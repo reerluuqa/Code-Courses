@@ -18,6 +18,7 @@ What it does:
 import os
 from pathlib import Path
 from datetime import datetime
+from urllib.parse import quote
 
 # Course configuration
 COURSES = [
@@ -160,7 +161,27 @@ COURSES = [
 ]
 
 
-def generate_course_html(course, all_courses):
+def build_notes_list(notes_dir):
+    """Build HTML list of note files in a notes/ directory."""
+    if not notes_dir.exists():
+        return '<p>No notes found yet. Add files to the notes folder to see them here.</p>'
+
+    entries = []
+    for entry in sorted(notes_dir.iterdir()):
+        if not entry.is_file():
+            continue
+        if entry.suffix.lower() not in {'.html', '.md'}:
+            continue
+        href = f'notes/{quote(entry.name)}'
+        entries.append(f'<li><a href="{href}">{entry.name}</a></li>')
+
+    if not entries:
+        return '<p>No notes found yet. Add files to the notes folder to see them here.</p>'
+
+    return '<ul class="notes-list">\n' + '\n'.join(entries) + '\n</ul>'
+
+
+def generate_course_html(course, all_courses, notes_html):
     """Generate HTML content for a course page"""
     
     # Generate navigation links
@@ -371,6 +392,30 @@ def generate_course_html(course, all_courses):
             color: var(--text-primary);
         }}
 
+        .notes-list {{
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }}
+
+        .notes-list a {{
+            display: block;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }}
+
+        .notes-list a:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }}
+
         footer {{
             text-align: center;
             padding: 3rem 2rem;
@@ -427,7 +472,7 @@ def generate_course_html(course, all_courses):
             <div class="info-box">
                 <p><strong>📌 Note:</strong> Add your course notes, projects, and learning materials to this folder. You can create markdown files, add code examples, or link to external resources.</p>
             </div>
-            <p>This section will contain all the notes, code examples, and projects from the <strong>{course['title']}</strong> course. Stay tuned for updates!</p>
+            {notes_html}
         </section>
 
         <section class="content-section">
@@ -501,7 +546,7 @@ def create_directory_structure(base_path='.'):
     created_folders = []
     updated_files = []
     
-    print("🚀 Building course structure...\n")
+    print("Building course structure...\n")
     
     for course in COURSES:
         course_dir = base_path / course['id']
@@ -510,51 +555,52 @@ def create_directory_structure(base_path='.'):
         if not course_dir.exists():
             course_dir.mkdir(parents=True)
             created_folders.append(course['id'])
-            print(f"✅ Created folder: {course['id']}/")
+            print(f"Created folder: {course['id']}/")
         else:
-            print(f"📁 Folder exists: {course['id']}/")
+            print(f"Folder exists: {course['id']}/")
         
         # Create subdirectories
         for subdir in ['notes', 'projects', 'exercises']:
             sub_path = course_dir / subdir
             if not sub_path.exists():
                 sub_path.mkdir(parents=True)
-                print(f"   ├── {subdir}/")
+                print(f"   - {subdir}/")
         
         # Generate and write index.html
-        html_content = generate_course_html(course, COURSES)
+        notes_html = build_notes_list(course_dir / 'notes')
+        html_content = generate_course_html(course, COURSES, notes_html)
         html_path = course_dir / 'index.html'
         html_path.write_text(html_content, encoding='utf-8')
         updated_files.append(f"{course['id']}/index.html")
-        print(f"   ├── index.html (updated)")
+        print(f"   - index.html (updated)")
         
         # Generate and write README.md
         readme_content = generate_readme(course)
         readme_path = course_dir / 'README.md'
         readme_path.write_text(readme_content, encoding='utf-8')
-        print(f"   └── README.md (updated)")
+        print(f"   - README.md (updated)")
         print()
     
     # Summary
     print("\n" + "="*60)
-    print("✨ Build Complete!")
+    print("Build Complete!")
     print("="*60)
-    print(f"\n📊 Summary:")
-    print(f"   • Folders created: {len(created_folders)}")
-    print(f"   • Files updated: {len(updated_files)}")
-    print(f"   • Total courses: {len(COURSES)}")
+    print("\nSummary:")
+    print(f"   - Folders created: {len(created_folders)}")
+    print(f"   - Files updated: {len(updated_files)}")
+    print(f"   - Total courses: {len(COURSES)}")
     
     if created_folders:
-        print(f"\n🆕 New folders:")
+        print("\nNew folders:")
         for folder in created_folders:
-            print(f"   • {folder}")
+            print(f"   - {folder}")
     
-    print(f"\n📝 Next steps:")
+    print("\nNext steps:")
     print(f"   1. Review the generated index.html files")
     print(f"   2. Add your course materials to each folder")
     print(f"   3. Commit and push to GitHub")
     print(f"   4. Enable GitHub Pages in your repository settings")
-    print(f"\n🌐 Your site will be live at:")
+    print("\nYour site will be live at:")
     print(f"   https://[your-username].github.io/[repository-name]/")
     print()
 
