@@ -161,27 +161,39 @@ COURSES = [
 ]
 
 
-def build_notes_list(notes_dir):
-    """Build HTML list of note files in a notes/ directory."""
-    if not notes_dir.exists():
-        return '<p>No notes found yet. Add files to the notes folder to see them here.</p>'
+def build_file_list(section_dir, relative_prefix, empty_message, exclude_names=None):
+    """Build HTML list of files in a directory."""
+    if not section_dir.exists():
+        return f'<p>{empty_message}</p>'
 
+    exclude_names = exclude_names or set()
     entries = []
-    for entry in sorted(notes_dir.iterdir()):
+    for entry in sorted(section_dir.iterdir()):
         if not entry.is_file():
             continue
-        if entry.suffix.lower() not in {'.html', '.md'}:
+        if entry.name in exclude_names:
             continue
-        href = f'notes/{quote(entry.name)}'
+        href = f'{relative_prefix}{quote(entry.name)}'
         entries.append(f'<li><a href="{href}">{entry.name}</a></li>')
 
     if not entries:
-        return '<p>No notes found yet. Add files to the notes folder to see them here.</p>'
+        return f'<p>{empty_message}</p>'
 
     return '<ul class="notes-list">\n' + '\n'.join(entries) + '\n</ul>'
 
 
-def generate_course_html(course, all_courses, notes_html):
+def build_course_root_list(course_dir):
+    """Build HTML list of files in the course root (excluding index/README)."""
+    exclude = {'index.html', 'README.md'}
+    return build_file_list(
+        course_dir,
+        relative_prefix='',
+        empty_message='No files in the course folder yet. Drop files here to see them listed.',
+        exclude_names=exclude
+    )
+
+
+def generate_course_html(course, all_courses, root_html, notes_html, projects_html, exercises_html):
     """Generate HTML content for a course page"""
     
     # Generate navigation links
@@ -461,26 +473,35 @@ def generate_course_html(course, all_courses, notes_html):
 
     <div class="container">
         <section class="content-section">
-            <h2>📚 Key Topics Covered</h2>
-            <ul class="topics-grid">
-                {topics_html}
-            </ul>
+            <h2>Course Files</h2>
+            <div class="info-box">
+                <p><strong>Note:</strong> Files placed directly in the course folder will appear here.</p>
+            </div>
+            {root_html}
         </section>
 
         <section class="content-section">
-            <h2>📝 Course Notes & Materials</h2>
+            <h2>Course Notes & Materials</h2>
             <div class="info-box">
-                <p><strong>📌 Note:</strong> Add your course notes, projects, and learning materials to this folder. You can create markdown files, add code examples, or link to external resources.</p>
+                <p><strong>Note:</strong> Add your course notes, projects, and learning materials to this folder. You can create markdown files, add code examples, or link to external resources.</p>
             </div>
             {notes_html}
         </section>
 
         <section class="content-section">
-            <h2>🚀 Projects</h2>
-            <p>Practical projects and exercises completed during this course will be listed here. Each project demonstrates key concepts and skills learned.</p>
+            <h2>Projects</h2>
             <div class="info-box">
-                <p><strong>💡 Tip:</strong> Create a separate folder for each project with its own README.md file explaining what you built and what you learned.</p>
+                <p><strong>Tip:</strong> Drop project files in the projects folder to list them here.</p>
             </div>
+            {projects_html}
+        </section>
+
+        <section class="content-section">
+            <h2>Exercises</h2>
+            <div class="info-box">
+                <p><strong>Tip:</strong> Drop exercise files in the exercises folder to list them here.</p>
+            </div>
+            {exercises_html}
         </section>
     </div>
 
@@ -567,8 +588,23 @@ def create_directory_structure(base_path='.'):
                 print(f"   - {subdir}/")
         
         # Generate and write index.html
-        notes_html = build_notes_list(course_dir / 'notes')
-        html_content = generate_course_html(course, COURSES, notes_html)
+        root_html = build_course_root_list(course_dir)
+        notes_html = build_file_list(
+            course_dir / 'notes',
+            relative_prefix='notes/',
+            empty_message='No notes found yet. Add files to the notes folder to see them here.'
+        )
+        projects_html = build_file_list(
+            course_dir / 'projects',
+            relative_prefix='projects/',
+            empty_message='No projects yet. Add files to the projects folder to see them here.'
+        )
+        exercises_html = build_file_list(
+            course_dir / 'exercises',
+            relative_prefix='exercises/',
+            empty_message='No exercises yet. Add files to the exercises folder to see them here.'
+        )
+        html_content = generate_course_html(course, COURSES, root_html, notes_html, projects_html, exercises_html)
         html_path = course_dir / 'index.html'
         html_path.write_text(html_content, encoding='utf-8')
         updated_files.append(f"{course['id']}/index.html")
