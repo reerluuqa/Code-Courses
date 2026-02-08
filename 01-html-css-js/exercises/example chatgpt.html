@@ -1,0 +1,602 @@
+<!--
+  Single-file HTML + CSS recreation of the ChatGPT UI shown in your screenshot.
+  Notes:
+  - No external libraries.
+  - Icons are inline SVG (simple approximations).
+  - Spacing/typography tuned to match the screenshot proportions.
+  - Feel free to tweak CSS variables at the top for pixel-perfect practice.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ChatGPT UI Clone (Practice)</title>
+
+  <style>
+    /* =========================
+       1) Design tokens (tweak here)
+       ========================= */
+    :root{
+      /* Layout */
+      --sidebar-w: 270px;     /* left rail width (matches screenshot feel) */
+      --topbar-h: 56px;       /* height of top row in main area */
+      --page-pad-x: 26px;     /* main padding left/right */
+
+      /* Colors */
+      --bg: #ffffff;
+      --sidebar-bg: #f7f7f7;
+      --sidebar-border: #e6e6e6;
+      --muted: #6b6b6b;
+      --text: #111111;
+      --pill-border: #e9e9e9;
+      --pill-shadow: 0 1px 0 rgba(0,0,0,.02), 0 2px 10px rgba(0,0,0,.04);
+
+      /* Typography */
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+
+    /* =========================
+       2) Base
+       ========================= */
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* =========================
+       3) App shell (sidebar + main)
+       ========================= */
+    .app{
+      height: 100vh;
+      display:flex;
+      overflow:hidden; /* keep it clean like the screenshot */
+    }
+
+    /* =========================
+       4) Sidebar (left rail)
+       ========================= */
+    .sidebar{
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
+      padding: 14px 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+
+    .sb-top{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 6px 6px 10px 6px;
+    }
+
+    .logo{
+      width: 20px;
+      height: 20px;
+      display:grid;
+      place-items:center;
+    }
+
+    .sb-divider{
+      height:1px;
+      background: var(--sidebar-border);
+      margin: 6px 0 8px;
+    }
+
+    .sb-nav{
+      display:flex;
+      flex-direction:column;
+      gap: 2px;
+    }
+
+    .sb-item{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      color: #1a1a1a;
+      font-size: 13px;
+      line-height: 1;
+      user-select:none;
+    }
+    .sb-item:hover{ background:#efefef; }
+
+    .sb-item svg{
+      width: 16px;
+      height: 16px;
+      opacity: .9;
+      flex: 0 0 auto;
+    }
+
+    .sb-scroll{
+      margin-top: 4px;
+      padding-right: 2px;
+      overflow:auto;
+      flex: 1 1 auto;
+    }
+    /* Hide scrollbar slightly (screenshot shows a subtle one) */
+    .sb-scroll::-webkit-scrollbar{ width: 10px; }
+    .sb-scroll::-webkit-scrollbar-thumb{
+      background: #d9d9d9;
+      border-radius: 999px;
+      border: 3px solid var(--sidebar-bg);
+    }
+
+    .sb-section-label{
+      font-size: 12px;
+      color: #9a9a9a;
+      padding: 10px 10px 6px;
+      letter-spacing: .2px;
+    }
+
+    .gpt-item{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      color:#1c1c1c;
+    }
+    .gpt-item:hover{ background:#efefef; }
+
+    .gpt-badge{
+      width: 18px; height: 18px;
+      border-radius: 999px;
+      background: #dfe7ff;
+      display:grid; place-items:center;
+      flex: 0 0 auto;
+      overflow:hidden;
+    }
+    .gpt-badge.alt1{ background:#e6f7e6; }
+    .gpt-badge.alt2{ background:#ffe7e7; }
+    .gpt-badge.alt3{ background:#f0e7ff; }
+
+    .gpt-name{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 190px;
+    }
+
+    /* =========================
+       5) Main area
+       ========================= */
+    .main{
+      flex: 1 1 auto;
+      display:flex;
+      flex-direction:column;
+      min-width: 0;
+      background: var(--bg);
+    }
+
+    /* Top bar (ChatGPT 5.2 + right icons) */
+    .topbar{
+      height: var(--topbar-h);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 10px var(--page-pad-x);
+    }
+
+    .model-pill{
+      display:flex;
+      align-items:center;
+      gap: 6px;
+      font-size: 14px;
+      color:#222;
+    }
+
+    .model-pill .caret{
+      width: 10px; height:10px;
+      opacity:.8;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      color:#222;
+    }
+    .icon-btn{
+      width: 28px; height: 28px;
+      display:grid; place-items:center;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+    }
+    .icon-btn:hover{
+      background:#f3f3f3;
+      border-color:#efefef;
+    }
+    .icon-btn svg{ width:18px; height:18px; }
+
+    /* Center content like screenshot */
+    .content{
+      flex: 1 1 auto;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      padding-top: 145px; /* pushes heading down similar to screenshot */
+      gap: 22px;
+    }
+
+    .hero-title{
+      font-size: 28px;
+      font-weight: 500;
+      color:#222;
+    }
+
+    /* The big input pill */
+    .composer{
+      width: min(880px, calc(100% - 2 * var(--page-pad-x)));
+      background: #fff;
+      border: 1px solid var(--pill-border);
+      border-radius: 999px;
+      box-shadow: var(--pill-shadow);
+      height: 54px;
+      display:flex;
+      align-items:center;
+      padding: 10px 10px 10px 12px;
+      gap: 10px;
+    }
+
+    .composer-left{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .plus{
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      display:grid; place-items:center;
+      background:#fff;
+      border: 1px solid #ededed;
+      flex: 0 0 auto;
+    }
+
+    .placeholder{
+      color:#a0a0a0;
+      font-size: 14px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .composer-right{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .mic{
+      width: 34px; height: 34px;
+      border-radius: 999px;
+      display:grid; place-items:center;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor:pointer;
+    }
+    .mic:hover{ background:#f6f6f6; }
+
+    .voice{
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      display:grid; place-items:center;
+      background:#000;
+      color:#fff;
+      cursor:pointer;
+    }
+    .voice svg{ width: 18px; height: 18px; }
+
+    /* =========================
+       6) Small responsiveness
+       ========================= */
+    @media (max-width: 900px){
+      :root{ --sidebar-w: 240px; }
+      .content{ padding-top: 120px; }
+    }
+    @media (max-width: 720px){
+      /* collapse sidebar for small screens (optional) */
+      .sidebar{ display:none; }
+      .topbar{ padding: 10px 16px; }
+      .composer{ width: calc(100% - 32px); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- =========================
+         SIDEBAR
+         ========================= -->
+    <aside class="sidebar">
+
+      <!-- Top logo area (approx) -->
+      <div class="sb-top">
+        <div class="logo" aria-hidden="true">
+          <!-- simple swirl-like mark (approx) -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3.2c2.6 0 4.8 2.1 4.8 4.7 0 1.7-.9 3.2-2.2 4"/>
+            <path d="M8.2 6.3C6.3 7.4 5.2 9.3 5.2 11.4c0 2.6 2.1 4.7 4.8 4.7"/>
+            <path d="M15.8 17.7c1.9-1.1 3-3 3-5.1 0-2.6-2.1-4.7-4.8-4.7"/>
+            <path d="M12 20.8c-2.6 0-4.8-2.1-4.8-4.7 0-1.7.9-3.2 2.2-4"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Primary nav -->
+      <nav class="sb-nav" aria-label="Primary">
+        <div class="sb-item">
+          <!-- pencil/new chat -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z"/>
+          </svg>
+          <span>New chat</span>
+        </div>
+
+        <div class="sb-item">
+          <!-- search -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M21 21l-4.3-4.3"/>
+          </svg>
+          <span>Search chats</span>
+        </div>
+
+        <div class="sb-item">
+          <!-- images -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2"/>
+            <path d="M8.5 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+            <path d="M21 16l-5.2-5.2a1.6 1.6 0 0 0-2.3 0L7 17"/>
+          </svg>
+          <span>Images</span>
+        </div>
+
+        <div class="sb-item">
+          <!-- apps (grid) -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>
+          </svg>
+          <span>Apps</span>
+        </div>
+
+        <div class="sb-item">
+          <!-- codex-ish (terminal) -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 6h16v12H4z"/>
+            <path d="M7 10l2 2-2 2"/>
+            <path d="M11 14h4"/>
+          </svg>
+          <span>Codex</span>
+        </div>
+      </nav>
+
+      <div class="sb-divider"></div>
+
+      <!-- "GPTs" section like screenshot -->
+      <div class="sb-scroll">
+        <div class="sb-section-label">GPTs</div>
+
+        <!-- Repeated list items: badge + name; truncate like screenshot -->
+        <div class="gpt-item">
+          <span class="gpt-badge">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1a2a6c" stroke-width="1.8">
+              <path d="M12 3l3 7-3 11-3-11 3-7z"/>
+            </svg>
+          </span>
+          <span class="gpt-name">EnglishTutor</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt3">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#4b2a7a" stroke-width="1.8">
+              <path d="M7 7h10v10H7z"/>
+              <path d="M9 11h6"/>
+            </svg>
+          </span>
+          <span class="gpt-name">InvestigationMaster</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt1">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1b5e20" stroke-width="1.8">
+              <path d="M12 4v16"/>
+              <path d="M4 12h16"/>
+            </svg>
+          </span>
+          <span class="gpt-name">supporting documentation</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt2">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#7a1f1f" stroke-width="1.8">
+              <path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.6-7 10-7 10z"/>
+            </svg>
+          </span>
+          <span class="gpt-name">Palliative Care Physician Sup...</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1a2a6c" stroke-width="1.8">
+              <path d="M6 18V6l12 6-12 6z"/>
+            </svg>
+          </span>
+          <span class="gpt-name">Support Advanced Care Pla...</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt3">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#4b2a7a" stroke-width="1.8">
+              <path d="M8 6h8M8 12h8M8 18h8"/>
+            </svg>
+          </span>
+          <span class="gpt-name">Consultation Skills Practice</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt1">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1b5e20" stroke-width="1.8">
+              <path d="M4 14c4-8 12-8 16 0"/>
+              <path d="M12 12v8"/>
+            </svg>
+          </span>
+          <span class="gpt-name">Acute Med</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt2">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#7a1f1f" stroke-width="1.8">
+              <path d="M12 2v20"/>
+              <path d="M2 12h20"/>
+            </svg>
+          </span>
+          <span class="gpt-name">Productivity</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1a2a6c" stroke-width="1.8">
+              <path d="M6 6h12v12H6z"/>
+              <path d="M9 9h6v6H9z"/>
+            </svg>
+          </span>
+          <span class="gpt-name">SCA exam prep</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt3">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#4b2a7a" stroke-width="1.8">
+              <path d="M4 7h16"/>
+              <path d="M4 12h16"/>
+              <path d="M4 17h16"/>
+            </svg>
+          </span>
+          <span class="gpt-name">SCA-style consultation pract...</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt1">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#1b5e20" stroke-width="1.8">
+              <path d="M12 2l3 7h7l-5.5 4 2 7-6.5-4.5L5.5 20l2-7L2 9h7l3-7z"/>
+            </svg>
+          </span>
+          <span class="gpt-name">Portfolio Life saver</span>
+        </div>
+
+        <div class="gpt-item">
+          <span class="gpt-badge alt2">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#7a1f1f" stroke-width="1.8">
+              <path d="M4 6h16v12H4z"/>
+              <path d="M7 10h6"/>
+              <path d="M7 14h10"/>
+            </svg>
+          </span>
+          <span class="gpt-name">QUIZ maker for kids</span>
+        </div>
+
+        <!-- Add more items to see scrollbar behavior like screenshot -->
+        <div style="height: 10px;"></div>
+      </div>
+    </aside>
+
+    <!-- =========================
+         MAIN
+         ========================= -->
+    <main class="main">
+
+      <!-- Top bar -->
+      <header class="topbar">
+        <div class="model-pill">
+          <span>ChatGPT 5.2</span>
+          <!-- caret -->
+          <svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </div>
+
+        <div class="top-actions">
+          <!-- user+ (approx) -->
+          <button class="icon-btn" aria-label="Invite / user plus">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="3"/>
+              <path d="M19 8v6"/>
+              <path d="M22 11h-6"/>
+            </svg>
+          </button>
+
+          <!-- refresh-ish (approx) -->
+          <button class="icon-btn" aria-label="Refresh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 1 1-2.6-6.4"/>
+              <path d="M21 3v6h-6"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Center landing content -->
+      <section class="content" aria-label="Landing">
+        <div class="hero-title">Where should we begin?</div>
+
+        <!-- Input pill -->
+        <div class="composer" role="group" aria-label="Message composer">
+
+          <div class="composer-left">
+            <div class="plus" aria-hidden="true">
+              <!-- plus icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </div>
+
+            <!-- placeholder text (static, since this is a visual clone) -->
+            <div class="placeholder">Ask anything</div>
+          </div>
+
+          <div class="composer-right">
+            <!-- mic icon button -->
+            <button class="mic" aria-label="Voice input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 14a3 3 0 0 0 3-3V7a3 3 0 0 0-6 0v4a3 3 0 0 0 3 3z"/>
+                <path d="M19 11a7 7 0 0 1-14 0"/>
+                <path d="M12 18v3"/>
+              </svg>
+            </button>
+
+            <!-- black voice mode button (waveform-ish) -->
+            <button class="voice" aria-label="Voice mode">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+                <path d="M6 12v-2"/>
+                <path d="M10 12v-5"/>
+                <path d="M14 12v-3"/>
+                <path d="M18 12v-6"/>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code Interface Clone</title>
+    <style>
+        /* 
+          CSS Reset and Base Styles
+          Reset default margins/padding and set up base font
+        */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        body {
+            background-color: #1e1e1e; /* VS Code dark theme background */
+            color: #cccccc; /* Default text color */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 
+          Activity Bar (Left Vertical Bar)
+          Contains icons for different views/panels
+        */
+        .activity-bar {
+            width: 48px;
+            background-color: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .activity-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #858585;
+            cursor: pointer;
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .activity-icon:hover {
+            color: #ffffff;
+        }
+
+        .activity-icon.active {
+            color: #ffffff;
+        }
+
+        .activity-icon.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #007acc; /* VS Code blue accent */
+        }
+
+        /* 
+          Sidebar (Left Panel)
+          Contains file explorer and other panels
+        */
+        .sidebar {
+            width: 300px;
+            background-color: #252526;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sidebar header/title bar */
+        .sidebar-header {
+            height: 35px;
+            background-color: #3c3c3c;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .sidebar-title {
+            flex-grow: 1;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .sidebar-action {
+            color: #cccccc;
+            cursor: pointer;
+        }
+
+        .sidebar-action:hover {
+            color: #ffffff;
+        }
+
+        /* File explorer section */
+        .file-explorer {
+            padding: 10px;
+        }
+
+        .file-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #bbbbbb;
+            margin-bottom: 5px;
+            padding-left: 5px;
+        }
+
+        .file-item {
+            padding: 3px 5px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .file-item:hover {
+            background-color: #2a2d2e;
+        }
+
+        .file-item.active {
+            background-color: #094771; /* Selection color */
+        }
+
+        .file-icon {
+            margin-right: 6px;
+            font-size: 16px;
+        }
+
+        .file-name {
+            font-size: 13px;
+        }
+
+        .html-file .file-name {
+            color: #e34c26; /* HTML orange color */
+        }
+
+        .css-file .file-name {
+            color: #264de4; /* CSS blue color */
+        }
+
+        .js-file .file-name {
+            color: #f0db4f; /* JavaScript yellow color */
+        }
+
+        /* 
+          Main Editor Area
+          Contains tabs and code editor
+        */
+        .main-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #1e1e1e;
+        }
+
+        /* Editor tabs */
+        .editor-tabs {
+            height: 35px;
+            background-color: #252526;
+            display: flex;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .editor-tab {
+            height: 100%;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            background-color: #2d2d2d;
+            border-right: 1px solid #2d2d30;
+            font-size: 13px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .editor-tab.active {
+            background-color: #1e1e1e;
+        }
+
+        .editor-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #1e1e1e;
+        }
+
+        .tab-icon {
+            margin-right: 8px;
+            color: #e34c26; /* HTML file icon color */
+        }
+
+        .tab-close {
+            margin-left: 10px;
+            color: #cccccc;
+            opacity: 0;
+        }
+
+        .editor-tab:hover .tab-close {
+            opacity: 1;
+        }
+
+        /* Code editor */
+        .code-editor {
+            flex-grow: 1;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 19px;
+            overflow: auto;
+        }
+
+        .code-line {
+            display: flex;
+            margin-bottom: 2px;
+        }
+
+        .line-number {
+            width: 40px;
+            text-align: right;
+            padding-right: 10px;
+            color: #858585;
+            user-select: none;
+        }
+
+        .line-content {
+            flex-grow: 1;
+        }
+
+        /* Syntax highlighting colors */
+        .html-tag {
+            color: #569cd6; /* Blue for HTML tags */
+        }
+
+        .html-attr {
+            color: #9cdcfe; /* Light blue for attributes */
+        }
+
+        .html-attr-value {
+            color: #ce9178; /* Orange/brown for attribute values */
+        }
+
+        .css-selector {
+            color: #d7ba7d; /* Gold for CSS selectors */
+        }
+
+        .css-property {
+            color: #9cdcfe; /* Light blue for CSS properties */
+        }
+
+        .css-value {
+            color: #ce9178; /* Orange/brown for CSS values */
+        }
+
+        .comment {
+            color: #6a9955; /* Green for comments */
+        }
+
+        /* 
+          Status Bar (Bottom Bar)
+          Shows information about the current file/state
+        */
+        .status-bar {
+            height: 22px;
+            background-color: #007acc; /* VS Code blue */
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 12px;
+            justify-content: space-between;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-icon {
+            margin-right: 5px;
+        }
+
+        /* 
+          Layout Container
+          Arranges activity bar, sidebar, and main area
+        */
+        .container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* 
+          Panel Container
+          For the right panel shown in the screenshot
+        */
+        .panel-container {
+            width: 300px;
+            background-color: #1e1e1e;
+            border-left: 1px solid #2d2d30;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            height: 35px;
+            background-color: #252526;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 1px solid #2d2d30;
+        }
+
+        .panel-tabs {
+            display: flex;
+            height: 100%;
+        }
+
+        .panel-tab {
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            height: 100%;
+            cursor: pointer;
+            border-right: 1px solid #2d2d30;
+        }
+
+        .panel-tab.active {
+            background-color: #1e1e1e;
+        }
+
+        .panel-content {
+            flex-grow: 1;
+            padding: 15px;
+            font-size: 13px;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #bbbbbb;
+            margin-bottom: 10px;
+        }
+
+        .panel-item {
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .panel-item:hover {
+            background-color: #2a2d2e;
+        }
+
+        /* 
+          Welcome Section
+          The main content shown in the screenshot
+        */
+        .welcome-section {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 300;
+            color: #ffffff;
+        }
+
+        .file-path {
+            font-size: 13px;
+            color: #bbbbbb;
+            margin-bottom: 20px;
+            background-color: #252526;
+            padding: 8px 12px;
+            border-radius: 3px;
+            border-left: 3px solid #007acc;
+        }
+
+        .file-path .path-item {
+            color: #ce9178; /* Orange/brown for path elements */
+        }
+
+        .file-path .separator {
+            color: #569cd6; /* Blue for separators */
+            margin: 0 5px;
+        }
+
+        .highlighted {
+            background-color: #264f78; /* Highlight background */
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        /* 
+          Responsive adjustments
+          Makes sure the layout works on different screen sizes
+        */
+        @media (max-width: 1200px) {
+            .sidebar, .panel-container {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .panel-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+      Main container for the entire VS Code interface
+      Uses flexbox to arrange activity bar, sidebar, and main area
+    -->
+    <div class="container">
+        <!-- Activity Bar - Leftmost vertical bar with icons -->
+        <div class="activity-bar">
+            <div class="activity-icon active">
+                <!-- Explorer icon (svg would be used in real VS Code) -->
+                <span>≡</span>
+            </div>
+            <div class="activity-icon">
+                <!-- Search icon -->
+                <span>🔍</span>
+            </div>
+            <div class="activity-icon">
+                <!-- Git icon -->
+                <span>⎇</span>
+            </div>
+            <div class="activity-icon">
+                <!-- Debug icon -->
+                <span>🐛</span>
+            </div>
+            <div class="activity-icon">
+                <!-- Extensions icon -->
+                <span>📦</span>
+            </div>
+        </div>
+
+        <!-- Sidebar - Contains file explorer and other panels -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Explorer</div>
+                <div class="sidebar-actions">
+                    <span class="sidebar-action">⋯</span>
+                </div>
+            </div>
+            
+            <div class="file-explorer">
+                <div class="file-section">
+                    <div class="section-title">01-html-css-js</div>
+                    <div class="file-item">
+                        <span class="file-icon">📁</span>
+                        <span class="file-name">exercises</span>
+                    </div>
+                </div>
+                
+                <div class="file-section">
+                    <div class="section-title">Open Editors</div>
+                    <div class="file-item active html-file">
+                        <span class="file-icon">📄</span>
+                        <span class="file-name">example website.html</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Editor Area - Contains tabs and code editor -->
+        <div class="main-area">
+            <div class="editor-tabs">
+                <div class="editor-tab active">
+                    <span class="tab-icon">📄</span>
+                    <span>example website.html</span>
+                    <span class="tab-close">×</span>
+                </div>
+                <div class="editor-tab">
+                    <span class="tab-icon">📄</span>
+                    <span>style.css</span>
+                    <span class="tab-close">×</span>
+                </div>
+                <div class="editor-tab">
+                    <span class="tab-icon">📄</span>
+                    <span>script.js</span>
+                    <span class="tab-close">×</span>
+                </div>
+            </div>
+            
+            <div class="code-editor">
+                <!-- Welcome section from the screenshot -->
+                <div class="welcome-section">
+                    <h1 class="welcome-title"># Welcome</h1>
+                </div>
+                
+                <div class="file-path">
+                    <span class="path-item">01-html-css-js</span>
+                    <span class="separator">></span>
+                    <span class="path-item">exercises</span>
+                    <span class="separator">></span>
+                    <span class="path-item">example website.html</span>
+                    <span class="separator">></span>
+                    <span class="path-item">html</span>
+                    <span class="separator">></span>
+                    <span class="path-item">head</span>
+                    <span class="separator">></span>
+                    <span class="path-item">style</span>
+                    <span class="separator">></span>
+                    <span class="path-item">span</span>
+                </div>
+                
+                <!-- Code from the screenshot -->
+                <div class="code-line">
+                    <div class="line-number">1</div>
+                    <div class="line-content">
+                        <span class="html-tag">&lt;html</span>
+                        <span class="html-attr"> lang</span>=<span class="html-attr-value">"en"</span>
+                        <span class="html-tag">&gt;</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">2</div>
+                    <div class="line-content">
+                        &nbsp;&nbsp;<span class="html-tag">&lt;head&gt;</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">3</div>
+                    <div class="line-content">
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="html-tag">&lt;style&gt;</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">4</div>
+                    <div class="line-content">
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="css-selector">.header-one</span>
+                        <span class="css-property">{</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">5</div>
+                    <div class="line-content">
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="css-property">}</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">6</div>
+                    <div class="line-content">
+                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="html-tag">&lt;/style&gt;</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">7</div>
+                    <div class="line-content">
+                        &nbsp;&nbsp;<span class="html-tag">&lt;/head&gt;</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">8</div>
+                    <div class="line-content">
+                        <span class="html-tag">&lt;/html&gt;</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">9</div>
+                    <div class="line-content"><br></div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">10</div>
+                    <div class="line-content">
+                        <span class="comment">---</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">11</div>
+                    <div class="line-content"><br></div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">12</div>
+                    <div class="line-content">
+                        <span class="comment"># Build with Agent</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">13</div>
+                    <div class="line-content">
+                        <span class="comment">AI responses may be inaccurate.</span>
+                    </div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">14</div>
+                    <div class="line-content"><br></div>
+                </div>
+                <div class="code-line">
+                    <div class="line-number">15</div>
+                    <div class="line-content">
+                        <span class="comment">Generate Agent Instructions to onboard AI onto your codebase.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Contains outline, timeline, etc. -->
+        <div class="panel-container">
+            <div class="panel-header">
+                <div class="panel-tabs">
+                    <div class="panel-tab active">OUTLINE</div>
+                    <div class="panel-tab">TIMELINE</div>
+                </div>
+            </div>
+            
+            <div class="panel-content">
+                <div class="panel-section">
+                    <div class="panel-section-title">OUTLINE</div>
+                    <div class="panel-item">TIMELINE</div>
+                </div>
+                
+                <div class="panel-section">
+                    <div class="panel-section-title">TIMELINE</div>
+                    <div class="panel-item">[empty]</div>
+                </div>
+                
+                <div class="panel-section">
+                    <div class="panel-section-title">SUGGESTED ACTIONS</div>
+                    <div class="panel-item">Build Workspace</div>
+                    <div class="panel-item">Show Config</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar - Bottom bar with status information -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">🌐</span>
+            <span>UTF-8</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">{ }</span>
+            <span>HTML</span>
+        </div>
+        <div class="status-item">
+            <span>Ln 1, Col 1</span>
+        </div>
+    </div>
+
+    <!-- 
+      JavaScript for interactive elements
+      This adds basic interactivity to the interface
+    -->
+    <script>
+        // Add interactivity to file items
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Remove active class from all file items
+                document.querySelectorAll('.file-item').forEach(el => {
+                    el.classList.remove('active');
+                });
+                // Add active class to clicked item
+                this.classList.add('active');
+            });
+        });
+
+        // Add interactivity to editor tabs
+        document.querySelectorAll('.editor-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.editor-tab').forEach(el => {
+                    el.classList.remove('active');
+                });
+                // Add active class to clicked tab
+                this.classList.add('active');
+            });
+            
+            // Close tab functionality
+            const closeBtn = tab.querySelector('.tab-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent triggering the tab click event
+                    tab.style.display = 'none';
+                });
+            }
+        });
+
+        // Add interactivity to panel tabs
+        document.querySelectorAll('.panel-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all panel tabs
+                document.querySelectorAll('.panel-tab').forEach(el => {
+                    el.classList.remove('active');
+                });
+                // Add active class to clicked tab
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,573 @@
+<!--
+  FILE: index.html
+  Goal: visually replicate the Chrome "New Tab" / Google start page shown in your screenshot.
+  Notes:
+  - This is NOT functional Chrome UI; it’s a front-end recreation for HTML/CSS practice.
+  - Replace the image paths in <img> tags (background + doodle/logo + avatar) with your own assets.
+  - Everything is sized/positioned to “feel” like the screenshot: centered logo, pill search bar, shortcut tile,
+    and the “Add extensions …” promo card.
+-->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>New Tab (Practice Replica)</title>
+
+    <style>
+      /* =========================
+         Design tokens
+         ========================= */
+      :root {
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.75);
+        --muted-2: rgba(255, 255, 255, 0.55);
+
+        /* The “cards” and search bar are a frosted translucent light surface in the screenshot */
+        --surface: rgba(255, 255, 255, 0.88);
+        --surface-2: rgba(255, 255, 255, 0.80);
+        --surface-border: rgba(0, 0, 0, 0.06);
+
+        --shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+        --shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.18);
+
+        --radius-xl: 24px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+        --radius-sm: 10px;
+
+        --page-max: 980px;
+
+        /* Accent (matches the warm gold-ish buttons in your screenshot) */
+        --accent: #f2c15c;
+        --accent-2: #e7b44b;
+
+        --icon: rgba(0, 0, 0, 0.50);
+        --icon-strong: rgba(0, 0, 0, 0.62);
+
+        --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans",
+          sans-serif;
+      }
+
+      /* =========================
+         Base layout
+         ========================= */
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        color: var(--text);
+
+        /*
+          Background:
+          - In the screenshot, it’s a space/planet image with a subtle vignette.
+          - Replace url(...) with your downloaded background image for best fidelity.
+        */
+        background:
+          radial-gradient(1200px 700px at 50% 40%, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0.78) 65%),
+          url("./assets/space-bg.png") center / cover no-repeat fixed;
+      }
+
+      /* A wrapper that keeps the main content centered and “floating” */
+      .page {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* =========================
+         Top-right nav (Gmail / Images / Apps grid / Avatar)
+         ========================= */
+      .topbar {
+        display: flex;
+        justify-content: flex-end;
+        padding: 18px 22px;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .topbar a {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .topbar a:hover {
+        text-decoration: underline;
+        color: var(--text);
+      }
+
+      /* “Apps grid” icon (3x3 dots) */
+      .apps-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .apps-btn:hover { background: rgba(255,255,255,0.10); }
+
+      .dots {
+        width: 18px;
+        height: 18px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+      }
+      .dots span {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.75);
+      }
+
+      /* Avatar */
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.18);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      }
+      .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      /* =========================
+         Main center stack
+         ========================= */
+      .center {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        padding: 28px 16px 0;
+      }
+
+      /* Constrain width so the search bar looks like the screenshot */
+      .stack {
+        width: min(var(--page-max), 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        margin-top: 52px; /* pushes content downward similar to screenshot */
+      }
+
+      /* =========================
+         Google doodle/logo block
+         ========================= */
+      .logo-wrap {
+        width: 520px;
+        max-width: 92vw;
+        height: 120px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        position: relative;
+      }
+
+      /*
+        In the screenshot, the doodle sits on a white rounded rectangle with soft shadow.
+        That’s what we recreate here.
+      */
+      .logo-card {
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.92);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+
+      .logo-card img {
+        height: 78px;
+        width: auto;
+        display: block;
+      }
+
+      /* =========================
+         Search bar
+         ========================= */
+      .search-row {
+        width: 720px;
+        max-width: 92vw;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .searchbar {
+        flex: 1;
+        height: 48px;
+        border-radius: 999px;
+        background: var(--surface);
+        border: 1px solid var(--surface-border);
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 10px;
+      }
+
+      .searchbar .icon {
+        width: 18px;
+        height: 18px;
+        fill: var(--icon);
+        flex: 0 0 auto;
+      }
+
+      .searchbar input {
+        border: 0;
+        outline: 0;
+        background: transparent;
+        height: 100%;
+        flex: 1;
+        font-size: 14px;
+        color: rgba(0,0,0,0.78);
+      }
+
+      .searchbar input::placeholder {
+        color: rgba(0,0,0,0.42);
+      }
+
+      /* Right-side icons inside the search bar (mic + lens) */
+      .search-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .icon-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+
+      .icon-btn:hover {
+        background: rgba(0,0,0,0.06);
+      }
+
+      /* “AI Mode” pill to the right of the search bar (as in screenshot) */
+      .ai-pill {
+        height: 38px;
+        border-radius: 999px;
+        background: var(--surface-2);
+        border: 1px solid var(--surface-border);
+        box-shadow: var(--shadow-soft);
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: rgba(0,0,0,0.72);
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .ai-pill:hover { filter: brightness(0.99); }
+
+      .ai-pill .spark {
+        width: 16px;
+        height: 16px;
+        fill: rgba(0,0,0,0.55);
+      }
+
+      /* =========================
+         Shortcut “+ Add shortcut” block
+         ========================= */
+      .shortcut {
+        margin-top: 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .shortcut .plus {
+        width: 54px;
+        height: 54px;
+        border-radius: 999px;
+        background: var(--accent);
+        display: grid;
+        place-items: center;
+        box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+        border: 1px solid rgba(0,0,0,0.08);
+        cursor: pointer;
+      }
+      .shortcut .plus:hover { background: var(--accent-2); }
+
+      .shortcut .plus span {
+        font-size: 28px;
+        line-height: 1;
+        color: rgba(0,0,0,0.68);
+        transform: translateY(-1px);
+      }
+
+      .shortcut .label {
+        font-size: 12px;
+        color: var(--muted);
+        text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      }
+
+      /* =========================
+         Promo card: “Add extensions …”
+         ========================= */
+      .promo {
+        margin-top: 18px;
+        width: 520px;
+        max-width: 92vw;
+        height: 56px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.85);
+        border: 1px solid rgba(0,0,0,0.06);
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 12px;
+        color: rgba(0,0,0,0.72);
+      }
+
+      .promo .bag {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.06);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+
+      .promo .bag svg {
+        width: 16px;
+        height: 16px;
+        fill: rgba(0,0,0,0.55);
+      }
+
+      .promo .text {
+        font-size: 12px;
+        line-height: 1.2;
+        flex: 1;
+      }
+
+      .promo .chev {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        color: rgba(0,0,0,0.55);
+      }
+
+      /* =========================
+         Bottom-left credit + bottom-right edit icon
+         ========================= */
+      .footer {
+        position: fixed;
+        left: 18px;
+        right: 18px;
+        bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: none; /* lets clicks pass through if you like */
+      }
+
+      .credit {
+        pointer-events: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--muted);
+        text-decoration: none;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.45);
+      }
+      .credit:hover { text-decoration: underline; color: var(--text); }
+
+      .pencil {
+        pointer-events: auto;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        background: rgba(0,0,0,0.22);
+        border: 1px solid rgba(255,255,255,0.12);
+        box-shadow: 0 10px 22px rgba(0,0,0,0.22);
+      }
+      .pencil:hover { background: rgba(0,0,0,0.30); }
+
+      .pencil svg {
+        width: 16px;
+        height: 16px;
+        fill: rgba(255,255,255,0.82);
+      }
+
+      /* =========================
+         Minor responsiveness tweaks
+         ========================= */
+      @media (max-width: 520px) {
+        .stack { margin-top: 34px; }
+        .logo-wrap { height: 104px; }
+        .promo { height: auto; padding: 12px 14px; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <!-- TOP RIGHT LINKS -->
+      <header class="topbar">
+        <a href="#" aria-label="Gmail">Gmail</a>
+        <a href="#" aria-label="Images">Images</a>
+
+        <div class="apps-btn" title="Google apps" aria-label="Google apps">
+          <div class="dots" aria-hidden="true">
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="avatar" title="Profile" aria-label="Profile">
+          <!-- Replace with your avatar image -->
+          <img src="./assets/avatar.png" alt="" />
+        </div>
+      </header>
+
+      <!-- CENTER STACK -->
+      <main class="center">
+        <div class="stack">
+          <!-- Google doodle/logo -->
+          <div class="logo-wrap" aria-label="Google logo area">
+            <div class="logo-card">
+              <!-- Replace with a doodle/logo image for best accuracy -->
+              <img src="./assets/google-doodle.png" alt="Google" />
+            </div>
+          </div>
+
+          <!-- Search bar row -->
+          <div class="search-row">
+            <div class="searchbar" role="search">
+              <!-- Magnifying glass -->
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm11 3-6.1-6.1a9.5 9.5 0 1 0-1.4 1.4L19.6 22 21 20.99Z"
+                />
+              </svg>
+
+              <input
+                type="text"
+                placeholder="Search Google or type a URL"
+                aria-label="Search"
+              />
+
+              <div class="search-actions" aria-label="Search actions">
+                <!-- Microphone -->
+                <div class="icon-btn" title="Search by voice" aria-label="Search by voice">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"
+                    />
+                  </svg>
+                </div>
+
+                <!-- Google Lens-ish -->
+                <div class="icon-btn" title="Search by image" aria-label="Search by image">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M7 7h2V5H7a2 2 0 0 0-2 2v2h2V7Zm8-2v2h2V9h2V7a2 2 0 0 0-2-2h-2ZM7 15H5v2a2 2 0 0 0 2 2h2v-2H7v-2Zm12 0h-2v2h-2v2h2a2 2 0 0 0 2-2v-2ZM8 11a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Mode pill -->
+            <div class="ai-pill" title="AI Mode" aria-label="AI Mode">
+              <svg class="spark" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 2l1.2 4.3L17.5 7.5l-4.3 1.2L12 13l-1.2-4.3L6.5 7.5l4.3-1.2L12 2Zm7 8l.8 2.9L23 14l-3.2.9L19 18l-.8-3.1L15 14l3.2-1.1L19 10ZM5 13l1 3.6L10 18l-4 1.4L5 23l-1-3.6L0 18l4-1.4L5 13Z"
+                />
+              </svg>
+              <span>AI Mode</span>
+            </div>
+          </div>
+
+          <!-- Shortcut (+) -->
+          <div class="shortcut" aria-label="Shortcuts">
+            <div class="plus" title="Add shortcut" aria-label="Add shortcut">
+              <span>+</span>
+            </div>
+            <div class="label">Add shortcut</div>
+          </div>
+
+          <!-- Promo card -->
+          <div class="promo" aria-label="Extensions promo">
+            <div class="bag" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M7 7V6a5 5 0 0 1 10 0v1h2v14H5V7h2Zm2 0h6V6a3 3 0 0 0-6 0v1Z"
+                />
+              </svg>
+            </div>
+            <div class="text">
+              Add extensions to stay organised, simplify tasks and enhance your browsing
+            </div>
+            <div class="chev" aria-hidden="true">›</div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <div class="footer">
+        <a class="credit" href="#" aria-label="Photo credit">
+          <!-- Small “link” icon -->
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="rgba(255,255,255,0.75)">
+            <path
+              d="M10.6 13.4a1 1 0 0 1 0-1.4l3.4-3.4a1 1 0 1 1 1.4 1.4l-3.4 3.4a1 1 0 0 1-1.4 0ZM7 17a4 4 0 0 1 0-8h3a1 1 0 0 1 0 2H7a2 2 0 0 0 0 4h3a1 1 0 0 1 0 2H7Zm7-8h3a4 4 0 0 1 0 8h-3a1 1 0 0 1 0-2h3a2 2 0 0 0 0-4h-3a1 1 0 0 1 0-2Z"
+            />
+          </svg>
+          <span>Photo by NASA Image Library</span>
+        </a>
+
+        <div class="pencil" title="Customize" aria-label="Customize">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M3 17.25V21h3.75L17.8 9.95l-3.75-3.75L3 17.25Zm18-11.5a1 1 0 0 0 0-1.41l-1.34-1.34a1 1 0 0 0-1.41 0l-1.13 1.13 3.75 3.75L21 5.75Z"
+            />
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /*
+        Tiny optional UX: focus the input when you press "/"
+        (purely for convenience while practicing)
+      */
+      const input = document.querySelector(".searchbar input");
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "/" && document.activeElement !== input) {
+          e.preventDefault();
+          input.focus();
+        }
+      });
+    </script>
+  </body>
+</html>
