@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flexbox Header Reference — Common Mistakes vs Correct Patterns</title>
+
+  <style>
+    :root{
+      --bg: #0b1220;
+      --panel: #101a33;
+      --panel2:#0e1730;
+      --ink:#e9eefc;
+      --muted:#b9c4e3;
+      --accent:#7aa2ff;
+      --good:#39d98a;
+      --bad:#ff6b6b;
+      --warn:#ffd166;
+      --border: rgba(255,255,255,.12);
+      --shadow: 0 8px 24px rgba(0,0,0,.35);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(122,162,255,.35), transparent 60%),
+                  radial-gradient(1200px 600px at 90% 10%, rgba(57,217,138,.18), transparent 60%),
+                  var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    .wrap{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    header.page{
+      position: sticky;
+      top:0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      background: rgba(11,18,32,.75);
+      border-bottom: 1px solid var(--border);
+    }
+    header.page .bar{
+      max-width:1100px;
+      margin:0 auto;
+      padding: 14px 16px;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 12px;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
+    }
+    .badge .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(122,162,255,.15);
+    }
+    .badge b{ font-weight: 700; letter-spacing:.2px; }
+    .badge span{ color: var(--muted); font-size: 13px; }
+
+    .toc{
+      display:flex;
+      flex-wrap: wrap;
+      gap:10px;
+      justify-content:flex-end;
+    }
+    .toc a{
+      color: var(--ink);
+      text-decoration:none;
+      font-size: 13px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+    }
+    .toc a:hover{ border-color: rgba(122,162,255,.55); }
+
+    h1{
+      font-size: 28px;
+      margin: 18px 0 8px;
+      letter-spacing: .2px;
+    }
+    .lead{
+      color: var(--muted);
+      margin: 0 0 18px;
+      max-width: 72ch;
+    }
+
+    .grid{
+      display:grid;
+      gap: 18px;
+    }
+    @media (min-width: 900px){
+      .grid{ grid-template-columns: 1fr 1fr; }
+    }
+
+    .card{
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card .head{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .card .head h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.2px;
+    }
+    .pill{
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .pill.good{ border-color: rgba(57,217,138,.45); color: rgba(57,217,138,.95); }
+    .pill.bad{ border-color: rgba(255,107,107,.55); color: rgba(255,107,107,.98); }
+
+    .card .body{
+      padding: 14px;
+    }
+
+    .explain{
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0 0 10px;
+    }
+
+    .demo{
+      border: 1px dashed rgba(255,255,255,.22);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.18);
+    }
+    .demo .labelrow{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .tag{
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+    }
+    .tag .sw{
+      width:10px;height:10px;border-radius:2px;
+      background: rgba(255,255,255,.25);
+    }
+    .tag.good .sw{ background: rgba(57,217,138,.85); }
+    .tag.bad  .sw{ background: rgba(255,107,107,.9); }
+    .tag.warn .sw{ background: rgba(255,209,102,.9); }
+
+    pre{
+      margin: 10px 0 0;
+      padding: 12px;
+      border-radius: 12px;
+      overflow:auto;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.28);
+      color: #eaf0ff;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.35;
+    }
+
+    code{ font-family: var(--mono); }
+
+    .note{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(122,162,255,.35);
+      background: rgba(122,162,255,.10);
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .note b{ color: var(--accent); }
+
+    /* ---------- shared mini UI primitives for demos ---------- */
+    .mini-header{
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+    }
+    .mini-box{
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(0,0,0,.15);
+    }
+
+    .logo{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    .icon{
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(255,107,107,.9), rgba(255,107,107,.45));
+      border: 1px solid rgba(255,255,255,.18);
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .icon:before{
+      content:"";
+      position:absolute;
+      inset: 8px;
+      border-radius: 6px;
+      border: 2px solid rgba(0,0,0,.35);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.18);
+    }
+
+    .brand{
+      font-weight: 800;
+      letter-spacing: .2px;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .brand .som{ color: rgba(255,255,255,.75); font-weight: 700; }
+
+    .right-nav{
+      font-size: 13px;
+      color: rgba(255,255,255,.85);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.18);
+    }
+
+    /* ---------- DEMO 1: flex properties on non-flex container ---------- */
+    .d1 header{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px;
+      padding: 10px 12px;
+
+      /* Mistake: these do nothing without display:flex */
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .d1 .logo { /* default block flow unless otherwise defined */ }
+
+    .d1 .logo-img{
+      width: 40px;
+      height: 40px;
+
+      /* Mistake: flex on leaf node (image) is not useful */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .d1 .logo-name{
+      display: grid; /* unnecessary here; also doesn't solve parent layout */
+      place-items: center;
+      margin-top: 6px; /* forces it to look "blocky" */
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    /* ---------- DEMO 1 GOOD ---------- */
+    .d1good header{
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap: 12px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .d1good .logo{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .d1good .logo-img{
+      width: 40px;
+      height: 40px;
+      display:block; /* predictable; avoids baseline quirks */
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(255,107,107,.9), rgba(255,107,107,.45));
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .d1good .logo-name{
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    /* ---------- DEMO 2: space-between creates "giant gap" ---------- */
+    .d2 header{
+      display:flex;
+      justify-content: space-between; /* intentionally pushes ends apart */
+      align-items:center;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+    }
+
+    /* ---------- DEMO 2 GOOD: fixed gap, no stretching ---------- */
+    .d2good header{
+      display:flex;
+      justify-content: flex-start;
+      align-items:center;
+      gap: 24px; /* deterministic spacing */
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+    }
+
+    /* ---------- DEMO 3 BEST: margin-left:auto for granular control ---------- */
+    .d3 header{
+      display:flex;
+      align-items:center;
+      gap: 14px; /* controls spacing among left items if more than one */
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+    }
+    .d3 .right-nav{
+      margin-left: auto; /* surgical push to the right */
+    }
+
+    /* ---------- DEMO 4: gap vs justify-content mental model ---------- */
+    .row{
+      display:flex;
+      align-items:center;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.06);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-height: 54px;
+    }
+    .row .chip{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.16);
+      font-size: 12px;
+      color: rgba(255,255,255,.85);
+    }
+    .row .chip + .chip{ } /* just to show adjacency */
+    .row.space-between{ justify-content: space-between; }
+    .row.gap-only{ justify-content: flex-start; gap: 14px; }
+    .row.space-around{ justify-content: space-around; }
+    .row.space-evenly{ justify-content: space-evenly; }
+    .row.center{ justify-content: center; gap: 14px; }
+
+    /* ---------- footer ---------- */
+    .footer{
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+    .kbd{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.25);
+      color: rgba(255,255,255,.9);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="page">
+    <div class="bar">
+      <div class="badge">
+        <span class="dot"></span>
+        <div>
+          <b>Flexbox Header Reference</b><br />
+          <span>Mistakes vs correct patterns (live demos + code)</span>
+        </div>
+      </div>
+
+      <nav class="toc" aria-label="Table of contents">
+        <a href="#rule1">Flex belongs on parent</a>
+        <a href="#rule2">Space-between vs gap</a>
+        <a href="#rule3">Granular control</a>
+        <a href="#rule4">Mental models</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Header layout: stop fighting Flexbox</h1>
+    <p class="lead">
+      This single-file reference deliberately reproduces the exact failure modes you hit:
+      (1) applying flex to the wrong element, (2) expecting <code>justify-content</code> to behave like a fixed gap,
+      and (3) trying to “precisely control” spacing while using <code>space-between</code>.
+      Each section shows the <b>broken result</b> and the <b>correct result</b> side-by-side, with the minimal CSS.
+    </p>
+
+    <!-- SECTION 1 -->
+    <section id="rule1" class="grid">
+      <article class="card">
+        <div class="head">
+          <h2>Rule 1 — Flex properties do nothing unless the container is flex</h2>
+          <span class="pill bad">Mistake</span>
+        </div>
+        <div class="body">
+          <p class="explain">
+            Here the header contains a logo block, but <code>justify-content</code> and <code>align-items</code> are set
+            on a non-flex container. Additionally, <code>display:flex</code> is applied to the image (a leaf node),
+            which does not align siblings.
+          </p>
+
+          <div class="demo d1">
+            <div class="labelrow">
+              <span class="tag bad"><span class="sw"></span>Broken demo</span>
+              <span class="tag warn"><span class="sw"></span>Flex props on non-flex container</span>
+              <span class="tag warn"><span class="sw"></span>Flex applied to image (wrong place)</span>
+            </div>
+
+            <header>
+              <div class="logo">
+                <div class="mini-box" style="display:inline-block;">
+                  <img class="logo-img" alt="" />
+                  <div class="logo-name">Medisom</div>
+                </div>
+              </div>
+              <div class="right-nav">right nav</div>
+            </header>
+
+<pre><code>header{
+  /* Missing: display:flex; */
+  justify-content: space-between;
+  align-items: center;
+}
+.logo-img{
+  display:flex; /* Wrong target */
+}</code></pre>
+          </div>
+
+          <div class="note">
+            <b>Diagnostic:</b> if <code>justify-content</code>/<code>align-items</code> appears ignored, the container is
+            almost always missing <code>display:flex</code>.
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="head">
+          <h2>Rule 1 — Correct: flex the parent that owns the alignment</h2>
+          <span class="pill good">Correct</span>
+        </div>
+        <div class="body">
+          <p class="explain">
+            Make the header a flex container and make the wrapper around icon + text a flex row.
+            Keep the image predictable (typically <code>display:block</code>).
+          </p>
+
+          <div class="demo d1good">
+            <div class="labelrow">
+              <span class="tag good"><span class="sw"></span>Correct demo</span>
+              <span class="tag"><span class="sw"></span>Parent controls alignment</span>
+            </div>
+
+            <header>
+              <div class="logo">
+                <div class="logo-img" aria-hidden="true"></div>
+                <div class="logo-name">Medi<span style="color:rgba(255,255,255,.75); font-weight:700;">Som</span></div>
+              </div>
+              <div class="right-nav">right nav</div>
+            </header>
+
+<pre><code>header{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}</code></pre>
+          </div>
+
+          <div class="note">
+            <b>Best practice:</b> apply flex to the element that directly contains the items you want to align.
+            Children should rarely be flex unless they themselves are containers.
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section id="rule2" class="grid" style="margin-top:18px;">
+      <article class="card">
+        <div class="head">
+          <h2>Rule 2 — <code>space-between</code> deliberately creates a “giant gap”</h2>
+          <span class="pill bad">Why it looks spread out</span>
+        </div>
+        <div class="body">
+          <p class="explain">
+            <code>justify-content: space-between</code> pushes the first item to the far left and the last item to the far right,
+            and dumps all remaining free space between them. With exactly two items, the gap becomes maximal.
+          </p>
+
+          <div class="demo d2">
+            <div class="labelrow">
+              <span class="tag bad"><span class="sw"></span>“Too spread out” demo</span>
+              <span class="tag warn"><span class="sw"></span>Free space distributed between items</span>
+            </div>
+
+            <header>
+              <div class="logo">
+                <div class="icon" aria-hidden="true"></div>
+                <div class="brand">Medi<span class="som">Som</span></div>
+              </div>
+              <div class="right-nav">right nav</div>
+            </header>
+
+<pre><code>header{
+  display:flex;
+  justify-content: space-between; /* max separation for 2 items */
+  align-items:center;
+}</code></pre>
+          </div>
+
+          <div class="note">
+            <b>Key point:</b> while <code>gap</code> is fixed, <code>space-between</code> is elastic (depends on container width).
+            If you want precise spacing, remove <code>space-between</code>.
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="head">
+          <h2>Rule 2 — Correct: fixed spacing uses <code>gap</code>, not <code>space-between</code></h2>
+          <span class="pill good">Deterministic gap</span>
+        </div>
+        <div class="body">
+          <p class="explain">
+            If your intent is “logo then nav with a controlled distance,” do not distribute free space.
+            Use <code>justify-content: flex-start</code> plus a <code>gap</code>.
+          </p>
+
+          <div class="demo d2good">
+            <div class="labelrow">
+              <span class="tag good"><span class="sw"></span>Fixed-gap demo</span>
+              <span class="tag"><span class="sw"></span>Spacing stays the same as width changes</span>
+            </div>
+
+            <header>
+              <div class="logo">
+                <div class="icon" aria-hidden="true"></div>
+                <div class="brand">Medi<span class="som">Som</span></div>
+              </div>
+              <div class="right-nav">right nav</div>
+            </header>
+
+<pre><code>header{
+  display:flex;
+  justify-content: flex-start;
+  align-items:center;
+  gap:24px; /* precise */
+}</code></pre>
+          </div>
+
+          <div class="note">
+            <b>Operational rule:</b> use <code>justify-content</code> to decide how free space is allocated; use <code>gap</code> to set exact spacing.
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section id="rule3" class="grid" style="margin-top:18px;">
+      <article class="card">
+        <div class="head">
+          <h2>Rule 3 — Granular control: push exactly one item right</h2>
+          <span class="pill good">Recommended</span>
+        </div>
+        <div class="body">
+          <p class="explain">
+            The most controllable navbar pattern: keep the header left-aligned, then push the right group using
+            <code>margin-left: auto</code>. This avoids “mystery spacing” and scales cleanly.
+          </p>
+
+          <div class="demo d3">
+            <div class="labelrow">
+              <span class="tag good"><span class="sw"></span>Best-practice demo</span>
+              <span class="tag"><span class="sw"></span>Precise: only the right group moves</span>
+            </div>
+
+            <header>
+              <div class="logo">
+                <div class="icon" aria-hidden="true"></div>
+                <div class="brand">Medi<span class="som">Som</span></div>
+              </div>
+
+              <!-- could be center items here too -->
+
+              <div class="right-nav">right nav</div>
+            </header>
+
+<pre><code>header{
+  display:flex;
+  align-items:center;
+  gap:14px; /* controls adjacent spacing */
+}
+.right-nav{
+  margin-left:auto; /* surgical right push */
+}</code></pre>
+          </div>
+
+          <div class="note">
+            <b>Why this wins:</b> you control “local” spacing with <code>gap</code>, and alignment with a single auto margin.
+            This is typically more predictable than <code>space-between</code>.
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="head">
+          <h2>Rule 3 — Precise spacing inside groups: nest flex containers</h2>
+          <span class="pill good">Scalable</span>
+        </div>
+        <div class="body">
+          <p class="explain">
+            A header commonly has groups: left (brand), middle (links), right (actions).
+            Treat each group as a flex container, and use <code>gap</code> inside each group.
+          </p>
+
+          <div class="demo">
+            <div class="labelrow">
+              <span class="tag good"><span class="sw"></span>Nesting demo</span>
+              <span class="tag"><span class="sw"></span>Group-level control</span>
+            </div>
+
+            <div class="mini-header" style="display:flex; align-items:center; gap:14px;">
+              <div class="logo" style="display:flex; align-items:center; gap:10px;">
+                <div class="icon" aria-hidden="true"></div>
+                <div class="brand">Medi<span class="som">Som</span></div>
+              </div>
+
+              <nav style="display:flex; gap:10px; margin-left: 28px;">
+                <span class="right-nav">Docs</span>
+                <span class="right-nav">Pricing</span>
+                <span class="right-nav">About</span>
+              </nav>
+
+              <div style="margin-left:auto; display:flex; gap:10px;">
+                <span class="right-nav">Login</span>
+                <span class="right-nav">Sign up</span>
+              </div>
+            </div>
+
+<pre><code>header{ display:flex; align-items:center; }
+.left{ display:flex; gap:10px; }
+.center{ display:flex; gap:10px; }
+.right{ margin-left:auto; display:flex; gap:10px; }</code></pre>
+          </div>
+
+          <div class="note">
+            <b>Pattern:</b> header controls global alignment; each group controls its internal spacing.
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section id="rule4" class="card" style="margin-top:18px;">
+      <div class="head">
+        <h2>Mental model — <code>justify-content</code> distributes free space; <code>gap</code> is fixed adjacency spacing</h2>
+        <span class="pill">Visual cheat sheet</span>
+      </div>
+      <div class="body">
+        <p class="explain">
+          These rows show how the same three items behave under different <code>justify-content</code> values.
+          Notice that anything with “space-…” uses container width to decide spacing (elastic), while <code>gap</code> stays constant (deterministic).
+        </p>
+
+        <div class="demo">
+          <div class="labelrow">
+            <span class="tag"><span class="sw"></span>Watch spacing strategy change</span>
+            <span class="tag warn"><span class="sw"></span>Elastic: depends on width</span>
+            <span class="tag good"><span class="sw"></span>Deterministic: fixed</span>
+          </div>
+
+          <div class="row gap-only" style="margin-bottom:10px;">
+            <span class="chip">A</span><span class="chip">B</span><span class="chip">C</span>
+          </div>
+          <pre><code>.row{ display:flex; }
+.row.gap-only{ justify-content:flex-start; gap:14px; } /* fixed */</code></pre>
+
+          <div style="height:10px;"></div>
+
+          <div class="row space-between" style="margin-bottom:10px;">
+            <span class="chip">A</span><span class="chip">B</span><span class="chip">C</span>
+          </div>
+          <pre><code>.row.space-between{ justify-content:space-between; } /* elastic */</code></pre>
+
+          <div style="height:10px;"></div>
+
+          <div class="row space-around" style="margin-bottom:10px;">
+            <span class="chip">A</span><span class="chip">B</span><span class="chip">C</span>
+          </div>
+          <pre><code>.row.space-around{ justify-content:space-around; } /* elastic */</code></pre>
+
+          <div style="height:10px;"></div>
+
+          <div class="row space-evenly" style="margin-bottom:10px;">
+            <span class="chip">A</span><span class="chip">B</span><span class="chip">C</span>
+          </div>
+          <pre><code>.row.space-evenly{ justify-content:space-evenly; } /* elastic */</code></pre>
+
+          <div style="height:10px;"></div>
+
+          <div class="row center">
+            <span class="chip">A</span><span class="chip">B</span><span class="chip">C</span>
+          </div>
+          <pre><code>.row.center{ justify-content:center; gap:14px; } /* fixed adjacency, centered */</code></pre>
+
+          <div class="note">
+            <b>Practical decision:</b>
+            If you want items pinned to edges (classic two-sided navbar), use <code>space-between</code> or <code>margin-left:auto</code>.
+            If you want precise spacing, use <code>gap</code> with <code>flex-start</code>/<code>center</code>.
+          </div>
+        </div>
+
+        <div class="footer">
+          Quick checklist:
+          <ul>
+            <li><span class="kbd">display:flex</span> must be on the container you want to control.</li>
+            <li><span class="kbd">gap</span> = fixed spacing between adjacent items.</li>
+            <li><span class="kbd">justify-content</span> = strategy for distributing free space.</li>
+            <li><span class="kbd">margin-left:auto</span> = push one item/group to the far right (granular control).</li>
+            <li>Use nested flex containers for group-level precision (left / center / right).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
