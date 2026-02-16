@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Functions Adventure</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0a0e14;
+      --bg-card: #131920;
+      --bg-code: #0d1117;
+      --fg: #e6edf3;
+      --muted: #7d8590;
+      --accent: #00ffaa;
+      --accent-dim: #00cc88;
+      --warning: #ff6b6b;
+      --info: #64b5f6;
+      --syntax-keyword: #ff79c6;
+      --syntax-string: #f1fa8c;
+      --syntax-function: #50fa7b;
+      --syntax-number: #bd93f9;
+      --syntax-comment: #6272a4;
+      --border: #21262d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-deep);
+      color: var(--fg);
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    code, .code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Animated background */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0,255,170,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,170,0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0,255,170,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    /* Code block styling */
+    .code-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .code-header {
+      background: rgba(255,255,255,0.03);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .code-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .code-content {
+      padding: 20px;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+
+    /* Syntax highlighting */
+    .kw { color: var(--syntax-keyword); }
+    .fn { color: var(--syntax-function); }
+    .str { color: var(--syntax-string); }
+    .num { color: var(--syntax-number); }
+    .cmt { color: var(--syntax-comment); font-style: italic; }
+    .param { color: var(--info); }
+    .op { color: var(--warning); }
+
+    /* Section styling */
+    .section {
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Buttons */
+    .btn {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+      color: var(--bg-deep);
+      font-weight: 700;
+      padding: 12px 28px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      font-size: 15px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,255,170,0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-outline:hover {
+      background: var(--accent);
+      color: var(--bg-deep);
+    }
+
+    /* Visual function machine */
+    .function-machine {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .machine-body {
+      background: linear-gradient(135deg, #1a2332 0%, #0f1419 100%);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      position: relative;
+    }
+
+    .input-arrow, .output-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .arrow-line {
+      height: 3px;
+      background: var(--accent);
+      flex: 1;
+      max-width: 80px;
+    }
+
+    .arrow-head {
+      width: 0;
+      height: 0;
+      border-left: 12px solid var(--accent);
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+    }
+
+    .arg-box {
+      background: var(--info);
+      color: var(--bg-deep);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    .result-box {
+      background: var(--accent);
+      color: var(--bg-deep);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    /* Scope visualization */
+    .scope-bubble {
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .scope-global {
+      background: rgba(255,107,107,0.1);
+      border: 2px dashed rgba(255,107,107,0.5);
+    }
+
+    .scope-function {
+      background: rgba(0,255,170,0.1);
+      border: 2px dashed rgba(0,255,170,0.5);
+      margin: 15px;
+    }
+
+    .scope-block {
+      background: rgba(100,181,246,0.1);
+      border: 2px dashed rgba(100,181,246,0.5);
+      margin: 15px;
+    }
+
+    /* Quiz styling */
+    .quiz-option {
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 12px;
+    }
+
+    .quiz-option:hover {
+      border-color: var(--accent);
+      transform: translateX(8px);
+    }
+
+    .quiz-option.selected {
+      border-color: var(--info);
+      background: rgba(100,181,246,0.1);
+    }
+
+    .quiz-option.correct {
+      border-color: var(--accent);
+      background: rgba(0,255,170,0.15);
+    }
+
+    .quiz-option.wrong {
+      border-color: var(--warning);
+      background: rgba(255,107,107,0.15);
+    }
+
+    /* Pitfall cards */
+    .pitfall-card {
+      background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(255,107,107,0.05) 100%);
+      border: 1px solid rgba(255,107,107,0.3);
+      border-radius: 12px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .pitfall-card::before {
+      content: '!';
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: var(--warning);
+      color: var(--bg-deep);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: var(--accent);
+      z-index: 100;
+      transition: width 0.3s ease;
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 50;
+    }
+
+    .nav-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      color: var(--fg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Execution animation */
+    .executing {
+      animation: pulse 0.5s ease;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Tab system */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--muted);
+    }
+
+    .tab:hover {
+      color: var(--fg);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: var(--bg-deep);
+      border-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Practice editor */
+    .practice-editor {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      color: var(--fg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      outline: none;
+    }
+
+    .practice-editor:focus {
+      border-color: var(--accent);
+    }
+
+    .output-console {
+      background: #000;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      min-height: 80px;
+      color: var(--accent);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-concept {
+      background: rgba(0,255,170,0.15);
+      color: var(--accent);
+    }
+
+    .badge-warning {
+      background: rgba(255,107,107,0.15);
+      color: var(--warning);
+    }
+
+    .badge-info {
+      background: rgba(100,181,246,0.15);
+      color: var(--info);
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background elements -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow" style="top: 20%; left: 20%;"></div>
+  <div class="bg-glow" style="top: 70%; left: 80%; animation-delay: -10s;"></div>
+
+  <!-- Progress bar -->
+  <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+
+  <!-- Main content -->
+  <main class="max-w-4xl mx-auto px-6 py-16">
+    
+    <!-- Hero Section -->
+    <section class="section mb-24" id="hero">
+      <div class="text-center mb-12">
+        <span class="badge badge-concept mb-4">Interactive Learning</span>
+        <h1 class="text-5xl md:text-7xl font-bold mb-6" style="letter-spacing: -2px;">
+          JavaScript<br>
+          <span style="color: var(--accent);">Functions</span>
+        </h1>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
+          Master the building blocks of JavaScript through visual explanations, 
+          interactive examples, and hands-on practice.
+        </p>
+        <button class="btn" onclick="scrollToSection('what-is-function')">
+          Start Learning
+        </button>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-16">
+        <div class="bg-opacity-50 p-6 rounded-xl" style="background: var(--bg-card);">
+          <div class="text-3xl font-bold" style="color: var(--accent);">6</div>
+          <div class="text-gray-400 text-sm">Core Concepts</div>
+        </div>
+        <div class="bg-opacity-50 p-6 rounded-xl" style="background: var(--bg-card);">
+          <div class="text-3xl font-bold" style="color: var(--info);">15+</div>
+          <div class="text-gray-400 text-sm">Code Examples</div>
+        </div>
+        <div class="bg-opacity-50 p-6 rounded-xl" style="background: var(--bg-card);">
+          <div class="text-3xl font-bold" style="color: var(--warning);">5</div>
+          <div class="text-gray-400 text-sm">Common Pitfalls</div>
+        </div>
+        <div class="bg-opacity-50 p-6 rounded-xl" style="background: var(--bg-card);">
+          <div class="text-3xl font-bold" style="color: var(--syntax-string);">4</div>
+          <div class="text-gray-400 text-sm">Practice Quizzes</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: What is a Function -->
+    <section class="section mb-24" id="what-is-function">
+      <span class="badge badge-concept mb-4">Concept 1</span>
+      <h2 class="text-4xl font-bold mb-6">What is a Function?</h2>
+      
+      <div class="mb-8">
+        <p class="text-lg text-gray-300 mb-4">
+          Think of a function as a <strong style="color: var(--accent);">reusable recipe</strong>. 
+          You define the steps once, then use it whenever you need it - optionally with different ingredients!
+        </p>
+      </div>
+
+      <!-- Visual: Function Machine -->
+      <div class="function-machine mb-8">
+        <h3 class="text-xl font-bold mb-6 text-center">The Function Machine Analogy</h3>
+        
+        <div class="grid md:grid-cols-3 gap-6 items-center">
+          <!-- Input -->
+          <div class="text-center">
+            <div class="text-sm text-gray-400 mb-2">INPUT (Arguments)</div>
+            <div class="flex flex-wrap gap-2 justify-center">
+              <span class="arg-box" id="machineArg1">5</span>
+              <span class="arg-box" id="machineArg2">3</span>
+            </div>
+          </div>
+
+          <!-- Machine -->
+          <div class="machine-body">
+            <div class="text-sm text-gray-400 mb-2">FUNCTION</div>
+            <div class="text-2xl font-bold code" style="color: var(--syntax-function);">multiply</div>
+            <div class="text-sm text-gray-500 mt-2">Does something with inputs</div>
+          </div>
+
+          <!-- Output -->
+          <div class="text-center">
+            <div class="text-sm text-gray-400 mb-2">OUTPUT (Return Value)</div>
+            <span class="result-box" id="machineResult">15</span>
+          </div>
+        </div>
+
+        <div class="mt-6 text-center">
+          <button class="btn btn-outline" onclick="animateMachine()">
+            Run the Machine
+          </button>
+        </div>
+      </div>
+
+      <!-- Definition Box -->
+      <div class="bg-opacity-50 rounded-xl p-6 mb-8" style="background: var(--bg-card); border-left: 4px solid var(--accent);">
+        <h4 class="font-bold mb-2">Definition</h4>
+        <p class="text-gray-300">
+          A <strong>function</strong> is a block of reusable code that performs a specific task. 
+          It can accept inputs (parameters), process them, and return an output.
+        </p>
+      </div>
+    </section>
+
+    <!-- Section 2: Function Declaration -->
+    <section class="section mb-24" id="declaration">
+      <span class="badge badge-concept mb-4">Concept 2</span>
+      <h2 class="text-4xl font-bold mb-6">Function Declaration</h2>
+
+      <p class="text-lg text-gray-300 mb-6">
+        A function declaration defines a named function using the <code class="kw">function</code> keyword.
+      </p>
+
+      <!-- Syntax Breakdown -->
+      <div class="code-block mb-8">
+        <div class="code-header">
+          <div class="code-dot" style="background: #ff5f56;"></div>
+          <div class="code-dot" style="background: #ffbd2e;"></div>
+          <div class="code-dot" style="background: #27ca40;"></div>
+          <span class="text-sm text-gray-400 ml-2">Syntax Breakdown</span>
+        </div>
+        <div class="code-content">
+          <div class="text-lg">
+            <span class="kw">function</span> <span class="fn">greet</span><span class="op">(</span><span class="param">name</span><span class="op">)</span> <span class="op">{</span>
+            <br>
+            &nbsp;&nbsp;<span class="kw">return</span> <span class="str">"Hello, "</span> <span class="op">+</span> <span class="param">name</span> <span class="op">+</span> <span class="str">"!"</span>;
+            <br>
+            <span class="op">}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Annotated Parts -->
+      <div class="grid md:grid-cols-2 gap-4 mb-8">
+        <div class="p-4 rounded-lg" style="background: rgba(255,121,198,0.1); border: 1px solid rgba(255,121,198,0.3);">
+          <code class="kw">function</code>
+          <p class="text-sm text-gray-400 mt-2">Keyword that starts the declaration</p>
+        </div>
+        <div class="p-4 rounded-lg" style="background: rgba(80,250,123,0.1); border: 1px solid rgba(80,250,123,0.3);">
+          <code class="fn">greet</code>
+          <p class="text-sm text-gray-400 mt-2">The function name (use verbNoun format)</p>
+        </div>
+        <div class="p-4 rounded-lg" style="background: rgba(100,181,246,0.1); border: 1px solid rgba(100,181,246,0.3);">
+          <code class="param">name</code>
+          <p class="text-sm text-gray-400 mt-2">Parameter: placeholder for input</p>
+        </div>
+        <div class="p-4 rounded-lg" style="background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3);">
+          <code class="kw">return</code>
+          <p class="text-sm text-gray-400 mt-2">Sends a value back to the caller</p>
+        </div>
+      </div>
+
+      <!-- Live Example -->
+      <div class="mb-8">
+        <h3 class="text-xl font-bold mb-4">Try It: Declaration</h3>
+        <div class="code-block mb-4">
+          <div class="code-header">
+            <span class="text-sm text-gray-400">Example</span>
+          </div>
+          <div class="code-content">
+            <span class="kw">function</span> <span class="fn">add</span><span class="op">(</span><span class="param">a</span>, <span class="param">b</span><span class="op">)</span> <span class="op">{</span>
+            <br>
+            &nbsp;&nbsp;<span class="kw">return</span> <span class="param">a</span> <span class="op">+</span> <span class="param">b</span>;
+            <br>
+            <span class="op">}</span>
+            <br><br>
+            <span class="cmt">// Calling the function:</span>
+            <br>
+            <span class="kw">let</span> result <span class="op">=</span> <span class="fn">add</span><span class="op">(</span><span class="num">3</span>, <span class="num">5</span><span class="op">)</span>;
+            <br>
+            console.<span class="fn">log</span>(result); <span class="cmt">// Output: 8</span>
+          </div>
+        </div>
+        <button class="btn" onclick="runDeclarationExample()">Run Code</button>
+        <div class="output-console mt-4" id="declarationOutput">// Click "Run Code" to see output</div>
+      </div>
+
+      <!-- Hoisting Explanation -->
+      <div class="p-6 rounded-xl mb-8" style="background: var(--bg-card);">
+        <h4 class="font-bold mb-3" style="color: var(--accent);">Hoisting Magic</h4>
+        <p class="text-gray-300 mb-4">
+          Function declarations are "hoisted" - you can call them before they're defined in your code!
+        </p>
+        <div class="code-block">
+          <div class="code-content text-sm">
+            <span class="fn">sayHi</span>(); <span class="cmt">// Works! Output: "Hi!"</span>
+            <br><br>
+            <span class="kw">function</span> <span class="fn">sayHi</span><span class="op">()</span> <span class="op">{</span>
+            <br>
+            &nbsp;&nbsp;console.<span class="fn">log</span>(<span class="str">"Hi!"</span>);
+            <br>
+            <span class="op">}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Function Expression -->
+    <section class="section mb-24" id="expression">
+      <span class="badge badge-concept mb-4">Concept 3</span>
+      <h2 class="text-4xl font-bold mb-6">Function Expression</h2>
+
+      <p class="text-lg text-gray-300 mb-6">
+        A function expression stores a function in a variable. The function can be named or anonymous.
+      </p>
+
+      <!-- Tabs for different types -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('expr-anonymous', this)">Anonymous</div>
+        <div class="tab" onclick="switchTab('expr-named', this)">Named</div>
+        <div class="tab" onclick="switchTab('expr-arrow', this)">Arrow Function</div>
+      </div>
+
+      <!-- Anonymous Expression -->
+      <div class="tab-content active" id="expr-anonymous">
+        <div class="code-block mb-4">
+          <div class="code-header">
+            <span class="text-sm text-gray-400">Anonymous Function Expression</span>
+          </div>
+          <div class="code-content">
+            <span class="kw">const</span> <span class="fn">greet</span> <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="param">name</span><span class="op">)</span> <span class="op">{</span>
+            <br>
+            &nbsp;&nbsp;<span class="kw">return</span> <span class="str">"Hello, "</span> <span class="op">+</span> <span class="param">name</span>;
+            <br>
+            <span class="op">}</span>;
+            <br><br>
+            console.<span class="fn">log</span>(<span class="fn">greet</span>(<span class="str">"Alex"</span>)); <span class="cmt">// "Hello, Alex"</span>
+          </div>
+        </div>
+        <p class="text-gray-400">The function has no name - it's identified by the variable name.</p>
+      </div>
+
+      <!-- Named Expression -->
+      <div class="tab-content" id="expr-named">
+        <div class="code-block mb-4">
+          <div class="code-header">
+            <span class="text-sm text-gray-400">Named Function Expression</span>
+          </div>
+          <div class="code-content">
+            <span class="kw">const</span> <span class="fn">factorial</span> <span class="op">=</span> <span class="kw">function</span> <span class="fn">fact</span><span class="op">(</span><span class="param">n</span><span class="op">)</span> <span class="op">{</span>
+            <br>
+            &nbsp;&nbsp;<span class="kw">if</span> (n <span class="op">&lt;=</span> <span class="num">1</span>) <span class="kw">return</span> <span class="num">1</span>;
+            <br>
+            &nbsp;&nbsp;<span class="kw">return</span> n <span class="op">*</span> <span class="fn">fact</span>(n <span class="op">-</span> <span class="num">1</span>); <span class="cmt">// Can reference itself!</span>
+            <br>
+            <span class="op">}</span>;
+          </div>
+        </div>
+        <p class="text-gray-400">Useful for recursion - the function can call itself by its internal name.</p>
+      </div>
+
+      <!-- Arrow Function -->
+      <div class="tab-content" id="expr-arrow">
+        <div class="code-block mb-4">
+          <div class="code-header">
+            <span class="text-sm text-gray-400">Arrow Function (ES6+)</span>
+          </div>
+          <div class="code-content">
+            <span class="cmt">// Short and concise!</span>
+            <br>
+            <span class="kw">const</span> <span class="fn">double</span> <span class="op">=</span> <span class="param">n</span> <span class="op">=></span> n <span class="op">*</span> <span class="num">2</span>;
+            <br><br>
+            <span class="cmt">// Multiple parameters need parentheses</span>
+            <br>
+            <span class="kw">const</span> <span class="fn">add</span> <span class="op">=</span> <span class="op">(</span><span class="param">a</span>, <span class="param">b</span><span class="op">)</span> <span class="op">=></span> a <span class="op">+</span> b;
+            <br><br>
+            <span class="cmt">// Multiple lines need braces & return</span>
+            <br>
+            <span class="kw">const</span> <span class="fn">greet</span> <span class="op">=</span> <span class="op">(</span><span class="param">name</span><span class="op">)</span> <span class="op">=></span> <span class="op">{</span>
+            <br>
+            &nbsp;&nbsp;<span class="kw">const</span> msg <span class="op">=</span> <span class="str">"Hello, "</span> <span class="op">+</span> name;
+            <br>
+            &nbsp;&nbsp;<span class="kw">return</span> msg;
+            <br>
+            <span class="op">}</span>;
+          </div>
+        </div>
+        <p class="text-gray-400">Arrow functions have shorter syntax and special 'this' behavior.</p>
+      </div>
+
+      <!-- Declaration vs Expression Comparison -->
+      <div class="mt-8 p-6 rounded-xl" style="background: var(--bg-card);">
+        <h4 class="font-bold mb-4">Declaration vs Expression</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th class="text-left py-2">Feature</th>
+                <th class="text-left py-2">Declaration</th>
+                <th class="text-left py-2">Expression</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-gray-800">
+                <td class="py-2">Hoisted</td>
+                <td class="py-2" style="color: var(--accent);">Yes (fully)</td>
+                <td class="py-2" style="color: var(--warning);">No (only variable)</td>
+              </tr>
+              <tr class="border-b border-gray-800">
+                <td class="py-2">Can call before define</td>
+                <td class="py-2" style="color: var(--accent);">Yes</td>
+                <td class="py-2" style="color: var(--warning);">No</td>
+              </tr>
+              <tr>
+                <td class="py-2">Use case</td>
+                <td class="py-2">Main functions</td>
+                <td class="py-2">Callbacks, one-offs</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Parameters & Arguments -->
+    <section class="section mb-24" id="parameters">
+      <span class="badge badge-concept mb-4">Concept 4</span>
+      <h2 class="text-4xl font-bold mb-6">Parameters vs Arguments</h2>
+
+      <p class="text-lg text-gray-300 mb-6">
+        These terms are often confused! Here's the difference:
+      </p>
+
+      <!-- Visual Comparison -->
+      <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="p-6 rounded-xl" style="background: rgba(100,181,246,0.1); border: 2px solid rgba(100,181,246,0.3);">
+          <h4 class="text-xl font-bold mb-2" style="color: var(--info);">Parameters</h4>
+          <p class="text-gray-300 mb-4">
+            Variables listed in the function definition. They're like <strong>placeholders</strong>.
+          </p>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">function</span> <span class="fn">greet</span>(<span class="param" style="background: rgba(100,181,246,0.3); padding: 2px 6px; border-radius: 4px;">name</span>, <span class="param" style="background: rgba(100,181,246,0.3); padding: 2px 6px; border-radius: 4px;">age</span>) {}
+              <br>
+              <span class="cmt">// name & age are PARAMETERS</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 rounded-xl" style="background: rgba(0,255,170,0.1); border: 2px solid rgba(0,255,170,0.3);">
+          <h4 class="text-xl font-bold mb-2" style="color: var(--accent);">Arguments</h4>
+          <p class="text-gray-300 mb-4">
+            Actual values passed when calling the function. They're the <strong>real data</strong>.
+          </p>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="fn">greet</span>(<span class="str" style="background: rgba(0,255,170,0.3); padding: 2px 6px; border-radius: 4px;">"Sam"</span>, <span class="num" style="background: rgba(0,255,170,0.3); padding: 2px 6px; border-radius: 4px;">25</span>);
+              <br>
+              <span class="cmt">// "Sam" & 25 are ARGUMENTS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parameter Features -->
+      <h3 class="text-xl font-bold mb-4">Parameter Superpowers</h3>
+
+      <div class="space-y-4 mb-8">
+        <!-- Default Parameters -->
+        <div class="p-5 rounded-xl" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-2">Default Parameters</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">function</span> <span class="fn">greet</span><span class="op">(</span><span class="param">name</span> <span class="op">=</span> <span class="str">"Guest"</span><span class="op">)</span> <span class="op">{</span>
+              <br>
+              &nbsp;&nbsp;<span class="kw">return</span> <span class="str">"Hello, "</span> <span class="op">+</span> name;
+              <br>
+              <span class="op">}</span>
+              <br><br>
+              <span class="fn">greet</span>(); <span class="cmt">// "Hello, Guest"</span>
+              <br>
+              <span class="fn">greet</span>(<span class="str">"Max"</span>); <span class="cmt">// "Hello, Max"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rest Parameters -->
+        <div class="p-5 rounded-xl" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-2">Rest Parameters (...args)</h4>
+          <p class="text-gray-400 text-sm mb-3">Collect unlimited arguments into an array</p>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">function</span> <span class="fn">sumAll</span><span class="op">(</span><span class="op">...</span><span class="param">numbers</span><span class="op">)</span> <span class="op">{</span>
+              <br>
+              &nbsp;&nbsp;<span class="kw">return</span> numbers.<span class="fn">reduce</span>((a, b) <span class="op">=></span> a <span class="op">+</span> b, <span class="num">0</span>);
+              <br>
+              <span class="op">}</span>
+              <br><br>
+              <span class="fn">sumAll</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>); <span class="cmt">// 15</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destructuring -->
+        <div class="p-5 rounded-xl" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-2">Destructuring Parameters</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">function</span> <span class="fn">showUser</span><span class="op">(</span>{ <span class="param">name</span>, <span class="param">age</span>, <span class="param">city</span> <span class="op">=</span> <span class="str">"Unknown"</span> }<span class="op">)</span> <span class="op">{</span>
+              <br>
+              &nbsp;&nbsp;console.<span class="fn">log</span>(<span class="str">`</span><span class="param">${name}</span><span class="str">, </span><span class="param">${age}</span><span class="str">, </span><span class="param">${city}</span><span class="str">`</span>);
+              <br>
+              <span class="op">}</span>
+              <br><br>
+              <span class="fn">showUser</span>({ name: <span class="str">"Lee"</span>, age: <span class="num">30</span> });
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Return Statements -->
+    <section class="section mb-24" id="return">
+      <span class="badge badge-concept mb-4">Concept 5</span>
+      <h2 class="text-4xl font-bold mb-6">Return Statements</h2>
+
+      <p class="text-lg text-gray-300 mb-6">
+        The <code class="kw">return</code> statement ends function execution and sends a value back.
+      </p>
+
+      <!-- Visual: Return Flow -->
+      <div class="function-machine mb-8">
+        <h3 class="text-xl font-bold mb-6 text-center">Return Value Flow</h3>
+        <div class="grid md:grid-cols-5 gap-4 items-center text-center">
+          <div class="p-4 rounded-lg" style="background: var(--bg-code);">
+            <div class="text-sm text-gray-400">Call</div>
+            <code class="fn">double(5)</code>
+          </div>
+          <div style="color: var(--accent);">→</div>
+          <div class="p-4 rounded-lg" style="background: var(--bg-code);">
+            <div class="text-sm text-gray-400">Process</div>
+            <code>5 * 2</code>
+          </div>
+          <div style="color: var(--accent);">→</div>
+          <div class="p-4 rounded-lg" style="background: var(--accent); color: var(--bg-deep);">
+            <div class="text-sm">Return</div>
+            <code class="font-bold">10</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- Return Examples -->
+      <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div>
+          <h4 class="font-bold mb-3" style="color: var(--accent);">With Return</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">function</span> <span class="fn">add</span><span class="op">(</span><span class="param">a</span>, <span class="param">b</span><span class="op">)</span> <span class="op">{</span>
+              <br>
+              &nbsp;&nbsp;<span class="kw">return</span> a <span class="op">+</span> b;
+              <br>
+              <span class="op">}</span>
+              <br><br>
+              <span class="kw">let</span> sum <span class="op">=</span> <span class="fn">add</span>(<span class="num">2</span>, <span class="num">3</span>);
+              <br>
+              console.<span class="fn">log</span>(sum); <span class="cmt">// 5</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-bold mb-3" style="color: var(--warning);">Without Return</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">function</span> <span class="fn">add</span><span class="op">(</span><span class="param">a</span>, <span class="param">b</span><span class="op">)</span> <span class="op">{</span>
+              <br>
+              &nbsp;&nbsp;console.<span class="fn">log</span>(a <span class="op">+</span> b);
+              <br>
+              <span class="op">}</span>
+              <br><br>
+              <span class="kw">let</span> sum <span class="op">=</span> <span class="fn">add</span>(<span class="num">2</span>, <span class="num">3</span>);
+              <br>
+              console.<span class="fn">log</span>(sum); <span class="cmt">// undefined!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Points -->
+      <div class="p-6 rounded-xl mb-8" style="background: var(--bg-card); border-left: 4px solid var(--accent);">
+        <h4 class="font-bold mb-4">Return Rules</h4>
+        <ul class="space-y-2 text-gray-300">
+          <li class="flex items-start gap-2">
+            <span style="color: var(--accent);">1.</span>
+            Functions without <code class="kw">return</code> return <code class="num">undefined</code>
+          </li>
+          <li class="flex items-start gap-2">
+            <span style="color: var(--accent);">2.</span>
+            <code class="kw">return</code> immediately exits the function
+          </li>
+          <li class="flex items-start gap-2">
+            <span style="color: var(--accent);">3.</span>
+            You can return <strong>any</strong> value: numbers, strings, objects, arrays, even other functions!
+          </li>
+          <li class="flex items-start gap-2">
+            <span style="color: var(--accent);">4.</span>
+            Early returns are great for validation
+          </li>
+        </ul>
+      </div>
+
+      <!-- Early Return Pattern -->
+      <div class="code-block">
+        <div class="code-header">
+          <span class="text-sm text-gray-400">Early Return Pattern (Clean Code)</span>
+        </div>
+        <div class="code-content">
+          <span class="kw">function</span> <span class="fn">divide</span><span class="op">(</span><span class="param">a</span>, <span class="param">b</span><span class="op">)</span> <span class="op">{</span>
+          <br>
+          &nbsp;&nbsp;<span class="cmt">// Guard clause - exit early</span>
+          <br>
+          &nbsp;&nbsp;<span class="kw">if</span> (b <span class="op">===</span> <span class="num">0</span>) <span class="kw">return</span> <span class="str">"Cannot divide by zero"</span>;
+          <br><br>
+          &nbsp;&nbsp;<span class="cmt">// Main logic</span>
+          <br>
+          &nbsp;&nbsp;<span class="kw">return</span> a <span class="op">/</span> b;
+          <br>
+          <span class="op">}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Function Scope -->
+    <section class="section mb-24" id="scope">
+      <span class="badge badge-concept mb-4">Concept 6</span>
+      <h2 class="text-4xl font-bold mb-6">Function Scope</h2>
+
+      <p class="text-lg text-gray-300 mb-6">
+        Scope determines where variables are accessible. Variables inside a function are <strong>not</strong> visible outside.
+      </p>
+
+      <!-- Scope Visualization -->
+      <div class="mb-8">
+        <h3 class="text-xl font-bold mb-4">Visual Scope Diagram</h3>
+        <div class="scope-bubble scope-global">
+          <div class="font-bold mb-2" style="color: var(--warning);">Global Scope</div>
+          <code class="text-sm">var globalVar = "I'm everywhere";</code>
+          
+          <div class="scope-bubble scope-function">
+            <div class="font-bold mb-2" style="color: var(--accent);">Function Scope</div>
+            <code class="text-sm">var functionVar = "Only in this function";</code>
+            
+            <div class="scope-bubble scope-block">
+              <div class="font-bold mb-2" style="color: var(--info);">Block Scope (let/const)</div>
+              <code class="text-sm">let blockVar = "Only in this block";</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scope Rules -->
+      <div class="code-block mb-8">
+        <div class="code-header">
+          <span class="text-sm text-gray-400">Scope in Action</span>
+        </div>
+        <div class="code-content">
+          <span class="kw">let</span> x <span class="op">=</span> <span class="num">10</span>; <span class="cmt">// Global</span>
+          <br><br>
+          <span class="kw">function</span> <span class="fn">myFunc</span><span class="op">()</span> <span class="op">{</span>
+          <br>
+          &nbsp;&nbsp;<span class="kw">let</span> y <span class="op">=</span> <span class="num">20</span>; <span class="cmt">// Function-scoped</span>
+          <br>
+          &nbsp;&nbsp;console.<span class="fn">log</span>(x); <span class="cmt">// 10 (can access global)</span>
+          <br>
+          &nbsp;&nbsp;console.<span class="fn">log</span>(y); <span class="cmt">// 20</span>
+          <br>
+          <span class="op">}</span>
+          <br><br>
+          console.<span class="fn">log</span>(x); <span class="cmt">// 10</span>
+          <br>
+          console.<span class="fn">log</span>(y); <span class="cmt">// ERROR! y is not defined</span>
+        </div>
+      </div>
+
+      <!-- Scope Chain -->
+      <div class="p-6 rounded-xl mb-8" style="background: var(--bg-card);">
+        <h4 class="font-bold mb-3">The Scope Chain</h4>
+        <p class="text-gray-300 mb-4">
+          When looking for a variable, JavaScript searches: <strong>Inner → Outer → Global</strong>
+        </p>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="p-2 rounded" style="background: rgba(100,181,246,0.2);">Current Scope</span>
+          <span style="color: var(--accent);">→</span>
+          <span class="p-2 rounded" style="background: rgba(0,255,170,0.2);">Parent Function</span>
+          <span style="color: var(--accent);">→</span>
+          <span class="p-2 rounded" style="background: rgba(255,107,107,0.2);">Global</span>
+        </div>
+      </div>
+
+      <!-- var vs let/const -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="p-5 rounded-xl" style="background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3);">
+          <h4 class="font-bold mb-2" style="color: var(--warning);">var (function-scoped)</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">if</span> (<span class="kw">true</span>) {
+              <br>
+              &nbsp;&nbsp;<span class="kw">var</span> x <span class="op">=</span> <span class="num">5</span>;
+              <br>
+              }
+              <br>
+              console.<span class="fn">log</span>(x); <span class="cmt">// 5 (leaks out!)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-xl" style="background: rgba(0,255,170,0.1); border: 1px solid rgba(0,255,170,0.3);">
+          <h4 class="font-bold mb-2" style="color: var(--accent);">let/const (block-scoped)</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">if</span> (<span class="kw">true</span>) {
+              <br>
+              &nbsp;&nbsp;<span class="kw">let</span> x <span class="op">=</span> <span class="num">5</span>;
+              <br>
+              }
+              <br>
+              console.<span class="fn">log</span>(x); <span class="cmt">// ERROR!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: Common Pitfalls -->
+    <section class="section mb-24" id="pitfalls">
+      <span class="badge badge-warning mb-4">Watch Out!</span>
+      <h2 class="text-4xl font-bold mb-6">Common Pitfalls</h2>
+
+      <p class="text-lg text-gray-300 mb-8">
+        Even experienced developers make these mistakes. Learn to avoid them!
+      </p>
+
+      <div class="space-y-6">
+        <!-- Pitfall 1 -->
+        <div class="pitfall-card">
+          <h4 class="font-bold mb-3 pt-2">1. Forgetting return</h4>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-sm text-gray-400 mb-2">Wrong</div>
+              <div class="code-block">
+                <div class="code-content text-sm">
+                  <span class="kw">function</span> <span class="fn">double</span><span class="op">(</span><span class="param">n</span><span class="op">)</span> <span class="op">{</span>
+                  <br>
+                  &nbsp;&nbsp;n <span class="op">*=</span> <span class="num">2</span>;
+                  <br>
+                  <span class="op">}</span> <span class="cmt">// No return!</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-400 mb-2">Right</div>
+              <div class="code-block">
+                <div class="code-content text-sm">
+                  <span class="kw">function</span> <span class="fn">double</span><span class="op">(</span><span class="param">n</span><span class="op">)</span> <span class="op">{</span>
+                  <br>
+                  &nbsp;&nbsp;<span class="kw">return</span> n <span class="op">*</span> <span class="num">2</span>;
+                  <br>
+                  <span class="op">}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pitfall 2 -->
+        <div class="pitfall-card">
+          <h4 class="font-bold mb-3 pt-2">2. Using var in loops</h4>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-sm text-gray-400 mb-2">Wrong</div>
+              <div class="code-block">
+                <div class="code-content text-sm">
+                  <span class="kw">for</span> (<span class="kw">var</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> <span class="num">3</span>; i<span class="op">++</span>) {
+                  <br>
+                  &nbsp;&nbsp;<span class="fn">setTimeout</span>(() <span class="op">=></span> 
+                  <br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="fn">log</span>(i), <span class="num">100</span>);
+                  <br>
+                  }
+                  <br>
+                  <span class="cmt">// Logs: 3, 3, 3</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="text-sm text-gray-400 mb-2">Right</div>
+              <div class="code-block">
+                <div class="code-content text-sm">
+                  <span class="kw">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> <span class="num">3</span>; i<span class="op">++</span>) {
+                  <br>
+                  &nbsp;&nbsp;<span class="fn">setTimeout</span>(() <span class="op">=></span> 
+                  <br>
+                  &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="fn">log</span>(i), <span class="num">100</span>);
+                  <br>
+                  }
+                  <br>
+                  <span class="cmt">// Logs: 0, 1, 2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pitfall 3 -->
+        <div class="pitfall-card">
+          <h4 class="font-bold mb-3 pt-2">3. Calling expression before definition</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="fn">sayHi</span>(); <span class="cmt">// TypeError: sayHi is not a function</span>
+              <br><br>
+              <span class="kw">const</span> <span class="fn">sayHi</span> <span class="op">=</span> <span class="op">()</span> <span class="op">=></span> console.<span class="fn">log</span>(<span class="str">"Hi!"</span>);
+            </div>
+          </div>
+          <p class="text-gray-400 text-sm mt-3">
+            Function expressions aren't hoisted like declarations. Variable is hoisted but value is <code>undefined</code>.
+          </p>
+        </div>
+
+        <!-- Pitfall 4 -->
+        <div class="pitfall-card">
+          <h4 class="font-bold mb-3 pt-2">4. Modifying parameters unexpectedly</h4>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-sm text-gray-400 mb-2">Careful with objects!</div>
+              <div class="code-block">
+                <div class="code-content text-sm">
+                  <span class="kw">function</span> <span class="fn">update</span><span class="op">(</span><span class="param">obj</span><span class="op">)</span> <span class="op">{</span>
+                  <br>
+                  &nbsp;&nbsp;obj.name <span class="op">=</span> <span class="str">"Changed"</span>;
+                  <br>
+                  <span class="op">}</span>
+                  <br><br>
+                  <span class="kw">const</span> user <span class="op">=</span> { name: <span class="str">"Sam"</span> };
+                  <br>
+                  <span class="fn">update</span>(user);
+                  <br>
+                  <span class="cmt">// user.name is now "Changed"!</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pitfall 5 -->
+        <div class="pitfall-card">
+          <h4 class="font-bold mb-3 pt-2">5. Arrow functions and 'this'</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="kw">const</span> obj <span class="op">=</span> {
+              <br>
+              &nbsp;&nbsp;value: <span class="num">42</span>,
+              <br>
+              &nbsp;&nbsp;<span class="fn">getValue</span>: () <span class="op">=></span> {
+              <br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="kw">this</span>.value; <span class="cmt">// undefined! Arrow has no 'this'</span>
+              <br>
+              &nbsp;&nbsp;}
+              <br>
+              };
+            </div>
+          </div>
+          <p class="text-gray-400 text-sm mt-3">
+            Arrow functions don't have their own <code>this</code>. Use regular functions for methods.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 8: Quizzes -->
+    <section class="section mb-24" id="quiz">
+      <span class="badge badge-info mb-4">Test Yourself</span>
+      <h2 class="text-4xl font-bold mb-6">Quizzes</h2>
+
+      <div id="quizContainer">
+        <!-- Quiz questions will be rendered here -->
+      </div>
+
+      <div class="mt-8 p-6 rounded-xl" style="background: var(--bg-card);">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-lg font-bold">Your Score</span>
+          <span class="text-2xl font-bold" style="color: var(--accent);" id="quizScore">0 / 4</span>
+        </div>
+        <button class="btn btn-outline" onclick="resetQuiz()">Reset Quiz</button>
+      </div>
+    </section>
+
+    <!-- Section 9: Practice -->
+    <section class="section mb-24" id="practice">
+      <span class="badge badge-concept mb-4">Hands On</span>
+      <h2 class="text-4xl font-bold mb-6">Practice Lab</h2>
+
+      <p class="text-lg text-gray-300 mb-8">
+        Write real code and see it run! Try these exercises.
+      </p>
+
+      <!-- Practice 1 -->
+      <div class="mb-8">
+        <div class="p-6 rounded-xl mb-4" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-2">Exercise 1: Create a Greeting Function</h4>
+          <p class="text-gray-400 mb-4">
+            Create a function called <code class="fn">greet</code> that takes a <code class="param">name</code> parameter 
+            and returns "Hello, [name]!"
+          </p>
+          <textarea class="practice-editor" id="practice1" rows="4">// Write your function here:
+function greet(name) {
+  // Your code
+}</textarea>
+          <div class="mt-4 flex gap-3">
+            <button class="btn" onclick="runPractice1()">Run Tests</button>
+          </div>
+          <div class="output-console mt-4" id="practice1Output">// Click "Run Tests" to check your solution</div>
+        </div>
+      </div>
+
+      <!-- Practice 2 -->
+      <div class="mb-8">
+        <div class="p-6 rounded-xl mb-4" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-2">Exercise 2: Sum Array</h4>
+          <p class="text-gray-400 mb-4">
+            Create a function called <code class="fn">sumArray</code> that takes an array of numbers 
+            and returns their sum.
+          </p>
+          <textarea class="practice-editor" id="practice2" rows="6">// Write your function here:
+function sumArray(numbers) {
+  // Your code
+}
+
+// Test: sumArray([1, 2, 3, 4]) should return 10</textarea>
+          <div class="mt-4 flex gap-3">
+            <button class="btn" onclick="runPractice2()">Run Tests</button>
+          </div>
+          <div class="output-console mt-4" id="practice2Output">// Click "Run Tests" to check your solution</div>
+        </div>
+      </div>
+
+      <!-- Practice 3 -->
+      <div class="mb-8">
+        <div class="p-6 rounded-xl mb-4" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-2">Exercise 3: Even Filter</h4>
+          <p class="text-gray-400 mb-4">
+            Create a function called <code class="fn">filterEvens</code> that takes an array of numbers 
+            and returns only the even numbers.
+          </p>
+          <textarea class="practice-editor" id="practice3" rows="6">// Write your function here:
+function filterEvens(numbers) {
+  // Your code (hint: use .filter())
+}
+
+// Test: filterEvens([1, 2, 3, 4, 5, 6]) should return [2, 4, 6]</textarea>
+          <div class="mt-4 flex gap-3">
+            <button class="btn" onclick="runPractice3()">Run Tests</button>
+          </div>
+          <div class="output-console mt-4" id="practice3Output">// Click "Run Tests" to check your solution</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final Section: Summary -->
+    <section class="section mb-24" id="summary">
+      <h2 class="text-4xl font-bold mb-6">Quick Reference</h2>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="p-6 rounded-xl" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-4" style="color: var(--accent);">Declaration Types</h4>
+          <div class="code-block">
+            <div class="code-content text-sm">
+              <span class="cmt">// Declaration</span>
+              <br><span class="kw">function</span> <span class="fn">name</span>() {}
+              <br><br>
+              <span class="cmt">// Expression</span>
+              <br><span class="kw">const</span> <span class="fn">fn</span> <span class="op">=</span> <span class="kw">function</span>() {};
+              <br><br>
+              <span class="cmt">// Arrow</span>
+              <br><span class="kw">const</span> <span class="fn">fn</span> <span class="op">=</span> () <span class="op">=></span> {};
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 rounded-xl" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-4" style="color: var(--info);">Key Concepts</h4>
+          <ul class="space-y-2 text-sm text-gray-300">
+            <li><strong>Parameters:</strong> Placeholder variables</li>
+            <li><strong>Arguments:</strong> Actual values passed</li>
+            <li><strong>Return:</strong> Sends value back, exits function</li>
+            <li><strong>Scope:</strong> Where variables are accessible</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-12 text-center">
+        <p class="text-xl text-gray-300 mb-6">
+          You've completed the Functions Fundamentals guide!
+        </p>
+        <button class="btn" onclick="scrollToSection('hero')">
+          Review from Top
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <button class="nav-btn" onclick="scrollToSection('hero')" aria-label="Go to top">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M18 15l-6-6-6 6"/>
+      </svg>
+    </button>
+    <button class="nav-btn" onclick="scrollToSection('quiz')" aria-label="Go to quiz">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 11l3 3L22 4"/>
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+      </svg>
+    </button>
+  </nav>
+
+  <script>
+    // ===== INITIALIZATION =====
+    // Quiz data - defined FIRST before any functions use it
+    const quizData = [
+      {
+        question: "What's the difference between a parameter and an argument?",
+        options: [
+          "They're the same thing",
+          "Parameters are placeholders in the definition; arguments are actual values passed",
+          "Arguments come first, parameters come after",
+          "Parameters are only used in arrow functions"
+        ],
+        correct: 1
+      },
+      {
+        question: "What does a function return if there's no return statement?",
+        options: [
+          "null",
+          "0",
+          "undefined",
+          "An error is thrown"
+        ],
+        correct: 2
+      },
+      {
+        question: "Which function type IS hoisted (can be called before definition)?",
+        options: [
+          "Function expression",
+          "Arrow function",
+          "Function declaration",
+          "None of them"
+        ],
+        correct: 2
+      },
+      {
+        question: "What will this code log?\nfor (let i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 100);\n}",
+        options: [
+          "0, 1, 2",
+          "3, 3, 3",
+          "undefined, undefined, undefined",
+          "0, 0, 0"
+        ],
+        correct: 0
+      }
+    ];
+
+    // State variables - initialized before use
+    let quizAnswered = [false, false, false, false];
+    let quizCorrect = [false, false, false, false];
+    let currentScore = 0;
+
+    // ===== SCROLL & VISIBILITY =====
+    function initScrollObserver() {
+      const sections = document.querySelectorAll('.section');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      sections.forEach(section => observer.observe(section));
+    }
+
+    function updateProgressBar() {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+      document.getElementById('progressBar').style.width = progress + '%';
+    }
+
+    function scrollToSection(id) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    // ===== TABS =====
+    function switchTab(tabId, clickedTab) {
+      // Hide all tab contents
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      // Deactivate all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected content and activate tab
+      const targetContent = document.getElementById(tabId);
+      if (targetContent) {
+        targetContent.classList.add('active');
+      }
+      if (clickedTab) {
+        clickedTab.classList.add('active');
+      }
+    }
+
+    // ===== FUNCTION MACHINE ANIMATION =====
+    function animateMachine() {
+      const args = [
+        [Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1],
+        [Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1],
+        [Math.floor(Math.random() * 10) + 1, Math.floor(Math.random() * 10) + 1]
+      ];
+      
+      let i = 0;
+      const machineBody = document.querySelector('.machine-body');
+      
+      const animate = () => {
+        if (i < args.length) {
+          const [a, b] = args[i];
+          const arg1El = document.getElementById('machineArg1');
+          const arg2El = document.getElementById('machineArg2');
+          const resultEl = document.getElementById('machineResult');
+          
+          if (arg1El) arg1El.textContent = a;
+          if (arg2El) arg2El.textContent = b;
+          if (resultEl) resultEl.textContent = '...';
+          
+          if (machineBody) {
+            machineBody.classList.add('executing');
+          }
+          
+          setTimeout(() => {
+            if (machineBody) {
+              machineBody.classList.remove('executing');
+            }
+            if (resultEl) {
+              resultEl.textContent = a * b;
+            }
+            i++;
+            setTimeout(animate, 500);
+          }, 300);
+        }
+      };
+      
+      animate();
+    }
+
+    // ===== CODE EXECUTION =====
+    function runDeclarationExample() {
+      const output = document.getElementById('declarationOutput');
+      if (!output) return;
+      
+      output.innerHTML = '';
+      
+      function add(a, b) {
+        return a + b;
+      }
+      
+      let result = add(3, 5);
+      output.innerHTML = `<span style="color: var(--muted);">></span> add(3, 5) returned: <span style="color: var(--accent);">${result}</span>`;
+    }
+
+    // ===== QUIZ SYSTEM =====
+    function renderQuiz() {
+      const container = document.getElementById('quizContainer');
+      if (!container) return;
+      
+      container.innerHTML = quizData.map((q, qIndex) => `
+        <div class="mb-8 p-6 rounded-xl" style="background: var(--bg-card);">
+          <h4 class="font-bold mb-4">Question ${qIndex + 1}</h4>
+          <p class="text-gray-300 mb-4" style="white-space: pre-wrap;">${q.question}</p>
+          <div class="space-y-2">
+            ${q.options.map((opt, oIndex) => `
+              <div class="quiz-option" data-question="${qIndex}" data-option="${oIndex}" onclick="selectAnswer(${qIndex}, ${oIndex})">
+                <span class="font-bold mr-2">${String.fromCharCode(65 + oIndex)}.</span>
+                ${opt}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectAnswer(questionIndex, optionIndex) {
+      if (quizAnswered[questionIndex]) return;
+      
+      quizAnswered[questionIndex] = true;
+      
+      const options = document.querySelectorAll(`[data-question="${questionIndex}"]`);
+      const isCorrect = optionIndex === quizData[questionIndex].correct;
+      
+      quizCorrect[questionIndex] = isCorrect;
+      
+      options.forEach((opt, i) => {
+        opt.classList.remove('selected');
+        if (i === quizData[questionIndex].correct) {
+          opt.classList.add('correct');
+        } else if (i === optionIndex && !isCorrect) {
+          opt.classList.add('wrong');
+        }
+      });
+      
+      updateScore();
+    }
+
+    function updateScore() {
+      currentScore = quizCorrect.filter(Boolean).length;
+      const scoreEl = document.getElementById('quizScore');
+      if (scoreEl) {
+        scoreEl.textContent = `${currentScore} / ${quizData.length}`;
+      }
+    }
+
+    function resetQuiz() {
+      quizAnswered = [false, false, false, false];
+      quizCorrect = [false, false, false, false];
+      currentScore = 0;
+      
+      document.querySelectorAll('.quiz-option').forEach(opt => {
+        opt.classList.remove('correct', 'wrong', 'selected');
+      });
+      
+      updateScore();
+    }
+
+    // ===== PRACTICE EXERCISES =====
+    function runPractice1() {
+      const code = document.getElementById('practice1').value;
+      const output = document.getElementById('practice1Output');
+      if (!output) return;
+      
+      output.innerHTML = '';
+      
+      try {
+        // Clear any existing function
+        window.greet = undefined;
+        
+        // Execute user code
+        eval(code);
+        
+        // Test the function
+        if (typeof window.greet !== 'function') {
+          output.innerHTML = '<span style="color: var(--warning);">Error: greet is not defined as a function</span>';
+          return;
+        }
+        
+        const test1 = window.greet('World');
+        const test2 = window.greet('JavaScript');
+        
+        let results = '';
+        results += `<span style="color: var(--muted);">Test 1:</span> greet("World") = "${test1}"`;
+        results += test1 === 'Hello, World!' ? ' <span style="color: var(--accent);">PASS</span>\n' : ' <span style="color: var(--warning);">Expected "Hello, World!"</span>\n';
+        
+        results += `<span style="color: var(--muted);">Test 2:</span> greet("JavaScript") = "${test2}"`;
+        results += test2 === 'Hello, JavaScript!' ? ' <span style="color: var(--accent);">PASS</span>' : ' <span style="color: var(--warning);">Expected "Hello, JavaScript!"</span>';
+        
+        output.innerHTML = results;
+      } catch (e) {
+        output.innerHTML = `<span style="color: var(--warning);">Error: ${e.message}</span>`;
+      }
+    }
+
+    function runPractice2() {
+      const code = document.getElementById('practice2').value;
+      const output = document.getElementById('practice2Output');
+      if (!output) return;
+      
+      output.innerHTML = '';
+      
+      try {
+        window.sumArray = undefined;
+        eval(code);
+        
+        if (typeof window.sumArray !== 'function') {
+          output.innerHTML = '<span style="color: var(--warning);">Error: sumArray is not defined as a function</span>';
+          return;
+        }
+        
+        const test1 = window.sumArray([1, 2, 3, 4]);
+        const test2 = window.sumArray([10, -5, 3]);
+        const test3 = window.sumArray([]);
+        
+        let results = '';
+        results += `<span style="color: var(--muted);">Test 1:</span> sumArray([1,2,3,4]) = ${test1}`;
+        results += test1 === 10 ? ' <span style="color: var(--accent);">PASS</span>\n' : ' <span style="color: var(--warning);">Expected 10</span>\n';
+        
+        results += `<span style="color: var(--muted);">Test 2:</span> sumArray([10,-5,3]) = ${test2}`;
+        results += test2 === 8 ? ' <span style="color: var(--accent);">PASS</span>\n' : ' <span style="color: var(--warning);">Expected 8</span>\n';
+        
+        results += `<span style="color: var(--muted);">Test 3:</span> sumArray([]) = ${test3}`;
+        results += test3 === 0 ? ' <span style="color: var(--accent);">PASS</span>' : ' <span style="color: var(--warning);">Expected 0</span>';
+        
+        output.innerHTML = results;
+      } catch (e) {
+        output.innerHTML = `<span style="color: var(--warning);">Error: ${e.message}</span>`;
+      }
+    }
+
+    function runPractice3() {
+      const code = document.getElementById('practice3').value;
+      const output = document.getElementById('practice3Output');
+      if (!output) return;
+      
+      output.innerHTML = '';
+      
+      try {
+        window.filterEvens = undefined;
+        eval(code);
+        
+        if (typeof window.filterEvens !== 'function') {
+          output.innerHTML = '<span style="color: var(--warning);">Error: filterEvens is not defined as a function</span>';
+          return;
+        }
+        
+        const test1 = window.filterEvens([1, 2, 3, 4, 5, 6]);
+        const test2 = window.filterEvens([1, 3, 5]);
+        const test3 = window.filterEvens([2, 4, 6]);
+        
+        let results = '';
+        const arr1Match = JSON.stringify(test1) === JSON.stringify([2, 4, 6]);
+        const arr2Match = JSON.stringify(test2) === JSON.stringify([]);
+        const arr3Match = JSON.stringify(test3) === JSON.stringify([2, 4, 6]);
+        
+        results += `<span style="color: var(--muted);">Test 1:</span> filterEvens([1,2,3,4,5,6]) = [${test1}]`;
+        results += arr1Match ? ' <span style="color: var(--accent);">PASS</span>\n' : ' <span style="color: var(--warning);">Expected [2,4,6]</span>\n';
+        
+        results += `<span style="color: var(--muted);">Test 2:</span> filterEvens([1,3,5]) = [${test2}]`;
+        results += arr2Match ? ' <span style="color: var(--accent);">PASS</span>\n' : ' <span style="color: var(--warning);">Expected []</span>\n';
+        
+        results += `<span style="color: var(--muted);">Test 3:</span> filterEvens([2,4,6]) = [${test3}]`;
+        results += arr3Match ? ' <span style="color: var(--accent);">PASS</span>' : ' <span style="color: var(--warning);">Expected [2,4,6]</span>';
+        
+        output.innerHTML = results;
+      } catch (e) {
+        output.innerHTML = `<span style="color: var(--warning);">Error: ${e.message}</span>`;
+      }
+    }
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', () => {
+      initScrollObserver();
+      renderQuiz();
+    });
+
+    window.addEventListener('scroll', updateProgressBar);
+  </script>
+</body>
+</html>

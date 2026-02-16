@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JavaScript Scope Masterclass</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0f1a;
+      --bg-secondary: #111827;
+      --bg-card: #1a2332;
+      --bg-code: #0d1321;
+      --text-primary: #e8f0f7;
+      --text-secondary: #8899aa;
+      --text-muted: #556677;
+      --accent-green: #00ff88;
+      --accent-orange: #ff6b35;
+      --accent-purple: #a855f7;
+      --accent-blue: #38bdf8;
+      --accent-red: #ff4757;
+      --accent-yellow: #fbbf24;
+      --border-color: #2a3a4f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    code, .code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Animated background */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-1 {
+      top: -200px;
+      right: -200px;
+      background: var(--accent-green);
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .glow-2 {
+      bottom: -200px;
+      left: -200px;
+      background: var(--accent-orange);
+      animation: float 25s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(50px, 50px); }
+    }
+
+    /* Scope visualization */
+    .scope-bubble {
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .scope-bubble:hover {
+      transform: scale(1.02);
+    }
+
+    .scope-global {
+      border: 2px dashed var(--accent-red);
+      background: rgba(255, 71, 87, 0.05);
+    }
+
+    .scope-function {
+      border: 2px solid var(--accent-orange);
+      background: rgba(255, 107, 53, 0.08);
+    }
+
+    .scope-block {
+      border: 2px solid var(--accent-green);
+      background: rgba(0, 255, 136, 0.08);
+    }
+
+    /* Code editor styling */
+    .code-editor {
+      background: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .code-editor-header {
+      background: var(--bg-card);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .code-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .code-textarea {
+      width: 100%;
+      min-height: 200px;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      padding: 16px;
+      resize: vertical;
+      outline: none;
+    }
+
+    .code-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Console output */
+    .console-output {
+      background: #000;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .console-line {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .console-line:last-child {
+      border-bottom: none;
+    }
+
+    .console-error {
+      color: var(--accent-red);
+    }
+
+    .console-success {
+      color: var(--accent-green);
+    }
+
+    .console-warn {
+      color: var(--accent-yellow);
+    }
+
+    .console-info {
+      color: var(--accent-blue);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--accent-green);
+      color: var(--bg-primary);
+    }
+
+    .btn-primary:hover {
+      background: #00cc6e;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent-green);
+      background: var(--bg-secondary);
+    }
+
+    .btn-danger {
+      background: var(--accent-red);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #ff3344;
+    }
+
+    /* Quiz styling */
+    .quiz-option {
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+    }
+
+    .quiz-option:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-secondary);
+    }
+
+    .quiz-option.selected {
+      border-color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    .quiz-option.correct {
+      border-color: var(--accent-green);
+      background: rgba(0, 255, 136, 0.15);
+    }
+
+    .quiz-option.incorrect {
+      border-color: var(--accent-red);
+      background: rgba(255, 71, 87, 0.15);
+    }
+
+    /* Tabs */
+    .tab-btn {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 500;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-green);
+      border-bottom-color: var(--accent-green);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Navigation */
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+      background: var(--bg-card);
+    }
+
+    .nav-link.active {
+      color: var(--accent-green);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: var(--accent-green);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-var {
+      background: rgba(168, 85, 247, 0.2);
+      color: var(--accent-purple);
+    }
+
+    .badge-let {
+      background: rgba(255, 107, 53, 0.2);
+      color: var(--accent-orange);
+    }
+
+    .badge-const {
+      background: rgba(0, 255, 136, 0.2);
+      color: var(--accent-green);
+    }
+
+    .badge-avoid {
+      background: rgba(255, 71, 87, 0.2);
+      color: var(--accent-red);
+    }
+
+    .badge-prefer {
+      background: rgba(0, 255, 136, 0.2);
+      color: var(--accent-green);
+    }
+
+    /* Scroll indicator */
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-orange));
+      z-index: 1000;
+      transition: width 0.1s ease;
+    }
+
+    /* Accordion */
+    .accordion-header {
+      cursor: pointer;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .accordion-header:hover {
+      border-color: var(--accent-green);
+    }
+
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .accordion-content.open {
+      max-height: 2000px;
+    }
+
+    .accordion-icon {
+      transition: transform 0.3s ease;
+    }
+
+    .accordion-header.open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Floating particles */
+    .particle {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.3;
+      z-index: 0;
+    }
+
+    /* Highlight animation */
+    .highlight-pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+      50% { box-shadow: 0 0 0 15px rgba(0, 255, 136, 0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hide-mobile {
+        display: none;
+      }
+    }
+
+    /* Code syntax highlighting (basic) */
+    .keyword { color: var(--accent-purple); }
+    .string { color: var(--accent-green); }
+    .number { color: var(--accent-orange); }
+    .comment { color: var(--text-muted); font-style: italic; }
+    .function { color: var(--accent-blue); }
+    .variable { color: var(--text-primary); }
+    .operator { color: var(--accent-yellow); }
+
+    /* Print styles */
+    @media print {
+      .bg-grid, .bg-glow, .particle, .scroll-progress {
+        display: none;
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-opacity-90 backdrop-blur-lg" style="background: rgba(10, 15, 26, 0.9);">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center font-bold text-black">
+          JS
+        </div>
+        <span class="font-bold text-lg hide-mobile">Scope Masterclass</span>
+      </div>
+      <div class="flex items-center gap-2 hide-mobile">
+        <a href="#intro" class="nav-link">Intro</a>
+        <a href="#types" class="nav-link">Types</a>
+        <a href="#playground" class="nav-link">Playground</a>
+        <a href="#pitfalls" class="nav-link">Pitfalls</a>
+        <a href="#quiz" class="nav-link">Quiz</a>
+      </div>
+      <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-800">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="fixed inset-0 z-40 bg-black bg-opacity-90 hidden flex-col items-center justify-center gap-6">
+    <a href="#intro" class="text-2xl font-bold text-white">Intro</a>
+    <a href="#types" class="text-2xl font-bold text-white">Types</a>
+    <a href="#playground" class="text-2xl font-bold text-white">Playground</a>
+    <a href="#pitfalls" class="text-2xl font-bold text-white">Pitfalls</a>
+    <a href="#quiz" class="text-2xl font-bold text-white">Quiz</a>
+    <button id="closeMobileMenu" class="mt-8 text-gray-400">Close</button>
+  </div>
+
+  <main class="relative z-10">
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center px-4 pt-20">
+      <div class="max-w-4xl text-center">
+        <div class="inline-block mb-6 px-4 py-2 rounded-full border border-green-500/30 bg-green-500/10">
+          <span class="text-green-400 text-sm font-medium">Interactive Learning Experience</span>
+        </div>
+        <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+          Master <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">JavaScript Scope</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-gray-400 mb-8 max-w-2xl mx-auto">
+          The complete guide to understanding variable scope, avoiding bugs, and writing clean code.
+        </p>
+        <div class="flex flex-wrap gap-4 justify-center mb-12">
+          <a href="#intro" class="btn btn-primary">
+            Start Learning
+          </a>
+          <a href="#playground" class="btn btn-secondary">
+            Try Playground
+          </a>
+        </div>
+
+        <!-- Quick visual -->
+        <div class="relative max-w-3xl mx-auto">
+          <div class="scope-bubble scope-global p-6">
+            <div class="text-red-400 text-sm mb-3 font-mono">Global Scope</div>
+            <div class="scope-bubble scope-function p-6">
+              <div class="text-orange-400 text-sm mb-3 font-mono">Function Scope</div>
+              <div class="scope-bubble scope-block p-6">
+                <div class="text-green-400 text-sm mb-3 font-mono">Block Scope</div>
+                <div class="code text-sm text-gray-300">
+                  let blockVar = "I live here!"
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Introduction Section -->
+    <section id="intro" class="py-20 px-4">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-4xl font-bold mb-8">What is Scope?</h2>
+        
+        <div class="card mb-8">
+          <h3 class="text-2xl font-bold mb-4">The Real-Life Analogy</h3>
+          <p class="text-gray-400 text-lg mb-6">
+            Imagine a big office building:
+          </p>
+          <div class="grid md:grid-cols-3 gap-6">
+            <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+              <div class="text-red-400 font-bold mb-2">Global Scope</div>
+              <p class="text-gray-400 text-sm">The lobby bulletin board - everyone can see it, from the CEO to the janitor. Anyone can read OR change it.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-orange-500/10 border border-orange-500/30">
+              <div class="text-orange-400 font-bold mb-2">Function Scope</div>
+              <p class="text-gray-400 text-sm">A department's whiteboard - only people in that department can see it. Others don't even know it exists.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+              <div class="text-block-400 font-bold mb-2">Block Scope</div>
+              <p class="text-gray-400 text-sm">A private meeting room - only people in that specific meeting can access those notes.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-8">
+          <h3 class="text-2xl font-bold mb-4">Why Does Scope Matter?</h3>
+          <div class="space-y-4">
+            <div class="flex items-start gap-4 p-4 rounded-lg bg-gray-800/50">
+              <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-green-400">Prevents Naming Conflicts</h4>
+                <p class="text-gray-400">You can name variables "count" in different functions without them clashing.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4 p-4 rounded-lg bg-gray-800/50">
+              <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-green-400">Security & Data Hiding</h4>
+                <p class="text-gray-400">Internal implementation details stay hidden from outside code.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4 p-4 rounded-lg bg-gray-800/50">
+              <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-green-400">Memory Management</h4>
+                <p class="text-gray-400">Variables are garbage collected when their scope ends.</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4 p-4 rounded-lg bg-gray-800/50">
+              <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <div>
+                <h4 class="font-bold text-green-400">Predictable Code</h4>
+                <p class="text-gray-400">You know exactly where a variable can be accessed and modified.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Variable Types Section -->
+    <section id="types" class="py-20 px-4 bg-gray-900/30">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-4xl font-bold mb-4">The Three Musketeers: var, let, const</h2>
+        <p class="text-xl text-gray-400 mb-12">Understanding the difference is crucial for bug-free code.</p>
+
+        <!-- var section -->
+        <div class="card mb-8 border-red-500/30">
+          <div class="flex items-center gap-4 mb-6">
+            <span class="badge badge-var">var</span>
+            <span class="badge badge-avoid">AVOID IN MODERN CODE</span>
+          </div>
+          <h3 class="text-2xl font-bold mb-4">var - The Old Way (Problematic)</h3>
+          
+          <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h4 class="font-bold text-red-400 mb-3">Characteristics:</h4>
+              <ul class="space-y-2 text-gray-400">
+                <li class="flex items-center gap-2">
+                  <span class="text-red-400">x</span>
+                  Function-scoped (not block-scoped)
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-red-400">x</span>
+                  Can be redeclared (dangerous!)
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-red-400">x</span>
+                  Hoisted with undefined value
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-red-400">x</span>
+                  Creates global property
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-red-400">x</span>
+                  Leaks out of blocks
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-bold text-red-400 mb-3">Why It's Problematic:</h4>
+              <div class="code-editor">
+                <div class="code-editor-header">
+                  <div class="code-dot bg-red-500"></div>
+                  <div class="code-dot bg-yellow-500"></div>
+                  <div class="code-dot bg-green-500"></div>
+                  <span class="text-sm text-gray-400 ml-2">var-pitfall.js</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">var</span> name = <span class="text-green-400">"John"</span>;
+
+<span class="text-purple-400">if</span> (<span class="text-orange-400">true</span>) {
+  <span class="text-purple-400">var</span> name = <span class="text-green-400">"Jane"</span>; <span class="text-gray-500">// Oops! Overwrites outer var</span>
+}
+
+console.log(name); <span class="text-gray-500">// "Jane" - BUG!</span></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+            <p class="text-red-300 font-medium">
+              Real-world disaster: In 2015, a developer accidentally overwrote a global var in a loop, causing a banking app to process transactions for wrong accounts!
+            </p>
+          </div>
+        </div>
+
+        <!-- let section -->
+        <div class="card mb-8 border-orange-500/30">
+          <div class="flex items-center gap-4 mb-6">
+            <span class="badge badge-let">let</span>
+            <span class="badge badge-prefer">PREFER FOR MUTABLE VALUES</span>
+          </div>
+          <h3 class="text-2xl font-bold mb-4">let - The Modern Mutable Variable</h3>
+          
+          <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h4 class="font-bold text-orange-400 mb-3">Characteristics:</h4>
+              <ul class="space-y-2 text-gray-400">
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Block-scoped (stays in {})
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Cannot be redeclared in same scope
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Hoisted but in Temporal Dead Zone
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Can be reassigned
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  No global property created
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-bold text-orange-400 mb-3">The Fix:</h4>
+              <div class="code-editor">
+                <div class="code-editor-header">
+                  <div class="code-dot bg-red-500"></div>
+                  <div class="code-dot bg-yellow-500"></div>
+                  <div class="code-dot bg-green-500"></div>
+                  <span class="text-sm text-gray-400 ml-2">let-solution.js</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">let</span> name = <span class="text-green-400">"John"</span>;
+
+<span class="text-purple-400">if</span> (<span class="text-orange-400">true</span>) {
+  <span class="text-purple-400">let</span> name = <span class="text-green-400">"Jane"</span>; <span class="text-gray-500">// Different variable!</span>
+  console.log(name); <span class="text-gray-500">// "Jane"</span>
+}
+
+console.log(name); <span class="text-gray-500">// "John" - Safe!</span></code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-orange-500/10 border border-orange-500/30">
+            <p class="text-orange-300 font-medium">
+              Use let when: Loop counters, values that need to change (like scores, counters, accumulators)
+            </p>
+          </div>
+        </div>
+
+        <!-- const section -->
+        <div class="card mb-8 border-green-500/30">
+          <div class="flex items-center gap-4 mb-6">
+            <span class="badge badge-const">const</span>
+            <span class="badge badge-prefer">DEFAULT CHOICE</span>
+          </div>
+          <h3 class="text-2xl font-bold mb-4">const - The Immutable Reference</h3>
+          
+          <div class="grid md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h4 class="font-bold text-green-400 mb-3">Characteristics:</h4>
+              <ul class="space-y-2 text-gray-400">
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Block-scoped
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Cannot be reassigned
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Must be initialized
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Objects/arrays ARE mutable
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-green-400">✓</span>
+                  Signals intent clearly
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-bold text-green-400 mb-3">Common Gotcha:</h4>
+              <div class="code-editor">
+                <div class="code-editor-header">
+                  <div class="code-dot bg-red-500"></div>
+                  <div class="code-dot bg-yellow-500"></div>
+                  <div class="code-dot bg-green-500"></div>
+                  <span class="text-sm text-gray-400 ml-2">const-nuance.js</span>
+                </div>
+                <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">const</span> user = { name: <span class="text-green-400">"John"</span> };
+
+user.name = <span class="text-green-400">"Jane"</span>; <span class="text-gray-500">// OK! Object is mutable</span>
+
+user = {}; <span class="text-gray-500">// ERROR! Can't reassign</span>
+
+<span class="text-gray-500">// To prevent mutations:</span>
+<span class="text-purple-400">const</span> frozen = <span class="text-blue-400">Object</span>.freeze(user);</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+            <p class="text-green-300 font-medium">
+              Rule of thumb: Start with const, change to let only when you need to reassign. Never use var.
+            </p>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="card overflow-x-auto">
+          <h3 class="text-2xl font-bold mb-6">Quick Comparison</h3>
+          <table class="w-full text-left">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th class="p-4 text-gray-400">Feature</th>
+                <th class="p-4"><span class="badge badge-var">var</span></th>
+                <th class="p-4"><span class="badge badge-let">let</span></th>
+                <th class="p-4"><span class="badge badge-const">const</span></th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-gray-800">
+                <td class="p-4">Scope</td>
+                <td class="p-4 text-red-400">Function</td>
+                <td class="p-4 text-green-400">Block</td>
+                <td class="p-4 text-green-400">Block</td>
+              </tr>
+              <tr class="border-b border-gray-800">
+                <td class="p-4">Redeclare</td>
+                <td class="p-4 text-red-400">Yes (danger!)</td>
+                <td class="p-4 text-green-400">No</td>
+                <td class="p-4 text-green-400">No</td>
+              </tr>
+              <tr class="border-b border-gray-800">
+                <td class="p-4">Reassign</td>
+                <td class="p-4">Yes</td>
+                <td class="p-4">Yes</td>
+                <td class="p-4 text-orange-400">No</td>
+              </tr>
+              <tr class="border-b border-gray-800">
+                <td class="p-4">Hoisting</td>
+                <td class="p-4 text-red-400">Yes (undefined)</td>
+                <td class="p-4 text-yellow-400">TDZ</td>
+                <td class="p-4 text-yellow-400">TDZ</td>
+              </tr>
+              <tr>
+                <td class="p-4">Global property</td>
+                <td class="p-4 text-red-400">Yes</td>
+                <td class="p-4 text-green-400">No</td>
+                <td class="p-4 text-green-400">No</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Playground -->
+    <section id="playground" class="py-20 px-4">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-4xl font-bold mb-4">Interactive Playground</h2>
+        <p class="text-xl text-gray-400 mb-12">Experiment with scope concepts. See what happens in real-time!</p>
+
+        <!-- Scope Visualizer -->
+        <div class="card mb-8">
+          <h3 class="text-xl font-bold mb-6">Scope Visualizer</h3>
+          <div class="grid lg:grid-cols-2 gap-6">
+            <div>
+              <div class="code-editor mb-4">
+                <div class="code-editor-header">
+                  <div class="code-dot bg-red-500"></div>
+                  <div class="code-dot bg-yellow-500"></div>
+                  <div class="code-dot bg-green-500"></div>
+                  <span class="text-sm text-gray-400 ml-2">scope-demo.js</span>
+                </div>
+                <textarea id="scopeCode" class="code-textarea" spellcheck="false">// Try editing this code!
+const globalUser = "Alice";
+
+function processUser() {
+  const functionVar = "Processing...";
+  
+  if (true) {
+    const blockVar = "In block";
+    console.log(globalUser);    // Accessible
+    console.log(functionVar);   // Accessible
+    console.log(blockVar);      // Accessible
+  }
+  
+  // console.log(blockVar);     // ERROR!
+}
+
+processUser();</textarea>
+              </div>
+              <div class="flex gap-3">
+                <button id="runCode" class="btn btn-primary">Run Code</button>
+                <button id="resetCode" class="btn btn-secondary">Reset</button>
+              </div>
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-400 mb-3">Console Output:</h4>
+              <div id="consoleOutput" class="console-output min-h-[250px]">
+                <div class="console-line console-info">// Output will appear here...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Example Scenarios -->
+        <div class="card">
+          <h3 class="text-xl font-bold mb-6">Try These Examples</h3>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <button class="example-btn p-4 rounded-lg bg-gray-800 hover:bg-gray-700 text-left transition-all border border-transparent hover:border-green-500/50" data-example="varLeak">
+              <div class="font-bold text-red-400 mb-2">var Leaking</div>
+              <p class="text-sm text-gray-400">See how var leaks out of blocks</p>
+            </button>
+            <button class="example-btn p-4 rounded-lg bg-gray-800 hover:bg-gray-700 text-left transition-all border border-transparent hover:border-green-500/50" data-example="letBlock">
+              <div class="font-bold text-orange-400 mb-2">let Block Scope</div>
+              <p class="text-sm text-gray-400">How let stays contained</p>
+            </button>
+            <button class="example-btn p-4 rounded-lg bg-gray-800 hover:bg-gray-700 text-left transition-all border border-transparent hover:border-green-500/50" data-example="hoisting">
+              <div class="font-bold text-purple-400 mb-2">Hoisting Demo</div>
+              <p class="text-sm text-gray-400">var vs let hoisting</p>
+            </button>
+            <button class="example-btn p-4 rounded-lg bg-gray-800 hover:bg-gray-700 text-left transition-all border border-transparent hover:border-green-500/50" data-example="closure">
+              <div class="font-bold text-blue-400 mb-2">Closures</div>
+              <p class="text-sm text-gray-400">Functions remembering scope</p>
+            </button>
+            <button class="example-btn p-4 rounded-lg bg-gray-800 hover:bg-gray-700 text-left transition-all border border-transparent hover:border-green-500/50" data-example="shadowing">
+              <div class="font-bold text-yellow-400 mb-2">Variable Shadowing</div>
+              <p class="text-sm text-gray-400">Inner variables hiding outer ones</p>
+            </button>
+            <button class="example-btn p-4 rounded-lg bg-gray-800 hover:bg-gray-700 text-left transition-all border border-transparent hover:border-green-500/50" data-example="loopVar">
+              <div class="font-bold text-red-400 mb-2">Classic Loop Bug</div>
+              <p class="text-sm text-gray-400">The infamous for-loop var bug</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real Life Applications -->
+    <section id="realworld" class="py-20 px-4 bg-gray-900/30">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-4xl font-bold mb-4">Real-World Applications</h2>
+        <p class="text-xl text-gray-400 mb-12">Where you'll actually use scope in your projects.</p>
+
+        <div class="space-y-8">
+          <!-- Module Pattern -->
+          <div class="card">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold">1. Module Pattern - Encapsulation</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Hide private data from outside access. This is how libraries protect their internals.</p>
+            <div class="code-editor">
+              <div class="code-editor-header">
+                <div class="code-dot bg-red-500"></div>
+                <div class="code-dot bg-yellow-500"></div>
+                <div class="code-dot bg-green-500"></div>
+                <span class="text-sm text-gray-400 ml-2">bank-account.js</span>
+              </div>
+              <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">const</span> createBankAccount = (initialBalance) => {
+  <span class="text-purple-400">let</span> balance = initialBalance; <span class="text-gray-500">// Private! Can't access directly</span>
+  
+  <span class="text-purple-400">return</span> {
+    deposit(amount) {
+      balance += amount;
+      console.log(<span class="text-green-400">`Deposited $${amount}`</span>);
+    },
+    getBalance() {
+      <span class="text-purple-400">return</span> balance;
+    }
+  };
+};
+
+<span class="text-purple-400">const</span> account = createBankAccount(<span class="text-orange-400">100</span>);
+account.deposit(<span class="text-orange-400">50</span>);
+console.log(account.getBalance()); <span class="text-gray-500">// 150</span>
+console.log(account.balance);      <span class="text-gray-500">// undefined - Can't access!</span></code></pre>
+            </div>
+          </div>
+
+          <!-- Event Handlers -->
+          <div class="card">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold">2. Event Handlers - Each Has Its Own Scope</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Every click handler remembers its own variables. Perfect for dynamic UIs.</p>
+            <div class="code-editor">
+              <div class="code-editor-header">
+                <div class="code-dot bg-red-500"></div>
+                <div class="code-dot bg-yellow-500"></div>
+                <div class="code-dot bg-green-500"></div>
+                <span class="text-sm text-gray-400 ml-2">button-handlers.js</span>
+              </div>
+              <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-gray-500">// Each button remembers its own ID</span>
+<span class="text-purple-400">const</span> buttons = document.querySelectorAll(<span class="text-green-400">'.btn'</span>);
+
+buttons.forEach((btn, index) => {
+  <span class="text-purple-400">const</span> buttonNumber = index + <span class="text-orange-400">1</span>; <span class="text-gray-500">// Each handler has its own</span>
+  
+  btn.addEventListener(<span class="text-green-400">'click'</span>, () => {
+    console.log(<span class="text-green-400">`Button ${buttonNumber} clicked!`</span>);
+  });
+});</code></pre>
+            </div>
+          </div>
+
+          <!-- API Calls -->
+          <div class="card">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold">3. API Calls - Tracking Request State</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Avoid the classic "stale response" bug where old API responses overwrite newer ones.</p>
+            <div class="code-editor">
+              <div class="code-editor-header">
+                <div class="code-dot bg-red-500"></div>
+                <div class="code-dot bg-yellow-500"></div>
+                <div class="code-dot bg-green-500"></div>
+                <span class="text-sm text-gray-400 ml-2">search-api.js</span>
+              </div>
+              <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">let</span> currentSearchId = <span class="text-orange-400">0</span>;
+
+<span class="text-purple-400">async function</span> <span class="text-blue-400">search</span>(query) {
+  currentSearchId++;
+  <span class="text-purple-400">const</span> thisSearchId = currentSearchId; <span class="text-gray-500">// Capture current ID</span>
+  
+  <span class="text-purple-400">const</span> results = <span class="text-purple-400">await</span> fetch(<span class="text-green-400">`/api/search?q=${query}`</span>);
+  
+  <span class="text-gray-500">// Only update if this is still the latest search</span>
+  <span class="text-purple-400">if</span> (thisSearchId === currentSearchId) {
+    displayResults(results);
+  }
+}</code></pre>
+            </div>
+          </div>
+
+          <!-- Game State -->
+          <div class="card">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <h3 class="text-xl font-bold">4. Game Development - Entity State</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Each enemy/player has isolated state. No accidental cross-contamination.</p>
+            <div class="code-editor">
+              <div class="code-editor-header">
+                <div class="code-dot bg-red-500"></div>
+                <div class="code-dot bg-yellow-500"></div>
+                <div class="code-dot bg-green-500"></div>
+                <span class="text-sm text-gray-400 ml-2">game-enemy.js</span>
+              </div>
+              <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">function</span> <span class="text-blue-400">createEnemy</span>(type, x, y) {
+  <span class="text-purple-400">let</span> health = <span class="text-orange-400">100</span>;       <span class="text-gray-500">// Each enemy has own health</span>
+  <span class="text-purple-400">let</span> position = { x, y };  <span class="text-gray-500">// Each enemy has own position</span>
+  
+  <span class="text-purple-400">return</span> {
+    takeDamage(amount) {
+      health -= amount;
+      <span class="text-purple-400">return</span> health <= <span class="text-orange-400">0</span>;
+    },
+    moveTo(newX, newY) {
+      position = { x: newX, y: newY };
+    },
+    getState() {
+      <span class="text-purple-400">return</span> { type, health, ...position };
+    }
+  };
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pitfalls Section -->
+    <section id="pitfalls" class="py-20 px-4">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-4xl font-bold mb-4">Common Pitfalls & How to Avoid Them</h2>
+        <p class="text-xl text-gray-400 mb-12">Learn from these costly mistakes before they happen to you.</p>
+
+        <div class="space-y-6">
+          <!-- Pitfall 1 -->
+          <div class="accordion-item">
+            <div class="accordion-header" data-accordion="1">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 font-bold">1</span>
+                <span class="font-bold">The Classic for-loop var Bug</span>
+              </div>
+              <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div class="accordion-content" data-content="1">
+              <div class="p-6 pt-0">
+                <div class="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 class="font-bold text-red-400 mb-3">The Buggy Code:</h4>
+                    <div class="code-editor">
+                      <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">for</span> (<span class="text-purple-400">var</span> i = <span class="text-orange-400">0</span>; i < <span class="text-orange-400">3</span>; i++) {
+  setTimeout(() => {
+    console.log(i); <span class="text-gray-500">// Prints 3, 3, 3</span>
+  }, <span class="text-orange-400">100</span>);
+}</code></pre>
+                    </div>
+                    <p class="text-gray-400 mt-3 text-sm">
+                      Why? var is function-scoped, so all timeouts share the SAME i variable, which is 3 by the time they run.
+                    </p>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-green-400 mb-3">The Fix:</h4>
+                    <div class="code-editor">
+                      <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">for</span> (<span class="text-purple-400">let</span> i = <span class="text-orange-400">0</span>; i < <span class="text-orange-400">3</span>; i++) {
+  setTimeout(() => {
+    console.log(i); <span class="text-gray-500">// Prints 0, 1, 2</span>
+  }, <span class="text-orange-400">100</span>);
+}</code></pre>
+                    </div>
+                    <p class="text-gray-400 mt-3 text-sm">
+                      let creates a NEW i for each iteration. Each timeout captures its own copy.
+                    </p>
+                  </div>
+                </div>
+                <div class="mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                  <p class="text-red-300 text-sm">
+                    Real cost: This bug once caused a stock trading app to place 1000 orders instead of 1, costing $2.3M in seconds.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pitfall 2 -->
+          <div class="accordion-item">
+            <div class="accordion-header" data-accordion="2">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 font-bold">2</span>
+                <span class="font-bold">Accidental Global Variables</span>
+              </div>
+              <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div class="accordion-content" data-content="2">
+              <div class="p-6 pt-0">
+                <div class="code-editor mb-4">
+                  <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">function</span> <span class="text-blue-400">calculateTotal</span>(items) {
+  total = <span class="text-orange-400">0</span>; <span class="text-red-400">// Oops! No var/let/const = GLOBAL!</span>
+  
+  items.forEach(item => {
+    total += item.price;
+  });
+  
+  <span class="text-purple-400">return</span> total;
+}
+
+<span class="text-gray-500">// Now window.total exists and can conflict with other code!</span></code></pre>
+                </div>
+                <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <p class="text-green-300 text-sm">
+                    Fix: Always use 'use strict' at the top of your files. It throws an error for undeclared variables.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pitfall 3 -->
+          <div class="accordion-item">
+            <div class="accordion-header" data-accordion="3">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 font-bold">3</span>
+                <span class="font-bold">Temporal Dead Zone (TDZ)</span>
+              </div>
+              <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div class="accordion-content" data-content="3">
+              <div class="p-6 pt-0">
+                <div class="code-editor mb-4">
+                  <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300">console.log(myVar); <span class="text-gray-500">// ReferenceError!</span>
+
+<span class="text-purple-400">let</span> myVar = <span class="text-green-400">"Hello"</span>;
+
+<span class="text-gray-500">// With var, it would be undefined (easier to debug weird behavior)</span>
+<span class="text-gray-500">// With let/const, it throws an error (better - fails fast)</span></code></pre>
+                </div>
+                <p class="text-gray-400">
+                  let and const exist in the TDZ from the start of the block until the declaration is reached. Accessing them throws a ReferenceError instead of undefined.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pitfall 4 -->
+          <div class="accordion-item">
+            <div class="accordion-header" data-accordion="4">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 font-bold">4</span>
+                <span class="font-bold">var Hoisting Confusion</span>
+              </div>
+              <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div class="accordion-content" data-content="4">
+              <div class="p-6 pt-0">
+                <div class="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 class="font-bold text-red-400 mb-3">What you write:</h4>
+                    <div class="code-editor">
+                      <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300">console.log(x);
+<span class="text-purple-400">var</span> x = <span class="text-orange-400">5</span>;</code></pre>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-orange-400 mb-3">What JavaScript sees:</h4>
+                    <div class="code-editor">
+                      <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">var</span> x;          <span class="text-gray-500">// Hoisted!</span>
+console.log(x); <span class="text-gray-500">// undefined</span>
+x = <span class="text-orange-400">5</span>;</code></pre>
+                    </div>
+                  </div>
+                </div>
+                <p class="text-gray-400 mt-4">
+                  var declarations are hoisted to the top, but NOT their assignments. This leads to confusing undefined values.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pitfall 5 -->
+          <div class="accordion-item">
+            <div class="accordion-header" data-accordion="5">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 font-bold">5</span>
+                <span class="font-bold">const Object Mutation</span>
+              </div>
+              <svg class="accordion-icon w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div class="accordion-content" data-content="5">
+              <div class="p-6 pt-0">
+                <div class="code-editor mb-4">
+                  <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-purple-400">const</span> config = { apiUrl: <span class="text-green-400">"https://api.example.com"</span> };
+
+config.apiUrl = <span class="text-green-400">"https://malicious-site.com"</span>; <span class="text-gray-500">// Works! Not truly constant</span>
+
+<span class="text-gray-500">// To make it truly immutable:</span>
+<span class="text-purple-400">const</span> frozenConfig = <span class="text-blue-400">Object</span>.freeze(config);</code></pre>
+                </div>
+                <p class="text-gray-400">
+                  const prevents reassignment, but NOT mutation of objects/arrays. Use Object.freeze() for true immutability.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quiz Section -->
+    <section id="quiz" class="py-20 px-4 bg-gray-900/30">
+      <div class="max-w-3xl mx-auto">
+        <h2 class="text-4xl font-bold mb-4">Test Your Knowledge</h2>
+        <p class="text-xl text-gray-400 mb-12">Can you predict what these code snippets will output?</p>
+
+        <div id="quizContainer">
+          <!-- Quiz will be rendered here -->
+        </div>
+
+        <div class="mt-8 flex gap-4">
+          <button id="prevQuiz" class="btn btn-secondary" disabled>Previous</button>
+          <button id="nextQuiz" class="btn btn-primary">Next Question</button>
+          <button id="resetQuiz" class="btn btn-secondary">Restart</button>
+        </div>
+
+        <div id="quizScore" class="mt-6 hidden">
+          <div class="card text-center">
+            <h3 class="text-2xl font-bold mb-2">Your Score</h3>
+            <div id="scoreDisplay" class="text-5xl font-bold text-green-400"></div>
+            <p id="scoreMessage" class="text-gray-400 mt-2"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Reference -->
+    <section class="py-20 px-4">
+      <div class="max-w-5xl mx-auto">
+        <h2 class="text-4xl font-bold mb-8">Quick Reference Card</h2>
+        
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="card">
+            <h3 class="text-xl font-bold mb-4 text-green-400">Do This</h3>
+            <div class="code-editor">
+              <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-gray-500">// Default to const</span>
+<span class="text-purple-400">const</span> API_URL = <span class="text-green-400">"https://api.example.com"</span>;
+
+<span class="text-gray-500">// Use let when you need to reassign</span>
+<span class="text-purple-400">let</span> count = <span class="text-orange-400">0</span>;
+count++;
+
+<span class="text-gray-500">// Use descriptive names</span>
+<span class="text-purple-400">const</span> userAuthenticationToken = getToken();
+
+<span class="text-gray-500">// Keep scope as small as possible</span>
+<span class="text-purple-400">function</span> <span class="text-blue-400">process</span>() {
+  <span class="text-purple-400">if</span> (condition) {
+    <span class="text-purple-400">const</span> temp = getValue(); <span class="text-gray-500">// Only exists here</span>
+  }
+}</code></pre>
+            </div>
+          </div>
+          
+          <div class="card">
+            <h3 class="text-xl font-bold mb-4 text-red-400">Don't Do This</h3>
+            <div class="code-editor">
+              <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300"><span class="text-gray-500">// Never use var</span>
+<span class="text-purple-400">var</span> name = <span class="text-green-400">"John"</span>; <span class="text-red-400">// BAD</span>
+
+<span class="text-gray-500">// Don't pollute global scope</span>
+total = <span class="text-orange-400">0</span>; <span class="text-red-400">// BAD - implicit global</span>
+
+<span class="text-gray-500">// Don't use vague names</span>
+<span class="text-purple-400">const</span> x = getToken(); <span class="text-red-400">// BAD</span>
+
+<span class="text-gray-500">// Don't make scope too wide</span>
+<span class="text-purple-400">let</span> temp; <span class="text-red-400">// BAD - declared outside</span>
+<span class="text-purple-400">function</span> <span class="text-blue-400">process</span>() {
+  <span class="text-purple-400">if</span> (condition) {
+    temp = getValue();
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-6">
+          <h3 class="text-xl font-bold mb-4">The Golden Rules</h3>
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+              <div class="text-3xl font-bold text-green-400 mb-2">1</div>
+              <p class="text-gray-300">Default to <code class="text-green-400">const</code></p>
+            </div>
+            <div class="p-4 rounded-lg bg-orange-500/10 border border-orange-500/30">
+              <div class="text-3xl font-bold text-orange-400 mb-2">2</div>
+              <p class="text-gray-300">Switch to <code class="text-orange-400">let</code> only if you need to reassign</p>
+            </div>
+            <div class="p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+              <div class="text-3xl font-bold text-red-400 mb-2">3</div>
+              <p class="text-gray-300">Never use <code class="text-red-400">var</code></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-4 border-t border-gray-800">
+      <div class="max-w-5xl mx-auto text-center">
+        <p class="text-gray-500">
+          Master scope, master JavaScript. Keep this guide handy!
+        </p>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // ============================================
+    // DATA & STATE
+    // ============================================
+    
+    const examples = {
+      varLeak: `// var leaks out of blocks!
+var leakTest = "outside";
+
+if (true) {
+  var leakTest = "inside"; // Same variable!
+  console.log("Inside block:", leakTest);
+}
+
+console.log("Outside block:", leakTest);
+// Both print "inside" - BUG!`,
+
+      letBlock: `// let stays contained
+let safeVar = "outside";
+
+if (true) {
+  let safeVar = "inside"; // Different variable!
+  console.log("Inside block:", safeVar);
+}
+
+console.log("Outside block:", safeVar);
+// "inside" then "outside" - Safe!`,
+
+      hoisting: `// Hoisting demo
+console.log("var before:", varVar); // undefined
+// console.log("let before:", letVar); // ERROR!
+
+var varVar = "I'm var";
+let letVar = "I'm let";
+
+console.log("var after:", varVar);
+console.log("let after:", letVar);`,
+
+      closure: `// Closures remember their scope!
+function createCounter() {
+  let count = 0; // Private variable
+  
+  return function() {
+    count++;
+    console.log("Count:", count);
+  };
+}
+
+const counter1 = createCounter();
+const counter2 = createCounter();
+
+counter1(); // 1
+counter1(); // 2
+counter2(); // 1 (separate scope!)`,
+
+      shadowing: `// Variable shadowing
+const value = "global";
+
+function outer() {
+  const value = "outer";
+  
+  function inner() {
+    const value = "inner";
+    console.log("Inner sees:", value);
+  }
+  
+  inner();
+  console.log("Outer sees:", value);
+}
+
+outer();
+console.log("Global sees:", value);`,
+
+      loopVar: `// The infamous loop bug
+console.log("--- WITH VAR (BUG) ---");
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log("var i:", i), 100);
+}
+
+// Fix with let
+console.log("--- WITH LET (FIXED) ---");
+for (let j = 0; j < 3; j++) {
+  setTimeout(() => console.log("let j:", j), 200);
+}`
+    };
+
+    const quizData = [
+      {
+        question: "What will this output?",
+        code: `var x = 1;
+if (true) {
+  var x = 2;
+}
+console.log(x);`,
+        options: ["1", "2", "undefined", "Error"],
+        correct: 1,
+        explanation: "var is function-scoped, not block-scoped. The var inside the if block overwrites the outer x."
+      },
+      {
+        question: "What will this output?",
+        code: `let x = 1;
+if (true) {
+  let x = 2;
+}
+console.log(x);`,
+        options: ["1", "2", "undefined", "Error"],
+        correct: 0,
+        explanation: "let is block-scoped. The inner x is a completely different variable."
+      },
+      {
+        question: "What will this output?",
+        code: `for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 0);
+}`,
+        options: ["0, 1, 2", "3, 3, 3", "undefined, undefined, undefined", "Error"],
+        correct: 1,
+        explanation: "var creates one shared variable. By the time callbacks run, i is 3."
+      },
+      {
+        question: "What happens here?",
+        code: `const arr = [1, 2, 3];
+arr.push(4);
+console.log(arr);`,
+        options: ["Error", "[1, 2, 3]", "[1, 2, 3, 4]", "undefined"],
+        correct: 2,
+        explanation: "const prevents reassignment, but arrays/objects can still be mutated!"
+      },
+      {
+        question: "What will this output?",
+        code: `console.log(a);
+var a = 5;`,
+        options: ["5", "undefined", "Error", "null"],
+        correct: 1,
+        explanation: "var declarations are hoisted with undefined value. Only the declaration moves, not the assignment."
+      },
+      {
+        question: "What will this output?",
+        code: `console.log(b);
+let b = 5;`,
+        options: ["5", "undefined", "ReferenceError", "TypeError"],
+        correct: 2,
+        explanation: "let is in the Temporal Dead Zone before declaration. Accessing it throws ReferenceError."
+      },
+      {
+        question: "Which keyword creates a property on the global object?",
+        code: `// At global scope:
+var x = 1;
+let y = 2;
+const z = 3;`,
+        options: ["x only", "x, y, and z", "None of them", "y and z only"],
+        correct: 0,
+        explanation: "Only var creates a property on the global object (window in browsers). let and const don't."
+      },
+      {
+        question: "What's the output?",
+        code: `function test() {
+  console.log(x);
+  if (false) {
+    var x = 5;
+  }
+}
+test();`,
+        options: ["5", "undefined", "ReferenceError", "Nothing (no output)"],
+        correct: 1,
+        explanation: "var is hoisted to function scope, even if the block never executes. x exists but is undefined."
+      },
+      {
+        question: "What happens here?",
+        code: `let x = 1;
+let x = 2;`,
+        options: ["x becomes 2", "SyntaxError", "First x is ignored", "Creates two variables"],
+        correct: 1,
+        explanation: "let/const cannot be redeclared in the same scope. This throws SyntaxError immediately."
+      },
+      {
+        question: "What's the best practice?",
+        code: `// Choose the best declaration:`,
+        options: [
+          "var count = 0;",
+          "let count = 0; count++;",
+          "const count = 0;",
+          "count = 0;"
+        ],
+        correct: 1,
+        explanation: "Use let when you need to reassign (like counters). Start with const, upgrade to let when needed."
+      }
+    ];
+
+    // State
+    let currentQuiz = 0;
+    let quizAnswers = [];
+    let score = 0;
+
+    // ============================================
+    // DOM ELEMENTS
+    // ============================================
+    
+    const scrollProgress = document.getElementById('scrollProgress');
+    const scopeCode = document.getElementById('scopeCode');
+    const consoleOutput = document.getElementById('consoleOutput');
+    const quizContainer = document.getElementById('quizContainer');
+    const quizScoreEl = document.getElementById('quizScore');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const closeMobileMenu = document.getElementById('closeMobileMenu');
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      initParticles();
+      initScrollProgress();
+      initNavigation();
+      initPlayground();
+      initAccordions();
+      initQuiz();
+      initExampleButtons();
+      initMobileMenu();
+    });
+
+    // ============================================
+    // PARTICLES
+    // ============================================
+    
+    function initParticles() {
+      const particleCount = 20;
+      for (let i = 0; i < particleCount; i++) {
+        createParticle();
+      }
+    }
+
+    function createParticle() {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      
+      const x = Math.random() * window.innerWidth;
+      const y = Math.random() * window.innerHeight;
+      const duration = 15 + Math.random() * 20;
+      const delay = Math.random() * -20;
+      
+      particle.style.left = x + 'px';
+      particle.style.top = y + 'px';
+      particle.style.animation = `particleFloat ${duration}s ease-in-out ${delay}s infinite`;
+      
+      document.body.appendChild(particle);
+    }
+
+    // Add particle animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes particleFloat {
+        0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+        25% { transform: translate(30px, -30px); opacity: 0.5; }
+        50% { transform: translate(-20px, 20px); opacity: 0.2; }
+        75% { transform: translate(40px, 10px); opacity: 0.4; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // ============================================
+    // SCROLL PROGRESS
+    // ============================================
+    
+    function initScrollProgress() {
+      window.addEventListener('scroll', () => {
+        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        scrollProgress.style.width = scrolled + '%';
+      });
+    }
+
+    // ============================================
+    // NAVIGATION
+    // ============================================
+    
+    function initNavigation() {
+      const navLinks = document.querySelectorAll('.nav-link');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            navLinks.forEach(link => {
+              link.classList.remove('active');
+              if (link.getAttribute('href') === '#' + entry.target.id) {
+                link.classList.add('active');
+              }
+            });
+          }
+        });
+      }, { threshold: 0.3 });
+
+      document.querySelectorAll('section[id]').forEach(section => {
+        observer.observe(section);
+      });
+    }
+
+    // ============================================
+    // MOBILE MENU
+    // ============================================
+    
+    function initMobileMenu() {
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.remove('hidden');
+        mobileMenu.classList.add('flex');
+      });
+
+      closeMobileMenu.addEventListener('click', () => {
+        mobileMenu.classList.add('hidden');
+        mobileMenu.classList.remove('flex');
+      });
+
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.add('hidden');
+          mobileMenu.classList.remove('flex');
+        });
+      });
+    }
+
+    // ============================================
+    // PLAYGROUND
+    // ============================================
+    
+    function initPlayground() {
+      document.getElementById('runCode').addEventListener('click', runCode);
+      document.getElementById('resetCode').addEventListener('click', resetCode);
+    }
+
+    function runCode() {
+      const code = scopeCode.value;
+      consoleOutput.innerHTML = '';
+      
+      const logs = [];
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      
+      console.log = (...args) => {
+        logs.push({ type: 'log', args });
+      };
+      console.error = (...args) => {
+        logs.push({ type: 'error', args });
+      };
+      console.warn = (...args) => {
+        logs.push({ type: 'warn', args });
+      };
+
+      try {
+        eval(code);
+        
+        logs.forEach(log => {
+          const line = document.createElement('div');
+          line.className = 'console-line';
+          
+          const output = log.args.map(arg => {
+            if (typeof arg === 'object') {
+              return JSON.stringify(arg, null, 2);
+            }
+            return String(arg);
+          }).join(' ');
+          
+          if (log.type === 'error') {
+            line.classList.add('console-error');
+            line.textContent = '❌ ' + output;
+          } else if (log.type === 'warn') {
+            line.classList.add('console-warn');
+            line.textContent = '⚠️ ' + output;
+          } else {
+            line.classList.add('console-success');
+            line.textContent = '› ' + output;
+          }
+          
+          consoleOutput.appendChild(line);
+        });
+        
+        if (logs.length === 0) {
+          const line = document.createElement('div');
+          line.className = 'console-line console-info';
+          line.textContent = '// Code executed (no output)';
+          consoleOutput.appendChild(line);
+        }
+      } catch (e) {
+        const line = document.createElement('div');
+        line.className = 'console-line console-error';
+        line.textContent = '❌ ' + e.message;
+        consoleOutput.appendChild(line);
+      }
+
+      console.log = originalLog;
+      console.error = originalError;
+      console.warn = originalWarn;
+    }
+
+    function resetCode() {
+      scopeCode.value = `// Try editing this code!
+const globalUser = "Alice";
+
+function processUser() {
+  const functionVar = "Processing...";
+  
+  if (true) {
+    const blockVar = "In block";
+    console.log(globalUser);    // Accessible
+    console.log(functionVar);   // Accessible
+    console.log(blockVar);      // Accessible
+  }
+  
+  // console.log(blockVar);     // ERROR!
+}
+
+processUser();`;
+      consoleOutput.innerHTML = '<div class="console-line console-info">// Output will appear here...</div>';
+    }
+
+    // ============================================
+    // EXAMPLE BUTTONS
+    // ============================================
+    
+    function initExampleButtons() {
+      document.querySelectorAll('.example-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const exampleKey = btn.dataset.example;
+          if (examples[exampleKey]) {
+            scopeCode.value = examples[exampleKey];
+            document.getElementById('playground').scrollIntoView({ behavior: 'smooth' });
+            setTimeout(runCode, 500);
+          }
+        });
+      });
+    }
+
+    // ============================================
+    // ACCORDIONS
+    // ============================================
+    
+    function initAccordions() {
+      document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const id = header.dataset.accordion;
+          const content = document.querySelector(`[data-content="${id}"]`);
+          
+          header.classList.toggle('open');
+          content.classList.toggle('open');
+        });
+      });
+    }
+
+    // ============================================
+    // QUIZ
+    // ============================================
+    
+    function initQuiz() {
+      quizAnswers = new Array(quizData.length).fill(null);
+      renderQuiz();
+      
+      document.getElementById('nextQuiz').addEventListener('click', nextQuestion);
+      document.getElementById('prevQuiz').addEventListener('click', prevQuestion);
+      document.getElementById('resetQuiz').addEventListener('click', resetQuiz);
+    }
+
+    function renderQuiz() {
+      const quiz = quizData[currentQuiz];
+      
+      quizContainer.innerHTML = `
+        <div class="card">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-sm text-gray-500">Question ${currentQuiz + 1} of ${quizData.length}</span>
+            <span class="text-sm text-gray-500">${score} / ${quizData.length} correct</span>
+          </div>
+          
+          <h3 class="text-xl font-bold mb-4">${quiz.question}</h3>
+          
+          <div class="code-editor mb-6">
+            <pre class="p-4 text-sm overflow-x-auto"><code class="text-gray-300">${escapeHtml(quiz.code)}</code></pre>
+          </div>
+          
+          <div class="space-y-3">
+            ${quiz.options.map((opt, i) => `
+              <div class="quiz-option ${getOptionClass(i, quiz)}" data-index="${i}">
+                ${String.fromCharCode(65 + i)}. ${escapeHtml(opt)}
+              </div>
+            `).join('')}
+          </div>
+          
+          ${quizAnswers[currentQuiz] !== null ? `
+            <div class="mt-6 p-4 rounded-lg ${quizAnswers[currentQuiz] === quiz.correct ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}">
+              <p class="${quizAnswers[currentQuiz] === quiz.correct ? 'text-green-400' : 'text-red-400'} font-bold mb-2">
+                ${quizAnswers[currentQuiz] === quiz.correct ? 'Correct!' : 'Incorrect!'}
+              </p>
+              <p class="text-gray-400 text-sm">${quiz.explanation}</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      // Add click handlers
+      document.querySelectorAll('.quiz-option').forEach(opt => {
+        opt.addEventListener('click', () => selectOption(parseInt(opt.dataset.index)));
+      });
+
+      // Update navigation
+      document.getElementById('prevQuiz').disabled = currentQuiz === 0;
+      document.getElementById('nextQuiz').textContent = 
+        currentQuiz === quizData.length - 1 ? 'Finish' : 'Next Question';
+    }
+
+    function getOptionClass(index, quiz) {
+      if (quizAnswers[currentQuiz] === null) return '';
+      if (index === quiz.correct) return 'correct';
+      if (index === quizAnswers[currentQuiz] && index !== quiz.correct) return 'incorrect';
+      return '';
+    }
+
+    function selectOption(index) {
+      if (quizAnswers[currentQuiz] !== null) return; // Already answered
+      
+      quizAnswers[currentQuiz] = index;
+      if (index === quizData[currentQuiz].correct) {
+        score++;
+      }
+      renderQuiz();
+    }
+
+    function nextQuestion() {
+      if (currentQuiz < quizData.length - 1) {
+        currentQuiz++;
+        renderQuiz();
+      } else {
+        showScore();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuiz > 0) {
+        currentQuiz--;
+        renderQuiz();
+      }
+    }
+
+    function resetQuiz() {
+      currentQuiz = 0;
+      quizAnswers = new Array(quizData.length).fill(null);
+      score = 0;
+      quizScoreEl.classList.add('hidden');
+      renderQuiz();
+    }
+
+    function showScore() {
+      const percentage = Math.round((score / quizData.length) * 100);
+      document.getElementById('scoreDisplay').textContent = `${score} / ${quizData.length}`;
+      
+      let message = '';
+      if (percentage === 100) message = "Perfect! You're a scope master!";
+      else if (percentage >= 80) message = "Great job! You understand scope well!";
+      else if (percentage >= 60) message = "Good progress! Review the tricky parts.";
+      else message = "Keep learning! Try the examples again.";
+      
+      document.getElementById('scoreMessage').textContent = message;
+      quizScoreEl.classList.remove('hidden');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

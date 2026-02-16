@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Fundamentals Playground</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07080c;
+      --bg-card: #0d0f14;
+      --bg-elevated: #12151c;
+      --fg: #e8eaed;
+      --muted: #6b7280;
+      --accent: #00ff88;
+      --accent-dim: rgba(0, 255, 136, 0.15);
+      --secondary: #ff6b35;
+      --tertiary: #00b4d8;
+      --border: #1f2937;
+      --code-bg: #0a0c10;
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    code, .code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Animated background */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-1 {
+      top: -200px;
+      right: -100px;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    }
+
+    .glow-2 {
+      bottom: -200px;
+      left: -100px;
+      background: radial-gradient(circle, var(--secondary) 0%, transparent 70%);
+    }
+
+    /* Navigation tabs */
+    .nav-tab {
+      padding: 12px 24px;
+      border-radius: 8px 8px 0 0;
+      background: transparent;
+      border: 1px solid transparent;
+      border-bottom: none;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .nav-tab:hover {
+      color: var(--fg);
+      background: var(--bg-elevated);
+    }
+
+    .nav-tab.active {
+      background: var(--bg-card);
+      color: var(--accent);
+      border-color: var(--border);
+    }
+
+    /* Content sections */
+    .content-section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: var(--bg-elevated);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Code blocks */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .code-header {
+      background: var(--bg-elevated);
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .code-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .code-content {
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .code-content pre {
+      margin: 0;
+      white-space: pre-wrap;
+    }
+
+    /* Syntax highlighting */
+    .keyword { color: #ff79c6; }
+    .function { color: #50fa7b; }
+    .string { color: #f1fa8c; }
+    .number { color: #bd93f9; }
+    .comment { color: #6272a4; font-style: italic; }
+    .method { color: #8be9fd; }
+    .bracket { color: #f8f8f2; }
+    .variable { color: #ffb86c; }
+
+    /* Array visual */
+    .array-container {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 16px;
+      background: var(--code-bg);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .array-item {
+      min-width: 60px;
+      padding: 12px 16px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .array-item .index {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .array-item.highlight {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      transform: scale(1.05);
+    }
+
+    .array-item.removing {
+      animation: itemRemove 0.5s ease forwards;
+    }
+
+    .array-item.adding {
+      animation: itemAdd 0.5s ease forwards;
+    }
+
+    @keyframes itemRemove {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0) translateX(20px); }
+    }
+
+    @keyframes itemAdd {
+      0% { opacity: 0; transform: scale(0); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-method {
+      background: var(--bg-elevated);
+      color: var(--tertiary);
+      border: 1px solid var(--tertiary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 8px 14px;
+    }
+
+    .btn-method:hover {
+      background: rgba(0, 180, 216, 0.15);
+    }
+
+    /* Quiz styles */
+    .quiz-option {
+      padding: 14px 18px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .quiz-option:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .quiz-option.selected {
+      border-color: var(--tertiary);
+      background: rgba(0, 180, 216, 0.15);
+    }
+
+    .quiz-option.correct {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.15);
+    }
+
+    .quiz-option.incorrect {
+      border-color: var(--error);
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    /* Pitfall cards */
+    .pitfall-card {
+      background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, transparent 50%);
+      border-left: 4px solid var(--secondary);
+    }
+
+    .tip-card {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, transparent 50%);
+      border-left: 4px solid var(--accent);
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-elevated);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--tertiary));
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    /* Live editor */
+    .live-editor {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .live-editor textarea {
+      width: 100%;
+      min-height: 120px;
+      background: transparent;
+      border: none;
+      padding: 16px;
+      color: var(--fg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      resize: vertical;
+    }
+
+    .live-editor textarea:focus {
+      outline: none;
+    }
+
+    .live-output {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 16px;
+      min-height: 60px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+    }
+
+    /* Floating particles */
+    .particle {
+      position: fixed;
+      width: 4px;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.6;
+      z-index: 0;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    /* Subsection tabs */
+    .subsection-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .subsection-tab {
+      padding: 8px 16px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .subsection-tab:hover {
+      border-color: var(--accent);
+    }
+
+    .subsection-tab.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* Diagram */
+    .diagram-box {
+      padding: 16px 24px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .diagram-arrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+    }
+
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .nav-tab {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+      
+      .subsection-tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+  <div id="particles"></div>
+
+  <!-- Main container -->
+  <div class="relative z-10 max-w-6xl mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <header class="text-center mb-12" style="animation: fadeIn 0.6s ease">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4" style="letter-spacing: -1px;">
+        <span style="color: var(--accent)">JS</span> Fundamentals Playground
+      </h1>
+      <p class="text-lg" style="color: var(--muted)">Master Functions and Arrays through interactive examples</p>
+      
+      <!-- Progress -->
+      <div class="max-w-md mx-auto mt-6">
+        <div class="flex justify-between text-sm mb-2" style="color: var(--muted)">
+          <span>Your Progress</span>
+          <span id="progressText">0% Complete</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="flex flex-wrap gap-2 mb-0" style="border-bottom: 1px solid var(--border)">
+      <button class="nav-tab active" data-section="functions">Functions</button>
+      <button class="nav-tab" data-section="arrays">Arrays Basics</button>
+      <button class="nav-tab" data-section="methods">Array Methods</button>
+      <button class="nav-tab" data-section="iteration">Iteration</button>
+      <button class="nav-tab" data-section="destructuring">Destructuring</button>
+      <button class="nav-tab" data-section="quiz">Quiz Time</button>
+    </nav>
+
+    <!-- Content Area -->
+    <main class="mt-0" style="background: var(--bg-card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 12px 12px; padding: 24px;">
+      
+      <!-- FUNCTIONS SECTION -->
+      <section id="functions" class="content-section active">
+        <h2 class="text-2xl font-bold mb-6" style="color: var(--accent)">Function Fundamentals</h2>
+        
+        <!-- What is a Function -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--accent); font-size: 20px;">?</span>
+            <span class="font-semibold">What is a Function?</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">
+              A <strong style="color: var(--fg)">function</strong> is a reusable block of code that performs a specific task. 
+              Think of it like a recipe: you give it ingredients (inputs), it follows steps, and produces a result (output).
+            </p>
+            
+            <!-- Visual diagram -->
+            <div class="flex flex-wrap items-center justify-center gap-4 p-6 rounded-lg mb-6" style="background: var(--code-bg)">
+              <div class="diagram-box">
+                <div style="color: var(--secondary)">Inputs</div>
+                <div style="color: var(--muted); font-size: 12px">(parameters)</div>
+              </div>
+              <div class="diagram-arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+              <div class="diagram-box" style="border-color: var(--accent)">
+                <div style="color: var(--accent)">Function</div>
+                <div style="color: var(--muted); font-size: 12px">{ code block }</div>
+              </div>
+              <div class="diagram-arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+              <div class="diagram-box">
+                <div style="color: var(--tertiary)">Output</div>
+                <div style="color: var(--muted); font-size: 12px">(return value)</div>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <div class="code-dot" style="background: #ff5f56"></div>
+                <div class="code-dot" style="background: #ffbd2e"></div>
+                <div class="code-dot" style="background: #27c93f"></div>
+                <span class="text-sm ml-2" style="color: var(--muted)">Example</span>
+              </div>
+              <div class="code-content">
+<pre><span class="comment">// A function that greets someone</span>
+<span class="keyword">function</span> <span class="function">greet</span>(<span class="variable">name</span>) {
+  <span class="keyword">return</span> <span class="string">"Hello, "</span> + <span class="variable">name</span> + <span class="string">"!"</span>;
+}
+
+<span class="comment">// Using (calling) the function</span>
+<span class="function">greet</span>(<span class="string">"Alex"</span>);  <span class="comment">// Returns: "Hello, Alex!"</span>
+<span class="function">greet</span>(<span class="string">"Sam"</span>);   <span class="comment">// Returns: "Hello, Sam!"</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ways to Create Functions -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--tertiary); font-size: 20px;">3</span>
+            <span class="font-semibold">Three Ways to Create Functions</span>
+          </div>
+          <div class="card-body">
+            <div class="grid md:grid-cols-3 gap-4">
+              
+              <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+                <h4 class="font-semibold mb-2" style="color: var(--accent)">1. Declaration</h4>
+                <div class="code-block">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">function</span> <span class="function">add</span>(<span class="variable">a</span>, <span class="variable">b</span>) {
+  <span class="keyword">return</span> <span class="variable">a</span> + <span class="variable">b</span>;
+}</pre>
+                  </div>
+                </div>
+                <p class="text-xs mt-2" style="color: var(--muted)">Hoisted - can be called before definition</p>
+              </div>
+
+              <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+                <h4 class="font-semibold mb-2" style="color: var(--secondary)">2. Expression</h4>
+                <div class="code-block">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">add</span> = <span class="keyword">function</span>(<span class="variable">a</span>, <span class="variable">b</span>) {
+  <span class="keyword">return</span> <span class="variable">a</span> + <span class="variable">b</span>;
+};</pre>
+                  </div>
+                </div>
+                <p class="text-xs mt-2" style="color: var(--muted)">Not hoisted - must be defined first</p>
+              </div>
+
+              <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+                <h4 class="font-semibold mb-2" style="color: var(--tertiary)">3. Arrow Function</h4>
+                <div class="code-block">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">add</span> = (<span class="variable">a</span>, <span class="variable">b</span>) => {
+  <span class="keyword">return</span> <span class="variable">a</span> + <span class="variable">b</span>;
+};
+
+<span class="comment">// Short form (implicit return)</span>
+<span class="keyword">const</span> <span class="variable">add</span> = (<span class="variable">a</span>, <span class="variable">b</span>) => <span class="variable">a</span> + <span class="variable">b</span>;</pre>
+                  </div>
+                </div>
+                <p class="text-xs mt-2" style="color: var(--muted)">Concise syntax, different 'this'</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameters vs Arguments -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--secondary); font-size: 20px;">!</span>
+            <span class="font-semibold">Parameters vs Arguments</span>
+          </div>
+          <div class="card-body">
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+              <div class="p-4 rounded-lg" style="background: var(--accent-dim); border-left: 4px solid var(--accent)">
+                <h4 class="font-semibold mb-2" style="color: var(--accent)">Parameters</h4>
+                <p style="color: var(--muted)">Variables listed in the function definition. They're like placeholder names.</p>
+                <div class="code-block mt-2">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">function</span> <span class="function">greet</span>(<span class="variable" style="color: var(--accent)">name</span>, <span class="variable" style="color: var(--accent)">age</span>) {
+  <span class="comment">//         ^^^^^   ^^^</span>
+  <span class="comment">//         parameters</span>
+}</pre>
+                  </div>
+                </div>
+              </div>
+              <div class="p-4 rounded-lg" style="background: rgba(255, 107, 53, 0.1); border-left: 4px solid var(--secondary)">
+                <h4 class="font-semibold mb-2" style="color: var(--secondary)">Arguments</h4>
+                <p style="color: var(--muted)">Actual values passed when calling the function.</p>
+                <div class="code-block mt-2">
+                  <div class="code-content text-sm">
+<pre><span class="function">greet</span>(<span class="string" style="color: var(--secondary)">"Alex"</span>, <span class="number" style="color: var(--secondary)">25</span>);
+<span class="comment">//    ^^^^^^  ^^</span>
+<span class="comment">//    arguments</span></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Try It Live -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent)">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span class="font-semibold">Try It Live</span>
+          </div>
+          <div class="card-body">
+            <div class="live-editor">
+              <textarea id="functionEditor">// Edit this code and click Run!
+function double(num) {
+  return num * 2;
+}
+
+// Test your function
+console.log(double(5));
+console.log(double(12));
+console.log(double(0.5));</textarea>
+              <div class="flex gap-2 p-3" style="background: var(--bg-elevated); border-top: 1px solid var(--border)">
+                <button class="btn btn-primary" onclick="runFunctionCode()">Run Code</button>
+                <button class="btn btn-secondary" onclick="resetFunctionEditor()">Reset</button>
+              </div>
+              <div class="live-output">
+                <span style="color: var(--muted)">Output will appear here...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pitfalls -->
+        <div class="card pitfall-card mb-6">
+          <div class="card-header">
+            <span style="color: var(--secondary); font-size: 20px;">!</span>
+            <span class="font-semibold">Common Pitfalls</span>
+          </div>
+          <div class="card-body space-y-4">
+            <div>
+              <h4 class="font-semibold mb-2">1. Forgetting 'return'</h4>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="code-block">
+                  <div class="code-header text-sm" style="color: var(--error)">Wrong</div>
+                  <div class="code-content text-sm">
+<pre><span class="keyword">function</span> <span class="function">add</span>(<span class="variable">a</span>, <span class="variable">b</span>) {
+  <span class="variable">a</span> + <span class="variable">b</span>;  <span class="comment">// No return!</span>
+}
+<span class="function">add</span>(<span class="number">2</span>, <span class="number">3</span>); <span class="comment">// undefined</span></pre>
+                  </div>
+                </div>
+                <div class="code-block">
+                  <div class="code-header text-sm" style="color: var(--success)">Correct</div>
+                  <div class="code-content text-sm">
+<pre><span class="keyword">function</span> <span class="function">add</span>(<span class="variable">a</span>, <span class="variable">b</span>) {
+  <span class="keyword">return</span> <span class="variable">a</span> + <span class="variable">b</span>;
+}
+<span class="function">add</span>(<span class="number">2</span>, <span class="number">3</span>); <span class="comment">// 5</span></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-2">2. Arrow functions and 'this'</h4>
+              <p style="color: var(--muted)" class="text-sm mb-2">Arrow functions don't have their own 'this'. They inherit it from the surrounding scope.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARRAYS SECTION -->
+      <section id="arrays" class="content-section">
+        <h2 class="text-2xl font-bold mb-6" style="color: var(--accent)">Arrays Basics</h2>
+        
+        <!-- What is an Array -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--accent); font-size: 20px;">[]</span>
+            <span class="font-semibold">What is an Array?</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">
+              An <strong style="color: var(--fg)">array</strong> is an ordered collection of items. Think of it as a list where each item has a numbered position (index), starting from 0.
+            </p>
+            
+            <!-- Interactive Array Visualization -->
+            <div class="mb-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="code text-sm" style="color: var(--tertiary)">const fruits = ["apple", "banana", "cherry", "date"];</span>
+              </div>
+              <div class="array-container" id="arrayViz">
+                <div class="array-item"><span class="index">0</span>apple</div>
+                <div class="array-item"><span class="index">1</span>banana</div>
+                <div class="array-item"><span class="index">2</span>cherry</div>
+                <div class="array-item"><span class="index">3</span>date</div>
+              </div>
+              <p class="text-sm mt-2" style="color: var(--muted)">Click on items to highlight them. Notice indices start at 0!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Creating Arrays -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--tertiary); font-size: 20px;">+</span>
+            <span class="font-semibold">Creating Arrays</span>
+          </div>
+          <div class="card-body">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="code-block">
+                <div class="code-header text-sm" style="color: var(--muted)">Literal Syntax (Recommended)</div>
+                <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+<span class="keyword">const</span> <span class="variable">mixed</span> = [<span class="number">1</span>, <span class="string">"hello"</span>, <span class="keyword">true</span>, <span class="keyword">null</span>];
+<span class="keyword">const</span> <span class="variable">empty</span> = [];</pre>
+                </div>
+              </div>
+              <div class="code-block">
+                <div class="code-header text-sm" style="color: var(--muted)">Array Constructor (Rare)</div>
+                <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">nums</span> = <span class="keyword">new</span> <span class="function">Array</span>(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>);
+<span class="keyword">const</span> <span class="variable">spaces</span> = <span class="keyword">new</span> <span class="function">Array</span>(<span class="number">5</span>); <span class="comment">// 5 empty slots</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accessing Elements -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--secondary); font-size: 20px;">@</span>
+            <span class="font-semibold">Accessing Elements</span>
+          </div>
+          <div class="card-body">
+            <div class="code-block mb-4">
+              <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">colors</span> = [<span class="string">"red"</span>, <span class="string">"green"</span>, <span class="string">"blue"</span>];
+
+<span class="variable">colors</span>[<span class="number">0</span>];  <span class="comment">// "red"   (first element)</span>
+<span class="variable">colors</span>[<span class="number">1</span>];  <span class="comment">// "green" (second element)</span>
+<span class="variable">colors</span>[<span class="number">2</span>];  <span class="comment">// "blue"  (third element)</span>
+<span class="variable">colors</span>[<span class="number">3</span>];  <span class="comment">// undefined (doesn't exist!)</span>
+
+<span class="comment">// Negative indices don't work like Python!</span>
+<span class="variable">colors</span>[-<span class="number">1</span>]; <span class="comment">// undefined (not the last element)</span>
+
+<span class="comment">// Use .at() for negative indices (ES2022)</span>
+<span class="variable">colors</span>.<span class="method">at</span>(-<span class="number">1</span>); <span class="comment">// "blue"</span></pre>
+              </div>
+            </div>
+            
+            <div class="flex gap-2 flex-wrap">
+              <button class="btn btn-method" onclick="demonstrateAccess(0)">colors[0]</button>
+              <button class="btn btn-method" onclick="demonstrateAccess(1)">colors[1]</button>
+              <button class="btn btn-method" onclick="demonstrateAccess(2)">colors[2]</button>
+              <button class="btn btn-method" onclick="demonstrateAccess(-1)">colors.at(-1)</button>
+            </div>
+            <div id="accessResult" class="mt-4 p-3 rounded" style="background: var(--code-bg); font-family: 'JetBrains Mono', monospace;">
+              Click a button to see the result
+            </div>
+          </div>
+        </div>
+
+        <!-- Basic Methods: Push, Pop, Shift, Unshift -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--accent); font-size: 20px;">+</span>
+            <span class="font-semibold">Basic Methods: Add and Remove</span>
+          </div>
+          <div class="card-body">
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+              <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+                <h4 class="font-semibold mb-2" style="color: var(--success)">push() - Add to end</h4>
+                <div class="code-block">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">arr</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+<span class="variable">arr</span>.<span class="method">push</span>(<span class="number">4</span>);
+<span class="comment">// arr is now [1, 2, 3, 4]</span></pre>
+                  </div>
+                </div>
+              </div>
+              <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+                <h4 class="font-semibold mb-2" style="color: var(--error)">pop() - Remove from end</h4>
+                <div class="code-block">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">arr</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+<span class="variable">arr</span>.<span class="method">pop</span>(); <span class="comment">// returns 3</span>
+<span class="comment">// arr is now [1, 2]</span></pre>
+                  </div>
+                </div>
+              </div>
+              <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+                <h4 class="font-semibold mb-2" style="color: var(--tertiary)">unshift() - Add to start</h4>
+                <div class="code-block">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">arr</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+<span class="variable">arr</span>.<span class="method">unshift</span>(<span class="number">0</span>);
+<span class="comment">// arr is now [0, 1, 2, 3]</span></pre>
+                  </div>
+                </div>
+              </div>
+              <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+                <h4 class="font-semibold mb-2" style="color: var(--secondary)">shift() - Remove from start</h4>
+                <div class="code-block">
+                  <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">arr</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
+<span class="variable">arr</span>.<span class="method">shift</span>(); <span class="comment">// returns 1</span>
+<span class="comment">// arr is now [2, 3]</span></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Interactive Demo -->
+            <h4 class="font-semibold mb-3">Interactive Demo</h4>
+            <div class="array-container mb-4" id="interactiveArray">
+              <div class="array-item"><span class="index">0</span>1</div>
+              <div class="array-item"><span class="index">1</span>2</div>
+              <div class="array-item"><span class="index">2</span>3</div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="btn btn-method" style="border-color: var(--success); color: var(--success)" onclick="interactivePush()">push(4)</button>
+              <button class="btn btn-method" style="border-color: var(--error); color: var(--error)" onclick="interactivePop()">pop()</button>
+              <button class="btn btn-method" style="border-color: var(--tertiary); color: var(--tertiary)" onclick="interactiveUnshift()">unshift(0)</button>
+              <button class="btn btn-method" style="border-color: var(--secondary); color: var(--secondary)" onclick="interactiveShift()">shift()</button>
+              <button class="btn btn-secondary" onclick="resetInteractiveArray()">Reset</button>
+            </div>
+            <div id="methodResult" class="mt-3 text-sm" style="color: var(--muted)"></div>
+          </div>
+        </div>
+
+        <!-- Pitfall -->
+        <div class="card pitfall-card">
+          <div class="card-header">
+            <span style="color: var(--secondary); font-size: 20px;">!</span>
+            <span class="font-semibold">Pitfalls to Avoid</span>
+          </div>
+          <div class="card-body space-y-4">
+            <div>
+              <h4 class="font-semibold mb-2">1. Off-by-one errors</h4>
+              <p style="color: var(--muted)" class="text-sm">Remember: arrays are 0-indexed! The last index is length - 1.</p>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-2">2. Mutating vs Non-mutating</h4>
+              <p style="color: var(--muted)" class="text-sm">push, pop, shift, unshift <strong>mutate</strong> the original array. Some methods (like map, filter) return a new array instead.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARRAY METHODS SECTION -->
+      <section id="methods" class="content-section">
+        <h2 class="text-2xl font-bold mb-6" style="color: var(--accent)">Essential Array Methods</h2>
+        
+        <p class="mb-6" style="color: var(--muted)">These methods transform arrays and are used constantly in JavaScript. Master these!</p>
+
+        <!-- MAP -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span class="code" style="color: var(--accent)">.map()</span>
+            <span class="font-semibold">Transform each element</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">
+              <strong style="color: var(--fg)">map()</strong> creates a new array by calling a function on every element. The original array is unchanged.
+            </p>
+            
+            <!-- Visual Map Diagram -->
+            <div class="flex flex-wrap items-center gap-4 mb-4 p-4 rounded-lg" style="background: var(--code-bg)">
+              <div>
+                <div class="text-xs mb-2" style="color: var(--muted)">Original</div>
+                <div class="flex gap-2">
+                  <div class="diagram-box text-sm">1</div>
+                  <div class="diagram-box text-sm">2</div>
+                  <div class="diagram-box text-sm">3</div>
+                </div>
+              </div>
+              <div class="diagram-arrow">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                <span class="text-xs">x2</span>
+              </div>
+              <div>
+                <div class="text-xs mb-2" style="color: var(--accent)">Result</div>
+                <div class="flex gap-2">
+                  <div class="diagram-box text-sm" style="border-color: var(--accent)">2</div>
+                  <div class="diagram-box text-sm" style="border-color: var(--accent)">4</div>
+                  <div class="diagram-box text-sm" style="border-color: var(--accent)">6</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="code-block mb-4">
+              <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+
+<span class="comment">// Double each number</span>
+<span class="keyword">const</span> <span class="variable">doubled</span> = <span class="variable">numbers</span>.<span class="method">map</span>(<span class="variable">num</span> => <span class="variable">num</span> * <span class="number">2</span>);
+<span class="comment">// doubled = [2, 4, 6, 8, 10]</span>
+
+<span class="comment">// Get just the names</span>
+<span class="keyword">const</span> <span class="variable">users</span> = [
+  { <span class="variable">name</span>: <span class="string">"Alex"</span>, <span class="variable">age</span>: <span class="number">25</span> },
+  { <span class="variable">name</span>: <span class="string">"Sam"</span>, <span class="variable">age</span>: <span class="number">30</span> }
+];
+<span class="keyword">const</span> <span class="variable">names</span> = <span class="variable">users</span>.<span class="method">map</span>(<span class="variable">user</span> => <span class="variable">user</span>.<span class="variable">name</span>);
+<span class="comment">// names = ["Alex", "Sam"]</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FILTER -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span class="code" style="color: var(--tertiary)">.filter()</span>
+            <span class="font-semibold">Keep elements that pass a test</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">
+              <strong style="color: var(--fg)">filter()</strong> creates a new array with only elements that return true for the test function.
+            </p>
+            
+            <!-- Visual Filter Diagram -->
+            <div class="flex flex-wrap items-center gap-4 mb-4 p-4 rounded-lg" style="background: var(--code-bg)">
+              <div>
+                <div class="text-xs mb-2" style="color: var(--muted)">Original</div>
+                <div class="flex gap-2">
+                  <div class="diagram-box text-sm">1</div>
+                  <div class="diagram-box text-sm">2</div>
+                  <div class="diagram-box text-sm">3</div>
+                  <div class="diagram-box text-sm">4</div>
+                </div>
+              </div>
+              <div class="diagram-arrow flex-col">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>
+                </svg>
+                <span class="text-xs">> 2</span>
+              </div>
+              <div>
+                <div class="text-xs mb-2" style="color: var(--tertiary)">Result</div>
+                <div class="flex gap-2">
+                  <div class="diagram-box text-sm" style="border-color: var(--tertiary)">3</div>
+                  <div class="diagram-box text-sm" style="border-color: var(--tertiary)">4</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+
+<span class="comment">// Keep only even numbers</span>
+<span class="keyword">const</span> <span class="variable">evens</span> = <span class="variable">numbers</span>.<span class="method">filter</span>(<span class="variable">num</span> => <span class="variable">num</span> % <span class="number">2</span> === <span class="number">0</span>);
+<span class="comment">// evens = [2, 4]</span>
+
+<span class="comment">// Keep adults</span>
+<span class="keyword">const</span> <span class="variable">ages</span> = [<span class="number">12</span>, <span class="number">18</span>, <span class="number">25</span>, <span class="number">15</span>, <span class="number">30</span>];
+<span class="keyword">const</span> <span class="variable">adults</span> = <span class="variable">ages</span>.<span class="method">filter</span>(<span class="variable">age</span> => <span class="variable">age</span> >= <span class="number">18</span>);
+<span class="comment">// adults = [18, 25, 30]</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REDUCE -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span class="code" style="color: var(--secondary)">.reduce()</span>
+            <span class="font-semibold">Combine into single value</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">
+              <strong style="color: var(--fg)">reduce()</strong> processes each element and accumulates a single result. It's the most powerful array method!
+            </p>
+            
+            <!-- Visual Reduce Diagram -->
+            <div class="flex flex-wrap items-center gap-4 mb-4 p-4 rounded-lg" style="background: var(--code-bg)">
+              <div>
+                <div class="text-xs mb-2" style="color: var(--muted)">Array</div>
+                <div class="flex gap-2">
+                  <div class="diagram-box text-sm">1</div>
+                  <div class="diagram-box text-sm">2</div>
+                  <div class="diagram-box text-sm">3</div>
+                  <div class="diagram-box text-sm">4</div>
+                </div>
+              </div>
+              <div class="diagram-arrow">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+                <span class="text-xs">sum</span>
+              </div>
+              <div>
+                <div class="text-xs mb-2" style="color: var(--secondary)">Result</div>
+                <div class="diagram-box text-sm" style="border-color: var(--secondary); min-width: 80px">10</div>
+              </div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>];
+
+<span class="comment">// Sum all numbers</span>
+<span class="keyword">const</span> <span class="variable">sum</span> = <span class="variable">numbers</span>.<span class="method">reduce</span>((<span class="variable">acc</span>, <span class="variable">num</span>) => <span class="variable">acc</span> + <span class="variable">num</span>, <span class="number">0</span>);
+<span class="comment">// sum = 10</span>
+
+<span class="comment">// How it works step by step:</span>
+<span class="comment">// acc=0, num=1  -> acc=1</span>
+<span class="comment">// acc=1, num=2  -> acc=3</span>
+<span class="comment">// acc=3, num=3  -> acc=6</span>
+<span class="comment">// acc=6, num=4  -> acc=10</span>
+
+<span class="comment">// Find maximum</span>
+<span class="keyword">const</span> <span class="variable">max</span> = <span class="variable">numbers</span>.<span class="method">reduce</span>((<span class="variable">max</span>, <span class="variable">num</span>) => <span class="variable">num</span> > <span class="variable">max</span> ? <span class="variable">num</span> : <span class="variable">max</span>, <span class="variable">numbers</span>[<span class="number">0</span>]);</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Method Comparison -->
+        <div class="card">
+          <div class="card-header">
+            <span class="font-semibold">Quick Reference</span>
+          </div>
+          <div class="card-body overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--border)">
+                  <th class="text-left py-2 px-3">Method</th>
+                  <th class="text-left py-2 px-3">Returns</th>
+                  <th class="text-left py-2 px-3">Use When</th>
+                  <th class="text-left py-2 px-3">Mutates?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border)">
+                  <td class="py-2 px-3 code" style="color: var(--accent)">map</td>
+                  <td class="py-2 px-3">New array (same length)</td>
+                  <td class="py-2 px-3">Transform each item</td>
+                  <td class="py-2 px-3" style="color: var(--success)">No</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border)">
+                  <td class="py-2 px-3 code" style="color: var(--tertiary)">filter</td>
+                  <td class="py-2 px-3">New array (shorter/same)</td>
+                  <td class="py-2 px-3">Keep some items</td>
+                  <td class="py-2 px-3" style="color: var(--success)">No</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border)">
+                  <td class="py-2 px-3 code" style="color: var(--secondary)">reduce</td>
+                  <td class="py-2 px-3">Single value</td>
+                  <td class="py-2 px-3">Combine into one</td>
+                  <td class="py-2 px-3" style="color: var(--success)">No</td>
+                </tr>
+                <tr>
+                  <td class="py-2 px-3 code" style="color: var(--muted)">forEach</td>
+                  <td class="py-2 px-3">undefined</td>
+                  <td class="py-2 px-3">Do something for each</td>
+                  <td class="py-2 px-3" style="color: var(--error)">Maybe</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ITERATION SECTION -->
+      <section id="iteration" class="content-section">
+        <h2 class="text-2xl font-bold mb-6" style="color: var(--accent)">Iteration Methods</h2>
+
+        <!-- forEach -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span class="code" style="color: var(--muted)">.forEach()</span>
+            <span class="font-semibold">Execute code for each element</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">
+              <strong style="color: var(--fg)">forEach()</strong> executes a function for each element. It doesn't return anything (returns undefined).
+            </p>
+            
+            <div class="code-block mb-4">
+              <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">fruits</span> = [<span class="string">"apple"</span>, <span class="string">"banana"</span>, <span class="string">"cherry"</span>];
+
+<span class="comment">// Log each fruit</span>
+<span class="variable">fruits</span>.<span class="method">forEach</span>(<span class="variable">fruit</span> => {
+  <span class="function">console</span>.<span class="method">log</span>(<span class="variable">fruit</span>);
+});
+<span class="comment">// Output: apple, banana, cherry</span>
+
+<span class="comment">// With index</span>
+<span class="variable">fruits</span>.<span class="method">forEach</span>((<span class="variable">fruit</span>, <span class="variable">index</span>) => {
+  <span class="function">console</span>.<span class="method">log</span>(<span class="variable">index</span> + <span class="string">": "</span> + <span class="variable">fruit</span>);
+});
+<span class="comment">// Output: 0: apple, 1: banana, 2: cherry</span></pre>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg tip-card">
+              <h4 class="font-semibold mb-2">forEach vs map</h4>
+              <p class="text-sm" style="color: var(--muted)">
+                Use <code style="color: var(--accent)">map</code> when you need the transformed values. Use <code style="color: var(--muted)">forEach</code> when you just want to do something (like logging, saving to database).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other iteration methods -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span class="font-semibold">Other Useful Iteration Methods</span>
+          </div>
+          <div class="card-body space-y-4">
+            
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2" style="color: var(--success)">.find() - Get first match</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">15</span>];
+<span class="keyword">const</span> <span class="variable">found</span> = <span class="variable">numbers</span>.<span class="method">find</span>(<span class="variable">n</span> => <span class="variable">n</span> > <span class="number">8</span>);
+<span class="comment">// found = 10 (first number greater than 8)</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2" style="color: var(--tertiary)">.findIndex() - Get index of first match</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">15</span>];
+<span class="keyword">const</span> <span class="variable">index</span> = <span class="variable">numbers</span>.<span class="method">findIndex</span>(<span class="variable">n</span> => <span class="variable">n</span> > <span class="number">8</span>);
+<span class="comment">// index = 2 (index of 10)</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2" style="color: var(--accent)">.some() - Check if ANY element passes test</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>];
+<span class="keyword">const</span> <span class="variable">hasEven</span> = <span class="variable">numbers</span>.<span class="method">some</span>(<span class="variable">n</span> => <span class="variable">n</span> % <span class="number">2</span> === <span class="number">0</span>);
+<span class="comment">// hasEven = true</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2" style="color: var(--secondary)">.every() - Check if ALL elements pass test</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>];
+<span class="keyword">const</span> <span class="variable">allEven</span> = <span class="variable">numbers</span>.<span class="method">every</span>(<span class="variable">n</span> => <span class="variable">n</span> % <span class="number">2</span> === <span class="number">0</span>);
+<span class="comment">// allEven = true</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Practice -->
+        <div class="card">
+          <div class="card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent)">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span class="font-semibold">Practice: Chain Methods</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">You can chain array methods together! Try editing this code:</p>
+            <div class="live-editor">
+              <textarea id="chainEditor">// Given: array of products
+const products = [
+  { name: "Laptop", price: 1000, inStock: true },
+  { name: "Phone", price: 500, inStock: true },
+  { name: "Tablet", price: 300, inStock: false },
+  { name: "Watch", price: 200, inStock: true }
+];
+
+// Challenge: Get names of in-stock products with price > 250
+const result = products
+  .filter(p => p.inStock && p.price > 250)
+  .map(p => p.name);
+
+console.log(result); // Should be ["Laptop", "Phone"]</textarea>
+              <div class="flex gap-2 p-3" style="background: var(--bg-elevated); border-top: 1px solid var(--border)">
+                <button class="btn btn-primary" onclick="runChainCode()">Run Code</button>
+              </div>
+              <div class="live-output" id="chainOutput">
+                <span style="color: var(--muted)">Output will appear here...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DESTRUCTURING SECTION -->
+      <section id="destructuring" class="content-section">
+        <h2 class="text-2xl font-bold mb-6" style="color: var(--accent)">Array Destructuring</h2>
+        
+        <div class="card mb-6">
+          <div class="card-header">
+            <span style="color: var(--accent); font-size: 20px;">=</span>
+            <span class="font-semibold">What is Destructuring?</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4" style="color: var(--muted)">
+              <strong style="color: var(--fg)">Destructuring</strong> lets you unpack values from arrays into distinct variables in one line.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+              <div class="code-block">
+                <div class="code-header text-sm" style="color: var(--error)">Without Destructuring</div>
+                <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">colors</span> = [<span class="string">"red"</span>, <span class="string">"green"</span>, <span class="string">"blue"</span>];
+
+<span class="keyword">const</span> <span class="variable">first</span> = <span class="variable">colors</span>[<span class="number">0</span>];
+<span class="keyword">const</span> <span class="variable">second</span> = <span class="variable">colors</span>[<span class="number">1</span>];
+<span class="keyword">const</span> <span class="variable">third</span> = <span class="variable">colors</span>[<span class="number">2</span>];</pre>
+                </div>
+              </div>
+              <div class="code-block">
+                <div class="code-header text-sm" style="color: var(--success)">With Destructuring</div>
+                <div class="code-content">
+<pre><span class="keyword">const</span> <span class="variable">colors</span> = [<span class="string">"red"</span>, <span class="string">"green"</span>, <span class="string">"blue"</span>];
+
+<span class="keyword">const</span> [<span class="variable">first</span>, <span class="variable">second</span>, <span class="variable">third</span>] = <span class="variable">colors</span>;
+<span class="comment">// first = "red", second = "green", third = "blue"</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destructuring Patterns -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <span class="font-semibold">Common Patterns</span>
+          </div>
+          <div class="card-body space-y-4">
+            
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2">Skip Elements</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">colors</span> = [<span class="string">"red"</span>, <span class="string">"green"</span>, <span class="string">"blue"</span>, <span class="string">"yellow"</span>];
+<span class="keyword">const</span> [<span class="variable">first</span>, , , <span class="variable">fourth</span>] = <span class="variable">colors</span>;
+<span class="comment">// first = "red", fourth = "yellow"</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2">Rest Pattern (collect the rest)</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">numbers</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>];
+<span class="keyword">const</span> [<span class="variable">first</span>, <span class="variable">second</span>, ...<span class="variable">rest</span>] = <span class="variable">numbers</span>;
+<span class="comment">// first = 1, second = 2, rest = [3, 4, 5]</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2">Default Values</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">const</span> <span class="variable">colors</span> = [<span class="string">"red"</span>];
+<span class="keyword">const</span> [<span class="variable">first</span>, <span class="variable">second</span> = <span class="string">"default"</span>] = <span class="variable">colors</span>;
+<span class="comment">// first = "red", second = "default"</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg" style="background: var(--code-bg)">
+              <h4 class="font-semibold mb-2">Swap Variables</h4>
+              <div class="code-block">
+                <div class="code-content text-sm">
+<pre><span class="keyword">let</span> <span class="variable">a</span> = <span class="number">1</span>;
+<span class="keyword">let</span> <span class="variable">b</span> = <span class="number">2</span>;
+
+[<span class="variable">a</span>, <span class="variable">b</span>] = [<span class="variable">b</span>, <span class="variable">a</span>];
+<span class="comment">// a = 2, b = 1  (swapped!)</span></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Demo -->
+        <div class="card">
+          <div class="card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent)">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span class="font-semibold">Try Destructuring</span>
+          </div>
+          <div class="card-body">
+            <div class="live-editor">
+              <textarea id="destructEditor">// Try different destructuring patterns!
+const data = ["Alice", "Bob", "Charlie", "David"];
+
+// Basic destructuring
+const [first, second] = data;
+console.log("First two:", first, second);
+
+// Skip and rest
+const [a, , c, ...others] = data;
+console.log("A and C:", a, c);
+console.log("Others:", others);</textarea>
+              <div class="flex gap-2 p-3" style="background: var(--bg-elevated); border-top: 1px solid var(--border)">
+                <button class="btn btn-primary" onclick="runDestructCode()">Run Code</button>
+              </div>
+              <div class="live-output" id="destructOutput">
+                <span style="color: var(--muted)">Output will appear here...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUIZ SECTION -->
+      <section id="quiz" class="content-section">
+        <h2 class="text-2xl font-bold mb-6" style="color: var(--accent)">Test Your Knowledge</h2>
+        
+        <div id="quizContainer">
+          <!-- Quiz will be rendered here -->
+        </div>
+        
+        <div class="flex gap-4 mt-6">
+          <button class="btn btn-primary" onclick="checkAnswers()">Check Answers</button>
+          <button class="btn btn-secondary" onclick="resetQuiz()">Reset Quiz</button>
+        </div>
+        
+        <div id="quizResult" class="mt-4 p-4 rounded-lg hidden"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ====== Initialize Data First ======
+    let interactiveArrayData = [1, 2, 3];
+    let userProgress = 0;
+    let completedSections = new Set();
+
+    const quizData = [
+      {
+        question: "What does map() return?",
+        options: ["The original array", "A new array", "A single value", "undefined"],
+        correct: 1,
+        explanation: "map() always returns a NEW array with the same length as the original."
+      },
+      {
+        question: "Which method would you use to get only even numbers from [1,2,3,4,5]?",
+        options: ["map()", "filter()", "reduce()", "forEach()"],
+        correct: 1,
+        explanation: "filter() keeps only elements that pass the test condition."
+      },
+      {
+        question: "What is the index of 'cherry' in ['apple', 'banana', 'cherry']?",
+        options: ["1", "2", "3", "undefined"],
+        correct: 1,
+        explanation: "Arrays are 0-indexed: apple=0, banana=1, cherry=2"
+      },
+      {
+        question: "What does [a, b] = [b, a] do?",
+        options: ["Creates new array", "Throws error", "Swaps a and b", "Nothing"],
+        correct: 2,
+        explanation: "This is a common pattern to swap variable values using destructuring!"
+      },
+      {
+        question: "Which method MUTATES the original array?",
+        options: ["map()", "filter()", "push()", "reduce()"],
+        correct: 2,
+        explanation: "push() adds to the original array. map, filter, and reduce return new arrays."
+      },
+      {
+        question: "What does reduce() return?",
+        options: ["An array", "undefined", "A single accumulated value", "boolean"],
+        correct: 2,
+        explanation: "reduce() boils down the array to a single value (sum, max, object, etc.)"
+      },
+      {
+        question: "What's the output of [1,2,3].pop()?",
+        options: ["[2,3]", "3", "[1,2]", "undefined"],
+        correct: 1,
+        explanation: "pop() removes and RETURNS the last element (3). The array becomes [1,2]."
+      },
+      {
+        question: "Which method returns undefined?",
+        options: ["map()", "filter()", "forEach()", "find()"],
+        correct: 2,
+        explanation: "forEach() just executes code for each element, returns undefined."
+      }
+    ];
+
+    // ====== Navigation ======
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const sections = document.querySelectorAll('.content-section');
+
+    navTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetSection = tab.dataset.section;
+        
+        navTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        sections.forEach(s => s.classList.remove('active'));
+        document.getElementById(targetSection).classList.add('active');
+        
+        // Mark as visited
+        if (!completedSections.has(targetSection)) {
+          completedSections.add(targetSection);
+          updateProgress();
+        }
+        
+        // Render quiz when quiz tab is clicked
+        if (targetSection === 'quiz') {
+          renderQuiz();
+        }
+      });
+    });
+
+    // ====== Progress Tracking ======
+    function updateProgress() {
+      const totalSections = 6;
+      userProgress = Math.round((completedSections.size / totalSections) * 100);
+      document.getElementById('progressFill').style.width = userProgress + '%';
+      document.getElementById('progressText').textContent = userProgress + '% Complete';
+    }
+
+    // ====== Interactive Array Demo ======
+    function renderInteractiveArray() {
+      const container = document.getElementById('interactiveArray');
+      container.innerHTML = interactiveArrayData.map((item, i) => 
+        `<div class="array-item"><span class="index">${i}</span>${item}</div>`
+      ).join('');
+    }
+
+    function interactivePush() {
+      const nextNum = interactiveArrayData.length + 1;
+      interactiveArrayData.push(nextNum);
+      renderInteractiveArray();
+      const lastItem = container.querySelector('.array-item:last-child');
+      if (lastItem) {
+        lastItem.classList.add('adding');
+        setTimeout(() => lastItem.classList.remove('adding'), 500);
+      }
+      document.getElementById('methodResult').innerHTML = `<span style="color: var(--success)">push(${nextNum})</span> - Added ${nextNum} to end. New length: ${interactiveArrayData.length}`;
+    }
+
+    function interactivePop() {
+      if (interactiveArrayData.length === 0) {
+        document.getElementById('methodResult').innerHTML = `<span style="color: var(--error)">Array is empty!</span>`;
+        return;
+      }
+      const removed = interactiveArrayData.pop();
+      const container = document.getElementById('interactiveArray');
+      const lastItem = container.querySelector('.array-item:last-child');
+      if (lastItem) {
+        lastItem.classList.add('removing');
+        setTimeout(() => {
+          renderInteractiveArray();
+        }, 450);
+      }
+      document.getElementById('methodResult').innerHTML = `<span style="color: var(--error)">pop()</span> - Removed ${removed}. New array: [${interactiveArrayData}]`;
+    }
+
+    function interactiveUnshift() {
+      const newNum = 0;
+      interactiveArrayData.unshift(newNum);
+      renderInteractiveArray();
+      const firstItem = document.querySelector('#interactiveArray .array-item:first-child');
+      if (firstItem) {
+        firstItem.classList.add('adding');
+        setTimeout(() => firstItem.classList.remove('adding'), 500);
+      }
+      document.getElementById('methodResult').innerHTML = `<span style="color: var(--tertiary)">unshift(0)</span> - Added 0 to start. New length: ${interactiveArrayData.length}`;
+    }
+
+    function interactiveShift() {
+      if (interactiveArrayData.length === 0) {
+        document.getElementById('methodResult').innerHTML = `<span style="color: var(--error)">Array is empty!</span>`;
+        return;
+      }
+      const removed = interactiveArrayData.shift();
+      const container = document.getElementById('interactiveArray');
+      const firstItem = container.querySelector('.array-item:first-child');
+      if (firstItem) {
+        firstItem.classList.add('removing');
+        setTimeout(() => {
+          renderInteractiveArray();
+        }, 450);
+      }
+      document.getElementById('methodResult').innerHTML = `<span style="color: var(--secondary)">shift()</span> - Removed ${removed}. New array: [${interactiveArrayData}]`;
+    }
+
+    function resetInteractiveArray() {
+      interactiveArrayData = [1, 2, 3];
+      renderInteractiveArray();
+      document.getElementById('methodResult').innerHTML = `Array reset to [1, 2, 3]`;
+    }
+
+    // ====== Array Access Demo ======
+    const colors = ["red", "green", "blue"];
+    
+    function demonstrateAccess(index) {
+      const container = document.getElementById('arrayViz');
+      const items = container.querySelectorAll('.array-item');
+      items.forEach(item => item.classList.remove('highlight'));
+      
+      let result;
+      if (index === -1) {
+        result = colors.at(-1);
+        if (items[items.length - 1]) {
+          items[items.length - 1].classList.add('highlight');
+        }
+      } else {
+        result = colors[index];
+        if (items[index]) {
+          items[index].classList.add('highlight');
+        }
+      }
+      
+      document.getElementById('accessResult').innerHTML = 
+        `<span style="color: var(--accent)">Result:</span> "${result}"`;
+    }
+
+    // Array visualization click handlers
+    document.getElementById('arrayViz').addEventListener('click', (e) => {
+      const item = e.target.closest('.array-item');
+      if (item) {
+        document.querySelectorAll('#arrayViz .array-item').forEach(i => i.classList.remove('highlight'));
+        item.classList.add('highlight');
+      }
+    });
+
+    // ====== Live Code Editors ======
+    function runFunctionCode() {
+      const code = document.getElementById('functionEditor').value;
+      const output = document.querySelector('#functions .live-output');
+      runCode(code, output);
+    }
+
+    function resetFunctionEditor() {
+      document.getElementById('functionEditor').value = `// Edit this code and click Run!
+function double(num) {
+  return num * 2;
+}
+
+// Test your function
+console.log(double(5));
+console.log(double(12));
+console.log(double(0.5));`;
+      document.querySelector('#functions .live-output').innerHTML = '<span style="color: var(--muted)">Output will appear here...</span>';
+    }
+
+    function runChainCode() {
+      const code = document.getElementById('chainEditor').value;
+      const output = document.getElementById('chainOutput');
+      runCode(code, output);
+    }
+
+    function runDestructCode() {
+      const code = document.getElementById('destructEditor').value;
+      const output = document.getElementById('destructOutput');
+      runCode(code, output);
+    }
+
+    function runCode(code, outputElement) {
+      let logs = [];
+      const originalLog = console.log;
+      console.log = (...args) => {
+        logs.push(args.map(arg => {
+          if (Array.isArray(arg)) return JSON.stringify(arg);
+          if (typeof arg === 'object') return JSON.stringify(arg);
+          return String(arg);
+        }).join(' '));
+      };
+      
+      try {
+        eval(code);
+        outputElement.innerHTML = logs.length > 0 
+          ? logs.map(l => `<div style="color: var(--accent)">${l}</div>`).join('')
+          : '<span style="color: var(--muted)">No output</span>';
+      } catch (e) {
+        outputElement.innerHTML = `<span style="color: var(--error)">Error: ${e.message}</span>`;
+      }
+      
+      console.log = originalLog;
+    }
+
+    // ====== Quiz ======
+    let selectedAnswers = {};
+
+    function renderQuiz() {
+      const container = document.getElementById('quizContainer');
+      container.innerHTML = quizData.map((q, i) => `
+        <div class="card mb-4" data-question="${i}">
+          <div class="card-header">
+            <span class="font-semibold">Question ${i + 1}</span>
+          </div>
+          <div class="card-body">
+            <p class="mb-4">${q.question}</p>
+            <div class="grid gap-2">
+              ${q.options.map((opt, oi) => `
+                <div class="quiz-option" data-option="${oi}" onclick="selectAnswer(${i}, ${oi})">
+                  ${String.fromCharCode(65 + oi)}. ${opt}
+                </div>
+              `).join('')}
+            </div>
+            <div class="explanation hidden mt-4 p-3 rounded" style="background: var(--code-bg)"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectAnswer(questionIndex, optionIndex) {
+      selectedAnswers[questionIndex] = optionIndex;
+      
+      const questionEl = document.querySelector(`[data-question="${questionIndex}"]`);
+      const options = questionEl.querySelectorAll('.quiz-option');
+      
+      options.forEach((opt, i) => {
+        opt.classList.remove('selected');
+        if (i === optionIndex) {
+          opt.classList.add('selected');
+        }
+      });
+    }
+
+    function checkAnswers() {
+      let correct = 0;
+      
+      quizData.forEach((q, i) => {
+        const questionEl = document.querySelector(`[data-question="${i}"]`);
+        const options = questionEl.querySelectorAll('.quiz-option');
+        const explanation = questionEl.querySelector('.explanation');
+        
+        options.forEach((opt, oi) => {
+          opt.classList.remove('correct', 'incorrect');
+          if (oi === q.correct) {
+            opt.classList.add('correct');
+          } else if (selectedAnswers[i] === oi) {
+            opt.classList.add('incorrect');
+          }
+        });
+        
+        explanation.classList.remove('hidden');
+        explanation.innerHTML = `<span style="color: var(--accent)">Explanation:</span> ${q.explanation}`;
+        
+        if (selectedAnswers[i] === q.correct) {
+          correct++;
+        }
+      });
+      
+      const resultEl = document.getElementById('quizResult');
+      resultEl.classList.remove('hidden');
+      
+      const percentage = Math.round((correct / quizData.length) * 100);
+      let message, bgColor;
+      
+      if (percentage >= 80) {
+        message = "Excellent! You've got this!";
+        bgColor = 'rgba(0, 255, 136, 0.15)';
+      } else if (percentage >= 50) {
+        message = "Good effort! Keep practicing!";
+        bgColor = 'rgba(255, 107, 53, 0.15)';
+      } else {
+        message = "Keep learning! Review the concepts above.";
+        bgColor = 'rgba(239, 68, 68, 0.15)';
+      }
+      
+      resultEl.style.background = bgColor;
+      resultEl.innerHTML = `
+        <h4 class="font-semibold mb-2">Score: ${correct}/${quizData.length} (${percentage}%)</h4>
+        <p>${message}</p>
+      `;
+    }
+
+    function resetQuiz() {
+      selectedAnswers = {};
+      renderQuiz();
+      document.getElementById('quizResult').classList.add('hidden');
+    }
+
+    // ====== Particles ======
+    function createParticles() {
+      const container = document.getElementById('particles');
+      const particleCount = 20;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 5 + 's';
+        particle.style.animation = `float ${5 + Math.random() * 10}s ease-in-out infinite`;
+        container.appendChild(particle);
+      }
+    }
+
+    // Add float animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes float {
+        0%, 100% { transform: translateY(0) translateX(0); opacity: 0.6; }
+        25% { transform: translateY(-20px) translateX(10px); opacity: 0.8; }
+        50% { transform: translateY(-10px) translateX(-10px); opacity: 0.4; }
+        75% { transform: translateY(-30px) translateX(5px); opacity: 0.7; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // ====== Initialize ======
+    document.addEventListener('DOMContentLoaded', () => {
+      createParticles();
+      renderInteractiveArray();
+      
+      // Mark first section as visited
+      completedSections.add('functions');
+      updateProgress();
+    });
+  </script>
+</body>
+</html>

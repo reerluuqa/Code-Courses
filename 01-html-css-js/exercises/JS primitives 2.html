@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Primitives Playground</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg: #080c10;
+            --bg-secondary: #0f1419;
+            --fg: #e6edf3;
+            --muted: #7d8590;
+            --accent: #00ddb3;
+            --accent-glow: rgba(0, 221, 179, 0.3);
+            --warning: #f0883e;
+            --error: #f85149;
+            --success: #3fb950;
+            --card: #161b22;
+            --border: #30363d;
+            --code-bg: #0d1117;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Background Grid */
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(0, 221, 179, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 221, 179, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Floating orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            top: -100px;
+            right: -100px;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--warning);
+            bottom: 20%;
+            left: -100px;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* Navigation */
+        .nav-item {
+            position: relative;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 221, 179, 0.1);
+            border-color: var(--border);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 221, 179, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .nav-item.completed::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+        }
+
+        /* Type Cards */
+        .type-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .type-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 221, 179, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .type-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -20px var(--accent-glow);
+        }
+
+        .type-card:hover::before {
+            opacity: 1;
+        }
+
+        .type-card.expanded {
+            grid-column: 1 / -1;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .code-editor {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--fg);
+            resize: vertical;
+            min-height: 80px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .code-editor:focus {
+            border-color: var(--accent);
+        }
+
+        /* Console output */
+        .console {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            min-height: 60px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+        }
+
+        .console-line:last-child {
+            border-bottom: none;
+        }
+
+        .console-line.error { color: var(--error); }
+        .console-line.success { color: var(--success); }
+        .console-line.info { color: var(--accent); }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--fg);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Quiz options */
+        .quiz-option {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .quiz-option:hover:not(.selected):not(.correct):not(.incorrect) {
+            border-color: var(--accent);
+            background: rgba(0, 221, 179, 0.05);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--accent);
+            background: rgba(0, 221, 179, 0.1);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success);
+            background: rgba(63, 185, 80, 0.1);
+        }
+
+        .quiz-option.incorrect {
+            border-color: var(--error);
+            background: rgba(248, 81, 73, 0.1);
+        }
+
+        /* Progress bar */
+        .progress-track {
+            background: var(--border);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #00ffcc);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Badge */
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Section transitions */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Stagger animations */
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: staggerIn 0.5s ease forwards;
+        }
+
+        @keyframes staggerIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus states */
+        *:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Exercise cards */
+        .exercise-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .exercise-card.solved {
+            border-color: var(--success);
+            background: rgba(63, 185, 80, 0.05);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-grid">
+    <!-- Floating orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- Main container -->
+    <div class="relative z-10 max-w-6xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+                JavaScript <span style="color: var(--accent)">Primitives</span>
+            </h1>
+            <p class="text-lg" style="color: var(--muted)">Master the 7 building blocks of JavaScript data</p>
+            
+            <!-- Overall Progress -->
+            <div class="mt-8 max-w-md mx-auto">
+                <div class="flex justify-between text-sm mb-2" style="color: var(--muted)">
+                    <span>Your Progress</span>
+                    <span id="overallProgress">0%</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="overallProgressBar" style="width: 0%"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="flex flex-wrap justify-center gap-2 mb-12" role="tablist">
+            <button class="nav-item active" data-section="learn" role="tab" aria-selected="true">
+                <span class="flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    Learn
+                </span>
+            </button>
+            <button class="nav-item" data-section="examples" role="tab" aria-selected="false">
+                <span class="flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="16 18 22 12 16 6"></polyline>
+                        <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
+                    Examples
+                </span>
+            </button>
+            <button class="nav-item" data-section="exercises" role="tab" aria-selected="false">
+                <span class="flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                    Exercises
+                </span>
+            </button>
+            <button class="nav-item" data-section="quiz" role="tab" aria-selected="false">
+                <span class="flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Quiz
+                </span>
+            </button>
+        </nav>
+
+        <!-- LEARN SECTION -->
+        <section id="learn" class="section active" role="tabpanel">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">What are Primitives?</h2>
+                <p class="text-lg" style="color: var(--muted); max-width: 700px;">
+                    Primitives are the most basic data types in JavaScript. They are <strong style="color: var(--fg)">immutable</strong> 
+                    (cannot be changed once created) and are stored directly in memory. JavaScript has exactly <strong style="color: var(--accent)">7 primitive types</strong>.
+                </p>
+            </div>
+
+            <!-- Type Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8" id="typeCardsGrid">
+                <!-- Cards will be rendered by JS -->
+            </div>
+
+            <!-- Expanded Detail View -->
+            <div id="typeDetailView" class="hidden mt-8 p-6 rounded-2xl" style="background: var(--card); border: 1px solid var(--border);">
+                <!-- Detail content rendered by JS -->
+            </div>
+        </section>
+
+        <!-- EXAMPLES SECTION -->
+        <section id="examples" class="section" role="tabpanel">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">Real-World Examples</h2>
+                <p class="text-lg" style="color: var(--muted)">Select a primitive type to see practical examples you might encounter.</p>
+            </div>
+
+            <!-- Type selector -->
+            <div class="flex flex-wrap gap-2 mb-8" id="exampleTypeSelector">
+                <!-- Rendered by JS -->
+            </div>
+
+            <!-- Examples content -->
+            <div id="examplesContent" class="space-y-6">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+
+        <!-- EXERCISES SECTION -->
+        <section id="exercises" class="section" role="tabpanel">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">Practice Exercises</h2>
+                <p class="text-lg" style="color: var(--muted)">Write code to solve each challenge. Run your code to check if it works!</p>
+            </div>
+
+            <div id="exercisesList" class="space-y-6">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+
+        <!-- QUIZ SECTION -->
+        <section id="quiz" class="section" role="tabpanel">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4">Test Your Knowledge</h2>
+                <p class="text-lg" style="color: var(--muted)">Answer questions about each primitive type to complete your learning.</p>
+            </div>
+
+            <!-- Quiz Type Selector -->
+            <div class="flex flex-wrap gap-2 mb-8" id="quizTypeSelector">
+                <!-- Rendered by JS -->
+            </div>
+
+            <!-- Quiz Content -->
+            <div id="quizContent">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // =============================================
+        // DATA DEFINITIONS
+        // =============================================
+        
+        const primitiveTypes = [
+            {
+                name: 'String',
+                color: '#58a6ff',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>`,
+                description: 'Text data enclosed in quotes',
+                detail: 'Strings represent textual data. They can be created with single quotes, double quotes, or backticks (template literals). Strings are immutable - methods like replace() return NEW strings.',
+                examples: [
+                    { code: `'Hello, World!'`, desc: 'Single quotes' },
+                    { code: `"JavaScript is fun"`, desc: 'Double quotes' },
+                    { code: '`Hello, ${name}!`', desc: 'Template literal with interpolation' },
+                    { code: `'Multi-line\\ntext here'`, desc: 'String with newline escape' }
+                ],
+                realWorld: [
+                    { title: 'User Names', code: "const firstName = 'Alice';\nconst lastName = 'Johnson';\nconst fullName = `${firstName} ${lastName}`;", desc: 'Storing and combining user names' },
+                    { title: 'Email Addresses', code: "const email = 'user@example.com';\nconst isValid = email.includes('@');", desc: 'Validating email format' },
+                    { title: 'URLs & Paths', code: "const apiUrl = 'https://api.example.com/users';\nconst endpoint = `/users/${userId}`;", desc: 'Building API endpoints' }
+                ],
+                exercise: {
+                    prompt: 'Create a variable called greeting that contains "Welcome to JavaScript!"',
+                    hint: 'Use either single or double quotes',
+                    validate: (code) => {
+                        try {
+                            eval(code);
+                            return typeof greeting === 'string' && greeting === 'Welcome to JavaScript!';
+                        } catch { return false; }
+                    },
+                    solution: 'const greeting = "Welcome to JavaScript!";'
+                },
+                quiz: [
+                    {
+                        question: 'Which of these is NOT a valid way to create a string?',
+                        options: ['\'hello\'', '"hello"', '{hello}', '`hello`'],
+                        correct: 2,
+                        explanation: 'Curly braces {} create an object, not a string. Strings must use quotes.'
+                    },
+                    {
+                        question: 'What is the result of "hello".length?',
+                        options: ['4', '5', '6', 'undefined'],
+                        correct: 1,
+                        explanation: 'Strings have a length property that returns the number of characters.'
+                    }
+                ]
+            },
+            {
+                name: 'Number',
+                color: '#f0883e',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>`,
+                description: 'Integers and decimals (64-bit floats)',
+                detail: 'Numbers in JavaScript are all 64-bit floating-point values. This means integers and decimals are the same type. Special values include Infinity, -Infinity, and NaN (Not a Number).',
+                examples: [
+                    { code: `42`, desc: 'Integer' },
+                    { code: `3.14159`, desc: 'Decimal (float)' },
+                    { code: `-273.15`, desc: 'Negative number' },
+                    { code: `2.998e8`, desc: 'Scientific notation (299,800,000)' },
+                    { code: `Infinity`, desc: 'Positive infinity' },
+                    { code: `NaN`, desc: 'Not a Number (result of invalid math)' }
+                ],
+                realWorld: [
+                    { title: 'Prices & Money', code: "const price = 29.99;\nconst tax = price * 0.08;\nconst total = price + tax;", desc: 'Calculating totals with tax' },
+                    { title: 'Temperature', code: "const celsius = 25;\nconst fahrenheit = (celsius * 9/5) + 32;", desc: 'Temperature conversion' },
+                    { title: 'Game Scores', code: "let score = 0;\nscore += 100;  // Found treasure!\nscore -= 25;   // Hit by enemy", desc: 'Tracking game progress' }
+                ],
+                exercise: {
+                    prompt: 'Create a variable called temperature and set it to 72.5',
+                    hint: 'Numbers don\'t need quotes',
+                    validate: (code) => {
+                        try {
+                            eval(code);
+                            return typeof temperature === 'number' && temperature === 72.5;
+                        } catch { return false; }
+                    },
+                    solution: 'const temperature = 72.5;'
+                },
+                quiz: [
+                    {
+                        question: 'What is typeof 42?',
+                        options: ['"integer"', '"number"', '"float"', '"int"'],
+                        correct: 1,
+                        explanation: 'JavaScript doesn\'t distinguish between integers and floats - both are "number".'
+                    },
+                    {
+                        question: 'What is Number("hello")?',
+                        options: ['0', 'null', 'NaN', 'undefined'],
+                        correct: 2,
+                        explanation: 'NaN (Not a Number) is returned when a string cannot be converted to a number.'
+                    }
+                ]
+            },
+            {
+                name: 'Boolean',
+                color: '#3fb950',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+                description: 'true or false only',
+                detail: 'Booleans represent logical values: true or false. They\'re essential for conditionals, loops, and feature flags. Many operations "return" booleans like comparisons.',
+                examples: [
+                    { code: `true`, desc: 'Yes, on, 1, correct' },
+                    { code: `false`, desc: 'No, off, 0, incorrect' },
+                    { code: `5 > 3`, desc: 'Evaluates to true' },
+                    { code: `10 === "10"`, desc: 'Evaluates to false (different types)' }
+                ],
+                realWorld: [
+                    { title: 'Feature Flags', code: "const darkModeEnabled = true;\nconst betaFeatures = false;", desc: 'Controlling app features' },
+                    { title: 'Form Validation', code: "const isEmailValid = email.includes('@');\nconst isAdult = age >= 18;", desc: 'Checking user input' },
+                    { title: 'Game States', code: "const isLoggedIn = true;\nconst hasPremium = false;\nconst canAccessLevel = isLoggedIn && hasPremium;", desc: 'Permission checks' }
+                ],
+                exercise: {
+                    prompt: 'Create a variable called isRaining and set it to false',
+                    hint: 'Booleans are true or false (no quotes)',
+                    validate: (code) => {
+                        try {
+                            eval(code);
+                            return typeof isRaining === 'boolean' && isRaining === false;
+                        } catch { return false; }
+                    },
+                    solution: 'const isRaining = false;'
+                },
+                quiz: [
+                    {
+                        question: 'What is typeof true?',
+                        options: ['"true"', '"boolean"', '"bool"', '"1"'],
+                        correct: 1,
+                        explanation: 'The boolean type returns "boolean" when using typeof.'
+                    },
+                    {
+                        question: 'Which comparison returns true?',
+                        options: ['"5" === 5', 'null === undefined', 'true === 1', 'false === false'],
+                        correct: 3,
+                        explanation: '=== checks both value AND type. false === false is the only exact match.'
+                    }
+                ]
+            },
+            {
+                name: 'Undefined',
+                color: '#8b949e',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+                description: 'Variable declared but not assigned',
+                detail: 'Undefined means a variable has been declared but hasn\'t been given a value yet. It\'s JavaScript\'s way of saying "I don\'t know yet." Functions without return statements also return undefined.',
+                examples: [
+                    { code: `let x;`, desc: 'x is undefined (no value assigned)' },
+                    { code: `typeof notDeclared`, desc: 'Returns "undefined" even for non-existent vars' },
+                    { code: `const obj = {}; obj.prop`, desc: 'Accessing missing property returns undefined' }
+                ],
+                realWorld: [
+                    { title: 'Uninitialized Variables', code: "let userData;\nconsole.log(userData); // undefined\nuserData = fetchUser();", desc: 'Variables before assignment' },
+                    { title: 'Optional Parameters', code: "function greet(name) {\n  // name is undefined if not passed\n  return `Hello, ${name || 'Guest'}!`;\n}", desc: 'Handling missing arguments' },
+                    { title: 'Missing Properties', code: "const user = { name: 'Alice' };\nif (user.email === undefined) {\n  console.log('No email provided');\n}", desc: 'Checking for missing data' }
+                ],
+                exercise: {
+                    prompt: 'Create a variable called notReady without assigning any value',
+                    hint: 'Just declare the variable, don\'t use =',
+                    validate: (code) => {
+                        try {
+                            eval(code);
+                            return typeof notReady === 'undefined';
+                        } catch { return false; }
+                    },
+                    solution: 'let notReady;'
+                },
+                quiz: [
+                    {
+                        question: 'What is typeof undefined?',
+                        options: ['"undefined"', '"null"', '"void"', '"nothing"'],
+                        correct: 0,
+                        explanation: 'undefined is its own type in JavaScript.'
+                    },
+                    {
+                        question: 'What does a function return if it has no return statement?',
+                        options: ['null', '0', 'undefined', 'Error'],
+                        correct: 2,
+                        explanation: 'Functions without explicit returns always return undefined.'
+                    }
+                ]
+            },
+            {
+                name: 'Null',
+                color: '#a371f7',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+                description: 'Intentional absence of value',
+                detail: 'Null represents the intentional absence of any value. It\'s different from undefined - undefined means "doesn\'t have a value yet" while null means "specifically set to nothing". Note: typeof null === "object" is a famous JS bug!',
+                examples: [
+                    { code: `let data = null;`, desc: 'Explicitly set to nothing' },
+                    { code: `typeof null`, desc: 'Returns "object" (historic bug!)' },
+                    { code: `null === undefined`, desc: 'false (different types)' },
+                    { code: `null == undefined`, desc: 'true (loose equality)' }
+                ],
+                realWorld: [
+                    { title: 'Resetting Values', code: "let currentUser = { name: 'Alice' };\ncurrentUser = null; // User logged out", desc: 'Clearing object references' },
+                    { title: 'API Responses', code: "const response = {\n  data: null, // No data yet\n  loading: true\n};", desc: 'Representing empty state' },
+                    { title: 'Default Parameters', code: "function search(query = null) {\n  if (query === null) {\n    return 'No search term';\n  }\n}", desc: 'Distinguishing null from undefined' }
+                ],
+                exercise: {
+                    prompt: 'Create a variable called empty and explicitly set it to represent "no value"',
+                    hint: 'Use the keyword that means "intentionally nothing"',
+                    validate: (code) => {
+                        try {
+                            eval(code);
+                            return empty === null;
+                        } catch { return false; }
+                    },
+                    solution: 'const empty = null;'
+                },
+                quiz: [
+                    {
+                        question: 'What is typeof null?',
+                        options: ['"null"', '"undefined"', '"object"', '"void"'],
+                        correct: 2,
+                        explanation: 'This is a famous JavaScript bug from the early days that can\'t be fixed for compatibility.'
+                    },
+                    {
+                        question: 'What is null === undefined?',
+                        options: ['true', 'false', 'TypeError', 'null'],
+                        correct: 1,
+                        explanation: '=== checks both type AND value. null and undefined are different types.'
+                    }
+                ]
+            },
+            {
+                name: 'Symbol',
+                color: '#f778ba',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+                description: 'Unique, immutable identifier',
+                detail: 'Symbols are unique identifiers. Every Symbol() call creates a completely unique value, even with the same description. They\'re often used as object property keys to avoid naming collisions.',
+                examples: [
+                    { code: `Symbol()`, desc: 'Creates a unique symbol' },
+                    { code: `Symbol('id')`, desc: 'Symbol with description (for debugging)' },
+                    { code: `Symbol('id') === Symbol('id')`, desc: 'false! Each is unique' },
+                    { code: `Symbol.for('app.id')`, desc: 'Global symbol registry' }
+                ],
+                realWorld: [
+                    { title: 'Private Properties', code: "const secret = Symbol('secret');\nconst obj = {\n  name: 'Public',\n  [secret]: 'Private data'\n};", desc: 'Hidden object properties' },
+                    { title: 'Preventing Collisions', code: "const lib1Key = Symbol('cache');\nconst lib2Key = Symbol('cache');\n// Different symbols, no collision!", desc: 'Library development' },
+                    { title: 'Built-in Symbols', code: "const iterable = {\n  [Symbol.iterator]() {\n    // Custom iteration logic\n  }\n};", desc: 'Implementing protocols' }
+                ],
+                exercise: {
+                    prompt: 'Create a Symbol called myKey with the description "identifier"',
+                    hint: 'Use Symbol() with a string inside',
+                    validate: (code) => {
+                        try {
+                            eval(code);
+                            return typeof myKey === 'symbol' && myKey.description === 'identifier';
+                        } catch { return false; }
+                    },
+                    solution: 'const myKey = Symbol("identifier");'
+                },
+                quiz: [
+                    {
+                        question: 'What is Symbol("a") === Symbol("a")?',
+                        options: ['true', 'false', 'Error', 'undefined'],
+                        correct: 1,
+                        explanation: 'Each Symbol() call creates a completely unique value, regardless of description.'
+                    },
+                    {
+                        question: 'What is typeof Symbol()?',
+                        options: ['"string"', '"object"', '"symbol"', '"unique"'],
+                        correct: 2,
+                        explanation: 'Symbol is its own primitive type in JavaScript (ES6+).'
+                    }
+                ]
+            },
+            {
+                name: 'BigInt',
+                color: '#79c0ff',
+                icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+                description: 'Arbitrarily large integers',
+                detail: 'BigInt can represent integers of arbitrary size, beyond the safe limit of regular Numbers (2^53 - 1). Created by appending "n" to a number or using BigInt(). Cannot mix with regular Numbers in operations.',
+                examples: [
+                    { code: `9007199254740991n`, desc: 'BigInt literal (note the n)' },
+                    { code: `BigInt(123)`, desc: 'BigInt constructor' },
+                    { code: `1000000000000000000000n`, desc: 'Number too big for regular Number!' },
+                    { code: `10n + 20n`, desc: 'BigInt arithmetic (returns 30n)' }
+                ],
+                realWorld: [
+                    { title: 'Database IDs', code: "const userId = 9007199254740993n;\n// Twitter/X snowflake IDs\nconst tweetId = 1600000000000000000n;", desc: 'Large identifier handling' },
+                    { title: 'Cryptography', code: "// Encryption often uses huge numbers\nconst modulus = \n  115792089237316195423570985008687907853269984665640564039457584007913129639747n;", desc: 'Cryptographic operations' },
+                    { title: 'Financial Calculations', code: "const cents = 9999999999999999n;\nconst dollars = cents / 100n;", desc: 'Precise monetary math' }
+                ],
+                exercise: {
+                    prompt: 'Create a BigInt called hugeNumber with the value 9007199254740993',
+                    hint: 'Add "n" at the end of the number or use BigInt()',
+                    validate: (code) => {
+                        try {
+                            eval(code);
+                            return typeof hugeNumber === 'bigint' && hugeNumber === 9007199254740993n;
+                        } catch { return false; }
+                    },
+                    solution: 'const hugeNumber = 9007199254740993n;'
+                },
+                quiz: [
+                    {
+                        question: 'What happens if you try: 5n + 10?',
+                        options: ['15n', '15', 'TypeError', 'NaN'],
+                        correct: 2,
+                        explanation: 'Cannot mix BigInt and Number in operations. Must convert one first.'
+                    },
+                    {
+                        question: 'Why use BigInt over Number?',
+                        options: ['Faster performance', 'Handles larger integers safely', 'More decimal places', 'Better memory usage'],
+                        correct: 1,
+                        explanation: 'Numbers lose precision above 2^53-1. BigInt handles integers of any size.'
+                    }
+                ]
+            }
+        ];
+
+        // =============================================
+        // STATE MANAGEMENT
+        // =============================================
+        
+        const state = {
+            currentSection: 'learn',
+            selectedType: primitiveTypes[0],
+            expandedType: null,
+            completedTypes: new Set(),
+            quizProgress: {},
+            exerciseProgress: {},
+            currentQuizIndex: 0
+        };
+
+        // =============================================
+        // DOM REFERENCES (initialized after DOMContentLoaded)
+        // =============================================
+        
+        let domRefs = {};
+
+        // =============================================
+        // UTILITY FUNCTIONS
+        // =============================================
+        
+        function updateProgress() {
+            let total = primitiveTypes.length * 3; // learn, exercise, quiz per type
+            let completed = 0;
+            
+            primitiveTypes.forEach(type => {
+                if (state.completedTypes.has(type.name)) completed++;
+                if (state.exerciseProgress[type.name]) completed++;
+                if (state.quizProgress[type.name]) completed++;
+            });
+            
+            const percent = Math.round((completed / total) * 100);
+            const progressBar = document.getElementById('overallProgressBar');
+            const progressText = document.getElementById('overallProgress');
+            
+            if (progressBar) progressBar.style.width = percent + '%';
+            if (progressText) progressText.textContent = percent + '%';
+            
+            return percent;
+        }
+
+        function markTypeLearned(typeName) {
+            state.completedTypes.add(typeName);
+            updateProgress();
+            renderTypeCards();
+        }
+
+        // =============================================
+        // RENDER FUNCTIONS
+        // =============================================
+        
+        function renderTypeCards() {
+            const grid = document.getElementById('typeCardsGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = primitiveTypes.map((type, index) => `
+                <div class="type-card stagger-item ${state.expandedType === type.name ? 'expanded' : ''}" 
+                     data-type="${type.name}"
+                     style="animation-delay: ${index * 0.1}s"
+                     tabindex="0"
+                     role="button"
+                     aria-expanded="${state.expandedType === type.name}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="p-3 rounded-xl" style="background: ${type.color}20; color: ${type.color}">
+                            ${type.icon}
+                        </div>
+                        ${state.completedTypes.has(type.name) ? `
+                            <span class="type-badge" style="background: rgba(63, 185, 80, 0.2); color: var(--success)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                Learned
+                            </span>
+                        ` : ''}
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">${type.name}</h3>
+                    <p style="color: var(--muted)" class="text-sm">${type.description}</p>
+                    ${state.expandedType === type.name ? `
+                        <div class="mt-6 pt-6" style="border-top: 1px solid var(--border)">
+                            <p class="mb-4">${type.detail}</p>
+                            <div class="code-block mb-4">
+                                <div class="font-mono text-sm space-y-2">
+                                    ${type.examples.slice(0, 3).map(ex => `
+                                        <div>
+                                            <span style="color: var(--accent)">${ex.code}</span>
+                                            <span style="color: var(--muted)"> // ${ex.desc}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="event.stopPropagation(); markTypeLearned('${type.name}')">
+                                Mark as Learned
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            // Add click handlers
+            grid.querySelectorAll('.type-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const typeName = card.dataset.type;
+                    state.expandedType = state.expandedType === typeName ? null : typeName;
+                    renderTypeCards();
+                });
+                
+                card.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        card.click();
+                    }
+                });
+            });
+        }
+
+        function renderExampleTypeSelector() {
+            const container = document.getElementById('exampleTypeSelector');
+            if (!container) return;
+            
+            container.innerHTML = primitiveTypes.map(type => `
+                <button class="nav-item ${state.selectedType.name === type.name ? 'active' : ''}"
+                        data-type="${type.name}">
+                    <span style="color: ${type.color}">${type.name}</span>
+                </button>
+            `).join('');
+
+            container.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.selectedType = primitiveTypes.find(t => t.name === btn.dataset.type);
+                    renderExampleTypeSelector();
+                    renderExamplesContent();
+                });
+            });
+        }
+
+        function renderExamplesContent() {
+            const container = document.getElementById('examplesContent');
+            if (!container) return;
+            
+            const type = state.selectedType;
+            
+            container.innerHTML = `
+                <div class="stagger-item" style="animation-delay: 0.1s">
+                    <h3 class="text-xl font-bold mb-4" style="color: ${type.color}">
+                        ${type.name} Examples
+                    </h3>
+                </div>
+                
+                <div class="space-y-4">
+                    ${type.realWorld.map((example, index) => `
+                        <div class="exercise-card stagger-item" style="animation-delay: ${0.15 + index * 0.1}s">
+                            <h4 class="font-bold mb-2">${example.title}</h4>
+                            <p class="text-sm mb-4" style="color: var(--muted)">${example.desc}</p>
+                            <div class="code-block">
+                                <pre class="font-mono text-sm" style="color: var(--fg)">${example.code}</pre>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="mt-8 p-6 rounded-2xl stagger-item" style="background: var(--card); border: 1px solid var(--border); animation-delay: 0.4s">
+                    <h4 class="font-bold mb-4">Quick Syntax Reference</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${type.examples.map(ex => `
+                            <div class="code-block">
+                                <code class="font-mono text-sm" style="color: var(--accent)">${ex.code}</code>
+                                <p class="text-xs mt-2" style="color: var(--muted)">${ex.desc}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderExercises() {
+            const container = document.getElementById('exercisesList');
+            if (!container) return;
+            
+            container.innerHTML = primitiveTypes.map((type, typeIndex) => `
+                <div class="exercise-card stagger-item ${state.exerciseProgress[type.name] ? 'solved' : ''}"
+                     style="animation-delay: ${typeIndex * 0.1}s"
+                     data-type="${type.name}">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="p-2 rounded-lg" style="background: ${type.color}20; color: ${type.color}">
+                                ${type.icon}
+                            </span>
+                            <h3 class="font-bold">${type.name} Exercise</h3>
+                        </div>
+                        ${state.exerciseProgress[type.name] ? `
+                            <span class="type-badge" style="background: rgba(63, 185, 80, 0.2); color: var(--success)">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                Solved
+                            </span>
+                        ` : ''}
+                    </div>
+                    
+                    <p class="mb-2"><strong>Challenge:</strong> ${type.exercise.prompt}</p>
+                    <p class="text-sm mb-4" style="color: var(--muted)"><strong>Hint:</strong> ${type.exercise.hint}</p>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2" style="color: var(--muted)">Your Code:</label>
+                        <textarea class="code-editor" 
+                                  id="exercise-${type.name}"
+                                  placeholder="Write your code here..."
+                                  spellcheck="false"
+                                  ${state.exerciseProgress[type.name] ? 'disabled' : ''}>${state.exerciseProgress[type.name] || ''}</textarea>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 items-center">
+                        <button class="btn btn-primary" onclick="runExercise('${type.name}')">
+                            Run Code
+                        </button>
+                        <button class="btn btn-secondary" onclick="showSolution('${type.name}')">
+                            Show Solution
+                        </button>
+                    </div>
+                    
+                    <div class="console mt-4 hidden" id="console-${type.name}">
+                        <!-- Console output -->
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderQuizTypeSelector() {
+            const container = document.getElementById('quizTypeSelector');
+            if (!container) return;
+            
+            container.innerHTML = primitiveTypes.map(type => `
+                <button class="nav-item ${state.selectedType.name === type.name ? 'active' : ''} ${state.quizProgress[type.name] ? 'completed' : ''}"
+                        data-type="${type.name}">
+                    <span style="color: ${type.color}">${type.name}</span>
+                </button>
+            `).join('');
+
+            container.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.selectedType = primitiveTypes.find(t => t.name === btn.dataset.type);
+                    state.currentQuizIndex = 0;
+                    renderQuizTypeSelector();
+                    renderQuizContent();
+                });
+            });
+        }
+
+        function renderQuizContent() {
+            const container = document.getElementById('quizContent');
+            if (!container) return;
+            
+            const type = state.selectedType;
+            const quiz = type.quiz;
+            const currentQuestion = quiz[state.currentQuizIndex];
+            
+            if (state.quizProgress[type.name]) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="inline-flex p-4 rounded-full mb-4" style="background: rgba(63, 185, 80, 0.2)">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-2">${type.name} Quiz Complete!</h3>
+                        <p style="color: var(--muted)">You've mastered this topic. Try another type!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="p-6 rounded-2xl stagger-item" style="background: var(--card); border: 1px solid var(--border)">
+                    <div class="flex items-center justify-between mb-6">
+                        <span class="type-badge" style="background: ${type.color}20; color: ${type.color}">
+                            Question ${state.currentQuizIndex + 1} of ${quiz.length}
+                        </span>
+                        <span style="color: var(--muted)">${type.name}</span>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold mb-6">${currentQuestion.question}</h3>
+                    
+                    <div class="space-y-3 mb-6" id="quizOptions">
+                        ${currentQuestion.options.map((option, index) => `
+                            <button class="quiz-option w-full" data-index="${index}">
+                                <span class="font-mono">${option}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="hidden p-4 rounded-xl mb-6" id="quizFeedback" style="background: var(--code-bg)">
+                        <p id="quizExplanation"></p>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <button class="btn btn-secondary" onclick="previousQuizQuestion()" ${state.currentQuizIndex === 0 ? 'disabled style="opacity:0.5"' : ''}>
+                            Previous
+                        </button>
+                        <button class="btn btn-primary hidden" id="nextQuizBtn" onclick="nextQuizQuestion()">
+                            ${state.currentQuizIndex === quiz.length - 1 ? 'Complete Quiz' : 'Next Question'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Add option click handlers
+            container.querySelectorAll('.quiz-option').forEach(btn => {
+                btn.addEventListener('click', () => selectQuizOption(parseInt(btn.dataset.index)));
+            });
+        }
+
+             // =============================================
+        // ADDITIONAL FUNCTIONS AND INITIALIZATION
+        // =============================================
+        
+        // ---------- Exercise Functions ----------
+        window.runExercise = function(typeName) {
+            const type = primitiveTypes.find(t => t.name === typeName);
+            if (!type) return;
+
+            const textarea = document.getElementById(`exercise-${typeName}`);
+            const consoleDiv = document.getElementById(`console-${typeName}`);
+            const code = textarea.value;
+
+            // Clear previous console and show
+            consoleDiv.innerHTML = '';
+            consoleDiv.classList.remove('hidden');
+
+            try {
+                const isValid = type.exercise.validate(code);
+                if (isValid) {
+                    // Mark as solved
+                    state.exerciseProgress[typeName] = code;
+                    // Update UI
+                    const card = document.querySelector(`.exercise-card[data-type="${typeName}"]`);
+                    if (card) {
+                        card.classList.add('solved');
+                        const badge = card.querySelector('.type-badge');
+                        if (!badge) {
+                            // Add solved badge if not present
+                            const badgeContainer = card.querySelector('.flex.items-start.justify-between .flex.items-center.gap-3');
+                            if (badgeContainer) {
+                                const newBadge = document.createElement('span');
+                                newBadge.className = 'type-badge';
+                                newBadge.style.background = 'rgba(63, 185, 80, 0.2)';
+                                newBadge.style.color = 'var(--success)';
+                                newBadge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Solved`;
+                                badgeContainer.parentElement.appendChild(newBadge);
+                            }
+                        }
+                    }
+                    textarea.disabled = true;
+                    // Show success in console
+                    consoleDiv.innerHTML = `<div class="console-line success">✓ Correct! Well done.</div>`;
+                    updateProgress();
+                } else {
+                    consoleDiv.innerHTML = `<div class="console-line error">✗ Not quite right. Try again!</div>`;
+                }
+            } catch (e) {
+                consoleDiv.innerHTML = `<div class="console-line error">Error: ${e.message}</div>`;
+            }
+        };
+
+        window.showSolution = function(typeName) {
+            const type = primitiveTypes.find(t => t.name === typeName);
+            if (!type) return;
+            const textarea = document.getElementById(`exercise-${typeName}`);
+            if (textarea) {
+                textarea.value = type.exercise.solution;
+            }
+        };
+
+        // ---------- Quiz Functions ----------
+        let selectedOptionIndex = -1; // tracks current question selected option
+
+        window.selectQuizOption = function(index) {
+            const type = state.selectedType;
+            const quiz = type.quiz;
+            const currentQuestion = quiz[state.currentQuizIndex];
+            const options = document.querySelectorAll('#quizOptions .quiz-option');
+            const feedbackDiv = document.getElementById('quizFeedback');
+            const explanationP = document.getElementById('quizExplanation');
+            const nextBtn = document.getElementById('nextQuizBtn');
+
+            // Remove previous selection classes
+            options.forEach(opt => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                opt.disabled = false;
+            });
+
+            // Mark selected
+            options[index].classList.add('selected');
+            selectedOptionIndex = index;
+
+            // Check correctness
+            const isCorrect = (index === currentQuestion.correct);
+            if (isCorrect) {
+                options[index].classList.add('correct');
+            } else {
+                options[index].classList.add('incorrect');
+                // Also highlight the correct one for learning
+                options[currentQuestion.correct].classList.add('correct');
+            }
+
+            // Show explanation
+            explanationP.textContent = currentQuestion.explanation;
+            feedbackDiv.classList.remove('hidden');
+
+            // Disable all options after selection
+            options.forEach(opt => opt.disabled = true);
+
+            // Show next button
+            nextBtn.classList.remove('hidden');
+        };
+
+        window.previousQuizQuestion = function() {
+            if (state.currentQuizIndex > 0) {
+                state.currentQuizIndex--;
+                selectedOptionIndex = -1;
+                renderQuizContent();
+            }
+        };
+
+        window.nextQuizQuestion = function() {
+            const type = state.selectedType;
+            const quiz = type.quiz;
+            if (state.currentQuizIndex < quiz.length - 1) {
+                // Move to next question
+                state.currentQuizIndex++;
+                selectedOptionIndex = -1;
+                renderQuizContent();
+            } else {
+                // Completed all questions
+                state.quizProgress[type.name] = true;
+                updateProgress();
+
+                // Show completion screen
+                renderQuizContent();
+                renderQuizTypeSelector();
+            }
+        };
+
+        // ---------- Initialization ----------
+        document.addEventListener('DOMContentLoaded', () => {
+            // Extend state with any missing properties (if needed)
+            if (!state.quizProgress) state.quizProgress = {};
+            if (!state.exerciseProgress) state.exerciseProgress = {};
+
+            // Initial renders
+            renderTypeCards();
+            renderExampleTypeSelector();
+            renderExamplesContent();
+            renderExercises();
+            renderQuizTypeSelector();
+            renderQuizContent();
+            updateProgress();
+
+            // Navigation
+            const navButtons = document.querySelectorAll('.nav-item[data-section]');
+            const sections = document.querySelectorAll('.section');
+
+            navButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const sectionId = btn.dataset.section;
+
+                    // Update active button
+                    navButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // Update active section
+                    sections.forEach(s => s.classList.remove('active'));
+                    document.getElementById(sectionId).classList.add('active');
+
+                    state.currentSection = sectionId;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
