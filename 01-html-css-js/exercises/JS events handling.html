@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Events Mastery 🎯</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg: #0a0e1a;
+        --surface: #111827;
+        --surface2: #1a2234;
+        --border: #2a3a5c;
+        --text: #e2e8f0;
+        --muted: #8892a8;
+        --accent: #6366f1;
+        --accent2: #22d3ee;
+        --green: #10b981;
+        --red: #ef4444;
+        --orange: #f59e0b;
+        --pink: #ec4899;
+        --glow: 0 0 20px rgba(99,102,241,0.3);
+        --glow-green: 0 0 20px rgba(16,185,129,0.3);
+        --glow-red: 0 0 20px rgba(239,68,68,0.3);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.7;
+        overflow-x: hidden;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* ===== HEADER ===== */
+    .hero {
+        text-align: center;
+        padding: 60px 20px 40px;
+        background: linear-gradient(180deg, rgba(99,102,241,0.1) 0%, transparent 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 50% 50%, rgba(99,102,241,0.05) 0%, transparent 50%);
+        animation: pulse-bg 8s ease-in-out infinite;
+    }
+    @keyframes pulse-bg {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 1; }
+    }
+    .hero h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 800;
+        background: linear-gradient(135deg, #6366f1, #22d3ee, #10b981);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+    }
+    .hero p { color: var(--muted); font-size: 1.1rem; margin-top: 10px; position: relative; }
+
+    .progress-bar-container {
+        max-width: 600px;
+        margin: 30px auto 0;
+        position: relative;
+    }
+    .progress-bar-bg {
+        height: 8px;
+        background: var(--surface);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+    .progress-text {
+        font-size: 0.85rem;
+        color: var(--accent2);
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    /* ===== NAVIGATION ===== */
+    .nav-container {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(10, 14, 26, 0.9);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+        padding: 0 20px;
+    }
+    .nav {
+        display: flex;
+        gap: 4px;
+        max-width: 1200px;
+        margin: 0 auto;
+        overflow-x: auto;
+        padding: 10px 0;
+        scrollbar-width: none;
+    }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav-btn {
+        padding: 8px 18px;
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--muted);
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: all 0.3s;
+        position: relative;
+    }
+    .nav-btn:hover { color: var(--text); background: var(--surface); }
+    .nav-btn.active {
+        color: var(--accent2);
+        background: rgba(34, 211, 238, 0.1);
+        border-color: rgba(34, 211, 238, 0.3);
+    }
+    .nav-btn .badge {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-left: 6px;
+        vertical-align: middle;
+    }
+    .badge.incomplete { background: var(--border); }
+    .badge.complete { background: var(--green); box-shadow: var(--glow-green); }
+
+    /* ===== SECTIONS ===== */
+    .section {
+        display: none;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px 80px;
+        animation: fadeIn 0.4s ease;
+    }
+    .section.active { display: block; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .section-title .emoji { font-size: 2.2rem; }
+    .section-subtitle {
+        color: var(--muted);
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+
+    /* ===== CARDS ===== */
+    .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        margin-bottom: 24px;
+        transition: border-color 0.3s;
+    }
+    .card:hover { border-color: rgba(99,102,241,0.4); }
+    .card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+        color: var(--accent2);
+    }
+    .card h4 {
+        font-size: 1rem;
+        margin: 16px 0 8px;
+        color: var(--pink);
+    }
+
+    /* ===== CODE BLOCKS ===== */
+    .code-block {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 14px 0;
+        overflow-x: auto;
+        position: relative;
+    }
+    .code-block code {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        line-height: 1.8;
+        color: #e6edf3;
+    }
+    .code-block .label {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 0.7rem;
+        color: var(--muted);
+        background: var(--surface);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    /* Syntax Highlighting */
+    .kw { color: #ff7b72; }
+    .fn { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .cm { color: #8b949e; font-style: italic; }
+    .num { color: #79c0ff; }
+    .prop { color: #ffa657; }
+    .tag { color: #7ee787; }
+    .param { color: #ffa657; }
+    .op { color: #ff7b72; }
+
+    /* ===== INTERACTIVE DEMOS ===== */
+    .demo-area {
+        background: var(--surface2);
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin: 16px 0;
+        text-align: center;
+        transition: all 0.3s;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+    .demo-area.highlight {
+        border-color: var(--accent);
+        background: rgba(99,102,241,0.05);
+    }
+
+    .demo-btn {
+        padding: 12px 28px;
+        background: linear-gradient(135deg, var(--accent), #818cf8);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+        position: relative;
+        overflow: hidden;
+    }
+    .demo-btn:hover { transform: translateY(-2px); box-shadow: var(--glow); }
+    .demo-btn:active { transform: translateY(0) scale(0.98); }
+
+    .demo-btn.green {
+        background: linear-gradient(135deg, var(--green), #34d399);
+    }
+    .demo-btn.red {
+        background: linear-gradient(135deg, var(--red), #f87171);
+    }
+    .demo-btn.orange {
+        background: linear-gradient(135deg, var(--orange), #fbbf24);
+        color: #000;
+    }
+    .demo-btn.small {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .demo-output {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        color: var(--green);
+        min-height: 40px;
+        width: 100%;
+        text-align: left;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    /* ===== VISUAL DIAGRAMS ===== */
+    .diagram {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin: 20px 0;
+        padding: 20px;
+    }
+    .diagram-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .diagram-box {
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-align: center;
+        min-width: 120px;
+        transition: all 0.3s;
+    }
+    .diagram-arrow {
+        font-size: 1.5rem;
+        color: var(--accent);
+        animation: bounce-arrow 1.5s ease-in-out infinite;
+    }
+    @keyframes bounce-arrow {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(5px); }
+    }
+
+    /* ===== BUBBLE VISUALIZATION ===== */
+    .bubble-demo {
+        position: relative;
+        margin: 20px auto;
+    }
+    .bubble-container {
+        border: 3px solid var(--border);
+        border-radius: 16px;
+        padding: 30px;
+        background: rgba(99,102,241,0.03);
+        transition: all 0.3s;
+        cursor: pointer;
+        position: relative;
+    }
+    .bubble-container.flash {
+        border-color: var(--accent);
+        background: rgba(99,102,241,0.1);
+    }
+    .bubble-container .name-tag {
+        position: absolute;
+        top: 8px;
+        left: 12px;
+        font-size: 0.75rem;
+        color: var(--muted);
+        font-family: 'Fira Code', monospace;
+    }
+    .bubble-mid {
+        border: 3px solid var(--border);
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 10px;
+        background: rgba(34,211,238,0.03);
+        transition: all 0.3s;
+        cursor: pointer;
+        position: relative;
+    }
+    .bubble-mid.flash {
+        border-color: var(--accent2);
+        background: rgba(34,211,238,0.1);
+    }
+    .bubble-inner {
+        border: 3px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        background: rgba(16,185,129,0.03);
+        transition: all 0.3s;
+        cursor: pointer;
+        position: relative;
+    }
+    .bubble-inner.flash {
+        border-color: var(--green);
+        background: rgba(16,185,129,0.1);
+    }
+
+    /* ===== TIPS & WARNINGS ===== */
+    .tip {
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin: 16px 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.92rem;
+    }
+    .tip.info {
+        background: rgba(99,102,241,0.1);
+        border-left: 4px solid var(--accent);
+    }
+    .tip.warning {
+        background: rgba(245,158,11,0.1);
+        border-left: 4px solid var(--orange);
+    }
+    .tip.danger {
+        background: rgba(239,68,68,0.1);
+        border-left: 4px solid var(--red);
+    }
+    .tip.success {
+        background: rgba(16,185,129,0.1);
+        border-left: 4px solid var(--green);
+    }
+    .tip-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+
+    /* ===== MISTAKE CARDS ===== */
+    .mistake-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .mistake-header {
+        display: flex;
+        gap: 12px;
+        padding: 18px 24px;
+        cursor: pointer;
+        align-items: center;
+        transition: background 0.3s;
+    }
+    .mistake-header:hover { background: var(--surface2); }
+    .mistake-header .number {
+        background: var(--red);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    .mistake-header h4 { flex: 1; font-size: 1rem; }
+    .mistake-header .toggle-icon {
+        color: var(--muted);
+        transition: transform 0.3s;
+        font-size: 1.2rem;
+    }
+    .mistake-header.open .toggle-icon { transform: rotate(180deg); }
+    .mistake-body {
+        display: none;
+        padding: 0 24px 20px;
+        animation: slideDown 0.3s ease;
+    }
+    .mistake-body.open { display: block; }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .bad-code { border-left: 3px solid var(--red); }
+    .good-code { border-left: 3px solid var(--green); }
+    .vs-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin: 10px 0 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .vs-label.bad { color: var(--red); }
+    .vs-label.good { color: var(--green); }
+
+    /* ===== QUIZ ===== */
+    .quiz-question {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        transition: border-color 0.3s;
+    }
+    .quiz-question.correct { border-color: var(--green); }
+    .quiz-question.wrong { border-color: var(--red); }
+    .quiz-question h4 {
+        font-size: 1rem;
+        margin-bottom: 4px;
+        color: var(--accent2);
+    }
+    .quiz-question p {
+        margin-bottom: 16px;
+        font-size: 0.95rem;
+    }
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .quiz-opt {
+        padding: 12px 18px;
+        background: var(--surface2);
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        text-align: left;
+        color: var(--text);
+    }
+    .quiz-opt:hover:not(.disabled) {
+        border-color: var(--accent);
+        background: rgba(99,102,241,0.05);
+    }
+    .quiz-opt.selected-correct {
+        border-color: var(--green);
+        background: rgba(16,185,129,0.1);
+        color: var(--green);
+    }
+    .quiz-opt.selected-wrong {
+        border-color: var(--red);
+        background: rgba(239,68,68,0.1);
+        color: var(--red);
+    }
+    .quiz-opt.show-correct {
+        border-color: var(--green);
+        background: rgba(16,185,129,0.05);
+    }
+    .quiz-opt.disabled { cursor: default; opacity: 0.7; }
+    .quiz-feedback {
+        margin-top: 12px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        display: none;
+    }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.correct {
+        background: rgba(16,185,129,0.1);
+        color: var(--green);
+    }
+    .quiz-feedback.wrong {
+        background: rgba(239,68,68,0.1);
+        color: var(--red);
+    }
+
+    .quiz-score {
+        text-align: center;
+        padding: 30px;
+        background: var(--surface);
+        border-radius: 16px;
+        border: 1px solid var(--border);
+    }
+    .quiz-score .score-num {
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* ===== EXERCISE ===== */
+    .exercise-area {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .exercise-header {
+        padding: 16px 24px;
+        background: var(--surface2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+    }
+    .exercise-header h4 {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .difficulty {
+        font-size: 0.75rem;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+    }
+    .difficulty.easy { background: rgba(16,185,129,0.15); color: var(--green); }
+    .difficulty.medium { background: rgba(245,158,11,0.15); color: var(--orange); }
+    .difficulty.hard { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    .exercise-body { padding: 20px 24px; }
+
+    .code-editor {
+        width: 100%;
+        min-height: 150px;
+        background: #0d1117;
+        color: #e6edf3;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        line-height: 1.8;
+        resize: vertical;
+        outline: none;
+        tab-size: 2;
+    }
+    .code-editor:focus { border-color: var(--accent); }
+
+    .exercise-result {
+        margin-top: 12px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        display: none;
+    }
+    .exercise-result.show { display: block; }
+    .exercise-result.pass {
+        background: rgba(16,185,129,0.1);
+        border: 1px solid rgba(16,185,129,0.3);
+        color: var(--green);
+    }
+    .exercise-result.fail {
+        background: rgba(239,68,68,0.1);
+        border: 1px solid rgba(239,68,68,0.3);
+        color: var(--red);
+    }
+
+    /* ===== EVENT LOG ===== */
+    .event-log {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        max-height: 180px;
+        overflow-y: auto;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8rem;
+        margin-top: 12px;
+    }
+    .event-log .log-entry {
+        padding: 3px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+        animation: logFade 0.3s ease;
+    }
+    @keyframes logFade {
+        from { background: rgba(99,102,241,0.1); }
+        to { background: transparent; }
+    }
+    .log-time { color: var(--muted); }
+    .log-type { color: var(--orange); }
+    .log-detail { color: var(--green); }
+
+    /* ===== INPUT DEMOS ===== */
+    .demo-input {
+        padding: 12px 18px;
+        background: #0d1117;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        color: var(--text);
+        font-size: 1rem;
+        font-family: 'Inter', sans-serif;
+        width: 100%;
+        max-width: 400px;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+    .demo-input:focus { border-color: var(--accent); }
+
+    .demo-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    .demo-form label {
+        font-size: 0.9rem;
+        color: var(--muted);
+    }
+
+    /* ===== TABS ===== */
+    .tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 4px;
+    }
+    .tab-btn {
+        padding: 8px 16px;
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border-radius: 8px 8px 0 0;
+        transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+        color: var(--accent2);
+        background: var(--surface);
+    }
+
+    /* ===== ANIMATIONS ===== */
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        transform: scale(0);
+        animation: ripple-anim 0.6s ease-out;
+        pointer-events: none;
+    }
+    @keyframes ripple-anim {
+        to { transform: scale(4); opacity: 0; }
+    }
+
+    .counter-display {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--accent2);
+        transition: transform 0.15s;
+    }
+    .counter-display.bump {
+        transform: scale(1.2);
+    }
+
+    .char-count {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    /* ===== PROPERTY TABLE ===== */
+    .prop-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 0.88rem;
+    }
+    .prop-table th {
+        text-align: left;
+        padding: 10px 14px;
+        background: var(--surface2);
+        color: var(--accent2);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .prop-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+    }
+    .prop-table tr:hover td { background: rgba(99,102,241,0.03); }
+    .prop-table code {
+        font-family: 'Fira Code', monospace;
+        color: var(--orange);
+        font-size: 0.82rem;
+        background: rgba(245,158,11,0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* ===== DELEGATION LIST ===== */
+    .delegation-list {
+        list-style: none;
+        padding: 0;
+    }
+    .delegation-list li {
+        padding: 12px 18px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .delegation-list li:hover {
+        border-color: var(--accent);
+        transform: translateX(4px);
+    }
+    .delegation-list li.selected {
+        border-color: var(--green);
+        background: rgba(16,185,129,0.05);
+    }
+
+    /* ===== FLOATING PARTICLES ===== */
+    .particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+        overflow: hidden;
+    }
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: var(--accent);
+        border-radius: 50%;
+        opacity: 0.2;
+        animation: float-particle linear infinite;
+    }
+    @keyframes float-particle {
+        0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.2; }
+        90% { opacity: 0.2; }
+        100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+        .card { padding: 20px; }
+        .section { padding: 24px 16px 60px; }
+        .prop-table { font-size: 0.78rem; }
+        .prop-table th, .prop-table td { padding: 8px 10px; }
+        .bubble-container { padding: 20px; }
+        .bubble-mid { padding: 18px; }
+    }
+
+    /* ===== ACHIEVEMENT TOAST ===== */
+    .toast {
+        position: fixed;
+        bottom: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface);
+        border: 1px solid var(--green);
+        border-radius: 12px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 1000;
+        transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .toast.show { bottom: 30px; }
+    .toast .toast-icon { font-size: 1.5rem; }
+    .toast .toast-text { font-weight: 600; font-size: 0.95rem; }
+
+    .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Cheatsheet grid */
+    .cheat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+        margin: 16px 0;
+    }
+    .cheat-item {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+    }
+    .cheat-item h5 {
+        color: var(--accent2);
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+    }
+    .cheat-item code {
+        font-family: 'Fira Code', monospace;
+        font-size: 0.8rem;
+        color: var(--orange);
+    }
+    .cheat-item p {
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin-top: 4px;
+    }
+
+    .highlight-text { color: var(--accent2); font-weight: 600; }
+    .inline-code {
+        font-family: 'Fira Code', monospace;
+        background: rgba(245,158,11,0.1);
+        color: var(--orange);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.85em;
+    }
+
+    .section-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border), transparent);
+        margin: 30px 0;
+    }
+
+    .key-visual {
+        display: inline-block;
+        padding: 4px 10px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.82rem;
+        color: var(--accent2);
+    }
+</style>
+</head>
+<body>
+
+<!-- Floating Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Achievement Toast -->
+<div class="toast" id="toast">
+    <span class="toast-icon">🏆</span>
+    <span class="toast-text" id="toast-text">Achievement unlocked!</span>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+    <h1>⚡ JS Events Mastery</h1>
+    <p>Your interactive guide to conquering Events & Event Handling</p>
+    <div class="progress-bar-container">
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+        <div class="progress-text"><span id="progress-pct">0</span>% Complete — <span id="sections-done">0</span>/7 sections</div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<div class="nav-container">
+    <div class="nav" id="main-nav">
+        <button class="nav-btn active" data-section="intro">📖 Intro <span class="badge incomplete" id="badge-intro"></span></button>
+        <button class="nav-btn" data-section="addEventListener">🎧 addEventListener <span class="badge incomplete" id="badge-addEventListener"></span></button>
+        <button class="nav-btn" data-section="eventObject">🔍 Event Object <span class="badge incomplete" id="badge-eventObject"></span></button>
+        <button class="nav-btn" data-section="eventTypes">🖱️ Event Types <span class="badge incomplete" id="badge-eventTypes"></span></button>
+        <button class="nav-btn" data-section="delegation">🎯 Delegation <span class="badge incomplete" id="badge-delegation"></span></button>
+        <button class="nav-btn" data-section="mistakes">⚠️ Pitfalls <span class="badge incomplete" id="badge-mistakes"></span></button>
+        <button class="nav-btn" data-section="quiz">🧠 Quiz <span class="badge incomplete" id="badge-quiz"></span></button>
+    </div>
+</div>
+
+<!-- ==================== SECTION: INTRO ==================== -->
+<div class="section active" id="sec-intro">
+    <h2 class="section-title"><span class="emoji">📖</span> What Are Events?</h2>
+    <p class="section-subtitle">Everything you interact with in a browser fires events. Let's understand the big picture.</p>
+
+    <div class="card">
+        <h3>Events = Signals from the Browser</h3>
+        <p>An <strong>event</strong> is a signal that something has happened. When a user clicks a button, types in an input, submits a form, or even just moves their mouse — the browser creates an <span class="highlight-text">Event object</span> and "fires" it.</p>
+        <p style="margin-top:12px">Your job as a developer is to <strong>listen</strong> for these events and <strong>respond</strong> with code.</p>
+
+        <div class="diagram">
+            <div class="diagram-row">
+                <div class="diagram-box" style="background:rgba(99,102,241,0.15);border:2px solid var(--accent);color:var(--accent);">👤 User Action</div>
+                <div class="diagram-arrow">→</div>
+                <div class="diagram-box" style="background:rgba(245,158,11,0.15);border:2px solid var(--orange);color:var(--orange);">📨 Event Created</div>
+                <div class="diagram-arrow">→</div>
+                <div class="diagram-box" style="background:rgba(16,185,129,0.15);border:2px solid var(--green);color:var(--green);">⚡ Your Handler Runs</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🗺️ What You'll Master</h3>
+        <div class="cheat-grid">
+            <div class="cheat-item">
+                <h5>1. addEventListener</h5>
+                <p>The modern way to attach event handlers to elements</p>
+            </div>
+            <div class="cheat-item">
+                <h5>2. The Event Object</h5>
+                <p>The treasure chest of info passed to every handler</p>
+            </div>
+            <div class="cheat-item">
+                <h5>3. Event Types</h5>
+                <p>click, input, submit, and many more</p>
+            </div>
+            <div class="cheat-item">
+                <h5>4. Event Delegation</h5>
+                <p>The pro pattern using bubbling to handle events efficiently</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎮 Try It! Your First Event</h3>
+        <p>Click the button below and watch the magic:</p>
+        <div class="demo-area" id="intro-demo-area">
+            <button class="demo-btn" id="intro-btn">🎉 Click Me!</button>
+            <div id="intro-counter" class="counter-display">0</div>
+            <p style="color:var(--muted);font-size:0.85rem">Click count updates in real-time</p>
+        </div>
+        <div class="code-block">
+            <span class="label">JavaScript</span>
+            <code>
+<span class="kw">const</span> btn = document.<span class="fn">querySelector</span>(<span class="str">'#intro-btn'</span>);
+<span class="kw">let</span> count = <span class="num">0</span>;
+
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () <span class="op">=></span> {
+  count++;
+  display.textContent = count;
+});
+            </code>
+        </div>
+    </div>
+
+    <div class="tip success">
+        <span class="tip-icon">✅</span>
+        <div><strong>Mark as read:</strong> Click the button below to track your progress!</div>
+    </div>
+    <button class="demo-btn green" onclick="completeSection('intro')">✅ I understand the basics — Mark Complete</button>
+</div>
+
+<!-- ==================== SECTION: addEventListener ==================== -->
+<div class="section" id="sec-addEventListener">
+    <h2 class="section-title"><span class="emoji">🎧</span> addEventListener</h2>
+    <p class="section-subtitle">The primary method to attach event handlers to DOM elements.</p>
+
+    <div class="card">
+        <h3>📐 Syntax</h3>
+        <div class="code-block">
+            <span class="label">Syntax</span>
+            <code>
+element.<span class="fn">addEventListener</span>(<span class="param">eventType</span>, <span class="param">handlerFunction</span>, <span class="param">options</span>);
+            </code>
+        </div>
+        <table class="prop-table">
+            <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+            <tr><td><code>eventType</code></td><td>String</td><td>Event name: <code>'click'</code>, <code>'input'</code>, <code>'submit'</code>, etc.</td></tr>
+            <tr><td><code>handler</code></td><td>Function</td><td>Callback that runs when event fires</td></tr>
+            <tr><td><code>options</code></td><td>Object/Boolean</td><td>Optional: <code>{ once, capture, passive }</code></td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>📝 Three Ways to Define the Handler</h3>
+
+        <h4>1. Anonymous Arrow Function</h4>
+        <div class="code-block">
+            <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  console.<span class="fn">log</span>(<span class="str">'Clicked!'</span>, e.target);
+});
+            </code>
+        </div>
+
+        <h4>2. Named Function (Recommended for removal)</h4>
+        <div class="code-block">
+            <code>
+<span class="kw">function</span> <span class="fn">handleClick</span>(<span class="param">e</span>) {
+  console.<span class="fn">log</span>(<span class="str">'Clicked!'</span>, e.target);
+}
+
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handleClick);
+<span class="cm">// Can remove later:</span>
+btn.<span class="fn">removeEventListener</span>(<span class="str">'click'</span>, handleClick);
+            </code>
+        </div>
+
+        <h4>3. Using options object</h4>
+        <div class="code-block">
+            <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handler, {
+  <span class="prop">once</span>: <span class="kw">true</span>,     <span class="cm">// runs only once, then auto-removes</span>
+  <span class="prop">capture</span>: <span class="kw">false</span>, <span class="cm">// use capture phase?</span>
+  <span class="prop">passive</span>: <span class="kw">true</span>   <span class="cm">// won't call preventDefault</span>
+});
+            </code>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎮 Interactive Demo: addEventListener Options</h3>
+
+        <div class="demo-area">
+            <p style="font-weight:600;color:var(--accent2);">Regular button (click many times):</p>
+            <button class="demo-btn" id="ael-regular">Click Me (Regular)</button>
+            <div class="demo-output" id="ael-regular-out">Waiting for clicks...</div>
+        </div>
+
+        <div class="demo-area" style="margin-top:12px;">
+            <p style="font-weight:600;color:var(--pink);">{ once: true } button (click and it stops listening):</p>
+            <button class="demo-btn orange" id="ael-once">Click Me (Once Only)</button>
+            <div class="demo-output" id="ael-once-out">Waiting for click...</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🆚 addEventListener vs onclick</h3>
+        <p>Why should you prefer <span class="inline-code">addEventListener</span> over <span class="inline-code">onclick</span>?</p>
+
+        <div class="code-block bad-code">
+            <span class="label">❌ onclick problem</span>
+            <code>
+<span class="cm">// Second handler OVERWRITES the first!</span>
+btn.<span class="prop">onclick</span> = () <span class="op">=></span> console.<span class="fn">log</span>(<span class="str">'First'</span>);
+btn.<span class="prop">onclick</span> = () <span class="op">=></span> console.<span class="fn">log</span>(<span class="str">'Second'</span>);
+<span class="cm">// Only "Second" fires ❌</span>
+            </code>
+        </div>
+
+        <div class="code-block good-code">
+            <span class="label">✅ addEventListener stacks</span>
+            <code>
+<span class="cm">// BOTH handlers fire!</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () <span class="op">=></span> console.<span class="fn">log</span>(<span class="str">'First'</span>));
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () <span class="op">=></span> console.<span class="fn">log</span>(<span class="str">'Second'</span>));
+<span class="cm">// "First" then "Second" fire ✅</span>
+            </code>
+        </div>
+
+        <div class="tip info">
+            <span class="tip-icon">💡</span>
+            <div><strong>Key Benefits:</strong> Multiple listeners, removable, capture/bubble control, options like <code>once</code> and <code>passive</code>.</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🏋️ Practice: removeEventListener</h3>
+        <p>Click "Start Listening" then "Stop Listening" and see the difference:</p>
+        <div class="demo-area">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                <button class="demo-btn green small" id="ael-start">▶ Start Listening</button>
+                <button class="demo-btn red small" id="ael-stop">⏹ Stop Listening</button>
+                <button class="demo-btn small" id="ael-target">🎯 Target Button</button>
+            </div>
+            <div class="demo-output" id="ael-remove-out">Click "Start Listening" first, then click "Target Button"</div>
+        </div>
+    </div>
+
+    <button class="demo-btn green" onclick="completeSection('addEventListener')">✅ Mark addEventListener Complete</button>
+</div>
+
+<!-- ==================== SECTION: Event Object ==================== -->
+<div class="section" id="sec-eventObject">
+    <h2 class="section-title"><span class="emoji">🔍</span> The Event Object</h2>
+    <p class="section-subtitle">Every event handler receives an Event object packed with useful info.</p>
+
+    <div class="card">
+        <h3>📦 What's Inside the Event Object?</h3>
+        <p>When an event fires, the browser creates an <strong>Event object</strong> and passes it as the first argument to your handler:</p>
+        <div class="code-block">
+            <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">event</span>) <span class="op">=></span> {
+  console.<span class="fn">log</span>(event);         <span class="cm">// The full Event object</span>
+  console.<span class="fn">log</span>(event.<span class="prop">type</span>);     <span class="cm">// "click"</span>
+  console.<span class="fn">log</span>(event.<span class="prop">target</span>);   <span class="cm">// The element that was clicked</span>
+});
+            </code>
+        </div>
+
+        <table class="prop-table">
+            <tr><th>Property</th><th>What It Returns</th><th>Example</th></tr>
+            <tr><td><code>e.type</code></td><td>Event type name</td><td><code>"click"</code></td></tr>
+            <tr><td><code>e.target</code></td><td>Element that triggered event</td><td><code>&lt;button&gt;</code></td></tr>
+            <tr><td><code>e.currentTarget</code></td><td>Element handler is attached to</td><td><code>&lt;div&gt;</code></td></tr>
+            <tr><td><code>e.clientX / clientY</code></td><td>Mouse position (viewport)</td><td><code>245, 380</code></td></tr>
+            <tr><td><code>e.key</code></td><td>Key pressed (keyboard events)</td><td><code>"Enter"</code></td></tr>
+            <tr><td><code>e.preventDefault()</code></td><td>Stops default behavior</td><td>Stop form submit</td></tr>
+            <tr><td><code>e.stopPropagation()</code></td><td>Stops event bubbling</td><td>Stop parent from hearing</td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>🎮 Interactive Event Explorer</h3>
+        <p>Move your mouse, click, and type below to see the Event object properties in real-time!</p>
+
+        <div class="demo-area" id="event-explorer" style="cursor:crosshair;min-height:160px;">
+            <p style="color:var(--muted);font-size:0.85rem;">👆 Move mouse, click, or press keys anywhere in this box</p>
+            <input type="text" class="demo-input" id="event-explorer-input" placeholder="Type here to see keyboard events..." style="max-width:300px;">
+        </div>
+
+        <div class="event-log" id="event-explorer-log">
+            <div class="log-entry"><span class="log-time">--:--:--</span> Waiting for events...</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎯 target vs currentTarget — THE Key Difference</h3>
+        <p>This trips up <strong>a lot</strong> of developers. Let's visualize it:</p>
+
+        <div class="demo-area" id="target-demo">
+            <div style="background:rgba(99,102,241,0.1);border:2px solid var(--accent);border-radius:12px;padding:20px;cursor:pointer;" id="target-outer">
+                <p style="color:var(--accent);font-size:0.8rem;margin-bottom:8px;">DIV (listener attached here) = currentTarget</p>
+                <button class="demo-btn small" id="target-inner" style="pointer-events:auto;">I'm a button inside = target</button>
+            </div>
+        </div>
+        <div class="demo-output" id="target-output">Click the button or the div to see the difference...</div>
+
+        <div class="tip warning">
+            <span class="tip-icon">⚠️</span>
+            <div><strong>Remember:</strong> <code>e.target</code> = what was actually clicked. <code>e.currentTarget</code> = what the listener is attached to. They can be different when events bubble!</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🛡️ preventDefault() in Action</h3>
+        <p>Try clicking these links — one has <span class="inline-code">preventDefault()</span>, one doesn't:</p>
+
+        <div class="demo-area">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;">
+                <a href="https://google.com" id="link-default" style="color:var(--accent2);font-weight:600;">Normal Link (will navigate) ↗</a>
+                <a href="https://google.com" id="link-prevented" style="color:var(--pink);font-weight:600;">Prevented Link (won't navigate) 🚫</a>
+            </div>
+            <div class="demo-output" id="prevent-output">Click a link to see what happens...</div>
+        </div>
+    </div>
+
+    <button class="demo-btn green" onclick="completeSection('eventObject')">✅ Mark Event Object Complete</button>
+</div>
+
+<!-- ==================== SECTION: Event Types ==================== -->
+<div class="section" id="sec-eventTypes">
+    <h2 class="section-title"><span class="emoji">🖱️</span> Event Types</h2>
+    <p class="section-subtitle">click, input, submit and beyond — master the essential event types.</p>
+
+    <div class="card">
+        <h3>🖱️ Click Events</h3>
+        <p>The most common event. Fires on mouse click, touch tap, or Enter/Space on a focused element.</p>
+
+        <div class="demo-area">
+            <button class="demo-btn" id="click-demo-btn">Click, Double-Click, or Right-Click Me</button>
+            <div class="demo-output" id="click-output">Waiting for interaction...</div>
+        </div>
+
+        <div class="code-block">
+            <code>
+<span class="cm">// Different click types</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () <span class="op">=></span> <span class="fn">log</span>(<span class="str">'Left click'</span>));
+btn.<span class="fn">addEventListener</span>(<span class="str">'dblclick'</span>, () <span class="op">=></span> <span class="fn">log</span>(<span class="str">'Double click'</span>));
+btn.<span class="fn">addEventListener</span>(<span class="str">'contextmenu'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  e.<span class="fn">preventDefault</span>(); <span class="cm">// prevent right-click menu</span>
+  <span class="fn">log</span>(<span class="str">'Right click'</span>);
+});
+            </code>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>⌨️ Input Events</h3>
+        <p>Tracks user typing in real-time. Perfect for search, validation, and live previews.</p>
+
+        <div class="demo-area">
+            <input type="text" class="demo-input" id="input-demo" placeholder="Start typing...">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:center;">
+                <div>
+                    <p style="color:var(--muted);font-size:0.8rem;">Characters:</p>
+                    <span class="char-count" id="char-count">0</span>
+                </div>
+                <div>
+                    <p style="color:var(--muted);font-size:0.8rem;">Live Preview:</p>
+                    <span id="live-preview" style="color:var(--accent2);font-size:1.2rem;font-weight:600;">...</span>
+                </div>
+            </div>
+            <div class="demo-output" id="input-output">Events will appear here...</div>
+        </div>
+
+        <div class="tip info">
+            <span class="tip-icon">💡</span>
+            <div>
+                <strong>input vs change:</strong><br>
+                • <code>input</code> fires on EVERY keystroke (real-time)<br>
+                • <code>change</code> fires only when the field loses focus AND value changed
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📝 Submit Events</h3>
+        <p>Fires when a form is submitted. You almost always want <span class="inline-code">preventDefault()</span> here!</p>
+
+        <div class="demo-area">
+            <form id="submit-demo-form" class="demo-form">
+                <label>Name:</label>
+                <input type="text" class="demo-input" id="form-name" placeholder="Enter your name" required>
+                <label>Email:</label>
+                <input type="email" class="demo-input" id="form-email" placeholder="Enter your email" required>
+                <button type="submit" class="demo-btn green">📤 Submit Form</button>
+            </form>
+            <div class="demo-output" id="submit-output" style="margin-top:12px;">Submit the form to see the result...</div>
+        </div>
+
+        <div class="code-block">
+            <code>
+form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  e.<span class="fn">preventDefault</span>(); <span class="cm">// ← CRITICAL! Stops page refresh</span>
+
+  <span class="kw">const</span> formData = <span class="kw">new</span> <span class="fn">FormData</span>(form);
+  <span class="kw">const</span> name = formData.<span class="fn">get</span>(<span class="str">'name'</span>);
+
+  <span class="cm">// Now send data via fetch, validate, etc.</span>
+  console.<span class="fn">log</span>(<span class="str">'Form data:'</span>, name);
+});
+            </code>
+        </div>
+
+        <div class="tip danger">
+            <span class="tip-icon">🚨</span>
+            <div><strong>Number 1 mistake:</strong> Forgetting <code>e.preventDefault()</code> on form submit. Without it, the page refreshes and your JS is useless!</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Event Types Cheat Sheet</h3>
+        <div class="cheat-grid">
+            <div class="cheat-item">
+                <h5>🖱️ Mouse</h5>
+                <code>click</code> <code>dblclick</code> <code>mousedown</code> <code>mouseup</code> <code>mousemove</code> <code>mouseenter</code> <code>mouseleave</code> <code>contextmenu</code>
+            </div>
+            <div class="cheat-item">
+                <h5>⌨️ Keyboard</h5>
+                <code>keydown</code> <code>keyup</code> <code>keypress</code>
+                <p>Use <code>e.key</code> for the character</p>
+            </div>
+            <div class="cheat-item">
+                <h5>📝 Form</h5>
+                <code>submit</code> <code>input</code> <code>change</code> <code>focus</code> <code>blur</code> <code>reset</code>
+            </div>
+            <div class="cheat-item">
+                <h5>🪟 Window/Doc</h5>
+                <code>load</code> <code>DOMContentLoaded</code> <code>resize</code> <code>scroll</code> <code>unload</code>
+            </div>
+            <div class="cheat-item">
+                <h5>📱 Touch</h5>
+                <code>touchstart</code> <code>touchmove</code> <code>touchend</code>
+            </div>
+            <div class="cheat-item">
+                <h5>🎪 Others</h5>
+                <code>transitionend</code> <code>animationend</code> <code>drag</code> <code>drop</code>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎮 Keyboard Events Playground</h3>
+        <p>Press any key and see what event properties you get:</p>
+        <div class="demo-area">
+            <input type="text" class="demo-input" id="keyboard-demo" placeholder="Click here and press any key..." style="text-align:center;font-size:1.2rem;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:400px;margin-top:8px;">
+                <div class="cheat-item" style="text-align:center;">
+                    <h5>e.key</h5>
+                    <span id="kb-key" style="font-size:1.5rem;font-weight:800;color:var(--accent2);">—</span>
+                </div>
+                <div class="cheat-item" style="text-align:center;">
+                    <h5>e.code</h5>
+                    <span id="kb-code" style="font-size:0.85rem;font-weight:600;color:var(--orange);">—</span>
+                </div>
+                <div class="cheat-item" style="text-align:center;">
+                    <h5>Modifiers</h5>
+                    <span id="kb-modifiers" style="font-size:0.85rem;font-weight:600;color:var(--pink);">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="demo-btn green" onclick="completeSection('eventTypes')">✅ Mark Event Types Complete</button>
+</div>
+
+<!-- ==================== SECTION: Event Delegation ==================== -->
+<div class="section" id="sec-delegation">
+    <h2 class="section-title"><span class="emoji">🎯</span> Event Delegation</h2>
+    <p class="section-subtitle">The pro technique that leverages event bubbling. Essential for dynamic content!</p>
+
+    <div class="card">
+        <h3>🫧 First: Understanding Event Bubbling</h3>
+        <p>When you click an element, the event doesn't just fire on that element. It <strong>bubbles up</strong> through all ancestor elements!</p>
+
+        <div class="demo-area">
+            <p style="color:var(--muted);font-size:0.85rem;margin-bottom:8px;">Click the inner button and watch the event bubble up:</p>
+            <div class="bubble-demo" style="width:100%;max-width:500px;">
+                <div class="bubble-container" id="bubble-outer">
+                    <span class="name-tag">&lt;div id="grandparent"&gt;</span>
+                    <div class="bubble-mid" id="bubble-mid">
+                        <span class="name-tag">&lt;div id="parent"&gt;</span>
+                        <div class="bubble-inner" id="bubble-inner">
+                            <span class="name-tag">&lt;button id="child"&gt;</span>
+                            <button class="demo-btn small" id="bubble-btn" style="margin-top:8px;">🫧 Click Me!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="demo-output" id="bubble-output">Click the button to see bubbling in action...</div>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-row" style="flex-direction:column;gap:4px;">
+                <div class="diagram-box" style="background:rgba(16,185,129,0.15);border:2px solid var(--green);color:var(--green);font-size:0.85rem;">① Button (target) fires first</div>
+                <div class="diagram-arrow" style="transform:rotate(90deg);">→</div>
+                <div class="diagram-box" style="background:rgba(34,211,238,0.15);border:2px solid var(--accent2);color:var(--accent2);font-size:0.85rem;">② Parent div hears it next</div>
+                <div class="diagram-arrow" style="transform:rotate(90deg);">→</div>
+                <div class="diagram-box" style="background:rgba(99,102,241,0.15);border:2px solid var(--accent);color:var(--accent);font-size:0.85rem;">③ Grandparent div hears it last</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>💡 What IS Event Delegation?</h3>
+        <p>Instead of adding listeners to <em>every</em> child element, you add <strong>ONE listener to the parent</strong> and use <span class="inline-code">e.target</span> to figure out which child was clicked.</p>
+
+        <div class="code-block bad-code">
+            <span class="label">❌ Bad: Listener on every item</span>
+            <code>
+<span class="cm">// If you have 1000 items, that's 1000 listeners! 😱</span>
+document.<span class="fn">querySelectorAll</span>(<span class="str">'.item'</span>).<span class="fn">forEach</span>(<span class="param">item</span> <span class="op">=></span> {
+  item.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+    <span class="fn">handleItem</span>(e.target);
+  });
+});
+            </code>
+        </div>
+
+        <div class="code-block good-code">
+            <span class="label">✅ Good: ONE listener on parent</span>
+            <code>
+<span class="cm">// ONE listener handles all items, even future ones! 🎉</span>
+<span class="kw">const</span> list = document.<span class="fn">querySelector</span>(<span class="str">'.list'</span>);
+
+list.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  <span class="kw">if</span> (e.target.<span class="fn">matches</span>(<span class="str">'.item'</span>)) {
+    <span class="fn">handleItem</span>(e.target);
+  }
+});
+            </code>
+        </div>
+
+        <div class="tip success">
+            <span class="tip-icon">🚀</span>
+            <div><strong>Delegation benefits:</strong><br>
+            1. <strong>Performance:</strong> 1 listener vs hundreds/thousands<br>
+            2. <strong>Dynamic content:</strong> Works on elements added AFTER the listener is set<br>
+            3. <strong>Less memory:</strong> Fewer listeners = less RAM usage</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎮 Delegation Demo: Dynamic Todo List</h3>
+        <p>This list uses ONE event listener on the <span class="inline-code">&lt;ul&gt;</span>. Add items and click them — even new items work!</p>
+
+        <div class="demo-area">
+            <div style="display:flex;gap:8px;width:100%;max-width:400px;">
+                <input type="text" class="demo-input" id="todo-input" placeholder="Add a todo..." style="flex:1;">
+                <button class="demo-btn green small" id="todo-add">+ Add</button>
+            </div>
+
+            <ul class="delegation-list" id="todo-list" style="width:100%;max-width:400px;margin-top:12px;">
+                <li data-id="1">🍕 Learn addEventListener</li>
+                <li data-id="2">🎯 Master event delegation</li>
+                <li data-id="3">🧠 Pass the quiz</li>
+            </ul>
+
+            <div class="demo-output" id="delegation-output">Click any item to toggle it. Add new items — they work too!</div>
+        </div>
+
+        <div class="code-block">
+            <span class="label">The Magic</span>
+            <code>
+<span class="kw">const</span> list = document.<span class="fn">querySelector</span>(<span class="str">'#todo-list'</span>);
+
+<span class="cm">// ONE listener handles ALL items</span>
+list.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  <span class="kw">const</span> item = e.target.<span class="fn">closest</span>(<span class="str">'li'</span>);
+  <span class="kw">if</span> (!item) <span class="kw">return</span>; <span class="cm">// clicked outside an li</span>
+
+  item.classList.<span class="fn">toggle</span>(<span class="str">'selected'</span>);
+  console.<span class="fn">log</span>(<span class="str">'Toggled:'</span>, item.<span class="prop">textContent</span>);
+});
+            </code>
+        </div>
+
+        <div class="tip info">
+            <span class="tip-icon">💡</span>
+            <div><strong>Use <code>e.target.closest(selector)</code></strong> instead of <code>e.target.matches()</code> when your list items have child elements (like icons/spans). <code>closest()</code> walks up the DOM to find the matching ancestor.</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🔬 matches() vs closest()</h3>
+        <div class="code-block">
+            <code>
+<span class="cm">// matches() — checks if THIS element matches the selector</span>
+e.target.<span class="fn">matches</span>(<span class="str">'.item'</span>);  <span class="cm">// true if clicked element IS .item</span>
+
+<span class="cm">// closest() — walks UP the DOM to find matching ancestor</span>
+e.target.<span class="fn">closest</span>(<span class="str">'.item'</span>);  <span class="cm">// returns .item even if you clicked a child</span>
+
+<span class="cm">// Example: &lt;li class="item"&gt;&lt;span&gt;Text&lt;/span&gt;&lt;/li&gt;</span>
+<span class="cm">// If you click the &lt;span&gt;:</span>
+<span class="cm">//   e.target.matches('.item') → false (it's the span!)</span>
+<span class="cm">//   e.target.closest('.item') → returns the &lt;li&gt; ✅</span>
+            </code>
+        </div>
+    </div>
+
+    <button class="demo-btn green" onclick="completeSection('delegation')">✅ Mark Delegation Complete</button>
+</div>
+
+<!-- ==================== SECTION: Mistakes & Pitfalls ==================== -->
+<div class="section" id="sec-mistakes">
+    <h2 class="section-title"><span class="emoji">⚠️</span> Common Mistakes & Pitfalls</h2>
+    <p class="section-subtitle">Don't fall into these traps! Click each to expand.</p>
+
+    <div class="mistake-card">
+        <div class="mistake-header" onclick="toggleMistake(this)">
+            <span class="number">1</span>
+            <h4>Calling the function instead of passing it</h4>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="mistake-body">
+            <p>The most common beginner mistake!</p>
+            <div class="vs-label bad">❌ WRONG — Calls immediately, doesn't listen</div>
+            <div class="code-block bad-code">
+                <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="fn">handleClick</span>()); <span class="cm">// ← () calls it NOW!</span>
+                </code>
+            </div>
+            <div class="vs-label good">✅ CORRECT — Passes the function reference</div>
+            <div class="code-block good-code">
+                <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handleClick); <span class="cm">// ← no (), passed as reference</span>
+                </code>
+            </div>
+            <div class="tip danger">
+                <span class="tip-icon">🧠</span>
+                <div>Think of it like this: <code>handleClick</code> = "here's the recipe". <code>handleClick()</code> = "cook the recipe right now".</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mistake-card">
+        <div class="mistake-header" onclick="toggleMistake(this)">
+            <span class="number">2</span>
+            <h4>Forgetting preventDefault() on form submit</h4>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="mistake-body">
+            <p>Forms have default browser behavior — they navigate/refresh the page!</p>
+            <div class="vs-label bad">❌ Page refreshes, your JS state is lost</div>
+            <div class="code-block bad-code">
+                <code>
+form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  <span class="cm">// Oops! Page refreshes before this runs properly</span>
+  <span class="fn">processForm</span>();
+});
+                </code>
+            </div>
+            <div class="vs-label good">✅ Page stays, JS handles everything</div>
+            <div class="code-block good-code">
+                <code>
+form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  e.<span class="fn">preventDefault</span>(); <span class="cm">// ← Always first line!</span>
+  <span class="fn">processForm</span>();
+});
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <div class="mistake-card">
+        <div class="mistake-header" onclick="toggleMistake(this)">
+            <span class="number">3</span>
+            <h4>Can't removeEventListener with anonymous functions</h4>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="mistake-body">
+            <div class="vs-label bad">❌ Can never remove this listener</div>
+            <div class="code-block bad-code">
+                <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () <span class="op">=></span> <span class="fn">doStuff</span>());
+btn.<span class="fn">removeEventListener</span>(<span class="str">'click'</span>, () <span class="op">=></span> <span class="fn">doStuff</span>()); <span class="cm">// ← Different function!</span>
+                </code>
+            </div>
+            <div class="vs-label good">✅ Named function can be removed</div>
+            <div class="code-block good-code">
+                <code>
+<span class="kw">function</span> <span class="fn">handler</span>() { <span class="fn">doStuff</span>(); }
+
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handler);
+btn.<span class="fn">removeEventListener</span>(<span class="str">'click'</span>, handler); <span class="cm">// ← Same reference ✅</span>
+                </code>
+            </div>
+            <div class="tip info">
+                <span class="tip-icon">💡</span>
+                <div>Or use <code>{ once: true }</code> if you just want it to fire once.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mistake-card">
+        <div class="mistake-header" onclick="toggleMistake(this)">
+            <span class="number">4</span>
+            <h4>Using e.target when you should use e.currentTarget</h4>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="mistake-body">
+            <p>If a button has child elements (icon, span), <code>e.target</code> might be the child, not the button!</p>
+            <div class="vs-label bad">❌ Might get the wrong element</div>
+            <div class="code-block bad-code">
+                <code>
+<span class="cm">// &lt;button&gt;&lt;span&gt;Click&lt;/span&gt;&lt;/button&gt;</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  e.target.classList.<span class="fn">add</span>(<span class="str">'active'</span>); <span class="cm">// ← might add to &lt;span&gt;!</span>
+});
+                </code>
+            </div>
+            <div class="vs-label good">✅ Always gets the element with the listener</div>
+            <div class="code-block good-code">
+                <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  e.currentTarget.classList.<span class="fn">add</span>(<span class="str">'active'</span>); <span class="cm">// ← always the button ✅</span>
+});
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <div class="mistake-card">
+        <div class="mistake-header" onclick="toggleMistake(this)">
+            <span class="number">5</span>
+            <h4>Adding listeners inside loops without cleanup</h4>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="mistake-body">
+            <div class="vs-label bad">❌ Duplicates listeners on re-render</div>
+            <div class="code-block bad-code">
+                <code>
+<span class="kw">function</span> <span class="fn">render</span>() {
+  <span class="cm">// Every call adds ANOTHER listener!</span>
+  btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handleClick);
+}
+<span class="fn">render</span>(); <span class="cm">// 1 listener</span>
+<span class="fn">render</span>(); <span class="cm">// 2 listeners!</span>
+<span class="fn">render</span>(); <span class="cm">// 3 listeners! 😱</span>
+                </code>
+            </div>
+            <div class="vs-label good">✅ Solutions</div>
+            <div class="code-block good-code">
+                <code>
+<span class="cm">// Solution 1: Remove before adding</span>
+btn.<span class="fn">removeEventListener</span>(<span class="str">'click'</span>, handleClick);
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handleClick);
+
+<span class="cm">// Solution 2: Use { once: true }</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handleClick, { <span class="prop">once</span>: <span class="kw">true</span> });
+
+<span class="cm">// Solution 3: Use event delegation</span>
+<span class="cm">// Solution 4: AbortController (modern)</span>
+<span class="kw">const</span> controller = <span class="kw">new</span> <span class="fn">AbortController</span>();
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handler, {
+  <span class="prop">signal</span>: controller.<span class="prop">signal</span>
+});
+controller.<span class="fn">abort</span>(); <span class="cm">// removes all listeners with this signal</span>
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <div class="mistake-card">
+        <div class="mistake-header" onclick="toggleMistake(this)">
+            <span class="number">6</span>
+            <h4>Listening on elements that don't exist yet</h4>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="mistake-body">
+            <div class="vs-label bad">❌ Element might be null</div>
+            <div class="code-block bad-code">
+                <code>
+<span class="cm">// In &lt;head&gt; before DOM is built:</span>
+<span class="kw">const</span> btn = document.<span class="fn">querySelector</span>(<span class="str">'#my-btn'</span>);
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handler);
+<span class="cm">// TypeError: Cannot read property 'addEventListener' of null</span>
+                </code>
+            </div>
+            <div class="vs-label good">✅ Wait for DOM or use delegation</div>
+            <div class="code-block good-code">
+                <code>
+<span class="cm">// Solution 1: DOMContentLoaded</span>
+document.<span class="fn">addEventListener</span>(<span class="str">'DOMContentLoaded'</span>, () <span class="op">=></span> {
+  <span class="kw">const</span> btn = document.<span class="fn">querySelector</span>(<span class="str">'#my-btn'</span>);
+  btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, handler);
+});
+
+<span class="cm">// Solution 2: Script at end of &lt;body&gt;</span>
+<span class="cm">// Solution 3: defer attribute on script tag</span>
+<span class="cm">// Solution 4: Event delegation on document/body</span>
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <div class="mistake-card">
+        <div class="mistake-header" onclick="toggleMistake(this)">
+            <span class="number">7</span>
+            <h4>Using this in arrow functions as event handlers</h4>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="mistake-body">
+            <p>Arrow functions don't have their own <code>this</code>!</p>
+            <div class="vs-label bad">❌ this is NOT the element</div>
+            <div class="code-block bad-code">
+                <code>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () <span class="op">=></span> {
+  console.<span class="fn">log</span>(<span class="kw">this</span>); <span class="cm">// ← Window object, NOT the button!</span>
+});
+                </code>
+            </div>
+            <div class="vs-label good">✅ Use regular function OR e.currentTarget</div>
+            <div class="code-block good-code">
+                <code>
+<span class="cm">// Regular function: this = the element</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="kw">function</span>() {
+  console.<span class="fn">log</span>(<span class="kw">this</span>); <span class="cm">// ← the button ✅</span>
+});
+
+<span class="cm">// Arrow function: use e.currentTarget instead</span>
+btn.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="param">e</span>) <span class="op">=></span> {
+  console.<span class="fn">log</span>(e.<span class="prop">currentTarget</span>); <span class="cm">// ← the button ✅</span>
+});
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <button class="demo-btn green" onclick="completeSection('mistakes')">✅ Mark Pitfalls Complete</button>
+</div>
+
+<!-- ==================== SECTION: QUIZ ==================== -->
+<div class="section" id="sec-quiz">
+    <h2 class="section-title"><span class="emoji">🧠</span> Final Quiz</h2>
+    <p class="section-subtitle">Test your knowledge! 10 questions to prove your mastery.</p>
+
+    <div id="quiz-container"></div>
+
+    <div id="quiz-results" style="display:none;">
+        <div class="quiz-score">
+            <p style="color:var(--muted);margin-bottom:8px;">Your Score</p>
+            <div class="score-num" id="final-score">0/10</div>
+            <p style="margin-top:12px;" id="score-message"></p>
+            <button class="demo-btn" onclick="resetQuiz()" style="margin-top:20px;">🔄 Retry Quiz</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+// ==================== GLOBAL STATE ====================
+const state = {
+    completedSections: new Set(),
+    quizScore: 0,
+    quizAnswered: 0,
+    totalQuestions: 10
+};
+
+// ==================== NAVIGATION ====================
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.section');
+
+navBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const sectionId = btn.dataset.section;
+        navBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        sections.forEach(s => s.classList.remove('active'));
+        document.getElementById(`sec-${sectionId}`).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});
+
+// ==================== PROGRESS TRACKING ====================
+function completeSection(name) {
+    if (state.completedSections.has(name)) return;
+    state.completedSections.add(name);
+    const badge = document.getElementById(`badge-${name}`);
+    if (badge) {
+        badge.classList.remove('incomplete');
+        badge.classList.add('complete');
+    }
+    updateProgress();
+    showToast(`Section "${name}" completed! 🎉`);
+
+    // Auto-navigate to next section
+    const order = ['intro', 'addEventListener', 'eventObject', 'eventTypes', 'delegation', 'mistakes', 'quiz'];
+    const idx = order.indexOf(name);
+    if (idx < order.length - 1) {
+        setTimeout(() => {
+            const nextBtn = document.querySelector(`[data-section="${order[idx+1]}"]`);
+            if (nextBtn) nextBtn.click();
+        }, 1200);
+    }
+}
+
+function updateProgress() {
+    const total = 7;
+    const done = state.completedSections.size;
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct;
+    document.getElementById('sections-done').textContent = done;
+}
+
+// ==================== TOAST ====================
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ==================== PARTICLES ====================
+function createParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (15 + Math.random() * 20) + 's';
+        p.style.animationDelay = (Math.random() * 15) + 's';
+        p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+        const colors = ['var(--accent)', 'var(--accent2)', 'var(--green)', 'var(--pink)'];
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        container.appendChild(p);
+    }
+}
+createParticles();
+
+// ==================== INTRO DEMO ====================
+(function() {
+    const btn = document.getElementById('intro-btn');
+    const counter = document.getElementById('intro-counter');
+    let count = 0;
+
+    btn.addEventListener('click', () => {
+        count++;
+        counter.textContent = count;
+        counter.classList.add('bump');
+        setTimeout(() => counter.classList.remove('bump'), 150);
+    });
+})();
+
+// ==================== addEventListener DEMOS ====================
+(function() {
+    // Regular button
+    const regBtn = document.getElementById('ael-regular');
+    const regOut = document.getElementById('ael-regular-out');
+    let regCount = 0;
+
+    regBtn.addEventListener('click', () => {
+        regCount++;
+        regOut.textContent = `Clicked ${regCount} time(s) — I keep listening!`;
+    });
+
+    // Once button
+    const onceBtn = document.getElementById('ael-once');
+    const onceOut = document.getElementById('ael-once-out');
+
+    onceBtn.addEventListener('click', () => {
+        onceOut.textContent = '✅ Fired once! Now I\'m done. Click again — nothing happens!';
+        onceBtn.style.opacity = '0.5';
+        onceBtn.style.cursor = 'not-allowed';
+    }, { once: true });
+
+    // Remove listener demo
+    const startBtn = document.getElementById('ael-start');
+    const stopBtn = document.getElementById('ael-stop');
+    const targetBtn = document.getElementById('ael-target');
+    const removeOut = document.getElementById('ael-remove-out');
+    let targetCount = 0;
+
+    function targetHandler() {
+        targetCount++;
+        removeOut.textContent = `🎯 Target clicked! Count: ${targetCount}`;
+        removeOut.style.color = 'var(--green)';
+    }
+
+    startBtn.addEventListener('click', () => {
+        targetBtn.addEventListener('click', targetHandler);
+        removeOut.textContent = '🟢 Listening! Now click the Target Button.';
+        removeOut.style.color = 'var(--green)';
+    });
+
+    stopBtn.addEventListener('click', () => {
+        targetBtn.removeEventListener('click', targetHandler);
+        removeOut.textContent = '🔴 Stopped listening. Target Button clicks are ignored.';
+        removeOut.style.color = 'var(--red)';
+    });
+})();
+
+// ==================== EVENT OBJECT EXPLORER ====================
+(function() {
+    const explorer = document.getElementById('event-explorer');
+    const input = document.getElementById('event-explorer-input');
+    const log = document.getElementById('event-explorer-log');
+    let firstEvent = true;
+
+    function addLog(type, detail) {
+        if (firstEvent) {
+            log.innerHTML = '';
+            firstEvent = false;
+        }
+        const now = new Date();
+        const time = now.toTimeString().split(' ')[0];
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="log-time">${time}</span> <span class="log-type">${type}</span> <span class="log-detail">${detail}</span>`;
+        log.prepend(entry);
+        if (log.children.length > 50) log.lastChild.remove();
+    }
+
+    explorer.addEventListener('mousemove', (e) => {
+        addLog('mousemove', `x:${e.clientX} y:${e.clientY} target:${e.target.tagName}`);
+    });
+
+    explorer.addEventListener('click', (e) => {
+        addLog('click', `target:${e.target.tagName}${e.target.id ? '#'+e.target.id : ''} button:${e.button}`);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        addLog('keydown', `key:"${e.key}" code:${e.code} shift:${e.shiftKey} ctrl:${e.ctrlKey}`);
+    });
+
+    input.addEventListener('input', (e) => {
+        addLog('input', `value:"${e.target.value}" inputType:${e.inputType}`);
+    });
+
+    // target vs currentTarget demo
+    const outer = document.getElementById('target-outer');
+    const output = document.getElementById('target-output');
+
+    outer.addEventListener('click', (e) => {
+        output.innerHTML = `
+            <span style="color:var(--orange)">e.target</span> = &lt;${e.target.tagName.toLowerCase()}${e.target.id ? ' id="'+e.target.id+'"' : ''}&gt; (what you clicked)<br>
+            <span style="color:var(--accent2)">e.currentTarget</span> = &lt;${e.currentTarget.tagName.toLowerCase()} id="${e.currentTarget.id}"&gt; (where listener is)
+        `;
+    });
+
+    // preventDefault demo
+    document.getElementById('link-prevented').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('prevent-output').innerHTML = '🚫 <span style="color:var(--pink)">preventDefault() stopped navigation!</span> The link was clicked but nothing happened.';
+    });
+
+    document.getElementById('link-default').addEventListener('click', (e) => {
+        e.preventDefault(); // preventing for demo purposes
+        document.getElementById('prevent-output').innerHTML = '⚠️ <span style="color:var(--orange)">In a real app, this would navigate to Google.</span> (Prevented here for demo)';
+    });
+})();
+
+// ==================== EVENT TYPES DEMOS ====================
+(function() {
+    // Click events
+    const clickBtn = document.getElementById('click-demo-btn');
+    const clickOut = document.getElementById('click-output');
+
+    clickBtn.addEventListener('click', (e) => {
+        clickOut.textContent = `🖱️ Click! at (${e.clientX}, ${e.clientY})`;
+    });
+    clickBtn.addEventListener('dblclick', () => {
+        clickOut.textContent = '🖱️🖱️ Double click detected!';
+    });
+    clickBtn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        clickOut.textContent = '🖱️ Right click (contextmenu) — default menu prevented!';
+    });
+
+    // Input events
+    const inputDemo = document.getElementById('input-demo');
+    const charCount = document.getElementById('char-count');
+    const livePreview = document.getElementById('live-preview');
+    const inputOut = document.getElementById('input-output');
+
+    inputDemo.addEventListener('input', (e) => {
+        charCount.textContent = e.target.value.length;
+        livePreview.textContent = e.target.value || '...';
+        inputOut.textContent = `input event: value="${e.target.value}" | inputType="${e.inputType}"`;
+    });
+
+    inputDemo.addEventListener('focus', () => {
+        inputOut.textContent = '🔵 focus event fired';
+    });
+
+    inputDemo.addEventListener('blur', () => {
+        inputOut.textContent = '⚪ blur event fired (lost focus)';
+    });
+
+    // Submit event
+    const form = document.getElementById('submit-demo-form');
+    const submitOut = document.getElementById('submit-output');
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('form-name').value;
+        const email = document.getElementById('form-email').value;
+        submitOut.innerHTML = `✅ Form submitted! preventDefault() stopped the refresh.<br>Name: "${name}" | Email: "${email}"<br><span style="color:var(--muted)">In a real app, you'd send this via fetch().</span>`;
+        submitOut.style.color = 'var(--green)';
+    });
+
+    // Keyboard demo
+    const kbDemo = document.getElementById('keyboard-demo');
+    const kbKey = document.getElementById('kb-key');
+    const kbCode = document.getElementById('kb-code');
+    const kbMod = document.getElementById('kb-modifiers');
+
+    kbDemo.addEventListener('keydown', (e) => {
+        kbKey.textContent = e.key;
+        kbCode.textContent = e.code;
+        const mods = [];
+        if (e.shiftKey) mods.push('Shift');
+        if (e.ctrlKey) mods.push('Ctrl');
+        if (e.altKey) mods.push('Alt');
+        if (e.metaKey) mods.push('Meta');
+        kbMod.textContent = mods.length ? mods.join('+') : 'None';
+    });
+})();
+
+// ==================== BUBBLING DEMO ====================
+(function() {
+    const outer = document.getElementById('bubble-outer');
+    const mid = document.getElementById('bubble-mid');
+    const inner = document.getElementById('bubble-inner');
+    const btn = document.getElementById('bubble-btn');
+    const output = document.getElementById('bubble-output');
+
+    const phases = [];
+
+    function flashEl(el, delay) {
+        setTimeout(() => {
+            el.classList.add('flash');
+            setTimeout(() => el.classList.remove('flash'), 600);
+        }, delay);
+    }
+
+    outer.addEventListener('click', (e) => {
+        if (e.target === btn || inner.contains(e.target)) {
+            flashEl(outer, 600);
+            setTimeout(() => {
+                output.textContent = phases.join(' → ') + ' → ③ grandparent DIV heard it! 🫧 Bubbling complete!';
+            }, 700);
+        }
+    });
+
+    mid.addEventListener('click', (e) => {
+        if (e.target === btn || inner.contains(e.target)) {
+            flashEl(mid, 300);
+            setTimeout(() => {
+                phases.push('② parent DIV');
+                output.textContent = phases.join(' → ') + ' ...bubbling up...';
+            }, 400);
+        }
+    });
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // We handle propagation manually for the visual
+        phases.length = 0;
+        phases.push('① button CLICKED');
+        flashEl(inner, 0);
+        output.textContent = phases[0] + ' ...bubbling up...';
+
+        // Simulate bubbling visually
+        flashEl(mid, 400);
+        setTimeout(() => {
+            phases.push('② parent DIV hears it');
+            output.textContent = phases.join(' → ') + ' ...still bubbling...';
+        }, 450);
+
+        flashEl(outer, 800);
+        setTimeout(() => {
+            phases.push('③ grandparent DIV hears it');
+            output.textContent = phases.join(' → ') + ' ✅ Done!';
+        }, 850);
+    });
+})();
+
+// ==================== DELEGATION DEMO ====================
+(function() {
+    const list = document.getElementById('todo-list');
+    const input = document.getElementById('todo-input');
+    const addBtn = document.getElementById('todo-add');
+    const output = document.getElementById('delegation-output');
+    let nextId = 4;
+
+    // ONE listener on the parent list
+    list.addEventListener('click', (e) => {
+        const item = e.target.closest('li');
+        if (!item) return;
+
+        item.classList.toggle('selected');
+        const isSelected = item.classList.contains('selected');
+        output.textContent = `${isSelected ? '✅' : '↩️'} "${item.textContent}" ${isSelected ? 'completed' : 'uncompleted'} — via delegation (e.target.closest('li'))`;
+    });
+
+    function addTodo() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        const li = document.createElement('li');
+        li.dataset.id = nextId++;
+        li.textContent = text;
+        list.appendChild(li);
+        input.value = '';
+        output.textContent = `➕ Added "${text}" — it works WITHOUT adding a new listener! That's delegation! 🎯`;
+    }
+
+    addBtn.addEventListener('click', addTodo);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') addTodo();
+    });
+})();
+
+// ==================== MISTAKES TOGGLE ====================
+function toggleMistake(header) {
+    const body = header.nextElementSibling;
+    const isOpen = body.classList.contains('open');
+
+    body.classList.toggle('open');
+    header.classList.toggle('open');
+}
+
+// ==================== QUIZ ====================
+const quizQuestions = [
+    {
+        q: "What is the correct syntax for addEventListener?",
+        options: [
+            'element.addEventListener("click", handler())',
+            'element.addEventListener("click", handler)',
+            'element.addEvent("click", handler)',
+            'element.on("click", handler)'
+        ],
+        correct: 1,
+        explanation: "Pass the function reference (without parentheses). Adding () would call it immediately!"
+    },
+    {
+        q: "What does e.preventDefault() do?",
+        options: [
+            "Stops the event from bubbling up",
+            "Removes the event listener",
+            "Prevents the browser's default action for that event",
+            "Prevents other handlers from firing"
+        ],
+        correct: 2,
+        explanation: "preventDefault() stops default browser behavior like form submission, link navigation, etc."
+    },
+    {
+        q: "What is the difference between e.target and e.currentTarget?",
+        options: [
+            "They are always the same element",
+            "e.target is the element the listener is attached to; e.currentTarget is what was clicked",
+            "e.target is what was actually clicked; e.currentTarget is where the listener is attached",
+            "e.target only works with delegation"
+        ],
+        correct: 2,
+        explanation: "e.target = the actual element clicked. e.currentTarget = the element the listener is on. They differ during bubbling."
+    },
+    {
+        q: "Why should you prefer addEventListener over onclick?",
+        options: [
+            "addEventListener is faster",
+            "addEventListener lets you add multiple handlers for the same event",
+            "onclick doesn't work in modern browsers",
+            "addEventListener automatically prevents default"
+        ],
+        correct: 1,
+        explanation: "onclick only allows one handler (later ones overwrite). addEventListener can stack multiple handlers."
+    },
+    {
+        q: "What does { once: true } do as the third argument?",
+        options: [
+            "Makes the event fire only once per second",
+            "Ensures only one listener can exist",
+            "Automatically removes the listener after it fires once",
+            "Makes the handler run synchronously"
+        ],
+        correct: 2,
+        explanation: "{ once: true } means the handler fires once, then auto-removes itself. Perfect for one-time actions!"
+    },
+    {
+        q: "What is event delegation?",
+        options: [
+            "Delegating event handling to a web worker",
+            "Attaching one listener to a parent and using e.target to identify which child was interacted with",
+            "Using setTimeout to delay event handling",
+            "Creating custom events"
+        ],
+        correct: 1,
+        explanation: "Event delegation = one listener on a parent, leveraging bubbling. Efficient and works with dynamic content!"
+    },
+    {
+        q: "Which method finds the closest matching ancestor element?",
+        options: [
+            "e.target.matches(selector)",
+            "e.target.closest(selector)",
+            "e.target.parentElement(selector)",
+            "e.target.querySelector(selector)"
+        ],
+        correct: 1,
+        explanation: "closest() walks UP the DOM tree from the element, checking each ancestor against the selector."
+    },
+    {
+        q: "What happens if you forget e.preventDefault() on a form submit handler?",
+        options: [
+            "Nothing, it works fine",
+            "The form data is lost",
+            "The page refreshes/navigates, losing your JS state",
+            "An error is thrown"
+        ],
+        correct: 2,
+        explanation: "Without preventDefault(), the form performs its default action (page navigation/refresh), wiping your app state."
+    },
+    {
+        q: "Why can't you use removeEventListener with an anonymous function?",
+        options: [
+            "Anonymous functions are not valid handlers",
+            "removeEventListener needs the exact same function reference, and each anonymous function is a new reference",
+            "removeEventListener only works with arrow functions",
+            "You actually can, this is a myth"
+        ],
+        correct: 1,
+        explanation: "Two identical-looking anonymous functions are different objects in memory. removeEventListener needs the SAME reference."
+    },
+    {
+        q: "In an arrow function event handler, what does 'this' refer to?",
+        options: [
+            "The element that was clicked",
+            "The element the listener is attached to",
+            "The surrounding lexical scope (often window)",
+            "The event object"
+        ],
+        correct: 2,
+        explanation: "Arrow functions don't have their own 'this'. They inherit from their enclosing scope. Use e.currentTarget instead."
+    }
+];
+
+function buildQuiz() {
+    const container = document.getElementById('quiz-container');
+    container.innerHTML = '';
+    state.quizScore = 0;
+    state.quizAnswered = 0;
+    document.getElementById('quiz-results').style.display = 'none';
+
+    quizQuestions.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.className = 'quiz-question';
+        div.id = `quiz-q-${i}`;
+
+        let optionsHtml = q.options.map((opt, j) =>
+            `<button class="quiz-opt" data-q="${i}" data-opt="${j}">${opt}</button>`
+        ).join('');
+
+        div.innerHTML = `
+            <h4>Question ${i + 1} of ${quizQuestions.length}</h4>
+            <p>${q.q}</p>
+            <div class="quiz-options">${optionsHtml}</div>
+            <div class="quiz-feedback" id="quiz-fb-${i}"></div>
+        `;
+        container.appendChild(div);
+    });
+
+    // Add click handlers
+    container.querySelectorAll('.quiz-opt').forEach(btn => {
+        btn.addEventListener('click', handleQuizAnswer);
+    });
+}
+
+function handleQuizAnswer(e) {
+    const btn = e.target;
+    const qIdx = parseInt(btn.dataset.q);
+    const optIdx = parseInt(btn.dataset.opt);
+    const question = quizQuestions[qIdx];
+    const qDiv = document.getElementById(`quiz-q-${qIdx}`);
+    const feedback = document.getElementById(`quiz-fb-${qIdx}`);
+
+    // Disable all options for this question
+    const allOpts = qDiv.querySelectorAll('.quiz-opt');
+    allOpts.forEach(o => {
+        o.classList.add('disabled');
+        o.removeEventListener('click', handleQuizAnswer);
+    });
+
+    const isCorrect = optIdx === question.correct;
+
+    if (isCorrect) {
+        btn.classList.add('selected-correct');
+        qDiv.classList.add('correct');
+        feedback.className = 'quiz-feedback show correct';
+        feedback.innerHTML = `✅ Correct! ${question.explanation}`;
+        state.quizScore++;
+    } else {
+        btn.classList.add('selected-wrong');
+        allOpts[question.correct].classList.add('show-correct');
+        qDiv.classList.add('wrong');
+        feedback.className = 'quiz-feedback show wrong';
+        feedback.innerHTML = `❌ Wrong! ${question.explanation}`;
+    }
+
+    state.quizAnswered++;
+
+    if (state.quizAnswered === state.totalQuestions) {
+        setTimeout(showQuizResults, 800);
+    }
+}
+
+function showQuizResults() {
+    const resultsDiv = document.getElementById('quiz-results');
+    resultsDiv.style.display = 'block';
+    document.getElementById('final-score').textContent = `${state.quizScore}/${state.totalQuestions}`;
+
+    const pct = (state.quizScore / state.totalQuestions) * 100;
+    const msgEl = document.getElementById('score-message');
+
+    if (pct === 100) {
+        msgEl.textContent = '🏆 PERFECT SCORE! You\'re ready for any interview!';
+        msgEl.style.color = 'var(--green)';
+        completeSection('quiz');
+    } else if (pct >= 80) {
+        msgEl.textContent = '🌟 Great job! Almost perfect. Review the ones you missed.';
+        msgEl.style.color = 'var(--accent2)';
+        completeSection('quiz');
+    } else if (pct >= 60) {
+        msgEl.textContent = '📚 Good effort! Review the sections and try again.';
+        msgEl.style.color = 'var(--orange)';
+    } else {
+        msgEl.textContent = '💪 Keep studying! Re-read the sections and try again.';
+        msgEl.style.color = 'var(--red)';
+    }
+
+    resultsDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetQuiz() {
+    buildQuiz();
+    document.getElementById('quiz-container').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Build quiz on load
+buildQuiz();
+
+// ==================== KEYBOARD SHORTCUT ====================
+document.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.altKey) {
+        const sections = ['intro', 'addEventListener', 'eventObject', 'eventTypes', 'delegation', 'mistakes', 'quiz'];
+        const idx = parseInt(e.key) - 1;
+        if (idx < sections.length && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+            const btn = document.querySelector(`[data-section="${sections[idx]}"]`);
+            if (btn) btn.click();
+        }
+    }
+});
+</script>
+</body>
+</html>

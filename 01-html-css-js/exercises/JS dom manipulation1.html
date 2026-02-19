@@ -1,0 +1,3178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 DOM Manipulation Masterclass</title>
+    <style>
+        /* ===== CSS RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== NAVIGATION ===== */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 12, 41, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 2px solid #6c63ff;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .top-nav h1 {
+            font-size: 1.3rem;
+            color: #6c63ff;
+        }
+
+        .progress-container {
+            flex: 1;
+            max-width: 300px;
+            margin: 0 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #1a1a2e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #6c63ff, #f857a6);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .xp-display {
+            background: linear-gradient(135deg, #6c63ff, #f857a6);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            width: 260px;
+            background: rgba(15, 12, 41, 0.98);
+            border-right: 1px solid #333;
+            overflow-y: auto;
+            padding: 15px 0;
+            z-index: 999;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-section {
+            padding: 10px 20px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-section h3 {
+            color: #6c63ff;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(108, 99, 255, 0.1);
+            border-left-color: #6c63ff;
+        }
+
+        .nav-item.active {
+            background: rgba(108, 99, 255, 0.2);
+            border-left-color: #6c63ff;
+            color: #fff;
+        }
+
+        .nav-item.completed {
+            color: #4ecdc4;
+        }
+
+        .nav-item .icon {
+            font-size: 1.2rem;
+        }
+
+        .nav-item .check {
+            margin-left: auto;
+            color: #4ecdc4;
+            display: none;
+        }
+
+        .nav-item.completed .check {
+            display: inline;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            margin-left: 260px;
+            margin-top: 60px;
+            padding: 30px;
+            max-width: 1000px;
+        }
+
+        .lesson {
+            display: none;
+        }
+
+        .lesson.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== SECTION STYLES ===== */
+        .section-header {
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .section-header .subtitle {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .section-header .badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .badge.beginner { background: #4ecdc4; color: #000; }
+        .badge.important { background: #f857a6; color: #fff; }
+        .badge.practice { background: #ffd93d; color: #000; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: rgba(30, 30, 60, 0.8);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(108, 99, 255, 0.15);
+        }
+
+        .card h3 {
+            color: #6c63ff;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card p {
+            line-height: 1.8;
+            margin-bottom: 12px;
+            color: #ccc;
+        }
+
+        /* ===== VISUAL EXPLANATION BOXES ===== */
+        .visual-box {
+            background: linear-gradient(135deg, #1a1a3e, #2d2d5e);
+            border: 2px dashed #6c63ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .visual-box .dom-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dom-node {
+            background: #6c63ff;
+            color: #fff;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .dom-node:hover {
+            transform: scale(1.1);
+            background: #f857a6;
+        }
+
+        .dom-node.highlight {
+            background: #f857a6;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(248, 87, 166, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(248, 87, 166, 0); }
+        }
+
+        .dom-connector {
+            width: 2px;
+            height: 20px;
+            background: #555;
+        }
+
+        .dom-children {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .dom-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ===== CODE BLOCKS ===== */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: #161b22;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .code-header span {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .copy-btn {
+            background: #6c63ff;
+            color: #fff;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #5a52d5;
+        }
+
+        .code-body {
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .code-body pre {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #e6edf3;
+            white-space: pre;
+        }
+
+        .code-comment { color: #8b949e; }
+        .code-keyword { color: #ff7b72; }
+        .code-string { color: #a5d6ff; }
+        .code-method { color: #d2a8ff; }
+        .code-tag { color: #7ee787; }
+        .code-attr { color: #79c0ff; }
+        .code-value { color: #ffd93d; }
+        .code-variable { color: #ffa657; }
+
+        /* ===== INTERACTIVE PLAYGROUND ===== */
+        .playground {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #6c63ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .playground h4 {
+            color: #ffd93d;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .playground-area {
+            background: #fff;
+            color: #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            min-height: 100px;
+        }
+
+        .playground-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .play-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .play-btn.primary {
+            background: linear-gradient(135deg, #6c63ff, #5a52d5);
+            color: #fff;
+        }
+
+        .play-btn.success {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: #fff;
+        }
+
+        .play-btn.danger {
+            background: linear-gradient(135deg, #f857a6, #ff5858);
+            color: #fff;
+        }
+
+        .play-btn.warning {
+            background: linear-gradient(135deg, #ffd93d, #f0c419);
+            color: #333;
+        }
+
+        .play-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== QUIZ STYLES ===== */
+        .quiz-container {
+            background: linear-gradient(135deg, #1a1a2e, #1f1f3a);
+            border: 2px solid #f857a6;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .quiz-container h4 {
+            color: #f857a6;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quiz-question {
+            font-size: 1rem;
+            margin: 15px 0;
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .quiz-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 12px 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        .quiz-option:hover {
+            border-color: #6c63ff;
+            background: rgba(108, 99, 255, 0.1);
+        }
+
+        .quiz-option.selected {
+            border-color: #6c63ff;
+            background: rgba(108, 99, 255, 0.2);
+        }
+
+        .quiz-option.correct {
+            border-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.2);
+        }
+
+        .quiz-option.incorrect {
+            border-color: #ff5858;
+            background: rgba(255, 88, 88, 0.2);
+        }
+
+        .quiz-option .letter {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .quiz-feedback {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .quiz-feedback.show { display: block; animation: fadeIn 0.3s ease; }
+        .quiz-feedback.correct-feedback { background: rgba(78, 205, 196, 0.15); border-left: 4px solid #4ecdc4; }
+        .quiz-feedback.incorrect-feedback { background: rgba(255, 88, 88, 0.15); border-left: 4px solid #ff5858; }
+
+        /* ===== PITFALL BOX ===== */
+        .pitfall-box {
+            background: rgba(255, 88, 88, 0.08);
+            border: 1px solid rgba(255, 88, 88, 0.3);
+            border-left: 4px solid #ff5858;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .pitfall-box h4 {
+            color: #ff5858;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pitfall-box p { color: #ddd; }
+
+        /* ===== TIP BOX ===== */
+        .tip-box {
+            background: rgba(78, 205, 196, 0.08);
+            border: 1px solid rgba(78, 205, 196, 0.3);
+            border-left: 4px solid #4ecdc4;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .tip-box h4 {
+            color: #4ecdc4;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tip-box p { color: #ddd; }
+
+        /* ===== COMPARISON TABLE ===== */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.85rem;
+        }
+
+        .comparison-table th {
+            background: #6c63ff;
+            color: #fff;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(108, 99, 255, 0.1);
+        }
+
+        /* ===== EXERCISE BOX ===== */
+        .exercise-box {
+            background: linear-gradient(135deg, #1a2a1a, #1a3a2a);
+            border: 2px solid #4ecdc4;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .exercise-box h4 {
+            color: #4ecdc4;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exercise-input {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px;
+            color: #e6edf3;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            margin: 10px 0;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .exercise-input:focus {
+            outline: none;
+            border-color: #6c63ff;
+        }
+
+        .exercise-result {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .exercise-result.show { display: block; }
+        .exercise-result.success { background: rgba(78, 205, 196, 0.15); color: #4ecdc4; }
+        .exercise-result.error { background: rgba(255, 88, 88, 0.15); color: #ff5858; }
+
+        /* ===== ANALOGY BOX ===== */
+        .analogy-box {
+            background: linear-gradient(135deg, #2d1f4e, #3d2f5e);
+            border: 1px solid #6c63ff;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .analogy-box .emoji {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .analogy-box h4 {
+            color: #ffd93d;
+            margin-bottom: 10px;
+        }
+
+        /* ===== STEP INDICATOR ===== */
+        .steps {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            flex: 1;
+            min-width: 150px;
+            background: rgba(30, 30, 60, 0.8);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .step .step-num {
+            width: 30px;
+            height: 30px;
+            background: #6c63ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin: 0 auto 10px;
+        }
+
+        .step .step-text {
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+
+        /* ===== ANIMATED EXAMPLES ===== */
+        .live-output {
+            background: #fff;
+            color: #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            min-height: 60px;
+            transition: all 0.3s ease;
+        }
+
+        .live-output h1, .live-output h2, .live-output h3 {
+            color: #333;
+        }
+
+        .live-output p {
+            color: #555;
+        }
+
+        .live-output .highlight-element {
+            outline: 3px solid #ff5858;
+            outline-offset: 3px;
+            animation: highlightPulse 1.5s infinite;
+        }
+
+        @keyframes highlightPulse {
+            0%, 100% { outline-color: #ff5858; }
+            50% { outline-color: #ffd93d; }
+        }
+
+        /* ===== LESSON NAVIGATION ===== */
+        .lesson-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+
+        .lesson-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 25px;
+            background: rgba(108, 99, 255, 0.2);
+            border: 1px solid #6c63ff;
+            color: #fff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .lesson-nav-btn:hover {
+            background: #6c63ff;
+            transform: translateY(-2px);
+        }
+
+        /* ===== MOBILE TOGGLE ===== */
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* ===== SCORE POPUP ===== */
+        .score-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #1a1a2e, #2d2d5e);
+            border: 2px solid #6c63ff;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            z-index: 2000;
+            transition: transform 0.3s ease;
+        }
+
+        .score-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .score-popup .big-emoji {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .score-popup h3 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1999;
+            display: none;
+        }
+
+        .overlay.show { display: block; }
+
+        /* ===== INLINE CODE ===== */
+        code {
+            background: rgba(108, 99, 255, 0.15);
+            color: #d2a8ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+        }
+
+        /* ===== ANIMATION CLASSES ===== */
+        .shake {
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .bounce {
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* ===== CONFETTI ===== */
+        .confetti-piece {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            z-index: 3000;
+            pointer-events: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px 15px;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .dom-children {
+                gap: 15px;
+            }
+
+            .steps {
+                flex-direction: column;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a2e; }
+        ::-webkit-scrollbar-thumb { background: #6c63ff; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #5a52d5; }
+
+        /* Tab system for code examples */
+        .tab-container {
+            margin: 15px 0;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-bottom: none;
+            color: #888;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #0d1117;
+            color: #fff;
+            border-color: #6c63ff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Highlight effect for playground elements */
+        .selector-highlight {
+            outline: 3px dashed #ff5858 !important;
+            outline-offset: 2px;
+            transition: all 0.3s ease;
+        }
+
+        /* Welcome animation */
+        .welcome-hero {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .welcome-hero h2 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #6c63ff, #f857a6, #ffd93d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .welcome-hero p {
+            font-size: 1.2rem;
+            color: #888;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: rgba(30, 30, 60, 0.6);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: #6c63ff;
+            transform: translateY(-5px);
+        }
+
+        .feature-card .feat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-card h4 {
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .start-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #6c63ff, #f857a6);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(108, 99, 255, 0.4);
+        }
+
+        /* Element counter badge */
+        .counter-badge {
+            display: inline-block;
+            background: #6c63ff;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAVIGATION -->
+    <nav class="top-nav">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+        <h1>🎮 DOM Master</h1>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0 / 10 lessons completed</div>
+        </div>
+        <div class="xp-display" id="xpDisplay">⭐ 0 XP</div>
+    </nav>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-section">
+            <h3>📚 Getting Started</h3>
+        </div>
+        <div class="nav-item active" onclick="showLesson(0)">
+            <span class="icon">🏠</span>
+            <span>Welcome</span>
+            <span class="check">✅</span>
+        </div>
+        <div class="nav-item" onclick="showLesson(1)">
+            <span class="icon">🌳</span>
+            <span>What is the DOM?</span>
+            <span class="check">✅</span>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🔍 Selecting Elements</h3>
+        </div>
+        <div class="nav-item" onclick="showLesson(2)">
+            <span class="icon">🎯</span>
+            <span>querySelector</span>
+            <span class="check">✅</span>
+        </div>
+        <div class="nav-item" onclick="showLesson(3)">
+            <span class="icon">🎯</span>
+            <span>querySelectorAll</span>
+            <span class="check">✅</span>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>✏️ Modifying Elements</h3>
+        </div>
+        <div class="nav-item" onclick="showLesson(4)">
+            <span class="icon">📝</span>
+            <span>textContent</span>
+            <span class="check">✅</span>
+        </div>
+        <div class="nav-item" onclick="showLesson(5)">
+            <span class="icon">🔧</span>
+            <span>innerHTML</span>
+            <span class="check">✅</span>
+        </div>
+        <div class="nav-item" onclick="showLesson(6)">
+            <span class="icon">⚔️</span>
+            <span>innerHTML vs textContent</span>
+            <span class="check">✅</span>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🏗️ Creating Elements</h3>
+        </div>
+        <div class="nav-item" onclick="showLesson(7)">
+            <span class="icon">🔨</span>
+            <span>createElement & append</span>
+            <span class="check">✅</span>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>⚡ Event Listeners</h3>
+        </div>
+        <div class="nav-item" onclick="showLesson(8)">
+            <span class="icon">👂</span>
+            <span>addEventListener</span>
+            <span class="check">✅</span>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🏆 Final Challenge</h3>
+        </div>
+        <div class="nav-item" onclick="showLesson(9)">
+            <span class="icon">🧪</span>
+            <span>Final Quiz & Exercises</span>
+            <span class="check">✅</span>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+        <!-- ============================================ -->
+        <!-- LESSON 0: WELCOME -->
+        <!-- ============================================ -->
+        <div class="lesson active" id="lesson-0">
+            <div class="welcome-hero">
+                <h2>DOM Manipulation Masterclass</h2>
+                <p>Learn to control web pages with JavaScript. Select elements, change content, create new ones, and respond to user actions!</p>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feat-icon">🎯</div>
+                        <h4>Select</h4>
+                        <p>Find any element on a page with precision</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">✏️</div>
+                        <h4>Modify</h4>
+                        <p>Change text, HTML, styles, and attributes</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">🏗️</div>
+                        <h4>Create</h4>
+                        <p>Build new elements and add them to the page</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feat-icon">⚡</div>
+                        <h4>Listen</h4>
+                        <p>React to clicks, typing, hovering and more</p>
+                    </div>
+                </div>
+                <button class="start-btn" onclick="showLesson(1); markComplete(0);">🚀 Start Learning!</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 1: WHAT IS THE DOM? -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-1">
+            <div class="section-header">
+                <h2>🌳 What is the DOM?</h2>
+                <p class="subtitle">Understanding the foundation of web manipulation</p>
+                <span class="badge beginner">Beginner</span>
+            </div>
+
+            <div class="analogy-box">
+                <div class="emoji">🏠</div>
+                <h4>Think of it Like a House Blueprint</h4>
+                <p>HTML is the blueprint. The DOM is the actual house built from that blueprint. JavaScript is like a renovation crew — it can change walls, add rooms, or paint things without needing a new blueprint!</p>
+            </div>
+
+            <div class="card">
+                <h3>📖 The DOM Explained Simply</h3>
+                <p><strong>DOM</strong> stands for <strong>Document Object Model</strong>.</p>
+                <p>When your browser loads an HTML page, it creates a tree-like structure in memory called the DOM. Every HTML tag becomes a "node" (object) that JavaScript can read, change, add to, or delete.</p>
+                <p>The DOM is your bridge between HTML and JavaScript!</p>
+            </div>
+
+            <div class="card">
+                <h3>🌳 Visual: The DOM Tree</h3>
+                <p>Click on any node to see what it represents!</p>
+                <div class="visual-box">
+                    <div class="dom-tree">
+                        <div class="dom-node" onclick="explainNode(this, 'document')" title="The entire page">document</div>
+                        <div class="dom-connector"></div>
+                        <div class="dom-node" onclick="explainNode(this, 'html')" title="Root HTML element">&lt;html&gt;</div>
+                        <div class="dom-connector"></div>
+                        <div class="dom-children">
+                            <div class="dom-branch">
+                                <div class="dom-node" onclick="explainNode(this, 'head')">&lt;head&gt;</div>
+                                <div class="dom-connector"></div>
+                                <div class="dom-children">
+                                    <div class="dom-node" onclick="explainNode(this, 'title')">&lt;title&gt;</div>
+                                </div>
+                            </div>
+                            <div class="dom-branch">
+                                <div class="dom-node" onclick="explainNode(this, 'body')">&lt;body&gt;</div>
+                                <div class="dom-connector"></div>
+                                <div class="dom-children">
+                                    <div class="dom-branch">
+                                        <div class="dom-node" onclick="explainNode(this, 'h1')">&lt;h1&gt;</div>
+                                    </div>
+                                    <div class="dom-branch">
+                                        <div class="dom-node" onclick="explainNode(this, 'p')">&lt;p&gt;</div>
+                                    </div>
+                                    <div class="dom-branch">
+                                        <div class="dom-node" onclick="explainNode(this, 'div')">&lt;div&gt;</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="nodeExplanation" style="margin-top: 15px; color: #ffd93d; min-height: 20px;">👆 Click a node to learn about it!</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🔑 Key Terms</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-text"><strong>document</strong><br>The entire web page</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div class="step-text"><strong>Element</strong><br>An HTML tag (like &lt;p&gt;, &lt;div&gt;)</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div class="step-text"><strong>Node</strong><br>Any piece of the DOM tree</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">4</div>
+                        <div class="step-text"><strong>Parent/Child</strong><br>Nesting relationships</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz 1 -->
+            <div class="quiz-container" id="quiz-1-1">
+                <h4>🧠 Quick Check</h4>
+                <p class="quiz-question">What does DOM stand for?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>Data Object Management</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-1', this, true)">
+                        <span class="letter">B</span>
+                        <span>Document Object Model</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-1', this, false)">
+                        <span class="letter">C</span>
+                        <span>Digital Online Markup</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>Document Order Method</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-1-2">
+                <h4>🧠 Quick Check</h4>
+                <p class="quiz-question">When is the DOM created?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-2', this, false)">
+                        <span class="letter">A</span>
+                        <span>When you write the HTML file</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-2', this, true)">
+                        <span class="letter">B</span>
+                        <span>When the browser loads the HTML page</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-2', this, false)">
+                        <span class="letter">C</span>
+                        <span>When you open the code editor</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-1-2', this, false)">
+                        <span class="letter">D</span>
+                        <span>When JavaScript is added to the page</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(0)">← Welcome</button>
+                <button class="lesson-nav-btn" onclick="showLesson(2); markComplete(1);">querySelector →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 2: querySelector -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-2">
+            <div class="section-header">
+                <h2>🎯 querySelector</h2>
+                <p class="subtitle">Your precision targeting tool — find ONE element</p>
+                <span class="badge beginner">Beginner</span>
+            </div>
+
+            <div class="analogy-box">
+                <div class="emoji">🔍</div>
+                <h4>Like Using "Find" in a Document</h4>
+                <p>Imagine pressing Ctrl+F in a document. <code>querySelector</code> finds the <strong>FIRST</strong> match and stops — just like "Find" highlights the first result!</p>
+            </div>
+
+            <div class="card">
+                <h3>📖 How querySelector Works</h3>
+                <p><code>document.querySelector(selector)</code> takes a <strong>CSS selector</strong> as a string and returns the <strong>first matching element</strong>.</p>
+                <p>If nothing matches, it returns <code>null</code>.</p>
+                <p>You can use ANY valid CSS selector — the same ones you use in your stylesheets!</p>
+            </div>
+
+            <div class="card">
+                <h3>📋 Selector Types You Can Use</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Selector Type</th>
+                        <th>Example</th>
+                        <th>What it Selects</th>
+                    </tr>
+                    <tr>
+                        <td>Tag</td>
+                        <td><code>"p"</code></td>
+                        <td>First &lt;p&gt; element</td>
+                    </tr>
+                    <tr>
+                        <td>Class</td>
+                        <td><code>".my-class"</code></td>
+                        <td>First element with class="my-class"</td>
+                    </tr>
+                    <tr>
+                        <td>ID</td>
+                        <td><code>"#my-id"</code></td>
+                        <td>Element with id="my-id"</td>
+                    </tr>
+                    <tr>
+                        <td>Attribute</td>
+                        <td><code>"[type='text']"</code></td>
+                        <td>First element with type="text"</td>
+                    </tr>
+                    <tr>
+                        <td>Combined</td>
+                        <td><code>"div.card h2"</code></td>
+                        <td>First h2 inside a div with class "card"</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Code Examples -->
+            <div class="card">
+                <h3>💻 Code Examples</h3>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>HTML (the page we're working with)</span>
+                    </div>
+                    <div class="code-body">
+<pre><span class="code-tag">&lt;h1</span> <span class="code-attr">id=</span><span class="code-string">"title"</span><span class="code-tag">&gt;</span>Hello World<span class="code-tag">&lt;/h1&gt;</span>
+<span class="code-tag">&lt;p</span> <span class="code-attr">class=</span><span class="code-string">"intro"</span><span class="code-tag">&gt;</span>First paragraph<span class="code-tag">&lt;/p&gt;</span>
+<span class="code-tag">&lt;p</span> <span class="code-attr">class=</span><span class="code-string">"intro"</span><span class="code-tag">&gt;</span>Second paragraph<span class="code-tag">&lt;/p&gt;</span>
+<span class="code-tag">&lt;div</span> <span class="code-attr">class=</span><span class="code-string">"box"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;span&gt;</span>Inside the box<span class="code-tag">&lt;/span&gt;</span>
+<span class="code-tag">&lt;/div&gt;</span></pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>JavaScript</span>
+                    </div>
+                    <div class="code-body">
+<pre><span class="code-comment">// Select by ID (use # prefix)</span>
+<span class="code-keyword">const</span> <span class="code-variable">title</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'#title'</span>);
+console.log(title); <span class="code-comment">// &lt;h1 id="title"&gt;Hello World&lt;/h1&gt;</span>
+
+<span class="code-comment">// Select by class (use . prefix)</span>
+<span class="code-keyword">const</span> <span class="code-variable">firstIntro</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'.intro'</span>);
+console.log(firstIntro); <span class="code-comment">// Only the FIRST .intro!</span>
+
+<span class="code-comment">// Select by tag name</span>
+<span class="code-keyword">const</span> <span class="code-variable">firstParagraph</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'p'</span>);
+
+<span class="code-comment">// Select nested elements</span>
+<span class="code-keyword">const</span> <span class="code-variable">boxSpan</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'.box span'</span>);
+
+<span class="code-comment">// When nothing is found:</span>
+<span class="code-keyword">const</span> <span class="code-variable">nope</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'.doesnt-exist'</span>);
+console.log(nope); <span class="code-comment">// null</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Playground -->
+            <div class="playground">
+                <h4>🎮 Try It! — Click buttons to select elements</h4>
+                <div class="playground-area" id="qsPlayground">
+                    <h2 id="play-title" style="color: #333;">My Cool Page</h2>
+                    <p class="play-text" style="color: #555;">This is the first paragraph.</p>
+                    <p class="play-text" style="color: #555;">This is the second paragraph.</p>
+                    <div class="play-box" style="background: #f0f0f0; padding: 10px; margin-top: 10px; border-radius: 5px;">
+                        <span style="color: #333;">I'm inside a div!</span>
+                    </div>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.85rem; color: #888;" id="qsResult">Click a button to see querySelector in action!</p>
+                <div class="playground-controls">
+                    <button class="play-btn primary" onclick="demoQS('#play-title', 'querySelector(\'#play-title\') — Selected the h2 by ID!')">Select #play-title</button>
+                    <button class="play-btn success" onclick="demoQS('.play-text', 'querySelector(\'.play-text\') — Only the FIRST .play-text is selected!')">Select .play-text</button>
+                    <button class="play-btn warning" onclick="demoQS('.play-box span', 'querySelector(\'.play-box span\') — Selected the span inside .play-box!')">Select .play-box span</button>
+                    <button class="play-btn danger" onclick="demoQSReset()">Reset</button>
+                </div>
+            </div>
+
+            <!-- Pitfall -->
+            <div class="pitfall-box">
+                <h4>⚠️ Common Mistake #1</h4>
+                <p><strong>Forgetting the # or . prefix!</strong></p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-comment">// ❌ WRONG — looks for a &lt;title&gt; TAG, not id="title"</span>
+document.<span class="code-method">querySelector</span>(<span class="code-string">'title'</span>);
+
+<span class="code-comment">// ✅ RIGHT — the # means "find by ID"</span>
+document.<span class="code-method">querySelector</span>(<span class="code-string">'#title'</span>);
+
+<span class="code-comment">// ❌ WRONG — looks for a &lt;intro&gt; tag (doesn't exist)</span>
+document.<span class="code-method">querySelector</span>(<span class="code-string">'intro'</span>);
+
+<span class="code-comment">// ✅ RIGHT — the . means "find by class"</span>
+document.<span class="code-method">querySelector</span>(<span class="code-string">'.intro'</span>);</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pitfall-box">
+                <h4>⚠️ Common Mistake #2</h4>
+                <p><strong>Not checking for null!</strong> If the element doesn't exist, you get an error.</p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-comment">// ❌ This will CRASH if element doesn't exist</span>
+document.<span class="code-method">querySelector</span>(<span class="code-string">'.missing'</span>).textContent = <span class="code-string">"Hi"</span>;
+<span class="code-comment">// TypeError: Cannot read properties of null</span>
+
+<span class="code-comment">// ✅ Always check first!</span>
+<span class="code-keyword">const</span> <span class="code-variable">el</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'.missing'</span>);
+<span class="code-keyword">if</span> (el) {
+  el.textContent = <span class="code-string">"Hi"</span>;
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exercise -->
+            <div class="exercise-box" id="exercise-2-1">
+                <h4>✍️ Exercise: Write the Selector</h4>
+                <p>Given this HTML, write the querySelector call to select the <strong>button</strong> with class "submit-btn":</p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-tag">&lt;form&gt;</span>
+  <span class="code-tag">&lt;button</span> <span class="code-attr">class=</span><span class="code-string">"submit-btn"</span><span class="code-tag">&gt;</span>Submit<span class="code-tag">&lt;/button&gt;</span>
+<span class="code-tag">&lt;/form&gt;</span></pre>
+                    </div>
+                </div>
+                <p style="font-size: 0.85rem; color: #888;">Type the complete JavaScript line (just the querySelector part):</p>
+                <textarea class="exercise-input" id="ex-2-1-input" placeholder="document.querySelector('...')" rows="2"></textarea>
+                <button class="play-btn success" onclick="checkExercise21()">Check Answer</button>
+                <div class="exercise-result" id="ex-2-1-result"></div>
+            </div>
+
+            <!-- Quiz -->
+            <div class="quiz-container" id="quiz-2-1">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">What does <code>querySelector</code> return if no element matches the selector?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>undefined</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-1', this, false)">
+                        <span class="letter">B</span>
+                        <span>An empty string ""</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-1', this, true)">
+                        <span class="letter">C</span>
+                        <span>null</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>It throws an error</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-2-2">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">If there are 5 elements with class "item", what does <code>document.querySelector('.item')</code> return?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-2', this, false)">
+                        <span class="letter">A</span>
+                        <span>All 5 elements</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-2', this, true)">
+                        <span class="letter">B</span>
+                        <span>Only the first element</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-2', this, false)">
+                        <span class="letter">C</span>
+                        <span>The last element</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-2-2', this, false)">
+                        <span class="letter">D</span>
+                        <span>An array of elements</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(1)">← What is the DOM?</button>
+                <button class="lesson-nav-btn" onclick="showLesson(3); markComplete(2);">querySelectorAll →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 3: querySelectorAll -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-3">
+            <div class="section-header">
+                <h2>🎯 querySelectorAll</h2>
+                <p class="subtitle">When you want ALL matching elements, not just the first</p>
+                <span class="badge beginner">Beginner</span>
+            </div>
+
+            <div class="analogy-box">
+                <div class="emoji">🔦</div>
+                <h4>Like "Find All" Instead of "Find"</h4>
+                <p><code>querySelector</code> = "Find Next" (one result). <code>querySelectorAll</code> = "Highlight All" (every match). It returns a <strong>NodeList</strong> — kind of like an array!</p>
+            </div>
+
+            <div class="card">
+                <h3>📖 How querySelectorAll Works</h3>
+                <p><code>document.querySelectorAll(selector)</code> returns a <strong>NodeList</strong> of ALL matching elements.</p>
+                <p>A NodeList looks like an array and you can loop through it, but it's NOT a real array (more on that below).</p>
+                <p>If nothing matches, it returns an <strong>empty NodeList</strong> (NOT null!).</p>
+            </div>
+
+            <div class="card">
+                <h3>💻 Code Examples</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// Get ALL paragraphs</span>
+<span class="code-keyword">const</span> <span class="code-variable">allParagraphs</span> = document.<span class="code-method">querySelectorAll</span>(<span class="code-string">'p'</span>);
+console.log(allParagraphs);        <span class="code-comment">// NodeList(3) [p, p, p]</span>
+console.log(allParagraphs.length); <span class="code-comment">// 3</span>
+
+<span class="code-comment">// Access individual elements by index (0-based!)</span>
+console.log(allParagraphs[<span class="code-value">0</span>]); <span class="code-comment">// First &lt;p&gt;</span>
+console.log(allParagraphs[<span class="code-value">1</span>]); <span class="code-comment">// Second &lt;p&gt;</span>
+console.log(allParagraphs[<span class="code-value">2</span>]); <span class="code-comment">// Third &lt;p&gt;</span>
+
+<span class="code-comment">// Loop with forEach</span>
+allParagraphs.<span class="code-method">forEach</span>(<span class="code-keyword">function</span>(paragraph) {
+  console.log(paragraph.textContent);
+});
+
+<span class="code-comment">// Loop with for...of</span>
+<span class="code-keyword">for</span> (<span class="code-keyword">const</span> <span class="code-variable">p</span> <span class="code-keyword">of</span> allParagraphs) {
+  console.log(p.textContent);
+}
+
+<span class="code-comment">// When nothing matches — returns EMPTY NodeList, not null</span>
+<span class="code-keyword">const</span> <span class="code-variable">nothing</span> = document.<span class="code-method">querySelectorAll</span>(<span class="code-string">'.fake'</span>);
+console.log(nothing.length); <span class="code-comment">// 0 (no error!)</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Playground -->
+            <div class="playground">
+                <h4>🎮 Try It! — Select multiple elements</h4>
+                <div class="playground-area" id="qsaPlayground">
+                    <p class="demo-item" style="color:#555; padding:5px; margin:5px 0; background:#f9f9f9; border-radius:4px;">🍎 Apple</p>
+                    <p class="demo-item" style="color:#555; padding:5px; margin:5px 0; background:#f9f9f9; border-radius:4px;">🍌 Banana</p>
+                    <p class="demo-item" style="color:#555; padding:5px; margin:5px 0; background:#f9f9f9; border-radius:4px;">🍊 Orange</p>
+                    <p class="demo-item" style="color:#555; padding:5px; margin:5px 0; background:#f9f9f9; border-radius:4px;">🍇 Grape</p>
+                    <p class="demo-item" style="color:#555; padding:5px; margin:5px 0; background:#f9f9f9; border-radius:4px;">🍓 Strawberry</p>
+                </div>
+                <p style="margin-top:10px; font-size:0.85rem; color:#888;" id="qsaResult">Click a button to see querySelectorAll in action!</p>
+                <div class="playground-controls">
+                    <button class="play-btn primary" onclick="demoQSA('all')">Select ALL Items</button>
+                    <button class="play-btn success" onclick="demoQSA('even')">Highlight Even Indexes</button>
+                    <button class="play-btn warning" onclick="demoQSA('count')">Count Elements</button>
+                    <button class="play-btn danger" onclick="demoQSAReset()">Reset</button>
+                </div>
+            </div>
+
+            <div class="pitfall-box">
+                <h4>⚠️ Common Mistake: Treating NodeList Like an Array</h4>
+                <p>A NodeList is NOT a full array. Some array methods don't work on it!</p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-keyword">const</span> <span class="code-variable">items</span> = document.<span class="code-method">querySelectorAll</span>(<span class="code-string">'.item'</span>);
+
+<span class="code-comment">// ✅ These WORK on NodeList:</span>
+items.<span class="code-method">forEach</span>(...);    <span class="code-comment">// works!</span>
+items.length;          <span class="code-comment">// works!</span>
+items[<span class="code-value">0</span>];             <span class="code-comment">// works!</span>
+
+<span class="code-comment">// ❌ These DON'T work directly:</span>
+items.<span class="code-method">map</span>(...);        <span class="code-comment">// ERROR! map is for arrays</span>
+items.<span class="code-method">filter</span>(...);     <span class="code-comment">// ERROR!</span>
+
+<span class="code-comment">// ✅ Fix: Convert to a real array first!</span>
+<span class="code-keyword">const</span> <span class="code-variable">arr</span> = Array.<span class="code-method">from</span>(items);     <span class="code-comment">// Method 1</span>
+<span class="code-keyword">const</span> <span class="code-variable">arr2</span> = [...items];            <span class="code-comment">// Method 2 (spread)</span>
+arr.<span class="code-method">map</span>(item => item.textContent);  <span class="code-comment">// Now it works!</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4>💡 Pro Tip</h4>
+                <p><code>querySelectorAll</code> returns an <strong>empty NodeList</strong> (not null) when nothing matches. So <code>.length</code> will be <code>0</code> and <code>forEach</code> simply won't run — no crash!</p>
+            </div>
+
+            <!-- Quiz -->
+            <div class="quiz-container" id="quiz-3-1">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">What does <code>querySelectorAll</code> return?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>A single element</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-1', this, false)">
+                        <span class="letter">B</span>
+                        <span>An Array</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-1', this, true)">
+                        <span class="letter">C</span>
+                        <span>A NodeList</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>A string</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-3-2">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">Which method can you use to loop through a NodeList?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-2', this, false)">
+                        <span class="letter">A</span>
+                        <span>.map()</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-2', this, true)">
+                        <span class="letter">B</span>
+                        <span>.forEach()</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-2', this, false)">
+                        <span class="letter">C</span>
+                        <span>.reduce()</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-3-2', this, false)">
+                        <span class="letter">D</span>
+                        <span>.filter()</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(2)">← querySelector</button>
+                <button class="lesson-nav-btn" onclick="showLesson(4); markComplete(3);">textContent →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 4: textContent -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-4">
+            <div class="section-header">
+                <h2>📝 textContent</h2>
+                <p class="subtitle">Read and change the text inside elements</p>
+                <span class="badge beginner">Beginner</span>
+            </div>
+
+            <div class="analogy-box">
+                <div class="emoji">✏️</div>
+                <h4>Like Erasing and Rewriting Text</h4>
+                <p><code>textContent</code> lets you <strong>read</strong> what text is inside an element, or <strong>replace</strong> it with new text. It treats everything as plain text — no HTML magic!</p>
+            </div>
+
+            <div class="card">
+                <h3>💻 Reading Text</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>HTML</span></div>
+                    <div class="code-body">
+<pre><span class="code-tag">&lt;h1</span> <span class="code-attr">id=</span><span class="code-string">"greeting"</span><span class="code-tag">&gt;</span>Hello, World!<span class="code-tag">&lt;/h1&gt;</span>
+<span class="code-tag">&lt;p</span> <span class="code-attr">id=</span><span class="code-string">"info"</span><span class="code-tag">&gt;</span>I have <span class="code-tag">&lt;strong&gt;</span>bold<span class="code-tag">&lt;/strong&gt;</span> text<span class="code-tag">&lt;/p&gt;</span></pre>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// READING text</span>
+<span class="code-keyword">const</span> <span class="code-variable">heading</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'#greeting'</span>);
+console.log(heading.textContent); <span class="code-comment">// "Hello, World!"</span>
+
+<span class="code-keyword">const</span> <span class="code-variable">info</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'#info'</span>);
+console.log(info.textContent); <span class="code-comment">// "I have bold text"</span>
+<span class="code-comment">// ^ Notice: it IGNORES the &lt;strong&gt; tags and gives raw text!</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>💻 Writing/Changing Text</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// CHANGING text</span>
+<span class="code-keyword">const</span> <span class="code-variable">heading</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'#greeting'</span>);
+heading.textContent = <span class="code-string">"Hi there! 👋"</span>;
+<span class="code-comment">// The heading now says "Hi there! 👋"</span>
+
+<span class="code-comment">// What if you try to put HTML in textContent?</span>
+heading.textContent = <span class="code-string">"&lt;em&gt;Fancy&lt;/em&gt;"</span>;
+<span class="code-comment">// Shows literally: "&lt;em&gt;Fancy&lt;/em&gt;" as plain text!</span>
+<span class="code-comment">// It does NOT create italic text — it's SAFE from HTML injection</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Playground -->
+            <div class="playground">
+                <h4>🎮 Try It! — Change text live</h4>
+                <div class="playground-area">
+                    <h2 id="tc-demo-heading" style="color:#333;">I am a heading</h2>
+                    <p id="tc-demo-para" style="color:#555;">I am a paragraph with some text in it.</p>
+                </div>
+                <div style="margin-top:15px;">
+                    <label style="color:#ccc; font-size:0.85rem;">New heading text:</label>
+                    <input type="text" class="exercise-input" style="min-height:auto; margin:5px 0;" id="tcInput1" placeholder="Type new heading text..." oninput="document.getElementById('tc-demo-heading').textContent = this.value">
+                    <label style="color:#ccc; font-size:0.85rem;">New paragraph text:</label>
+                    <input type="text" class="exercise-input" style="min-height:auto; margin:5px 0;" id="tcInput2" placeholder="Type new paragraph text..." oninput="document.getElementById('tc-demo-para').textContent = this.value">
+                </div>
+                <p style="font-size:0.8rem; color:#888; margin-top:10px;">⬆️ Type in the boxes above and watch the text change in real-time!</p>
+            </div>
+
+            <div class="tip-box">
+                <h4>💡 Key Point</h4>
+                <p><code>textContent</code> is <strong>safe</strong> because it treats everything as plain text. If someone types <code>&lt;script&gt;alert('hack')&lt;/script&gt;</code>, it will show that literally as text, not execute it. This makes it great for user input!</p>
+            </div>
+
+            <div class="quiz-container" id="quiz-4-1">
+                <h4>🧠 Quick Check</h4>
+                <p class="quiz-question">What happens when you set <code>element.textContent = "&lt;b&gt;Bold&lt;/b&gt;"</code>?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-4-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>The text appears bold</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-4-1', this, true)">
+                        <span class="letter">B</span>
+                        <span>It shows "&lt;b&gt;Bold&lt;/b&gt;" as visible text</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-4-1', this, false)">
+                        <span class="letter">C</span>
+                        <span>It throws an error</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-4-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>Nothing happens</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(3)">← querySelectorAll</button>
+                <button class="lesson-nav-btn" onclick="showLesson(5); markComplete(4);">innerHTML →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 5: innerHTML -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-5">
+            <div class="section-header">
+                <h2>🔧 innerHTML</h2>
+                <p class="subtitle">Read and write HTML content inside elements</p>
+                <span class="badge important">Important</span>
+            </div>
+
+            <div class="analogy-box">
+                <div class="emoji">🏗️</div>
+                <h4>Like Remodeling a Room</h4>
+                <p><code>textContent</code> just repaints the walls (changes text). <code>innerHTML</code> can tear down walls, add new furniture, and completely rebuild the interior (changes HTML structure)!</p>
+            </div>
+
+            <div class="card">
+                <h3>💻 Reading HTML</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>HTML</span></div>
+                    <div class="code-body">
+<pre><span class="code-tag">&lt;div</span> <span class="code-attr">id=</span><span class="code-string">"container"</span><span class="code-tag">&gt;</span>
+  <span class="code-tag">&lt;h2&gt;</span>Title<span class="code-tag">&lt;/h2&gt;</span>
+  <span class="code-tag">&lt;p&gt;</span>Some <span class="code-tag">&lt;strong&gt;</span>bold<span class="code-tag">&lt;/strong&gt;</span> text<span class="code-tag">&lt;/p&gt;</span>
+<span class="code-tag">&lt;/div&gt;</span></pre>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript</span></div>
+                    <div class="code-body">
+<pre><span class="code-keyword">const</span> <span class="code-variable">container</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'#container'</span>);
+
+<span class="code-comment">// innerHTML shows ALL the HTML inside</span>
+console.log(container.innerHTML);
+<span class="code-comment">// "  &lt;h2&gt;Title&lt;/h2&gt;\n  &lt;p&gt;Some &lt;strong&gt;bold&lt;/strong&gt; text&lt;/p&gt;"</span>
+
+<span class="code-comment">// Compare with textContent:</span>
+console.log(container.textContent);
+<span class="code-comment">// "  Title\n  Some bold text"  (no HTML tags!)</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>💻 Writing/Changing HTML</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript</span></div>
+                    <div class="code-body">
+<pre><span class="code-keyword">const</span> <span class="code-variable">container</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'#container'</span>);
+
+<span class="code-comment">// Replace ALL content with new HTML</span>
+container.innerHTML = <span class="code-string">'&lt;h2&gt;New Title&lt;/h2&gt;&lt;p&gt;Brand new content!&lt;/p&gt;'</span>;
+
+<span class="code-comment">// ADD to existing content</span>
+container.innerHTML += <span class="code-string">'&lt;p&gt;An extra paragraph!&lt;/p&gt;'</span>;
+
+<span class="code-comment">// Create a list dynamically</span>
+container.innerHTML = <span class="code-string">`
+  &lt;ul&gt;
+    &lt;li&gt;Item 1&lt;/li&gt;
+    &lt;li&gt;Item 2&lt;/li&gt;
+    &lt;li&gt;Item 3&lt;/li&gt;
+  &lt;/ul&gt;
+`</span>;
+
+<span class="code-comment">// Clear everything inside</span>
+container.innerHTML = <span class="code-string">''</span>; <span class="code-comment">// Empty! Container has no children now</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Playground -->
+            <div class="playground">
+                <h4>🎮 Try It! — innerHTML in action</h4>
+                <div class="playground-area" id="ih-playground">
+                    <p style="color:#555;">Original content here.</p>
+                </div>
+                <div class="playground-controls">
+                    <button class="play-btn primary" onclick="demoInnerHTML('add-bold')">Add Bold Text</button>
+                    <button class="play-btn success" onclick="demoInnerHTML('add-list')">Create List</button>
+                    <button class="play-btn warning" onclick="demoInnerHTML('add-styled')">Add Styled Box</button>
+                    <button class="play-btn danger" onclick="demoInnerHTML('clear')">Clear All</button>
+                    <button class="play-btn primary" onclick="demoInnerHTML('reset')">Reset</button>
+                </div>
+            </div>
+
+            <div class="pitfall-box">
+                <h4>🚨 DANGER: innerHTML and Security (XSS)</h4>
+                <p><strong>Never use innerHTML with user input without sanitizing!</strong> A malicious user could inject JavaScript:</p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-comment">// ❌ DANGEROUS — never do this with user input!</span>
+<span class="code-keyword">const</span> <span class="code-variable">userInput</span> = <span class="code-string">'&lt;img src=x onerror=alert("hacked!")&gt;'</span>;
+container.innerHTML = userInput; <span class="code-comment">// Executes malicious code!</span>
+
+<span class="code-comment">// ✅ SAFE — use textContent for user-provided text</span>
+container.textContent = userInput; <span class="code-comment">// Shows as harmless text</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pitfall-box">
+                <h4>⚠️ Performance Pitfall: innerHTML += in Loops</h4>
+                <p>Using <code>innerHTML +=</code> in a loop is slow because it re-parses ALL the HTML every time!</p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-comment">// ❌ SLOW — re-renders everything each iteration</span>
+<span class="code-keyword">for</span> (<span class="code-keyword">let</span> i = <span class="code-value">0</span>; i < <span class="code-value">100</span>; i++) {
+  container.innerHTML += <span class="code-string">`&lt;p&gt;Item ${i}&lt;/p&gt;`</span>;
+}
+
+<span class="code-comment">// ✅ BETTER — build the string first, set once</span>
+<span class="code-keyword">let</span> <span class="code-variable">html</span> = <span class="code-string">''</span>;
+<span class="code-keyword">for</span> (<span class="code-keyword">let</span> i = <span class="code-value">0</span>; i < <span class="code-value">100</span>; i++) {
+  html += <span class="code-string">`&lt;p&gt;Item ${i}&lt;/p&gt;`</span>;
+}
+container.innerHTML = html; <span class="code-comment">// Set once!</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quiz-container" id="quiz-5-1">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">Which is the safe way to display user-typed text?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-5-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>element.innerHTML = userInput</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-5-1', this, true)">
+                        <span class="letter">B</span>
+                        <span>element.textContent = userInput</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-5-1', this, false)">
+                        <span class="letter">C</span>
+                        <span>Both are equally safe</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-5-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>Neither is safe</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(4)">← textContent</button>
+                <button class="lesson-nav-btn" onclick="showLesson(6); markComplete(5);">innerHTML vs textContent →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 6: innerHTML vs textContent -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-6">
+            <div class="section-header">
+                <h2>⚔️ innerHTML vs textContent</h2>
+                <p class="subtitle">Know when to use which — this is crucial!</p>
+                <span class="badge important">Important</span>
+            </div>
+
+            <div class="card">
+                <h3>📊 Side-by-Side Comparison</h3>
+                <table class="comparison-table">
+                    <tr>
+                        <th>Feature</th>
+                        <th>textContent</th>
+                        <th>innerHTML</th>
+                    </tr>
+                    <tr>
+                        <td>Returns</td>
+                        <td>Plain text only</td>
+                        <td>HTML string (tags included)</td>
+                    </tr>
+                    <tr>
+                        <td>Sets</td>
+                        <td>Plain text (tags shown as text)</td>
+                        <td>Parses HTML (tags become elements)</td>
+                    </tr>
+                    <tr>
+                        <td>Security</td>
+                        <td>✅ Safe from XSS</td>
+                        <td>⚠️ Can be exploited</td>
+                    </tr>
+                    <tr>
+                        <td>Performance</td>
+                        <td>✅ Faster</td>
+                        <td>❌ Slower (parses HTML)</td>
+                    </tr>
+                    <tr>
+                        <td>Use for</td>
+                        <td>Plain text, user input</td>
+                        <td>Trusted HTML content</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Interactive Comparison -->
+            <div class="playground">
+                <h4>🎮 See the Difference!</h4>
+                <p style="color:#ccc; font-size:0.9rem; margin-bottom:10px;">Both boxes receive the same input. Watch how they handle it differently!</p>
+                <input type="text" class="exercise-input" style="min-height:auto;" id="compareInput" placeholder='Try typing: <b>Hello</b> <em>World</em>' value='<b>Hello</b> <em>World</em>'>
+                <div style="display:flex; gap:15px; margin-top:15px; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:200px;">
+                        <p style="color:#4ecdc4; font-weight:bold; margin-bottom:8px;">textContent result:</p>
+                        <div class="playground-area" id="tcCompare" style="min-height:60px;"></div>
+                    </div>
+                    <div style="flex:1; min-width:200px;">
+                        <p style="color:#f857a6; font-weight:bold; margin-bottom:8px;">innerHTML result:</p>
+                        <div class="playground-area" id="ihCompare" style="min-height:60px;"></div>
+                    </div>
+                </div>
+                <button class="play-btn primary" onclick="runComparison()" style="margin-top:10px;">Apply Both!</button>
+            </div>
+
+            <div class="card">
+                <h3>🎯 Quick Decision Guide</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">?</div>
+                        <div class="step-text"><strong>Just showing text?</strong><br>→ Use <code>textContent</code></div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">?</div>
+                        <div class="step-text"><strong>Need HTML structure?</strong><br>→ Use <code>innerHTML</code></div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">?</div>
+                        <div class="step-text"><strong>Showing user input?</strong><br>→ ALWAYS <code>textContent</code></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quiz-container" id="quiz-6-1">
+                <h4>🧠 Decision Quiz</h4>
+                <p class="quiz-question">You want to display a user's comment on your website. Which should you use?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-6-1', this, true)">
+                        <span class="letter">A</span>
+                        <span>textContent — it's user input, must be safe!</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-6-1', this, false)">
+                        <span class="letter">B</span>
+                        <span>innerHTML — so the comment looks pretty</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-6-2">
+                <h4>🧠 Decision Quiz</h4>
+                <p class="quiz-question">You want to insert a card with an image, title, and description that YOU wrote in your code. Which should you use?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-6-2', this, false)">
+                        <span class="letter">A</span>
+                        <span>textContent</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-6-2', this, true)">
+                        <span class="letter">B</span>
+                        <span>innerHTML — you need HTML structure and it's your own trusted code</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(5)">← innerHTML</button>
+                <button class="lesson-nav-btn" onclick="showLesson(7); markComplete(6);">createElement →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 7: createElement & append -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-7">
+            <div class="section-header">
+                <h2>🔨 createElement & append</h2>
+                <p class="subtitle">Build new elements from scratch and add them to the page</p>
+                <span class="badge beginner">Beginner</span>
+            </div>
+
+            <div class="analogy-box">
+                <div class="emoji">🧱</div>
+                <h4>Like Building with LEGO</h4>
+                <p>Step 1: Pick a LEGO brick (<code>createElement</code>). Step 2: Customize it (add text, classes). Step 3: Snap it onto your structure (<code>append</code>).</p>
+            </div>
+
+            <div class="card">
+                <h3>📖 The 3-Step Process</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-text"><strong>Create</strong><br><code>document.createElement('tag')</code></div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div class="step-text"><strong>Customize</strong><br>Set text, classes, attributes</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div class="step-text"><strong>Attach</strong><br><code>parent.appendChild(el)</code></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>💻 Code Examples</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript — Basic Element Creation</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// STEP 1: Create a new paragraph element</span>
+<span class="code-keyword">const</span> <span class="code-variable">newParagraph</span> = document.<span class="code-method">createElement</span>(<span class="code-string">'p'</span>);
+
+<span class="code-comment">// STEP 2: Customize it</span>
+newParagraph.textContent = <span class="code-string">'Hello! I was created by JavaScript!'</span>;
+newParagraph.style.color = <span class="code-string">'blue'</span>;
+newParagraph.style.fontSize = <span class="code-string">'18px'</span>;
+newParagraph.classList.<span class="code-method">add</span>(<span class="code-string">'my-class'</span>);
+newParagraph.<span class="code-method">setAttribute</span>(<span class="code-string">'id'</span>, <span class="code-string">'dynamic-p'</span>);
+
+<span class="code-comment">// STEP 3: Add it to the page</span>
+document.body.<span class="code-method">appendChild</span>(newParagraph);
+<span class="code-comment">// Now it appears at the bottom of the &lt;body&gt;!</span></pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript — Building a Full Card</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// Create a card with title and description</span>
+<span class="code-keyword">const</span> <span class="code-variable">card</span> = document.<span class="code-method">createElement</span>(<span class="code-string">'div'</span>);
+card.classList.<span class="code-method">add</span>(<span class="code-string">'card'</span>);
+
+<span class="code-keyword">const</span> <span class="code-variable">title</span> = document.<span class="code-method">createElement</span>(<span class="code-string">'h3'</span>);
+title.textContent = <span class="code-string">'My Card'</span>;
+
+<span class="code-keyword">const</span> <span class="code-variable">desc</span> = document.<span class="code-method">createElement</span>(<span class="code-string">'p'</span>);
+desc.textContent = <span class="code-string">'This card was built entirely with JS!'</span>;
+
+<span class="code-comment">// Build the structure: card ← title + desc</span>
+card.<span class="code-method">appendChild</span>(title);
+card.<span class="code-method">appendChild</span>(desc);
+
+<span class="code-comment">// Add card to a container</span>
+document.<span class="code-method">querySelector</span>(<span class="code-string">'#container'</span>).<span class="code-method">appendChild</span>(card);</pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript — Other Useful Methods</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// append() — can add multiple items + text</span>
+parent.<span class="code-method">append</span>(element1, element2, <span class="code-string">'text'</span>);
+
+<span class="code-comment">// prepend() — add at the BEGINNING</span>
+parent.<span class="code-method">prepend</span>(newElement);
+
+<span class="code-comment">// before() / after() — add as siblings</span>
+existingElement.<span class="code-method">before</span>(newElement);
+existingElement.<span class="code-method">after</span>(newElement);
+
+<span class="code-comment">// remove() — delete an element</span>
+element.<span class="code-method">remove</span>();
+
+<span class="code-comment">// replaceWith() — swap an element</span>
+oldElement.<span class="code-method">replaceWith</span>(newElement);</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Playground -->
+            <div class="playground">
+                <h4>🎮 Build a Todo List!</h4>
+                <div class="playground-area" id="todo-playground">
+                    <h3 style="color:#333; margin-bottom:10px;">📋 My Todo List</h3>
+                    <ul id="todo-list" style="color:#555; padding-left:20px;"></ul>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" class="exercise-input" style="min-height:auto; flex:1; min-width:200px;" id="todoInput" placeholder="Enter a todo item...">
+                    <button class="play-btn success" onclick="addTodo()">➕ Add Item</button>
+                    <button class="play-btn danger" onclick="clearTodos()">🗑️ Clear All</button>
+                </div>
+                <p id="todoCount" style="font-size:0.85rem; color:#888; margin-top:8px;">0 items</p>
+            </div>
+
+            <div class="tip-box">
+                <h4>💡 createElement vs innerHTML — When to use which?</h4>
+                <p><strong>createElement</strong>: Better for adding ONE element at a time, preserves existing event listeners, more secure.<br>
+                <strong>innerHTML</strong>: Easier for complex HTML, but destroys existing event listeners on replaced content.</p>
+            </div>
+
+            <div class="pitfall-box">
+                <h4>⚠️ Common Mistake: Forgetting to Append!</h4>
+                <p>Creating an element does NOT add it to the page. You MUST append it!</p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-comment">// ❌ Element is created but never shows up!</span>
+<span class="code-keyword">const</span> <span class="code-variable">ghost</span> = document.<span class="code-method">createElement</span>(<span class="code-string">'p'</span>);
+ghost.textContent = <span class="code-string">"I'm invisible!"</span>;
+<span class="code-comment">// Floating in JavaScript memory, not on the page...</span>
+
+<span class="code-comment">// ✅ Must attach it somewhere!</span>
+document.body.<span class="code-method">appendChild</span>(ghost); <span class="code-comment">// NOW it's visible!</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="exercise-box" id="exercise-7-1">
+                <h4>✍️ Exercise: Create an Element</h4>
+                <p>Write JavaScript to create a <code>&lt;button&gt;</code> with the text "Click Me" and the class "my-btn". Type the 3 lines of code:</p>
+                <textarea class="exercise-input" id="ex-7-1-input" placeholder="const btn = document.createElement('button');&#10;btn.textContent = ...&#10;btn.classList.add(...)" rows="4"></textarea>
+                <button class="play-btn success" onclick="checkExercise71()">Check Answer</button>
+                <div class="exercise-result" id="ex-7-1-result"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-7-1">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">Which method adds an element to the END of a parent's children?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-7-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>parent.prepend(child)</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-7-1', this, true)">
+                        <span class="letter">B</span>
+                        <span>parent.appendChild(child)</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-7-1', this, false)">
+                        <span class="letter">C</span>
+                        <span>parent.before(child)</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-7-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>parent.insertHTML(child)</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(6)">← innerHTML vs textContent</button>
+                <button class="lesson-nav-btn" onclick="showLesson(8); markComplete(7);">Event Listeners →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 8: addEventListener -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-8">
+            <div class="section-header">
+                <h2>👂 addEventListener</h2>
+                <p class="subtitle">Make your page react to clicks, typing, hovering, and more!</p>
+                <span class="badge beginner">Beginner</span>
+            </div>
+
+            <div class="analogy-box">
+                <div class="emoji">🔔</div>
+                <h4>Like Setting Up a Doorbell</h4>
+                <p>An event listener is like wiring a doorbell. The <strong>button</strong> is the element, the <strong>pressing</strong> is the event (click), and the <strong>chime sound</strong> is the function that runs. You wire it up once, and it responds every time!</p>
+            </div>
+
+            <div class="card">
+                <h3>📖 The Pattern</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>The Syntax</span></div>
+                    <div class="code-body">
+<pre>element.<span class="code-method">addEventListener</span>(<span class="code-string">'eventType'</span>, functionToRun);
+
+<span class="code-comment">//  ↑ element          = what to listen on</span>
+<span class="code-comment">//  ↑ 'eventType'     = what to listen for (click, input, etc)</span>
+<span class="code-comment">//  ↑ functionToRun   = what to do when it happens</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📋 Common Event Types</h3>
+                <table class="comparison-table">
+                    <tr><th>Event</th><th>When it fires</th><th>Common use</th></tr>
+                    <tr><td><code>'click'</code></td><td>Element is clicked</td><td>Buttons, links</td></tr>
+                    <tr><td><code>'dblclick'</code></td><td>Double-clicked</td><td>Special actions</td></tr>
+                    <tr><td><code>'mouseover'</code></td><td>Mouse enters element</td><td>Hover effects</td></tr>
+                    <tr><td><code>'mouseout'</code></td><td>Mouse leaves element</td><td>Remove hover effects</td></tr>
+                    <tr><td><code>'keydown'</code></td><td>A key is pressed</td><td>Keyboard shortcuts</td></tr>
+                    <tr><td><code>'keyup'</code></td><td>A key is released</td><td>Input validation</td></tr>
+                    <tr><td><code>'input'</code></td><td>Input value changes</td><td>Live search, validation</td></tr>
+                    <tr><td><code>'submit'</code></td><td>Form is submitted</td><td>Form handling</td></tr>
+                    <tr><td><code>'change'</code></td><td>Input loses focus after change</td><td>Dropdowns, checkboxes</td></tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>💻 Code Examples</h3>
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript — Click Events</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// Method 1: Named function</span>
+<span class="code-keyword">function</span> <span class="code-method">handleClick</span>() {
+  alert(<span class="code-string">'Button was clicked!'</span>);
+}
+<span class="code-keyword">const</span> <span class="code-variable">btn</span> = document.<span class="code-method">querySelector</span>(<span class="code-string">'#myBtn'</span>);
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, handleClick);
+
+<span class="code-comment">// Method 2: Anonymous function (most common)</span>
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, <span class="code-keyword">function</span>() {
+  console.log(<span class="code-string">'Clicked!'</span>);
+});
+
+<span class="code-comment">// Method 3: Arrow function (modern & clean)</span>
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, () => {
+  console.log(<span class="code-string">'Clicked!'</span>);
+});</pre>
+                    </div>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header"><span>JavaScript — The Event Object</span></div>
+                    <div class="code-body">
+<pre><span class="code-comment">// Every event gives you an "event object" with useful info</span>
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, <span class="code-keyword">function</span>(<span class="code-variable">event</span>) {
+  console.log(event.target);      <span class="code-comment">// The element that was clicked</span>
+  console.log(event.type);        <span class="code-comment">// "click"</span>
+  console.log(event.clientX);     <span class="code-comment">// Mouse X position</span>
+  console.log(event.clientY);     <span class="code-comment">// Mouse Y position</span>
+});
+
+<span class="code-comment">// Keyboard events give key info</span>
+document.<span class="code-method">addEventListener</span>(<span class="code-string">'keydown'</span>, <span class="code-keyword">function</span>(<span class="code-variable">event</span>) {
+  console.log(event.key);         <span class="code-comment">// "Enter", "a", "ArrowUp"</span>
+  console.log(event.code);        <span class="code-comment">// "Enter", "KeyA", "ArrowUp"</span>
+});</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Playground -->
+            <div class="playground">
+                <h4>🎮 Event Playground — Try all event types!</h4>
+                <div class="playground-area" id="event-playground" style="display: flex; flex-direction: column; gap: 15px;">
+                    <button id="evt-click-btn" style="padding:12px 24px; font-size:1rem; background:#6c63ff; color:#fff; border:none; border-radius:8px; cursor:pointer;">Click Me!</button>
+                    <button id="evt-dblclick-btn" style="padding:12px 24px; font-size:1rem; background:#f857a6; color:#fff; border:none; border-radius:8px; cursor:pointer;">Double-Click Me!</button>
+                    <div id="evt-hover-box" style="padding:20px; background:#e0e0e0; border-radius:8px; text-align:center; color:#333; transition: all 0.3s;">Hover Over Me!</div>
+                    <input id="evt-input" type="text" style="padding:10px; font-size:1rem; border:2px solid #ddd; border-radius:8px;" placeholder="Type something...">
+                </div>
+                <div style="background:#0d1117; border-radius:8px; padding:15px; margin-top:15px; max-height:150px; overflow-y:auto;" id="eventLog">
+                    <p style="color:#888; font-size:0.85rem;">📋 Event log will appear here...</p>
+                </div>
+                <button class="play-btn danger" onclick="document.getElementById('eventLog').innerHTML='<p style=color:#888;font-size:0.85rem>📋 Event log cleared!</p>'" style="margin-top:10px;">Clear Log</button>
+            </div>
+
+            <div class="pitfall-box">
+                <h4>⚠️ Common Mistake #1: Calling the Function Immediately</h4>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-comment">// ❌ WRONG — This CALLS the function right away!</span>
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, handleClick<span style="color:#ff5858; font-weight:bold">()</span>);
+<span class="code-comment">//                                       ^^ These () call it immediately!</span>
+
+<span class="code-comment">// ✅ RIGHT — Pass the function reference (no parentheses)</span>
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, handleClick);
+<span class="code-comment">//                                       ^ No () = "call this later when clicked"</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pitfall-box">
+                <h4>⚠️ Common Mistake #2: Selecting Before Element Exists</h4>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-comment">// ❌ If your &lt;script&gt; is in the &lt;head&gt;, the button doesn't exist yet!</span>
+<span class="code-tag">&lt;head&gt;</span>
+  <span class="code-tag">&lt;script&gt;</span>
+    document.<span class="code-method">querySelector</span>(<span class="code-string">'#btn'</span>).<span class="code-method">addEventListener</span>(...);
+    <span class="code-comment">// ERROR! #btn hasn't been created yet</span>
+  <span class="code-tag">&lt;/script&gt;</span>
+<span class="code-tag">&lt;/head&gt;</span>
+
+<span class="code-comment">// ✅ Fix 1: Put script at END of body</span>
+<span class="code-tag">&lt;body&gt;</span>
+  <span class="code-tag">&lt;button</span> <span class="code-attr">id=</span><span class="code-string">"btn"</span><span class="code-tag">&gt;</span>Click<span class="code-tag">&lt;/button&gt;</span>
+  <span class="code-tag">&lt;script&gt;</span> ... <span class="code-tag">&lt;/script&gt;</span>  <span class="code-comment">&lt;!-- After the HTML --&gt;</span>
+<span class="code-tag">&lt;/body&gt;</span>
+
+<span class="code-comment">// ✅ Fix 2: Use DOMContentLoaded</span>
+document.<span class="code-method">addEventListener</span>(<span class="code-string">'DOMContentLoaded'</span>, () => {
+  document.<span class="code-method">querySelector</span>(<span class="code-string">'#btn'</span>).<span class="code-method">addEventListener</span>(...);
+});</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <h4>💡 Removing Event Listeners</h4>
+                <p>To remove a listener, you need a <strong>named function reference</strong>:</p>
+                <div class="code-block">
+                    <div class="code-body">
+<pre><span class="code-keyword">function</span> <span class="code-method">myHandler</span>() { console.log(<span class="code-string">'clicked'</span>); }
+
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, myHandler);   <span class="code-comment">// Add</span>
+btn.<span class="code-method">removeEventListener</span>(<span class="code-string">'click'</span>, myHandler); <span class="code-comment">// Remove</span>
+
+<span class="code-comment">// ❌ Can't remove anonymous functions — you have no reference!</span>
+btn.<span class="code-method">addEventListener</span>(<span class="code-string">'click'</span>, () => {}); <span class="code-comment">// No way to remove this</span></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quiz-container" id="quiz-8-1">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">What's wrong with this code?<br><code>btn.addEventListener('click', sayHello());</code></p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>Nothing, it's correct</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-1', this, true)">
+                        <span class="letter">B</span>
+                        <span>The () calls the function immediately instead of waiting for the click</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-1', this, false)">
+                        <span class="letter">C</span>
+                        <span>'click' should not be in quotes</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>addEventListener is not a real method</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-8-2">
+                <h4>🧠 Quiz Time!</h4>
+                <p class="quiz-question">Which event fires when a user types in an input field?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-2', this, false)">
+                        <span class="letter">A</span>
+                        <span>'click'</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-2', this, false)">
+                        <span class="letter">B</span>
+                        <span>'submit'</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-2', this, true)">
+                        <span class="letter">C</span>
+                        <span>'input'</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-8-2', this, false)">
+                        <span class="letter">D</span>
+                        <span>'change'</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(7)">← createElement</button>
+                <button class="lesson-nav-btn" onclick="showLesson(9); markComplete(8);">Final Challenge →</button>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- LESSON 9: FINAL QUIZ & EXERCISES -->
+        <!-- ============================================ -->
+        <div class="lesson" id="lesson-9">
+            <div class="section-header">
+                <h2>🏆 Final Challenge</h2>
+                <p class="subtitle">Test everything you've learned!</p>
+                <span class="badge practice">Practice</span>
+            </div>
+
+            <div class="card">
+                <h3>📚 What You've Learned</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">✅</div>
+                        <div class="step-text"><strong>DOM</strong><br>The tree structure browsers create</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">✅</div>
+                        <div class="step-text"><strong>querySelector</strong><br>Select ONE element</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">✅</div>
+                        <div class="step-text"><strong>querySelectorAll</strong><br>Select ALL matching elements</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">✅</div>
+                        <div class="step-text"><strong>textContent & innerHTML</strong><br>Modify element content</div>
+                    </div>
+                </div>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">✅</div>
+                        <div class="step-text"><strong>createElement</strong><br>Build new elements</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">✅</div>
+                        <div class="step-text"><strong>addEventListener</strong><br>Respond to user actions</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mega Playground -->
+            <div class="playground">
+                <h4>🎮 Final Playground — Interactive Color Changer</h4>
+                <p style="color:#ccc; margin-bottom:15px;">This mini-app uses EVERYTHING you learned. Click the buttons!</p>
+                <div class="playground-area" id="final-playground">
+                    <h2 id="final-title" style="color:#333; text-align:center;">🎨 Color Playground</h2>
+                    <p id="final-text" style="color:#555; text-align:center;">Click buttons below to see DOM magic!</p>
+                    <div id="final-box" style="width:100px;height:100px;background:#6c63ff;margin:15px auto;border-radius:10px;transition:all 0.3s;"></div>
+                    <p id="final-counter" style="text-align:center; color:#888; font-size:0.9rem;">Clicks: 0</p>
+                </div>
+                <div class="playground-controls">
+                    <button class="play-btn primary" onclick="finalDemo('color')">🎨 Random Color</button>
+                    <button class="play-btn success" onclick="finalDemo('grow')">📈 Grow</button>
+                    <button class="play-btn warning" onclick="finalDemo('shrink')">📉 Shrink</button>
+                    <button class="play-btn danger" onclick="finalDemo('spin')">🔄 Spin</button>
+                    <button class="play-btn primary" onclick="finalDemo('addItem')">➕ Add Item</button>
+                    <button class="play-btn danger" onclick="finalDemo('reset')">🔄 Reset</button>
+                </div>
+            </div>
+
+            <!-- Final Quiz -->
+            <div class="quiz-container" id="quiz-final-1">
+                <h4>🏆 Final Quiz — Question 1/5</h4>
+                <p class="quiz-question">What is the correct way to select an element with id="hero"?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-1', this, false)">
+                        <span class="letter">A</span>
+                        <span>document.querySelector('hero')</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-1', this, true)">
+                        <span class="letter">B</span>
+                        <span>document.querySelector('#hero')</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-1', this, false)">
+                        <span class="letter">C</span>
+                        <span>document.querySelector('.hero')</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-1', this, false)">
+                        <span class="letter">D</span>
+                        <span>document.select('#hero')</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-final-2">
+                <h4>🏆 Final Quiz — Question 2/5</h4>
+                <p class="quiz-question">You have 10 buttons with class="action-btn". How do you select ALL of them?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-2', this, false)">
+                        <span class="letter">A</span>
+                        <span>document.querySelector('.action-btn')</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-2', this, true)">
+                        <span class="letter">B</span>
+                        <span>document.querySelectorAll('.action-btn')</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-2', this, false)">
+                        <span class="letter">C</span>
+                        <span>document.selectAll('.action-btn')</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-2', this, false)">
+                        <span class="letter">D</span>
+                        <span>document.getElements('.action-btn')</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-final-3">
+                <h4>🏆 Final Quiz — Question 3/5</h4>
+                <p class="quiz-question">A user types their name in an input. You want to show it on the page. Which should you use?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-3', this, false)">
+                        <span class="letter">A</span>
+                        <span>element.innerHTML = userName — for rich formatting</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-3', this, true)">
+                        <span class="letter">B</span>
+                        <span>element.textContent = userName — it's user input, safety first!</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-final-4">
+                <h4>🏆 Final Quiz — Question 4/5</h4>
+                <p class="quiz-question">After <code>const p = document.createElement('p')</code>, where is the element?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-4', this, false)">
+                        <span class="letter">A</span>
+                        <span>Visible on the page inside &lt;body&gt;</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-4', this, true)">
+                        <span class="letter">B</span>
+                        <span>In JavaScript memory only — not on the page yet</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-4', this, false)">
+                        <span class="letter">C</span>
+                        <span>It doesn't exist until you set textContent</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <div class="quiz-container" id="quiz-final-5">
+                <h4>🏆 Final Quiz — Question 5/5</h4>
+                <p class="quiz-question">Which line correctly adds a click event to a button?</p>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-5', this, false)">
+                        <span class="letter">A</span>
+                        <span>btn.addEventListener('click', doStuff())</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-5', this, true)">
+                        <span class="letter">B</span>
+                        <span>btn.addEventListener('click', doStuff)</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-5', this, false)">
+                        <span class="letter">C</span>
+                        <span>btn.addEvent('click', doStuff)</span>
+                    </div>
+                    <div class="quiz-option" onclick="checkQuiz('quiz-final-5', this, false)">
+                        <span class="letter">D</span>
+                        <span>btn.on('click', doStuff)</span>
+                    </div>
+                </div>
+                <div class="quiz-feedback"></div>
+            </div>
+
+            <!-- Final Exercise -->
+            <div class="exercise-box">
+                <h4>🏋️ Final Exercise: Build It All!</h4>
+                <p>Describe (or write) the JavaScript needed to:</p>
+                <ol style="color:#ccc; padding-left:20px; line-height:2;">
+                    <li>Select a <code>&lt;div id="output"&gt;</code></li>
+                    <li>Create a new <code>&lt;p&gt;</code> element</li>
+                    <li>Set its text to "I did it!"</li>
+                    <li>Add it inside the div</li>
+                </ol>
+                <textarea class="exercise-input" id="ex-final-input" placeholder="Write your 4 lines of code here..." rows="5"></textarea>
+                <button class="play-btn success" onclick="checkFinalExercise()">Check Answer</button>
+                <div class="exercise-result" id="ex-final-result"></div>
+            </div>
+
+            <div class="card" style="text-align:center; background: linear-gradient(135deg, #1a2a1a, #2d5e2d);">
+                <h3>🎉 Congratulations!</h3>
+                <p style="font-size:1.1rem;">You've completed the DOM Manipulation Masterclass!</p>
+                <p>You now understand the core concepts that power every interactive website. Keep practicing and building projects!</p>
+                <button class="start-btn" onclick="markComplete(9); showCertificate();" style="margin-top:15px;">🏆 Claim Certificate!</button>
+            </div>
+
+            <div class="lesson-nav">
+                <button class="lesson-nav-btn" onclick="showLesson(8)">← Event Listeners</button>
+                <button class="lesson-nav-btn" onclick="showLesson(0)">🏠 Home</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SCORE POPUP -->
+    <div class="overlay" id="overlay"></div>
+    <div class="score-popup" id="scorePopup">
+        <div class="big-emoji" id="popupEmoji">🏆</div>
+        <h3 id="popupTitle">Amazing!</h3>
+        <p style="color:#ccc; margin-bottom:15px;" id="popupText">You've completed a lesson!</p>
+        <button class="play-btn primary" onclick="closePopup()">Continue</button>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        let currentLesson = 0;
+        let xp = 0;
+        let completedLessons = new Set();
+        let finalClickCount = 0;
+        let boxSize = 100;
+
+        // ===== NAVIGATION =====
+        function showLesson(index) {
+            document.querySelectorAll('.lesson').forEach(l => l.classList.remove('active'));
+            document.getElementById(`lesson-${index}`).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach((item, i) => {
+                item.classList.remove('active');
+                if (i === index) item.classList.add('active');
+            });
+
+            currentLesson = index;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        // ===== PROGRESS & XP =====
+        function markComplete(lessonIndex) {
+            if (!completedLessons.has(lessonIndex)) {
+                completedLessons.add(lessonIndex);
+                addXP(50);
+
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems[lessonIndex].classList.add('completed');
+
+                updateProgress();
+            }
+        }
+
+        function addXP(amount) {
+            xp += amount;
+            const display = document.getElementById('xpDisplay');
+            display.textContent = `⭐ ${xp} XP`;
+            display.classList.add('bounce');
+            setTimeout(() => display.classList.remove('bounce'), 500);
+        }
+
+        function updateProgress() {
+            const total = 10;
+            const completed = completedLessons.size;
+            const percent = (completed / total) * 100;
+
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').textContent = `${completed} / ${total} lessons completed`;
+        }
+
+        // ===== QUIZ SYSTEM =====
+        function checkQuiz(quizId, selectedOption, isCorrect) {
+            const container = document.getElementById(quizId);
+            const options = container.querySelectorAll('.quiz-option');
+            const feedback = container.querySelector('.quiz-feedback');
+
+            // Prevent re-answering
+            if (container.dataset.answered) return;
+            container.dataset.answered = 'true';
+
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+            });
+
+            if (isCorrect) {
+                selectedOption.classList.add('correct');
+                feedback.className = 'quiz-feedback show correct-feedback';
+                feedback.innerHTML = '✅ <strong>Correct!</strong> Great job! +10 XP';
+                addXP(10);
+                createMiniConfetti(selectedOption);
+            } else {
+                selectedOption.classList.add('incorrect');
+                // Find and highlight the correct answer
+                options.forEach(opt => {
+                    opt.addEventListener('click', () => {}, true); // noop
+                });
+                // We need to find the correct one
+                const allClickHandlers = container.querySelectorAll('.quiz-option');
+                feedback.className = 'quiz-feedback show incorrect-feedback';
+                feedback.innerHTML = '❌ <strong>Not quite.</strong> Review the lesson above and try to understand why!';
+                selectedOption.classList.add('shake');
+            }
+        }
+
+        // ===== LESSON 1: DOM TREE INTERACTION =====
+        function explainNode(el, type) {
+            const explanations = {
+                document: '📄 The "document" is the entire web page. It\'s the starting point for accessing anything!',
+                html: '🏠 The <html> element is the root of all content on the page.',
+                head: '🧠 The <head> contains metadata — title, CSS links, meta tags. Not visible content!',
+                title: '📌 The <title> sets the text shown in the browser tab.',
+                body: '👁️ The <body> contains ALL visible content — everything users see!',
+                h1: '📢 The <h1> is the main heading — the biggest, most important title.',
+                p: '📝 The <p> is a paragraph — for blocks of text.',
+                div: '📦 The <div> is a generic container — used to group other elements.'
+            };
+
+            document.querySelectorAll('.dom-node').forEach(n => n.classList.remove('highlight'));
+            el.classList.add('highlight');
+            document.getElementById('nodeExplanation').textContent = explanations[type] || '';
+        }
+
+        // ===== LESSON 2: querySelector Demo =====
+        function demoQS(selector, message) {
+            // Reset all
+            demoQSReset();
+
+            const playground = document.getElementById('qsPlayground');
+            const selected = playground.querySelector(selector);
+
+            if (selected) {
+                selected.classList.add('selector-highlight');
+                selected.style.background = '#fff3cd';
+            }
+
+            document.getElementById('qsResult').textContent = '✅ ' + message;
+        }
+
+        function demoQSReset() {
+            const playground = document.getElementById('qsPlayground');
+            playground.querySelectorAll('*').forEach(el => {
+                el.classList.remove('selector-highlight');
+                el.style.background = '';
+            });
+            document.getElementById('qsResult').textContent = 'Click a button to see querySelector in action!';
+        }
+
+        // ===== LESSON 3: querySelectorAll Demo =====
+        function demoQSA(type) {
+            demoQSAReset();
+            const items = document.getElementById('qsaPlayground').querySelectorAll('.demo-item');
+
+            if (type === 'all') {
+                items.forEach(item => {
+                    item.style.background = '#d4edda';
+                    item.style.borderLeft = '4px solid #4ecdc4';
+                });
+                document.getElementById('qsaResult').textContent = `✅ querySelectorAll('.demo-item') selected ALL ${items.length} items!`;
+            } else if (type === 'even') {
+                items.forEach((item, index) => {
+                    if (index % 2 === 0) {
+                        item.style.background = '#cce5ff';
+                        item.style.borderLeft = '4px solid #6c63ff';
+                    }
+                });
+                document.getElementById('qsaResult').textContent = '✅ Highlighted items at index 0, 2, 4 (even indexes)';
+            } else if (type === 'count') {
+                document.getElementById('qsaResult').textContent = `✅ items.length = ${items.length} — There are ${items.length} elements with class "demo-item"`;
+            }
+        }
+
+        function demoQSAReset() {
+            const items = document.getElementById('qsaPlayground').querySelectorAll('.demo-item');
+            items.forEach(item => {
+                item.style.background = '#f9f9f9';
+                item.style.borderLeft = '';
+            });
+            document.getElementById('qsaResult').textContent = 'Click a button to see querySelectorAll in action!';
+        }
+
+        // ===== LESSON 5: innerHTML Demo =====
+        function demoInnerHTML(type) {
+            const area = document.getElementById('ih-playground');
+            switch(type) {
+                case 'add-bold':
+                    area.innerHTML += '<p style="color:#333;"><strong>This bold text</strong> was added with innerHTML!</p>';
+                    break;
+                case 'add-list':
+                    area.innerHTML = '<ul style="color:#333;padding-left:20px;"><li>🍎 Apple</li><li>🍌 Banana</li><li>🍊 Orange</li></ul>';
+                    break;
+                case 'add-styled':
+                    area.innerHTML += '<div style="background:linear-gradient(135deg,#6c63ff,#f857a6);color:#fff;padding:15px;border-radius:8px;margin-top:10px;text-align:center;">✨ Styled box created with innerHTML!</div>';
+                    break;
+                case 'clear':
+                    area.innerHTML = '<p style="color:#999; text-align:center;">Cleared! innerHTML = ""</p>';
+                    break;
+                case 'reset':
+                    area.innerHTML = '<p style="color:#555;">Original content here.</p>';
+                    break;
+            }
+        }
+
+        // ===== LESSON 6: Comparison Demo =====
+        function runComparison() {
+            const input = document.getElementById('compareInput').value;
+            document.getElementById('tcCompare').textContent = input;
+            document.getElementById('ihCompare').innerHTML = input;
+        }
+
+        // ===== LESSON 7: Todo List =====
+        function addTodo() {
+            const input = document.getElementById('todoInput');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const li = document.createElement('li');
+            li.style.padding = '5px 0';
+            li.style.cursor = 'pointer';
+            li.style.transition = 'all 0.3s';
+            li.textContent = text;
+
+            // Click to mark as done
+            li.addEventListener('click', function() {
+                this.style.textDecoration = this.style.textDecoration === 'line-through' ? 'none' : 'line-through';
+                this.style.opacity = this.style.opacity === '0.5' ? '1' : '0.5';
+            });
+
+            // Double-click to delete
+            li.addEventListener('dblclick', function() {
+                this.remove();
+                updateTodoCount();
+            });
+
+            document.getElementById('todo-list').appendChild(li);
+            input.value = '';
+            input.focus();
+            updateTodoCount();
+        }
+
+        function clearTodos() {
+            document.getElementById('todo-list').innerHTML = '';
+            updateTodoCount();
+        }
+
+        function updateTodoCount() {
+            const count = document.getElementById('todo-list').children.length;
+            document.getElementById('todoCount').textContent = `${count} item${count !== 1 ? 's' : ''} (click to toggle done, double-click to delete)`;
+        }
+
+        // Allow Enter key to add todos
+        document.addEventListener('DOMContentLoaded', () => {
+            const todoInput = document.getElementById('todoInput');
+            if (todoInput) {
+                todoInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') addTodo();
+                });
+            }
+        });
+
+        // ===== LESSON 8: Event Playground =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const log = document.getElementById('eventLog');
+
+            function addLog(msg, color = '#4ecdc4') {
+                const entry = document.createElement('p');
+                entry.style.fontSize = '0.85rem';
+                entry.style.color = color;
+                entry.style.margin = '3px 0';
+                entry.style.fontFamily = 'monospace';
+                const time = new Date().toLocaleTimeString();
+                entry.textContent = `[${time}] ${msg}`;
+                log.prepend(entry);
+
+                // Keep log manageable
+                while (log.children.length > 20) {
+                    log.removeChild(log.lastChild);
+                }
+            }
+
+            // Click
+            document.getElementById('evt-click-btn').addEventListener('click', function() {
+                addLog('🖱️ CLICK event on button!', '#4ecdc4');
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => this.style.transform = 'scale(1)', 150);
+            });
+
+            // Double click
+            document.getElementById('evt-dblclick-btn').addEventListener('dblclick', function() {
+                addLog('🖱️🖱️ DBLCLICK event! You double-clicked!', '#f857a6');
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => this.style.transform = 'scale(1)', 150);
+            });
+
+            // Hover
+            const hoverBox = document.getElementById('evt-hover-box');
+            hoverBox.addEventListener('mouseover', function() {
+                this.style.background = '#6c63ff';
+                this.style.color = '#fff';
+                this.textContent = "I'm being hovered! 🎉";
+                addLog('🖱️ MOUSEOVER event!', '#ffd93d');
+            });
+            hoverBox.addEventListener('mouseout', function() {
+                this.style.background = '#e0e0e0';
+                this.style.color = '#333';
+                this.textContent = 'Hover Over Me!';
+                addLog('🖱️ MOUSEOUT event — mouse left', '#888');
+            });
+
+            // Input
+            document.getElementById('evt-input').addEventListener('input', function(e) {
+                addLog(`⌨️ INPUT event: "${e.target.value}"`, '#a5d6ff');
+            });
+
+            document.getElementById('evt-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    addLog(`⌨️ KEYDOWN: Enter key pressed!`, '#ff7b72');
+                }
+            });
+        });
+
+        // ===== EXERCISES =====
+        function checkExercise21() {
+            const input = document.getElementById('ex-2-1-input').value.trim().toLowerCase().replace(/\s+/g, '');
+            const result = document.getElementById('ex-2-1-result');
+
+            const valid = [
+                "document.queryselector('.submit-btn')",
+                'document.queryselector(".submit-btn")',
+                "document.queryselector('.submit-btn');",
+                'document.queryselector(".submit-btn");',
+                "document.queryselector('button.submit-btn')",
+                'document.queryselector("button.submit-btn")',
+                "document.queryselector('button.submit-btn');",
+                'document.queryselector("button.submit-btn");',
+                "document.queryselector('form.submit-btn')",
+            ];
+
+            if (input.includes("queryselector") && input.includes(".submit-btn")) {
+                result.className = 'exercise-result show success';
+                result.innerHTML = '✅ <strong>Correct!</strong> You used the class selector with the dot prefix. +15 XP!';
+                addXP(15);
+            } else if (input.includes("queryselector") && input.includes("submit-btn") && !input.includes('.')) {
+                result.className = 'exercise-result show error';
+                result.innerHTML = '❌ Close! You forgot the <strong>dot (.)</strong> before the class name. Classes need a . prefix!';
+            } else {
+                result.className = 'exercise-result show error';
+                result.innerHTML = '❌ Try again! Remember: <code>document.querySelector(\'.submit-btn\')</code> — note the dot before the class name.';
+            }
+        }
+
+        function checkExercise71() {
+            const input = document.getElementById('ex-7-1-input').value.trim().toLowerCase();
+            const result = document.getElementById('ex-7-1-result');
+
+            const hasCreate = input.includes("createelement") && input.includes("button");
+            const hasText = input.includes("textcontent") && (input.includes("click me") || input.includes("'click me'") || input.includes('"click me"'));
+            const hasClass = input.includes("classlist.add") && input.includes("my-btn");
+
+            if (hasCreate && hasText && hasClass) {
+                result.className = 'exercise-result show success';
+                result.innerHTML = '✅ <strong>Perfect!</strong> You created the element, set its text, and added the class! +20 XP!';
+                addXP(20);
+            } else {
+                let hint = '❌ Not quite. You need: ';
+                if (!hasCreate) hint += '1) createElement("button") ';
+                if (!hasText) hint += '2) textContent = "Click Me" ';
+                if (!hasClass) hint += '3) classList.add("my-btn") ';
+                result.className = 'exercise-result show error';
+                result.innerHTML = hint;
+            }
+        }
+
+        function checkFinalExercise() {
+            const input = document.getElementById('ex-final-input').value.trim().toLowerCase();
+            const result = document.getElementById('ex-final-result');
+
+            const hasSelect = input.includes("queryselector") && input.includes("#output");
+            const hasCreate = input.includes("createelement") && input.includes("'p'");
+            const hasText = input.includes("textcontent") && input.includes("i did it");
+            const hasAppend = input.includes("appendchild") || input.includes(".append(");
+
+            const score = [hasSelect, hasCreate, hasText, hasAppend].filter(Boolean).length;
+
+            if (score === 4) {
+                result.className = 'exercise-result show success';
+                result.innerHTML = '🎉 <strong>PERFECT!</strong> You nailed all 4 steps! +30 XP! You\'re a DOM Master!';
+                addXP(30);
+                createConfetti();
+            } else if (score >= 2) {
+                result.className = 'exercise-result show error';
+                let missing = [];
+                if (!hasSelect) missing.push('Select the div with querySelector("#output")');
+                if (!hasCreate) missing.push('Create element with createElement("p")');
+                if (!hasText) missing.push('Set text with textContent = "I did it!"');
+                if (!hasAppend) missing.push('Append with appendChild()');
+                result.innerHTML = `Almost! ${score}/4 correct. Missing: <br>• ${missing.join('<br>• ')}`;
+            } else {
+                result.className = 'exercise-result show error';
+                result.innerHTML = '❌ Try the 4 steps:<br>1. const div = document.querySelector("#output")<br>2. const p = document.createElement("p")<br>3. p.textContent = "I did it!"<br>4. div.appendChild(p)';
+            }
+        }
+
+        // ===== LESSON 9: Final Playground =====
+        function finalDemo(action) {
+            const box = document.getElementById('final-box');
+            const counter = document.getElementById('final-counter');
+            const title = document.getElementById('final-title');
+            const text = document.getElementById('final-text');
+
+            finalClickCount++;
+            counter.textContent = `Clicks: ${finalClickCount}`;
+
+            switch(action) {
+                case 'color':
+                    const colors = ['#ff5858', '#ffd93d', '#4ecdc4', '#6c63ff', '#f857a6', '#44a08d', '#ff7b72', '#a5d6ff'];
+                    box.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    text.textContent = '🎨 Changed color with style.background!';
+                    break;
+                case 'grow':
+                    boxSize = Math.min(boxSize + 20, 200);
+                    box.style.width = boxSize + 'px';
+                    box.style.height = boxSize + 'px';
+                    text.textContent = `📈 Grew to ${boxSize}px with style.width!`;
+                    break;
+                case 'shrink':
+                    boxSize = Math.max(boxSize - 20, 40);
+                    box.style.width = boxSize + 'px';
+                    box.style.height = boxSize + 'px';
+                    text.textContent = `📉 Shrunk to ${boxSize}px!`;
+                    break;
+                case 'spin':
+                    box.style.transform = 'rotate(360deg)';
+                    setTimeout(() => box.style.transform = 'rotate(0deg)', 600);
+                    text.textContent = '🔄 Spinning with style.transform!';
+                    break;
+                case 'addItem':
+                    const newEl = document.createElement('p');
+                    newEl.textContent = `✨ New element #${finalClickCount}`;
+                    newEl.style.color = '#333';
+                    newEl.style.textAlign = 'center';
+                    newEl.style.fontSize = '0.9rem';
+                    newEl.style.cursor = 'pointer';
+                    newEl.addEventListener('click', function() { this.remove(); });
+                    const playground = document.getElementById('final-playground');
+                    playground.insertBefore(newEl, counter);
+                    text.textContent = '➕ Created new element with createElement + appendChild!';
+                    break;
+                case 'reset':
+                    box.style.background = '#6c63ff';
+                    box.style.width = '100px';
+                    box.style.height = '100px';
+                    box.style.transform = 'rotate(0deg)';
+                    boxSize = 100;
+                    finalClickCount = 0;
+                    counter.textContent = 'Clicks: 0';
+                    text.textContent = 'Click buttons below to see DOM magic!';
+                    title.textContent = '🎨 Color Playground';
+                    // Remove added elements
+                    document.querySelectorAll('#final-playground > p:not(#final-text):not(#final-counter)').forEach(el => el.remove());
+                    break;
+            }
+        }
+
+        // ===== CONFETTI =====
+        function createConfetti() {
+            const colors = ['#6c63ff', '#f857a6', '#4ecdc4', '#ffd93d', '#ff5858'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const piece = document.createElement('div');
+                    piece.className = 'confetti-piece';
+                    piece.style.left = Math.random() * 100 + 'vw';
+                    piece.style.top = '-10px';
+                    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    piece.style.width = Math.random() * 10 + 5 + 'px';
+                    piece.style.height = Math.random() * 10 + 5 + 'px';
+                    document.body.appendChild(piece);
+
+                    const animation = piece.animate([
+                        { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+                        { transform: `translate(${Math.random() * 200 - 100}px, ${window.innerHeight + 50}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+                    ], {
+                        duration: Math.random() * 2000 + 1500,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    });
+
+                    animation.onfinish = () => piece.remove();
+                }, i * 30);
+            }
+        }
+
+        function createMiniConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            const colors = ['#4ecdc4', '#ffd93d', '#6c63ff'];
+            for (let i = 0; i < 8; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = rect.left + rect.width / 2 + 'px';
+                piece.style.top = rect.top + 'px';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.width = '6px';
+                piece.style.height = '6px';
+                piece.style.borderRadius = '50%';
+                document.body.appendChild(piece);
+
+                const animation = piece.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${Math.random() * 100 - 50}px, ${Math.random() * -80 - 20}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 600,
+                    easing: 'ease-out'
+                });
+
+                animation.onfinish = () => piece.remove();
+            }
+        }
+
+        // ===== POPUP =====
+        function showPopup(emoji, title, text) {
+            document.getElementById('popupEmoji').textContent = emoji;
+            document.getElementById('popupTitle').textContent = title;
+            document.getElementById('popupText').textContent = text;
+            document.getElementById('scorePopup').classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+        }
+
+        function closePopup() {
+            document.getElementById('scorePopup').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        function showCertificate() {
+            showPopup('🏆', 'DOM Master Certified!', `You earned ${xp} XP and completed ${completedLessons.size}/10 lessons!`);
+            createConfetti();
+        }
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgress();
+            // Initialize comparison demo
+            runComparison();
+        });
+    </script>
+
+</body>
+</html>

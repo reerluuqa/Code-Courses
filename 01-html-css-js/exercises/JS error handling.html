@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Error Handling Mastery</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0e1a;--bg2:#111827;--bg3:#1e293b;--bg4:#2d3a4f;
+--accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;
+--green:#22c55e;--green2:#4ade80;--red:#ef4444;--red2:#f87171;
+--orange:#f59e0b;--cyan:#06b6d4;--pink:#ec4899;--purple:#a855f7;
+--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+--code-bg:#0d1117;--shadow:0 8px 32px rgba(0,0,0,.4);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.7}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px}
+
+/* Header */
+.hero{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;text-align:center;padding:2rem;
+}
+.hero::before{
+  content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,.15),transparent 70%);
+  top:-100px;right:-100px;border-radius:50%;animation:pulse 4s ease-in-out infinite;
+}
+.hero::after{
+  content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(236,72,153,.1),transparent 70%);
+  bottom:-100px;left:-100px;border-radius:50%;animation:pulse 4s ease-in-out infinite 2s;
+}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes glow{0%,100%{box-shadow:0 0 5px var(--accent)}50%{box-shadow:0 0 20px var(--accent),0 0 40px rgba(99,102,241,.3)}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes blink{50%{border-color:transparent}}
+@keyframes success{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes confetti{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(100vh) rotate(720deg)}}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 20px;background:rgba(99,102,241,.15);
+  border:1px solid rgba(99,102,241,.3);border-radius:50px;font-size:.85rem;color:var(--accent3);
+  margin-bottom:1.5rem;animation:fadeUp .6s ease;
+}
+.hero-badge .dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+.hero h1{
+  font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;margin-bottom:1rem;
+  background:linear-gradient(135deg,#fff,var(--accent3),var(--pink));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;animation:fadeUp .6s ease .2s both;position:relative;z-index:1;
+}
+.hero p{font-size:1.2rem;color:var(--text2);max-width:600px;animation:fadeUp .6s ease .4s both;position:relative;z-index:1}
+.hero-cta{
+  margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;
+  animation:fadeUp .6s ease .6s both;position:relative;z-index:1;
+}
+.btn{
+  padding:14px 32px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;
+  border:none;transition:all .3s;font-family:inherit;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 15px rgba(99,102,241,.4)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(99,102,241,.5)}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--bg4)}
+.btn-secondary:hover{background:var(--bg4);transform:translateY(-2px)}
+.btn-sm{padding:8px 18px;font-size:.85rem;border-radius:8px}
+.btn-success{background:var(--green);color:#000}
+.btn-danger{background:var(--red);color:#fff}
+
+/* Progress Bar */
+.progress-bar-container{
+  position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--bg2);height:4px;
+}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--pink));transition:width .5s;width:0%}
+
+/* Nav */
+nav{
+  position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:999;
+  background:rgba(17,24,39,.9);backdrop-filter:blur(20px);border-radius:16px;
+  padding:8px;display:flex;gap:4px;border:1px solid var(--bg4);
+  max-width:95vw;overflow-x:auto;
+}
+nav button{
+  padding:10px 18px;border:none;background:transparent;color:var(--text2);
+  border-radius:12px;cursor:pointer;font-size:.85rem;font-weight:600;
+  white-space:nowrap;transition:all .3s;font-family:inherit;
+}
+nav button:hover{color:var(--text);background:var(--bg3)}
+nav button.active{background:var(--accent);color:#fff}
+
+/* Sections */
+.section{
+  min-height:100vh;padding:80px 1.5rem 4rem;max-width:1000px;margin:0 auto;
+  display:none;animation:fadeUp .5s ease;
+}
+.section.active{display:block}
+.section-title{
+  font-size:2.5rem;font-weight:800;margin-bottom:.5rem;
+  display:flex;align-items:center;gap:12px;
+}
+.section-title .emoji{font-size:2.5rem}
+.section-sub{color:var(--text2);font-size:1.1rem;margin-bottom:3rem}
+
+/* Cards */
+.card{
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:16px;padding:2rem;
+  margin-bottom:2rem;transition:all .3s;
+}
+.card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow)}
+.card h3{font-size:1.4rem;margin-bottom:1rem;display:flex;align-items:center;gap:10px}
+.card p{color:var(--text2)}
+
+/* Code Blocks */
+.code-block{
+  background:var(--code-bg);border:1px solid var(--bg4);border-radius:12px;
+  overflow:hidden;margin:1rem 0;font-family:'Fira Code',monospace;font-size:.88rem;
+}
+.code-header{
+  display:flex;justify-content:space-between;align-items:center;padding:10px 16px;
+  background:var(--bg3);border-bottom:1px solid var(--bg4);
+}
+.code-header span{color:var(--text2);font-size:.8rem}
+.code-dots{display:flex;gap:6px}
+.code-dots span{width:12px;height:12px;border-radius:50%}
+.code-dots span:nth-child(1){background:#ef4444}
+.code-dots span:nth-child(2){background:#f59e0b}
+.code-dots span:nth-child(3){background:#22c55e}
+.code-body{padding:16px;overflow-x:auto;line-height:1.8}
+.code-body .kw{color:#c084fc} /* keywords */
+.code-body .fn{color:#60a5fa} /* functions */
+.code-body .str{color:#4ade80} /* strings */
+.code-body .num{color:#fb923c} /* numbers */
+.code-body .cm{color:#64748b;font-style:italic} /* comments */
+.code-body .err{color:#f87171} /* errors */
+.code-body .op{color:#e2e8f0} /* operators */
+.code-body .var{color:#67e8f9} /* variables */
+.code-body .line{display:block;padding:0 0 0 2.5em;position:relative}
+.code-body .line::before{
+  content:attr(data-n);position:absolute;left:0;color:var(--text3);width:2em;text-align:right;
+}
+.copy-btn{
+  padding:4px 12px;background:var(--bg4);border:none;color:var(--text2);
+  border-radius:6px;cursor:pointer;font-size:.75rem;transition:all .3s;font-family:inherit;
+}
+.copy-btn:hover{background:var(--accent);color:#fff}
+
+/* Flow Diagram */
+.flow-diagram{
+  display:flex;flex-direction:column;align-items:center;gap:0;margin:2rem 0;
+}
+.flow-box{
+  padding:16px 32px;border-radius:12px;font-weight:600;text-align:center;
+  min-width:200px;transition:all .3s;position:relative;
+}
+.flow-box.try-box{background:rgba(96,165,250,.15);border:2px solid #60a5fa;color:#60a5fa}
+.flow-box.catch-box{background:rgba(248,113,113,.15);border:2px solid #f87171;color:#f87171}
+.flow-box.finally-box{background:rgba(74,222,128,.15);border:2px solid #4ade80;color:#4ade80}
+.flow-box.error-box{background:rgba(251,146,60,.15);border:2px solid #fb923c;color:#fb923c}
+.flow-box.start-box{background:rgba(168,85,247,.15);border:2px solid #a855f7;color:#a855f7;border-radius:50px}
+.flow-arrow{
+  width:2px;height:30px;background:var(--text3);position:relative;
+}
+.flow-arrow::after{
+  content:'▼';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+  color:var(--text3);font-size:.7rem;
+}
+.flow-branch{
+  display:flex;align-items:flex-start;gap:3rem;position:relative;
+}
+.flow-branch::before{
+  content:'';position:absolute;top:0;left:50%;width:60%;height:2px;
+  background:var(--text3);transform:translateX(-50%);
+}
+.flow-label{
+  font-size:.8rem;color:var(--text3);padding:4px 12px;background:var(--bg3);
+  border-radius:6px;margin:8px 0;
+}
+.flow-label.yes{color:var(--green2)}
+.flow-label.no{color:var(--red2)}
+
+/* Interactive Playground */
+.playground{
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:16px;overflow:hidden;margin:1.5rem 0;
+}
+.playground-header{
+  padding:12px 20px;background:var(--bg3);border-bottom:1px solid var(--bg4);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.playground-header h4{font-size:.95rem;display:flex;align-items:center;gap:8px}
+.playground-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.playground-body textarea{
+  background:var(--code-bg);border:none;color:var(--text);padding:16px;
+  font-family:'Fira Code',monospace;font-size:.85rem;resize:none;
+  border-right:1px solid var(--bg4);min-height:200px;outline:none;line-height:1.7;
+}
+.playground-output{
+  padding:16px;font-family:'Fira Code',monospace;font-size:.85rem;
+  background:var(--code-bg);overflow-y:auto;max-height:400px;
+}
+.output-line{padding:2px 0;display:flex;align-items:flex-start;gap:8px}
+.output-line.log{color:var(--text)}
+.output-line.error{color:var(--red2)}
+.output-line.warn{color:var(--orange)}
+.output-line.info{color:var(--cyan)}
+.output-line.success{color:var(--green2)}
+.output-prefix{color:var(--text3);user-select:none}
+
+/* Error Type Cards */
+.error-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin:2rem 0}
+.error-card{
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:16px;padding:1.5rem;
+  transition:all .3s;cursor:pointer;position:relative;overflow:hidden;
+}
+.error-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:16px 16px 0 0;
+}
+.error-card.syntax::before{background:var(--red)}
+.error-card.reference::before{background:var(--orange)}
+.error-card.type::before{background:var(--purple)}
+.error-card.range::before{background:var(--cyan)}
+.error-card.uri::before{background:var(--pink)}
+.error-card.eval::before{background:var(--green)}
+.error-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:var(--accent)}
+.error-card h4{font-size:1.1rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.error-card .tag{
+  font-size:.7rem;padding:3px 10px;border-radius:50px;font-weight:600;
+}
+.error-card.syntax .tag{background:rgba(239,68,68,.15);color:var(--red2)}
+.error-card.reference .tag{background:rgba(245,158,11,.15);color:var(--orange)}
+.error-card.type .tag{background:rgba(168,85,247,.15);color:var(--purple)}
+.error-card.range .tag{background:rgba(6,182,212,.15);color:var(--cyan)}
+.error-card.uri .tag{background:rgba(236,72,153,.15);color:var(--pink)}
+.error-card.eval .tag{background:rgba(34,197,94,.15);color:var(--green)}
+.error-card p{color:var(--text2);font-size:.9rem;margin-bottom:12px}
+.error-card code{
+  display:block;background:var(--code-bg);padding:10px;border-radius:8px;
+  font-family:'Fira Code',monospace;font-size:.8rem;color:var(--red2);
+}
+
+/* Quiz */
+.quiz-container{margin:2rem 0}
+.quiz-q{
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:16px;padding:2rem;
+  margin-bottom:1.5rem;transition:all .3s;
+}
+.quiz-q.correct{border-color:var(--green);background:rgba(34,197,94,.05)}
+.quiz-q.incorrect{border-color:var(--red);animation:shake .5s}
+.quiz-q h4{margin-bottom:1rem;font-size:1.1rem;display:flex;align-items:center;gap:8px}
+.quiz-q .q-num{
+  width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;
+}
+.quiz-options{display:flex;flex-direction:column;gap:10px;margin:1rem 0}
+.quiz-opt{
+  padding:12px 18px;background:var(--bg3);border:2px solid transparent;
+  border-radius:10px;cursor:pointer;transition:all .3s;font-size:.95rem;
+  display:flex;align-items:center;gap:12px;
+}
+.quiz-opt:hover{border-color:var(--accent);background:rgba(99,102,241,.1)}
+.quiz-opt.selected{border-color:var(--accent);background:rgba(99,102,241,.15)}
+.quiz-opt.correct-answer{border-color:var(--green);background:rgba(34,197,94,.15)}
+.quiz-opt.wrong-answer{border-color:var(--red);background:rgba(239,68,68,.15)}
+.quiz-opt .opt-letter{
+  width:28px;height:28px;border-radius:6px;background:var(--bg4);
+  display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.8rem;flex-shrink:0;
+}
+.quiz-explanation{
+  margin-top:1rem;padding:12px 16px;background:rgba(99,102,241,.1);
+  border-left:3px solid var(--accent);border-radius:0 8px 8px 0;
+  font-size:.9rem;color:var(--text2);display:none;
+}
+.quiz-explanation.show{display:block;animation:fadeUp .3s ease}
+
+/* Score */
+.score-display{
+  text-align:center;padding:3rem;background:var(--bg2);border-radius:16px;
+  border:1px solid var(--bg4);margin:2rem 0;
+}
+.score-circle{
+  width:150px;height:150px;border-radius:50%;margin:0 auto 1.5rem;
+  display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:800;
+  position:relative;
+}
+.score-circle::before{
+  content:'';position:absolute;inset:-4px;border-radius:50%;
+  background:conic-gradient(var(--accent) calc(var(--pct)*3.6deg),var(--bg4) 0);
+}
+.score-circle span{position:relative;z-index:1;background:var(--bg2);width:130px;height:130px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+.tab{
+  padding:10px 20px;background:var(--bg3);border:1px solid var(--bg4);
+  border-radius:10px;cursor:pointer;color:var(--text2);font-weight:600;
+  transition:all .3s;font-size:.9rem;
+}
+.tab:hover{color:var(--text);border-color:var(--accent)}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab-content{display:none;animation:fadeUp .3s ease}
+.tab-content.active{display:block}
+
+/* Tips */
+.tip{
+  padding:16px 20px;border-radius:12px;margin:1.5rem 0;display:flex;gap:12px;
+  align-items:flex-start;font-size:.95rem;
+}
+.tip.warning{background:rgba(245,158,11,.1);border-left:3px solid var(--orange)}
+.tip.danger{background:rgba(239,68,68,.1);border-left:3px solid var(--red)}
+.tip.success{background:rgba(34,197,94,.1);border-left:3px solid var(--green)}
+.tip.info{background:rgba(99,102,241,.1);border-left:3px solid var(--accent)}
+.tip-icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.tip strong{display:block;margin-bottom:4px}
+
+/* Pitfall Section */
+.pitfall{
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:16px;padding:2rem;
+  margin-bottom:1.5rem;position:relative;overflow:hidden;
+}
+.pitfall::before{
+  content:'⚠️';position:absolute;top:15px;right:20px;font-size:2rem;opacity:.2;
+}
+.pitfall h4{color:var(--red2);margin-bottom:.5rem;font-size:1.1rem}
+.pitfall .wrong{position:relative;padding-left:1.5rem}
+.pitfall .wrong::before{content:'❌';position:absolute;left:0;top:0}
+.pitfall .right{position:relative;padding-left:1.5rem;margin-top:.5rem}
+.pitfall .right::before{content:'✅';position:absolute;left:0;top:0}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:2rem 0}
+.stat{
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:12px;padding:1.5rem;text-align:center;
+}
+.stat .stat-num{font-size:2rem;font-weight:800;color:var(--accent)}
+.stat .stat-label{color:var(--text2);font-size:.9rem;margin-top:4px}
+
+/* Accordion */
+.accordion{margin:1rem 0}
+.acc-item{
+  background:var(--bg2);border:1px solid var(--bg4);border-radius:12px;
+  margin-bottom:8px;overflow:hidden;
+}
+.acc-header{
+  padding:16px 20px;cursor:pointer;display:flex;justify-content:space-between;
+  align-items:center;font-weight:600;transition:all .3s;
+}
+.acc-header:hover{background:var(--bg3)}
+.acc-header .arrow{transition:transform .3s;color:var(--text3)}
+.acc-item.open .acc-header .arrow{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+.acc-item.open .acc-body{max-height:2000px}
+.acc-body-inner{padding:0 20px 20px}
+
+/* Checklist */
+.checklist{list-style:none;margin:1rem 0}
+.checklist li{
+  padding:10px 16px;display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--bg4);font-size:.95rem;
+}
+.checklist li::before{content:'☐';font-size:1.2rem;color:var(--text3)}
+.checklist li.done::before{content:'☑';color:var(--green)}
+
+/* Responsive */
+@media(max-width:768px){
+  nav{top:auto;bottom:8px;left:8px;right:8px;transform:none;border-radius:12px}
+  nav button{padding:8px 12px;font-size:.75rem}
+  .section{padding:60px 1rem 6rem}
+  .playground-body{grid-template-columns:1fr}
+  .flow-branch{flex-direction:column;gap:0;align-items:center}
+  .flow-branch::before{display:none}
+  .section-title{font-size:1.8rem}
+}
+
+/* Confetti */
+.confetti-piece{
+  position:fixed;width:10px;height:10px;top:-10px;z-index:9999;
+  animation:confetti 3s ease-in forwards;pointer-events:none;
+}
+</style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div class="progress-bar-container"><div class="progress-bar-fill" id="progressBar"></div></div>
+
+<!-- Navigation -->
+<nav id="mainNav">
+  <button class="active" onclick="showSection('hero')">🏠 Home</button>
+  <button onclick="showSection('tryCatch')">🛡️ Try-Catch</button>
+  <button onclick="showSection('errorTypes')">🔴 Error Types</button>
+  <button onclick="showSection('throwing')">🎯 Throwing</button>
+  <button onclick="showSection('debugging')">🔍 Debugging</button>
+  <button onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+  <button onclick="showSection('exercises')">💪 Exercises</button>
+  <button onclick="showSection('quiz')">🏆 Quiz</button>
+</nav>
+
+<!-- HERO -->
+<section class="section active" id="hero">
+  <div class="hero" style="min-height:calc(100vh - 80px)">
+    <div class="hero-badge"><span class="dot"></span> Interactive Learning Lab</div>
+    <h1>JavaScript Error<br>Handling Mastery</h1>
+    <p>Master try-catch-finally, error types, throwing errors, and debugging — everything you need to ace your interview.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary" onclick="showSection('tryCatch')">Start Learning →</button>
+      <button class="btn btn-secondary" onclick="showSection('quiz')">Jump to Quiz 🏆</button>
+    </div>
+    <div class="stats" style="margin-top:3rem;width:100%;max-width:700px;position:relative;z-index:1">
+      <div class="stat"><div class="stat-num">7</div><div class="stat-label">Interactive Lessons</div></div>
+      <div class="stat"><div class="stat-num">12+</div><div class="stat-label">Code Playgrounds</div></div>
+      <div class="stat"><div class="stat-num">15</div><div class="stat-label">Quiz Questions</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRY-CATCH-FINALLY -->
+<section class="section" id="tryCatch">
+  <h2 class="section-title"><span class="emoji">🛡️</span> Try-Catch-Finally</h2>
+  <p class="section-sub">The foundation of error handling in JavaScript — your safety net for risky code.</p>
+
+  <!-- Visual Flow -->
+  <div class="card">
+    <h3>📊 How It Works — Visual Flow</h3>
+    <p>Click each box to highlight the execution path:</p>
+    <div class="flow-diagram" id="flowDiagram">
+      <div class="flow-box start-box" onclick="animateFlow(0)">Code Execution Starts</div>
+      <div class="flow-arrow"></div>
+      <div class="flow-box try-box" onclick="animateFlow(1)">🔵 TRY Block<br><small>Risky code runs here</small></div>
+      <div class="flow-arrow"></div>
+      <div class="flow-label">Error thrown?</div>
+      <div class="flow-branch">
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div class="flow-label no">No Error ✅</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-box try-box" onclick="animateFlow(2)" style="border-color:var(--green)">Skip catch block</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div class="flow-label yes">Error! 💥</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-box catch-box" onclick="animateFlow(3)">🔴 CATCH Block<br><small>Handle the error</small></div>
+        </div>
+      </div>
+      <div class="flow-arrow"></div>
+      <div class="flow-box finally-box" onclick="animateFlow(4)">🟢 FINALLY Block<br><small>ALWAYS runs</small></div>
+      <div class="flow-arrow"></div>
+      <div class="flow-box start-box" onclick="animateFlow(5)">Continue Execution</div>
+    </div>
+  </div>
+
+  <!-- Basic Try-Catch -->
+  <div class="card">
+    <h3>📝 Basic Try-Catch</h3>
+    <p>Wrap risky code in <code>try</code>, handle errors in <code>catch</code>:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span>basic-try-catch.js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">try</span> {</span>
+<span class="line" data-n="2">  <span class="cm">// Risky code that might throw an error</span></span>
+<span class="line" data-n="3">  <span class="kw">const</span> <span class="var">data</span> = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="str">'invalid json'</span>);</span>
+<span class="line" data-n="4">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">data</span>);</span>
+<span class="line" data-n="5">} <span class="kw">catch</span> (<span class="var">error</span>) {</span>
+<span class="line" data-n="6">  <span class="cm">// This runs ONLY if try block throws</span></span>
+<span class="line" data-n="7">  <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Parsing failed:'</span>, <span class="var">error</span>.<span class="var">message</span>);</span>
+<span class="line" data-n="8">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Error Object -->
+  <div class="card">
+    <h3>🔍 The Error Object Properties</h3>
+    <p>When you catch an error, you get an object with useful properties:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span>error-properties.js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">try</span> {</span>
+<span class="line" data-n="2">  <span class="var">undefinedFunction</span>();</span>
+<span class="line" data-n="3">} <span class="kw">catch</span> (<span class="var">error</span>) {</span>
+<span class="line" data-n="4">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">error</span>.<span class="var">name</span>);    <span class="cm">// "ReferenceError"</span></span>
+<span class="line" data-n="5">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">error</span>.<span class="var">message</span>); <span class="cm">// "undefinedFunction is not defined"</span></span>
+<span class="line" data-n="6">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">error</span>.<span class="var">stack</span>);   <span class="cm">// Full stack trace</span></span>
+<span class="line" data-n="7">}</span>
+      </div>
+    </div>
+    <div class="tip info">
+      <span class="tip-icon">💡</span>
+      <div><strong>Pro Tip:</strong> <code>error.stack</code> shows you the exact file and line number where the error occurred — invaluable for debugging!</div>
+    </div>
+  </div>
+
+  <!-- Try-Catch-Finally -->
+  <div class="card">
+    <h3>🔄 Try-Catch-Finally</h3>
+    <p><code>finally</code> ALWAYS executes — whether or not an error was thrown. Perfect for cleanup:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span>finally-block.js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">readFile</span>() {</span>
+<span class="line" data-n="2">  <span class="kw">let</span> <span class="var">connection</span> = <span class="kw">null</span>;</span>
+<span class="line" data-n="3">  <span class="kw">try</span> {</span>
+<span class="line" data-n="4">    <span class="var">connection</span> = <span class="fn">openDatabase</span>();</span>
+<span class="line" data-n="5">    <span class="kw">const</span> <span class="var">data</span> = <span class="var">connection</span>.<span class="fn">query</span>(<span class="str">'SELECT * FROM users'</span>);</span>
+<span class="line" data-n="6">    <span class="kw">return</span> <span class="var">data</span>;</span>
+<span class="line" data-n="7">  } <span class="kw">catch</span> (<span class="var">error</span>) {</span>
+<span class="line" data-n="8">    <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Query failed:'</span>, <span class="var">error</span>);</span>
+<span class="line" data-n="9">    <span class="kw">return</span> <span class="kw">null</span>;</span>
+<span class="line" data-n="10">  } <span class="kw">finally</span> {</span>
+<span class="line" data-n="11">    <span class="cm">// ✅ This ALWAYS runs — even after return!</span></span>
+<span class="line" data-n="12">    <span class="kw">if</span> (<span class="var">connection</span>) <span class="var">connection</span>.<span class="fn">close</span>();</span>
+<span class="line" data-n="13">    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Cleanup done!'</span>);</span>
+<span class="line" data-n="14">  }</span>
+<span class="line" data-n="15">}</span>
+      </div>
+    </div>
+    <div class="tip warning">
+      <span class="tip-icon">⚡</span>
+      <div><strong>Key Insight:</strong> <code>finally</code> runs even if <code>try</code> or <code>catch</code> has a <code>return</code> statement! If <code>finally</code> also has a <code>return</code>, it overrides the others.</div>
+    </div>
+  </div>
+
+  <!-- Interactive Playground -->
+  <div class="card">
+    <h3>🎮 Try It Yourself!</h3>
+    <p>Edit the code and see what happens:</p>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Live Playground</h4>
+        <button class="btn btn-sm btn-primary" onclick="runPlayground('pg1')">▶ Run</button>
+      </div>
+      <div class="playground-body">
+        <textarea id="pg1-code" spellcheck="false">try {
+  console.log("1️⃣ Try block starts");
+  
+  // Try changing this to valid JSON!
+  const data = JSON.parse('{"name": "JS"}');
+  console.log("2️⃣ Parsed:", data.name);
+  
+  // Uncomment to trigger error:
+  // JSON.parse('bad json');
+  
+} catch (error) {
+  console.log("3️⃣ Caught:", error.message);
+} finally {
+  console.log("4️⃣ Finally always runs!");
+}</textarea>
+        <div class="playground-output" id="pg1-output">
+          <div class="output-line info"><span class="output-prefix">→</span> Click "Run" to execute</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Try without Catch -->
+  <div class="card">
+    <h3>🤔 Try without Catch?</h3>
+    <p>You can use <code>try-finally</code> without <code>catch</code> — the error still propagates but cleanup happens:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span>try-finally.js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">riskyOperation</span>() {</span>
+<span class="line" data-n="2">  <span class="kw">try</span> {</span>
+<span class="line" data-n="3">    <span class="cm">// Error will propagate up!</span></span>
+<span class="line" data-n="4">    <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Something broke'</span>);</span>
+<span class="line" data-n="5">  } <span class="kw">finally</span> {</span>
+<span class="line" data-n="6">    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Cleanup runs before error propagates!'</span>);</span>
+<span class="line" data-n="7">  }</span>
+<span class="line" data-n="8">}</span>
+<span class="line" data-n="9"></span>
+<span class="line" data-n="10"><span class="cm">// The error bubbles up to here</span></span>
+<span class="line" data-n="11"><span class="kw">try</span> {</span>
+<span class="line" data-n="12">  <span class="fn">riskyOperation</span>();</span>
+<span class="line" data-n="13">} <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line" data-n="14">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Caught at outer level:'</span>, <span class="var">e</span>.<span class="var">message</span>);</span>
+<span class="line" data-n="15">}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip success">
+    <span class="tip-icon">✅</span>
+    <div><strong>Section Complete!</strong> You now understand try-catch-finally flow. Next up: Error Types →
+    <br><button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="showSection('errorTypes')">Continue →</button></div>
+  </div>
+</section>
+
+<!-- ERROR TYPES -->
+<section class="section" id="errorTypes">
+  <h2 class="section-title"><span class="emoji">🔴</span> Error Types</h2>
+  <p class="section-sub">JavaScript has 7 built-in error types. Knowing each one makes debugging 10x faster.</p>
+
+  <!-- Error Hierarchy -->
+  <div class="card">
+    <h3>🌳 Error Hierarchy</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <span>error-hierarchy.txt</span>
+      </div>
+      <div class="code-body">
+<span class="line" data-n=""><span class="fn">Error</span> <span class="cm">(base class)</span></span>
+<span class="line" data-n="">  ├── <span class="err">SyntaxError</span>     <span class="cm">— invalid syntax</span></span>
+<span class="line" data-n="">  ├── <span class="err">ReferenceError</span>  <span class="cm">— accessing undefined variable</span></span>
+<span class="line" data-n="">  ├── <span class="err">TypeError</span>       <span class="cm">— wrong type operation</span></span>
+<span class="line" data-n="">  ├── <span class="err">RangeError</span>      <span class="cm">— value out of range</span></span>
+<span class="line" data-n="">  ├── <span class="err">URIError</span>        <span class="cm">— bad URI function usage</span></span>
+<span class="line" data-n="">  ├── <span class="err">EvalError</span>       <span class="cm">— eval() related (legacy)</span></span>
+<span class="line" data-n="">  └── <span class="err">AggregateError</span> <span class="cm">— multiple errors (ES2021)</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Type Cards -->
+  <div class="error-grid">
+    <div class="error-card syntax" onclick="toggleErrorDetail(this)">
+      <h4><span class="tag">COMMON</span> SyntaxError</h4>
+      <p>Invalid JavaScript syntax that can't be parsed</p>
+      <code>JSON.parse("{'bad': 'json'}");<br>// Unexpected token ' in JSON</code>
+    </div>
+    <div class="error-card reference" onclick="toggleErrorDetail(this)">
+      <h4><span class="tag">VERY COMMON</span> ReferenceError</h4>
+      <p>Accessing a variable that doesn't exist</p>
+      <code>console.log(myVar);<br>// myVar is not defined</code>
+    </div>
+    <div class="error-card type" onclick="toggleErrorDetail(this)">
+      <h4><span class="tag">VERY COMMON</span> TypeError</h4>
+      <p>Using a value in an incompatible way</p>
+      <code>null.toString();<br>// Cannot read properties of null</code>
+    </div>
+    <div class="error-card range" onclick="toggleErrorDetail(this)">
+      <h4><span class="tag">OCCASIONAL</span> RangeError</h4>
+      <p>A number is outside its valid range</p>
+      <code>new Array(-1);<br>// Invalid array length</code>
+    </div>
+    <div class="error-card uri" onclick="toggleErrorDetail(this)">
+      <h4><span class="tag">RARE</span> URIError</h4>
+      <p>Incorrect use of URI handling functions</p>
+      <code>decodeURIComponent('%');<br>// URI malformed</code>
+    </div>
+    <div class="error-card eval" onclick="toggleErrorDetail(this)">
+      <h4><span class="tag">LEGACY</span> EvalError</h4>
+      <p>Related to eval() — rarely seen in modern JS</p>
+      <code>// Modern JS doesn't throw this<br>// Kept for backward compatibility</code>
+    </div>
+  </div>
+
+  <!-- Deep Dive with Tabs -->
+  <div class="card">
+    <h3>🔬 Deep Dive: Each Error Type</h3>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'et')">SyntaxError</div>
+      <div class="tab" onclick="switchTab(this,'et')">ReferenceError</div>
+      <div class="tab" onclick="switchTab(this,'et')">TypeError</div>
+      <div class="tab" onclick="switchTab(this,'et')">RangeError</div>
+    </div>
+    <div class="tab-content active" data-tab-group="et">
+      <h4 style="color:var(--red2)">SyntaxError — "Your code is grammatically wrong"</h4>
+      <p style="color:var(--text2);margin:8px 0">Thrown when the JS engine can't even <em>parse</em> your code. <strong>Cannot be caught</strong> if it's in the same script block!</p>
+      <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>syntax-errors.js</span></div>
+        <div class="code-body">
+<span class="line" data-n="1"><span class="cm">// ❌ These crash BEFORE code runs:</span></span>
+<span class="line" data-n="2"><span class="cm">// let x = ;         // Unexpected token ;</span></span>
+<span class="line" data-n="3"><span class="cm">// if (true {        // Missing )</span></span>
+<span class="line" data-n="4"><span class="cm">// const 123abc = 1; // Invalid identifier</span></span>
+<span class="line" data-n="5"></span>
+<span class="line" data-n="6"><span class="cm">// ✅ But runtime syntax errors CAN be caught:</span></span>
+<span class="line" data-n="7"><span class="kw">try</span> {</span>
+<span class="line" data-n="8">  <span class="fn">eval</span>(<span class="str">'let x = ;'</span>); <span class="cm">// Runtime parsing</span></span>
+<span class="line" data-n="9">} <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line" data-n="10">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">e</span> <span class="kw">instanceof</span> <span class="fn">SyntaxError</span>); <span class="cm">// true</span></span>
+<span class="line" data-n="11">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">e</span>.<span class="var">message</span>); <span class="cm">// Unexpected token ;</span></span>
+<span class="line" data-n="12">}</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-content" data-tab-group="et">
+      <h4 style="color:var(--orange)">ReferenceError — "That variable doesn't exist"</h4>
+      <p style="color:var(--text2);margin:8px 0">Thrown when you try to use a variable that hasn't been declared.</p>
+      <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>reference-errors.js</span></div>
+        <div class="code-body">
+<span class="line" data-n="1"><span class="cm">// ❌ Common causes:</span></span>
+<span class="line" data-n="2"><span class="fn">console</span>.<span class="fn">log</span>(<span class="var">myVariable</span>);     <span class="cm">// Not declared</span></span>
+<span class="line" data-n="3"><span class="fn">console</span>.<span class="fn">log</span>(<span class="var">x</span>); <span class="kw">let</span> <span class="var">x</span> = <span class="num">5</span>; <span class="cm">// TDZ (Temporal Dead Zone)</span></span>
+<span class="line" data-n="4"></span>
+<span class="line" data-n="5"><span class="cm">// ✅ How to check safely:</span></span>
+<span class="line" data-n="6"><span class="kw">if</span> (<span class="kw">typeof</span> <span class="var">maybeExists</span> !== <span class="str">'undefined'</span>) {</span>
+<span class="line" data-n="7">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">maybeExists</span>);</span>
+<span class="line" data-n="8">}</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-content" data-tab-group="et">
+      <h4 style="color:var(--purple)">TypeError — "You can't do that with this type"</h4>
+      <p style="color:var(--text2);margin:8px 0">The most common error! Thrown when an operation is performed on the wrong type.</p>
+      <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>type-errors.js</span></div>
+        <div class="code-body">
+<span class="line" data-n="1"><span class="cm">// ❌ Common causes:</span></span>
+<span class="line" data-n="2"><span class="kw">null</span>.<span class="fn">toString</span>();            <span class="cm">// Cannot read properties of null</span></span>
+<span class="line" data-n="3"><span class="kw">undefined</span>.<span class="var">name</span>;             <span class="cm">// Cannot read properties of undefined</span></span>
+<span class="line" data-n="4"><span class="str">"hello"</span>();                   <span class="cm">// "hello" is not a function</span></span>
+<span class="line" data-n="5"><span class="kw">const</span> <span class="var">x</span> = <span class="num">5</span>; <span class="var">x</span> = <span class="num">10</span>;       <span class="cm">// Assignment to constant</span></span>
+<span class="line" data-n="6"></span>
+<span class="line" data-n="7"><span class="cm">// ✅ Defend with optional chaining:</span></span>
+<span class="line" data-n="8"><span class="kw">const</span> <span class="var">user</span> = <span class="kw">null</span>;</span>
+<span class="line" data-n="9"><span class="fn">console</span>.<span class="fn">log</span>(<span class="var">user</span>?.<span class="var">name</span>);     <span class="cm">// undefined (no crash!)</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-content" data-tab-group="et">
+      <h4 style="color:var(--cyan)">RangeError — "That value is out of bounds"</h4>
+      <p style="color:var(--text2);margin:8px 0">Thrown when a value is outside its allowed range.</p>
+      <div class="code-block"><div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>range-errors.js</span></div>
+        <div class="code-body">
+<span class="line" data-n="1"><span class="cm">// ❌ Common causes:</span></span>
+<span class="line" data-n="2"><span class="kw">new</span> <span class="fn">Array</span>(-<span class="num">1</span>);               <span class="cm">// Invalid array length</span></span>
+<span class="line" data-n="3">(<span class="num">1.5</span>).<span class="fn">toFixed</span>(<span class="num">200</span>);          <span class="cm">// Precision out of range</span></span>
+<span class="line" data-n="4"></span>
+<span class="line" data-n="5"><span class="cm">// ❌ Infinite recursion:</span></span>
+<span class="line" data-n="6"><span class="kw">function</span> <span class="fn">infinite</span>() { <span class="fn">infinite</span>(); }</span>
+<span class="line" data-n="7"><span class="fn">infinite</span>(); <span class="cm">// Maximum call stack size exceeded</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checking Error Types -->
+  <div class="card">
+    <h3>🎯 Checking Error Types with instanceof</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>instanceof-check.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">try</span> {</span>
+<span class="line" data-n="2">  <span class="fn">someRiskyOperation</span>();</span>
+<span class="line" data-n="3">} <span class="kw">catch</span> (<span class="var">error</span>) {</span>
+<span class="line" data-n="4">  <span class="kw">if</span> (<span class="var">error</span> <span class="kw">instanceof</span> <span class="fn">TypeError</span>) {</span>
+<span class="line" data-n="5">    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Type problem!'</span>, <span class="var">error</span>.<span class="var">message</span>);</span>
+<span class="line" data-n="6">  } <span class="kw">else if</span> (<span class="var">error</span> <span class="kw">instanceof</span> <span class="fn">RangeError</span>) {</span>
+<span class="line" data-n="7">    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Out of range!'</span>, <span class="var">error</span>.<span class="var">message</span>);</span>
+<span class="line" data-n="8">  } <span class="kw">else</span> {</span>
+<span class="line" data-n="9">    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Unknown error:'</span>, <span class="var">error</span>);</span>
+<span class="line" data-n="10">  }</span>
+<span class="line" data-n="11">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Playground -->
+  <div class="card">
+    <h3>🎮 Identify the Error Type!</h3>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Error Type Explorer</h4>
+        <button class="btn btn-sm btn-primary" onclick="runPlayground('pg2')">▶ Run</button>
+      </div>
+      <div class="playground-body">
+        <textarea id="pg2-code" spellcheck="false">// Try each one! Uncomment to test:
+
+try {
+  // Test 1: TypeError
+  null.toString();
+  
+  // Test 2: ReferenceError
+  // console.log(doesNotExist);
+  
+  // Test 3: RangeError
+  // new Array(-1);
+  
+  // Test 4: SyntaxError
+  // JSON.parse('{bad}');
+  
+} catch (error) {
+  console.log("Type:", error.constructor.name);
+  console.log("Message:", error.message);
+  console.log("Is TypeError?", error instanceof TypeError);
+}</textarea>
+        <div class="playground-output" id="pg2-output">
+          <div class="output-line info"><span class="output-prefix">→</span> Click "Run" to execute</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip success">
+    <span class="tip-icon">✅</span>
+    <div><strong>Section Complete!</strong> You can now identify all JavaScript error types.
+    <br><button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="showSection('throwing')">Continue to Throwing Errors →</button></div>
+  </div>
+</section>
+
+<!-- THROWING ERRORS -->
+<section class="section" id="throwing">
+  <h2 class="section-title"><span class="emoji">🎯</span> Throwing Errors</h2>
+  <p class="section-sub">Creating and throwing your own errors for robust, defensive code.</p>
+
+  <div class="card">
+    <h3>💥 The throw Statement</h3>
+    <p>You can throw <strong>anything</strong> in JavaScript, but you <strong>should</strong> throw Error objects:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>throw-basics.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="cm">// ❌ You CAN throw anything (but don't!):</span></span>
+<span class="line" data-n="2"><span class="kw">throw</span> <span class="str">"something went wrong"</span>;  <span class="cm">// string</span></span>
+<span class="line" data-n="3"><span class="kw">throw</span> <span class="num">404</span>;                       <span class="cm">// number</span></span>
+<span class="line" data-n="4"><span class="kw">throw</span> { <span class="var">code</span>: <span class="num">500</span> };              <span class="cm">// object</span></span>
+<span class="line" data-n="5"></span>
+<span class="line" data-n="6"><span class="cm">// ✅ ALWAYS throw Error objects:</span></span>
+<span class="line" data-n="7"><span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">"Something went wrong"</span>);</span>
+<span class="line" data-n="8"><span class="kw">throw new</span> <span class="fn">TypeError</span>(<span class="str">"Expected a string"</span>);</span>
+<span class="line" data-n="9"><span class="kw">throw new</span> <span class="fn">RangeError</span>(<span class="str">"Age must be 0-150"</span>);</span>
+      </div>
+    </div>
+    <div class="tip danger">
+      <span class="tip-icon">🚫</span>
+      <div><strong>Never throw strings!</strong> You lose the stack trace, error type, and all debugging info. Always use <code>new Error()</code>.</div>
+    </div>
+  </div>
+
+  <!-- Input Validation -->
+  <div class="card">
+    <h3>🛡️ Input Validation Pattern</h3>
+    <p>The most common use case — validate function inputs early:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>validation.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">divide</span>(<span class="var">a</span>, <span class="var">b</span>) {</span>
+<span class="line" data-n="2">  <span class="kw">if</span> (<span class="kw">typeof</span> <span class="var">a</span> !== <span class="str">'number'</span> || <span class="kw">typeof</span> <span class="var">b</span> !== <span class="str">'number'</span>) {</span>
+<span class="line" data-n="3">    <span class="kw">throw new</span> <span class="fn">TypeError</span>(<span class="str">'Both arguments must be numbers'</span>);</span>
+<span class="line" data-n="4">  }</span>
+<span class="line" data-n="5">  <span class="kw">if</span> (<span class="var">b</span> === <span class="num">0</span>) {</span>
+<span class="line" data-n="6">    <span class="kw">throw new</span> <span class="fn">RangeError</span>(<span class="str">'Cannot divide by zero'</span>);</span>
+<span class="line" data-n="7">  }</span>
+<span class="line" data-n="8">  <span class="kw">return</span> <span class="var">a</span> / <span class="var">b</span>;</span>
+<span class="line" data-n="9">}</span>
+<span class="line" data-n="10"></span>
+<span class="line" data-n="11"><span class="cm">// Usage:</span></span>
+<span class="line" data-n="12"><span class="kw">try</span> {</span>
+<span class="line" data-n="13">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">divide</span>(<span class="num">10</span>, <span class="num">2</span>));     <span class="cm">// 5</span></span>
+<span class="line" data-n="14">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">divide</span>(<span class="num">10</span>, <span class="num">0</span>));     <span class="cm">// RangeError!</span></span>
+<span class="line" data-n="15">} <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line" data-n="16">  <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">e</span>.<span class="var">name</span> + <span class="str">': '</span> + <span class="var">e</span>.<span class="var">message</span>);</span>
+<span class="line" data-n="17">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Error Classes -->
+  <div class="card">
+    <h3>🏗️ Custom Error Classes</h3>
+    <p>Create your own error types for domain-specific errors:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>custom-errors.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">class</span> <span class="fn">ValidationError</span> <span class="kw">extends</span> <span class="fn">Error</span> {</span>
+<span class="line" data-n="2">  <span class="fn">constructor</span>(<span class="var">field</span>, <span class="var">message</span>) {</span>
+<span class="line" data-n="3">    <span class="kw">super</span>(<span class="var">message</span>);</span>
+<span class="line" data-n="4">    <span class="kw">this</span>.<span class="var">name</span> = <span class="str">'ValidationError'</span>;</span>
+<span class="line" data-n="5">    <span class="kw">this</span>.<span class="var">field</span> = <span class="var">field</span>;</span>
+<span class="line" data-n="6">  }</span>
+<span class="line" data-n="7">}</span>
+<span class="line" data-n="8"></span>
+<span class="line" data-n="9"><span class="kw">class</span> <span class="fn">NotFoundError</span> <span class="kw">extends</span> <span class="fn">Error</span> {</span>
+<span class="line" data-n="10">  <span class="fn">constructor</span>(<span class="var">resource</span>) {</span>
+<span class="line" data-n="11">    <span class="kw">super</span>(<span class="str">`${</span><span class="var">resource</span><span class="str">} not found`</span>);</span>
+<span class="line" data-n="12">    <span class="kw">this</span>.<span class="var">name</span> = <span class="str">'NotFoundError'</span>;</span>
+<span class="line" data-n="13">    <span class="kw">this</span>.<span class="var">statusCode</span> = <span class="num">404</span>;</span>
+<span class="line" data-n="14">  }</span>
+<span class="line" data-n="15">}</span>
+<span class="line" data-n="16"></span>
+<span class="line" data-n="17"><span class="cm">// Usage:</span></span>
+<span class="line" data-n="18"><span class="kw">function</span> <span class="fn">createUser</span>(<span class="var">email</span>) {</span>
+<span class="line" data-n="19">  <span class="kw">if</span> (!<span class="var">email</span>.<span class="fn">includes</span>(<span class="str">'@'</span>)) {</span>
+<span class="line" data-n="20">    <span class="kw">throw new</span> <span class="fn">ValidationError</span>(<span class="str">'email'</span>, <span class="str">'Invalid email format'</span>);</span>
+<span class="line" data-n="21">  }</span>
+<span class="line" data-n="22">}</span>
+<span class="line" data-n="23"></span>
+<span class="line" data-n="24"><span class="kw">try</span> {</span>
+<span class="line" data-n="25">  <span class="fn">createUser</span>(<span class="str">'bad-email'</span>);</span>
+<span class="line" data-n="26">} <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line" data-n="27">  <span class="kw">if</span> (<span class="var">e</span> <span class="kw">instanceof</span> <span class="fn">ValidationError</span>) {</span>
+<span class="line" data-n="28">    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Field: ${</span><span class="var">e</span>.<span class="var">field</span><span class="str">}, ${</span><span class="var">e</span>.<span class="var">message</span><span class="str">}`</span>);</span>
+<span class="line" data-n="29">  }</span>
+<span class="line" data-n="30">}</span>
+      </div>
+    </div>
+    <div class="tip info">
+      <span class="tip-icon">🎯</span>
+      <div><strong>Interview Tip:</strong> Custom errors show you understand OOP and professional error handling. Always set <code>this.name</code> in the constructor!</div>
+    </div>
+  </div>
+
+  <!-- Re-throwing -->
+  <div class="card">
+    <h3>🔄 Re-throwing Errors</h3>
+    <p>Catch specific errors, re-throw ones you can't handle:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>rethrowing.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">processData</span>(<span class="var">jsonStr</span>) {</span>
+<span class="line" data-n="2">  <span class="kw">try</span> {</span>
+<span class="line" data-n="3">    <span class="kw">const</span> <span class="var">data</span> = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="var">jsonStr</span>);</span>
+<span class="line" data-n="4">    <span class="kw">return</span> <span class="var">data</span>.<span class="var">value</span>.<span class="fn">toUpperCase</span>();</span>
+<span class="line" data-n="5">  } <span class="kw">catch</span> (<span class="var">error</span>) {</span>
+<span class="line" data-n="6">    <span class="kw">if</span> (<span class="var">error</span> <span class="kw">instanceof</span> <span class="fn">SyntaxError</span>) {</span>
+<span class="line" data-n="7">      <span class="cm">// Handle JSON parsing errors</span></span>
+<span class="line" data-n="8">      <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Invalid JSON input'</span>);</span>
+<span class="line" data-n="9">      <span class="kw">return null</span>;</span>
+<span class="line" data-n="10">    }</span>
+<span class="line" data-n="11">    <span class="cm">// Re-throw anything else!</span></span>
+<span class="line" data-n="12">    <span class="kw">throw</span> <span class="var">error</span>;</span>
+<span class="line" data-n="13">  }</span>
+<span class="line" data-n="14">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Playground -->
+  <div class="card">
+    <h3>🎮 Practice Throwing Errors</h3>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Throw & Catch Lab</h4>
+        <button class="btn btn-sm btn-primary" onclick="runPlayground('pg3')">▶ Run</button>
+      </div>
+      <div class="playground-body">
+        <textarea id="pg3-code" spellcheck="false">// Create a function that validates age
+function setAge(age) {
+  if (typeof age !== 'number') {
+    throw new TypeError('Age must be a number');
+  }
+  if (age < 0 || age > 150) {
+    throw new RangeError('Age must be 0-150');
+  }
+  return `Age set to ${age}`;
+}
+
+// Test it!
+try {
+  console.log(setAge(25));      // ✅ Works
+  console.log(setAge("old"));   // ❌ TypeError
+} catch (e) {
+  console.log(`${e.name}: ${e.message}`);
+}
+
+try {
+  console.log(setAge(200));     // ❌ RangeError
+} catch (e) {
+  console.log(`${e.name}: ${e.message}`);
+}</textarea>
+        <div class="playground-output" id="pg3-output">
+          <div class="output-line info"><span class="output-prefix">→</span> Click "Run" to execute</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip success">
+    <span class="tip-icon">✅</span>
+    <div><strong>Section Complete!</strong> You can now create and throw custom errors like a pro!
+    <br><button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="showSection('debugging')">Continue to Debugging →</button></div>
+  </div>
+</section>
+
+<!-- DEBUGGING -->
+<section class="section" id="debugging">
+  <h2 class="section-title"><span class="emoji">🔍</span> Debugging Basics</h2>
+  <p class="section-sub">Essential debugging techniques every JavaScript developer must know.</p>
+
+  <!-- Console Methods -->
+  <div class="card">
+    <h3>🖥️ Console Methods Beyond console.log</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>console-methods.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="cm">// 📝 Basic logging levels:</span></span>
+<span class="line" data-n="2"><span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'General info'</span>);         <span class="cm">// ⬜ Normal</span></span>
+<span class="line" data-n="3"><span class="fn">console</span>.<span class="fn">warn</span>(<span class="str">'Warning message'</span>);      <span class="cm">// 🟨 Yellow</span></span>
+<span class="line" data-n="4"><span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Error message'</span>);      <span class="cm">// 🟥 Red</span></span>
+<span class="line" data-n="5"><span class="fn">console</span>.<span class="fn">info</span>(<span class="str">'Info message'</span>);        <span class="cm">// ℹ️ Blue</span></span>
+<span class="line" data-n="6"></span>
+<span class="line" data-n="7"><span class="cm">// 📊 Formatted data:</span></span>
+<span class="line" data-n="8"><span class="fn">console</span>.<span class="fn">table</span>([{<span class="var">name</span>:<span class="str">'Alice'</span>,<span class="var">age</span>:<span class="num">25</span>},{<span class="var">name</span>:<span class="str">'Bob'</span>,<span class="var">age</span>:<span class="num">30</span>}]);</span>
+<span class="line" data-n="9"></span>
+<span class="line" data-n="10"><span class="cm">// ⏱️ Timing:</span></span>
+<span class="line" data-n="11"><span class="fn">console</span>.<span class="fn">time</span>(<span class="str">'operation'</span>);</span>
+<span class="line" data-n="12"><span class="cm">// ...expensive operation...</span></span>
+<span class="line" data-n="13"><span class="fn">console</span>.<span class="fn">timeEnd</span>(<span class="str">'operation'</span>);  <span class="cm">// operation: 2.5ms</span></span>
+<span class="line" data-n="14"></span>
+<span class="line" data-n="15"><span class="cm">// 📦 Grouping:</span></span>
+<span class="line" data-n="16"><span class="fn">console</span>.<span class="fn">group</span>(<span class="str">'User Data'</span>);</span>
+<span class="line" data-n="17"><span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Name: Alice'</span>);</span>
+<span class="line" data-n="18"><span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Age: 25'</span>);</span>
+<span class="line" data-n="19"><span class="fn">console</span>.<span class="fn">groupEnd</span>();</span>
+<span class="line" data-n="20"></span>
+<span class="line" data-n="21"><span class="cm">// 🔢 Counting:</span></span>
+<span class="line" data-n="22"><span class="fn">console</span>.<span class="fn">count</span>(<span class="str">'clicked'</span>);  <span class="cm">// clicked: 1</span></span>
+<span class="line" data-n="23"><span class="fn">console</span>.<span class="fn">count</span>(<span class="str">'clicked'</span>);  <span class="cm">// clicked: 2</span></span>
+<span class="line" data-n="24"></span>
+<span class="line" data-n="25"><span class="cm">// ✅ Assert (logs only if false):</span></span>
+<span class="line" data-n="26"><span class="fn">console</span>.<span class="fn">assert</span>(<span class="num">1</span> === <span class="num">2</span>, <span class="str">'Math is broken!'</span>);</span>
+<span class="line" data-n="27"></span>
+<span class="line" data-n="28"><span class="cm">// 📍 Stack trace:</span></span>
+<span class="line" data-n="29"><span class="fn">console</span>.<span class="fn">trace</span>(<span class="str">'Where am I called from?'</span>);</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Console Playground -->
+  <div class="card">
+    <h3>🎮 Console Method Explorer</h3>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Try Console Methods</h4>
+        <button class="btn btn-sm btn-primary" onclick="runPlayground('pg4')">▶ Run</button>
+      </div>
+      <div class="playground-body">
+        <textarea id="pg4-code" spellcheck="false">// Try different console methods!
+
+console.log("📝 Regular log");
+console.warn("⚠️ This is a warning");
+console.error("❌ This is an error");
+
+// Timing
+console.time("loop");
+let sum = 0;
+for (let i = 0; i < 1000000; i++) sum += i;
+console.timeEnd("loop");
+
+// Assert (only shows if condition is FALSE)
+console.assert(5 > 3, "This won't show");
+console.assert(5 < 3, "5 is NOT less than 3!");
+
+// Stack trace
+function a() { b(); }
+function b() { c(); }
+function c() { console.trace("Trace from c()"); }
+a();</textarea>
+        <div class="playground-output" id="pg4-output">
+          <div class="output-line info"><span class="output-prefix">→</span> Click "Run" to execute</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debugger Statement -->
+  <div class="card">
+    <h3>⏸️ The debugger Statement</h3>
+    <p>Pause execution exactly where you need to inspect:</p>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>debugger.js</span></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">calculateTotal</span>(<span class="var">items</span>) {</span>
+<span class="line" data-n="2">  <span class="kw">let</span> <span class="var">total</span> = <span class="num">0</span>;</span>
+<span class="line" data-n="3">  </span>
+<span class="line" data-n="4">  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">item</span> <span class="kw">of</span> <span class="var">items</span>) {</span>
+<span class="line" data-n="5">    <span class="kw">debugger</span>; <span class="cm">// ⏸ Execution pauses here!</span></span>
+<span class="line" data-n="6">    <span class="cm">// Open DevTools → inspect 'item' and 'total'</span></span>
+<span class="line" data-n="7">    <span class="var">total</span> += <span class="var">item</span>.<span class="var">price</span> * <span class="var">item</span>.<span class="var">qty</span>;</span>
+<span class="line" data-n="8">  }</span>
+<span class="line" data-n="9">  </span>
+<span class="line" data-n="10">  <span class="kw">return</span> <span class="var">total</span>;</span>
+<span class="line" data-n="11">}</span>
+      </div>
+    </div>
+    <div class="tip warning">
+      <span class="tip-icon">⚡</span>
+      <div><strong>Remember:</strong> <code>debugger</code> only works when DevTools is open! Remove all <code>debugger</code> statements before pushing to production.</div>
+    </div>
+  </div>
+
+  <!-- Debugging Strategies -->
+  <div class="card">
+    <h3>🧠 Debugging Strategy Checklist</h3>
+    <ul class="checklist">
+      <li>Read the error message carefully — it tells you the type, message, and line number</li>
+      <li>Check the stack trace — follow the chain of function calls</li>
+      <li>Use <code>console.log()</code> to track variable values at key points</li>
+      <li>Use <code>typeof</code> to verify variable types when you get TypeErrors</li>
+      <li>Use breakpoints in DevTools instead of many console.logs</li>
+      <li>Check for typos in variable/function names (ReferenceErrors)</li>
+      <li>Verify API response shapes — <code>console.log(JSON.stringify(data, null, 2))</code></li>
+      <li>Use the Network tab for API/fetch debugging</li>
+      <li>Rubber duck debugging — explain the code to someone (or a duck 🦆)</li>
+      <li>When stuck, isolate the problem — create a minimal reproduction</li>
+    </ul>
+  </div>
+
+  <!-- DevTools Tips -->
+  <div class="card">
+    <h3>🛠️ Chrome DevTools Power Tips</h3>
+    <div class="accordion">
+      <div class="acc-item" onclick="toggleAccordion(this)">
+        <div class="acc-header"><span>🔴 Breakpoints — Pause on any line</span><span class="arrow">▼</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <p>Click the line number in Sources tab. Execution pauses there. Inspect variables in Scope panel. Use Step Over (F10), Step Into (F11), Step Out (Shift+F11) to navigate.</p>
+        </div></div>
+      </div>
+      <div class="acc-item" onclick="toggleAccordion(this)">
+        <div class="acc-header"><span>💥 Break on Exceptions</span><span class="arrow">▼</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <p>In Sources tab, click the ⏸ icon to "Pause on caught exceptions." Your code will pause exactly where the error is thrown — even inside try-catch!</p>
+        </div></div>
+      </div>
+      <div class="acc-item" onclick="toggleAccordion(this)">
+        <div class="acc-header"><span>👀 Watch Expressions</span><span class="arrow">▼</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <p>Add expressions to the Watch panel (e.g., <code>user.name</code>, <code>items.length</code>). They update in real-time as you step through code.</p>
+        </div></div>
+      </div>
+      <div class="acc-item" onclick="toggleAccordion(this)">
+        <div class="acc-header"><span>📝 Conditional Breakpoints</span><span class="arrow">▼</span></div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <p>Right-click a line number → "Add conditional breakpoint." Enter a condition like <code>i === 50</code>. Only pauses when the condition is true — perfect for loops!</p>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip success">
+    <span class="tip-icon">✅</span>
+    <div><strong>Section Complete!</strong> You now have a debugging toolkit that'll save you hours.
+    <br><button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="showSection('pitfalls')">Continue to Common Pitfalls →</button></div>
+  </div>
+</section>
+
+<!-- PITFALLS -->
+<section class="section" id="pitfalls">
+  <h2 class="section-title"><span class="emoji">⚠️</span> Common Mistakes & Pitfalls</h2>
+  <p class="section-sub">Learn from the mistakes that trip up even experienced developers.</p>
+
+  <div class="pitfall">
+    <h4>Pitfall #1: Swallowing Errors Silently</h4>
+    <div class="wrong"><strong>Empty catch block — the bug disappears!</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">try</span> { <span class="fn">riskyCode</span>(); } <span class="kw">catch</span> (<span class="var">e</span>) { } <span class="cm">// ❌ Silent failure!</span></span>
+    </div></div>
+    <div class="right"><strong>Always handle or log the error</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">try</span> { <span class="fn">riskyCode</span>(); } <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line">  <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Operation failed:'</span>, <span class="var">e</span>); <span class="cm">// ✅</span></span>
+<span class="line">  <span class="fn">reportToMonitoring</span>(<span class="var">e</span>); <span class="cm">// ✅ Even better!</span></span>
+<span class="line">}</span>
+    </div></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>Pitfall #2: Catching Too Broadly</h4>
+    <div class="wrong"><strong>Catching all errors when you only expect one type</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">try</span> {</span>
+<span class="line">  <span class="kw">const</span> <span class="var">data</span> = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="var">input</span>);</span>
+<span class="line">  <span class="fn">processData</span>(<span class="var">data</span>);</span>
+<span class="line">} <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Invalid JSON'</span>); <span class="cm">// ❌ Maybe processData failed!</span></span>
+<span class="line">}</span>
+    </div></div>
+    <div class="right"><strong>Check the error type</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">try</span> {</span>
+<span class="line">  <span class="kw">const</span> <span class="var">data</span> = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="var">input</span>);</span>
+<span class="line">  <span class="fn">processData</span>(<span class="var">data</span>);</span>
+<span class="line">} <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line">  <span class="kw">if</span> (<span class="var">e</span> <span class="kw">instanceof</span> <span class="fn">SyntaxError</span>) {</span>
+<span class="line">    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Invalid JSON'</span>); <span class="cm">// ✅</span></span>
+<span class="line">  } <span class="kw">else</span> { <span class="kw">throw</span> <span class="var">e</span>; } <span class="cm">// ✅ Re-throw unknown errors</span></span>
+<span class="line">}</span>
+    </div></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>Pitfall #3: Try-Catch with Async Code</h4>
+    <div class="wrong"><strong>try-catch doesn't catch errors in callbacks or promises!</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="cm">// ❌ This does NOT catch the error!</span></span>
+<span class="line"><span class="kw">try</span> {</span>
+<span class="line">  <span class="fn">setTimeout</span>(() => { <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Async error!'</span>); }, <span class="num">1000</span>);</span>
+<span class="line">} <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line">  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Never reached'</span>); <span class="cm">// ❌ Won't run</span></span>
+<span class="line">}</span>
+    </div></div>
+    <div class="right"><strong>Use async/await with try-catch, or .catch() for promises</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="cm">// ✅ async/await</span></span>
+<span class="line"><span class="kw">async function</span> <span class="fn">fetchData</span>() {</span>
+<span class="line">  <span class="kw">try</span> {</span>
+<span class="line">    <span class="kw">const</span> <span class="var">res</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/data'</span>);</span>
+<span class="line">    <span class="kw">const</span> <span class="var">data</span> = <span class="kw">await</span> <span class="var">res</span>.<span class="fn">json</span>();</span>
+<span class="line">  } <span class="kw">catch</span> (<span class="var">e</span>) { <span class="fn">console</span>.<span class="fn">error</span>(<span class="var">e</span>); } <span class="cm">// ✅ Works!</span></span>
+<span class="line">}</span>
+    </div></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>Pitfall #4: Throwing Strings Instead of Error Objects</h4>
+    <div class="wrong"><strong>You lose stack trace and error type!</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">throw</span> <span class="str">'Something went wrong'</span>; <span class="cm">// ❌ No stack trace!</span></span>
+    </div></div>
+    <div class="right"><strong>Always throw Error objects</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Something went wrong'</span>); <span class="cm">// ✅ Has stack trace!</span></span>
+    </div></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>Pitfall #5: Finally Return Override</h4>
+    <div class="wrong"><strong>Return in finally overrides try/catch returns!</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">function</span> <span class="fn">gotcha</span>() {</span>
+<span class="line">  <span class="kw">try</span> {</span>
+<span class="line">    <span class="kw">return</span> <span class="str">'from try'</span>;</span>
+<span class="line">  } <span class="kw">finally</span> {</span>
+<span class="line">    <span class="kw">return</span> <span class="str">'from finally'</span>; <span class="cm">// ⚠️ This wins!</span></span>
+<span class="line">  }</span>
+<span class="line">}</span>
+<span class="line"><span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">gotcha</span>()); <span class="cm">// "from finally" 😱</span></span>
+    </div></div>
+    <div class="right"><strong>Don't return from finally blocks</strong></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>Pitfall #6: Using Error Instead of Specific Error Types</h4>
+    <div class="wrong"><strong>Generic errors make handling harder</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Invalid input'</span>); <span class="cm">// ❌ Too vague</span></span>
+    </div></div>
+    <div class="right"><strong>Use specific error types</strong></div>
+    <div class="code-block"><div class="code-body">
+<span class="line"><span class="kw">throw new</span> <span class="fn">TypeError</span>(<span class="str">'Expected string, got number'</span>); <span class="cm">// ✅</span></span>
+    </div></div>
+  </div>
+
+  <!-- Interactive Pitfall Quiz -->
+  <div class="card">
+    <h3>🎮 Spot the Bug!</h3>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Can you fix this code?</h4>
+        <button class="btn btn-sm btn-primary" onclick="runPlayground('pg5')">▶ Run</button>
+      </div>
+      <div class="playground-body">
+        <textarea id="pg5-code" spellcheck="false">// 🐛 This code has 3 bugs! Can you fix them?
+
+function getUserAge(user) {
+  // Bug 1: Should validate input
+  try {
+    const age = user.profile.age;
+    
+    if (age < 0) {
+      throw "Age cannot be negative"; // Bug 2
+    }
+    
+    return age;
+  } catch (e) {
+    // Bug 3: Silent failure
+  }
+}
+
+// Test:
+console.log(getUserAge(null));
+console.log(getUserAge({profile: {age: 25}}));
+console.log(getUserAge({profile: {age: -5}}));</textarea>
+        <div class="playground-output" id="pg5-output">
+          <div class="output-line info"><span class="output-prefix">→</span> Fix the 3 bugs and run!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip success">
+    <span class="tip-icon">✅</span>
+    <div><strong>Section Complete!</strong> Now you know what NOT to do. Time for hands-on practice!
+    <br><button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="showSection('exercises')">Continue to Exercises →</button></div>
+  </div>
+</section>
+
+<!-- EXERCISES -->
+<section class="section" id="exercises">
+  <h2 class="section-title"><span class="emoji">💪</span> Practice Exercises</h2>
+  <p class="section-sub">Hands-on coding challenges. Write real error handling code!</p>
+
+  <!-- Exercise 1 -->
+  <div class="card">
+    <h3>Exercise 1: Safe JSON Parser</h3>
+    <p>Create a function that safely parses JSON and returns a default value on failure.</p>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Your Solution</h4>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-secondary" onclick="showHint('ex1')">💡 Hint</button>
+          <button class="btn btn-sm btn-success" onclick="showSolution('ex1')">Show Solution</button>
+          <button class="btn btn-sm btn-primary" onclick="runPlayground('ex1')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <textarea id="ex1-code" spellcheck="false">// Create: safeParse(jsonString, defaultValue)
+// - Returns parsed JSON on success
+// - Returns defaultValue on failure
+// - Should log the error message
+
+function safeParse(jsonString, defaultValue) {
+  // Your code here!
+}
+
+// Tests:
+console.log(safeParse('{"name":"Alice"}', {}));  
+// Expected: {name: "Alice"}
+
+console.log(safeParse('invalid', []));            
+// Expected: [] (and logs error)
+
+console.log(safeParse('{"age": 25}', null));      
+// Expected: {age: 25}</textarea>
+        <div class="playground-output" id="ex1-output">
+          <div class="output-line info" id="ex1-hint" style="display:none"><span class="output-prefix">💡</span> Use try-catch. JSON.parse() throws SyntaxError on invalid JSON.</div>
+          <div class="output-line info"><span class="output-prefix">→</span> Write your solution and run!</div>
+        </div>
+      </div>
+    </div>
+    <div class="code-block" id="ex1-solution" style="display:none">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>solution.js</span></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">safeParse</span>(<span class="var">jsonString</span>, <span class="var">defaultValue</span>) {</span>
+<span class="line" data-n="2">  <span class="kw">try</span> {</span>
+<span class="line" data-n="3">    <span class="kw">return</span> <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="var">jsonString</span>);</span>
+<span class="line" data-n="4">  } <span class="kw">catch</span> (<span class="var">error</span>) {</span>
+<span class="line" data-n="5">    <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Parse failed:'</span>, <span class="var">error</span>.<span class="var">message</span>);</span>
+<span class="line" data-n="6">    <span class="kw">return</span> <span class="var">defaultValue</span>;</span>
+<span class="line" data-n="7">  }</span>
+<span class="line" data-n="8">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="card">
+    <h3>Exercise 2: Input Validator</h3>
+    <p>Create a function that validates user registration data and throws appropriate errors.</p>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Your Solution</h4>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-secondary" onclick="showHint('ex2')">💡 Hint</button>
+          <button class="btn btn-sm btn-success" onclick="showSolution('ex2')">Show Solution</button>
+          <button class="btn btn-sm btn-primary" onclick="runPlayground('ex2')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <textarea id="ex2-code" spellcheck="false">// Create: validateUser(user)
+// Throw TypeError if user is not an object
+// Throw Error('Name is required') if no name
+// Throw Error('Email must contain @') if invalid email
+// Throw RangeError('Age must be 13-120') if age out of range
+// Return "Valid!" if all checks pass
+
+function validateUser(user) {
+  // Your code here!
+}
+
+// Tests:
+const tests = [
+  { input: "not an object", expect: "TypeError" },
+  { input: { email: "a@b.c", age: 20 }, expect: "Name is required" },
+  { input: { name: "Al", email: "bad", age: 20 }, expect: "Email must contain @" },
+  { input: { name: "Al", email: "a@b", age: 5 }, expect: "Age must be 13-120" },
+  { input: { name: "Al", email: "a@b", age: 25 }, expect: "Valid!" },
+];
+
+tests.forEach((t, i) => {
+  try {
+    const result = validateUser(t.input);
+    console.log(`Test ${i+1}: ${result === t.expect ? '✅' : '❌'} ${result}`);
+  } catch (e) {
+    const pass = e.message === t.expect || e.constructor.name === t.expect;
+    console.log(`Test ${i+1}: ${pass ? '✅' : '❌'} ${e.name}: ${e.message}`);
+  }
+});</textarea>
+        <div class="playground-output" id="ex2-output">
+          <div class="output-line info" id="ex2-hint" style="display:none"><span class="output-prefix">💡</span> Check typeof for object, then check each property. Use specific error types!</div>
+          <div class="output-line info"><span class="output-prefix">→</span> Write your solution and run!</div>
+        </div>
+      </div>
+    </div>
+    <div class="code-block" id="ex2-solution" style="display:none">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>solution.js</span></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">validateUser</span>(<span class="var">user</span>) {</span>
+<span class="line" data-n="2">  <span class="kw">if</span> (<span class="kw">typeof</span> <span class="var">user</span> !== <span class="str">'object'</span> || <span class="var">user</span> === <span class="kw">null</span>) {</span>
+<span class="line" data-n="3">    <span class="kw">throw new</span> <span class="fn">TypeError</span>(<span class="str">'TypeError'</span>);</span>
+<span class="line" data-n="4">  }</span>
+<span class="line" data-n="5">  <span class="kw">if</span> (!<span class="var">user</span>.<span class="var">name</span>) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Name is required'</span>);</span>
+<span class="line" data-n="6">  <span class="kw">if</span> (!<span class="var">user</span>.<span class="var">email</span>?.<span class="fn">includes</span>(<span class="str">'@'</span>)) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Email must contain @'</span>);</span>
+<span class="line" data-n="7">  <span class="kw">if</span> (<span class="var">user</span>.<span class="var">age</span> < <span class="num">13</span> || <span class="var">user</span>.<span class="var">age</span> > <span class="num">120</span>) {</span>
+<span class="line" data-n="8">    <span class="kw">throw new</span> <span class="fn">RangeError</span>(<span class="str">'Age must be 13-120'</span>);</span>
+<span class="line" data-n="9">  }</span>
+<span class="line" data-n="10">  <span class="kw">return</span> <span class="str">'Valid!'</span>;</span>
+<span class="line" data-n="11">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="card">
+    <h3>Exercise 3: Custom Error Class</h3>
+    <p>Build a custom <code>HttpError</code> class and use it in a fetch simulation.</p>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Your Solution</h4>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-success" onclick="showSolution('ex3')">Show Solution</button>
+          <button class="btn btn-sm btn-primary" onclick="runPlayground('ex3')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <textarea id="ex3-code" spellcheck="false">// Create HttpError class extending Error
+// Properties: statusCode, name = 'HttpError'
+
+class HttpError extends Error {
+  // Your code here!
+}
+
+// Simulate API call
+function fetchUser(id) {
+  if (typeof id !== 'number') {
+    throw new TypeError('ID must be a number');
+  }
+  if (id === 0) {
+    throw new HttpError(400, 'Invalid user ID');
+  }
+  if (id === 999) {
+    throw new HttpError(404, 'User not found');
+  }
+  return { id, name: 'Alice' };
+}
+
+// Test with error handling
+[1, 0, 999, "abc"].forEach(id => {
+  try {
+    const user = fetchUser(id);
+    console.log(`✅ User: ${JSON.stringify(user)}`);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      console.log(`🌐 HTTP ${e.statusCode}: ${e.message}`);
+    } else if (e instanceof TypeError) {
+      console.log(`⚠️ Type Error: ${e.message}`);
+    } else {
+      throw e;
+    }
+  }
+});</textarea>
+        <div class="playground-output" id="ex3-output">
+          <div class="output-line info"><span class="output-prefix">→</span> Write your solution and run!</div>
+        </div>
+      </div>
+    </div>
+    <div class="code-block" id="ex3-solution" style="display:none">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>solution.js</span></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">class</span> <span class="fn">HttpError</span> <span class="kw">extends</span> <span class="fn">Error</span> {</span>
+<span class="line" data-n="2">  <span class="fn">constructor</span>(<span class="var">statusCode</span>, <span class="var">message</span>) {</span>
+<span class="line" data-n="3">    <span class="kw">super</span>(<span class="var">message</span>);</span>
+<span class="line" data-n="4">    <span class="kw">this</span>.<span class="var">name</span> = <span class="str">'HttpError'</span>;</span>
+<span class="line" data-n="5">    <span class="kw">this</span>.<span class="var">statusCode</span> = <span class="var">statusCode</span>;</span>
+<span class="line" data-n="6">  }</span>
+<span class="line" data-n="7">}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="card">
+    <h3>Exercise 4: Retry with Error Handling</h3>
+    <p>Implement a retry mechanism that tries an operation multiple times before giving up.</p>
+    <div class="playground">
+      <div class="playground-header">
+        <h4>⚡ Your Solution</h4>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-success" onclick="showSolution('ex4')">Show Solution</button>
+          <button class="btn btn-sm btn-primary" onclick="runPlayground('ex4')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <textarea id="ex4-code" spellcheck="false">// Create: retry(fn, maxAttempts)
+// - Calls fn() up to maxAttempts times
+// - Returns result on success
+// - Throws last error if all attempts fail
+// - Logs each attempt
+
+function retry(fn, maxAttempts) {
+  // Your code here!
+}
+
+// Test: Random failure simulation
+let attempts = 0;
+function unreliableApi() {
+  attempts++;
+  if (Math.random() < 0.7) {
+    throw new Error(`Attempt ${attempts} failed!`);
+  }
+  return { data: 'Success!', attempt: attempts };
+}
+
+try {
+  const result = retry(unreliableApi, 5);
+  console.log('✅ Got result:', JSON.stringify(result));
+} catch (e) {
+  console.log('❌ All attempts failed:', e.message);
+}</textarea>
+        <div class="playground-output" id="ex4-output">
+          <div class="output-line info"><span class="output-prefix">→</span> Write your solution and run!</div>
+        </div>
+      </div>
+    </div>
+    <div class="code-block" id="ex4-solution" style="display:none">
+      <div class="code-header"><div class="code-dots"><span></span><span></span><span></span></div><span>solution.js</span></div>
+      <div class="code-body">
+<span class="line" data-n="1"><span class="kw">function</span> <span class="fn">retry</span>(<span class="var">fn</span>, <span class="var">maxAttempts</span>) {</span>
+<span class="line" data-n="2">  <span class="kw">let</span> <span class="var">lastError</span>;</span>
+<span class="line" data-n="3">  <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">1</span>; <span class="var">i</span> <= <span class="var">maxAttempts</span>; <span class="var">i</span>++) {</span>
+<span class="line" data-n="4">    <span class="kw">try</span> {</span>
+<span class="line" data-n="5">      <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Attempt ${</span><span class="var">i</span><span class="str">}...`</span>);</span>
+<span class="line" data-n="6">      <span class="kw">return</span> <span class="fn">fn</span>();</span>
+<span class="line" data-n="7">    } <span class="kw">catch</span> (<span class="var">e</span>) {</span>
+<span class="line" data-n="8">      <span class="var">lastError</span> = <span class="var">e</span>;</span>
+<span class="line" data-n="9">      <span class="fn">console</span>.<span class="fn">warn</span>(<span class="str">`  Failed: ${</span><span class="var">e</span>.<span class="var">message</span><span class="str">}`</span>);</span>
+<span class="line" data-n="10">    }</span>
+<span class="line" data-n="11">  }</span>
+<span class="line" data-n="12">  <span class="kw">throw</span> <span class="var">lastError</span>;</span>
+<span class="line" data-n="13">}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip success">
+    <span class="tip-icon">✅</span>
+    <div><strong>Great Practice!</strong> You're building real error handling skills. Ready for the final quiz?
+    <br><button class="btn btn-sm btn-primary" style="margin-top:8px" onclick="showSection('quiz')">Take the Quiz →</button></div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="section" id="quiz">
+  <h2 class="section-title"><span class="emoji">🏆</span> Final Quiz</h2>
+  <p class="section-sub">Test your mastery! 15 questions covering everything you've learned.</p>
+
+  <div id="quizScore" class="score-display" style="display:none">
+    <div class="score-circle" id="scoreCircle"><span id="scoreText">0%</span></div>
+    <h3 id="scoreTitle" style="margin-bottom:8px"></h3>
+    <p id="scoreMsg" style="color:var(--text2)"></p>
+    <button class="btn btn-primary" onclick="resetQuiz()" style="margin-top:1rem">🔄 Retry Quiz</button>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div style="text-align:center;margin:2rem 0" id="quizSubmitArea">
+    <button class="btn btn-primary" onclick="submitQuiz()" style="font-size:1.1rem;padding:16px 48px">
+      🏆 Submit Quiz
+    </button>
+  </div>
+</section>
+
+<!-- CONFETTI CONTAINER -->
+<div id="confettiContainer"></div>
+
+<script>
+// ==========================================
+// NAVIGATION & SECTIONS
+// ==========================================
+const sections = ['hero','tryCatch','errorTypes','throwing','debugging','pitfalls','exercises','quiz'];
+let currentSection = 'hero';
+
+function showSection(id) {
+  currentSection = id;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  const idx = sections.indexOf(id);
+  document.querySelectorAll('nav button')[idx].classList.add('active');
+  const pct = (idx / (sections.length - 1)) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ==========================================
+// CODE COPY
+// ==========================================
+function copyCode(btn) {
+  const codeBody = btn.closest('.code-block').querySelector('.code-body');
+  const text = codeBody.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.style.background = 'var(--green)';
+    btn.style.color = '#000';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.background = ''; btn.style.color = ''; }, 2000);
+  });
+}
+
+// ==========================================
+// PLAYGROUND EXECUTION
+// ==========================================
+function runPlayground(id) {
+  const code = document.getElementById(id + '-code').value;
+  const output = document.getElementById(id + '-output');
+  output.innerHTML = '';
+
+  const origLog = console.log;
+  const origError = console.error;
+  const origWarn = console.warn;
+  const origInfo = console.info;
+  const origAssert = console.assert;
+  const origTime = console.time;
+  const origTimeEnd = console.timeEnd;
+  const origTrace = console.trace;
+  const origCount = console.count;
+  const origGroup = console.group;
+  const origGroupEnd = console.groupEnd;
+
+  const counts = {};
+  const timers = {};
+
+  function addLine(type, ...args) {
+    const line = document.createElement('div');
+    line.className = 'output-line ' + type;
+    const prefix = document.createElement('span');
+    prefix.className = 'output-prefix';
+    prefix.textContent = type === 'error' ? '❌' : type === 'warn' ? '⚠️' : type === 'info' ? 'ℹ️' : '→';
+    line.appendChild(prefix);
+    const content = document.createElement('span');
+    content.textContent = args.map(a => {
+      if (typeof a === 'object') {
+        try { return JSON.stringify(a, null, 2); } catch(e) { return String(a); }
+      }
+      return String(a);
+    }).join(' ');
+    line.appendChild(content);
+    output.appendChild(line);
+    output.scrollTop = output.scrollHeight;
+  }
+
+  console.log = (...a) => addLine('log', ...a);
+  console.error = (...a) => addLine('error', ...a);
+  console.warn = (...a) => addLine('warn', ...a);
+  console.info = (...a) => addLine('info', ...a);
+  console.assert = (cond, ...a) => { if (!cond) addLine('error', 'Assertion failed:', ...a); };
+  console.time = (label) => { timers[label] = performance.now(); };
+  console.timeEnd = (label) => { const d = performance.now() - (timers[label]||0); addLine('log', `${label}: ${d.toFixed(2)}ms`); };
+  console.trace = (...a) => addLine('info', 'Trace:', ...a);
+  console.count = (label) => { counts[label] = (counts[label] || 0) + 1; addLine('log', `${label}: ${counts[label]}`); };
+  console.group = (label) => addLine('log', `▶ ${label}`);
+  console.groupEnd = () => {};
+
+  try {
+    const result = new Function(code)();
+    if (result !== undefined) {
+      addLine('success', '← ' + (typeof result === 'object' ? JSON.stringify(result) : result));
+    }
+  } catch (e) {
+    addLine('error', `${e.name}: ${e.message}`);
+  }
+
+  console.log = origLog;
+  console.error = origError;
+  console.warn = origWarn;
+  console.info = origInfo;
+  console.assert = origAssert;
+  console.time = origTime;
+  console.timeEnd = origTimeEnd;
+  console.trace = origTrace;
+  console.count = origCount;
+  console.group = origGroup;
+  console.groupEnd = origGroupEnd;
+}
+
+// ==========================================
+// TABS
+// ==========================================
+function switchTab(clickedTab, groupId) {
+  const container = clickedTab.closest('.card');
+  container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  clickedTab.classList.add('active');
+  const contents = container.querySelectorAll(`.tab-content[data-tab-group="${groupId}"]`);
+  const idx = Array.from(container.querySelectorAll('.tab')).indexOf(clickedTab);
+  contents.forEach((c, i) => c.classList.toggle('active', i === idx));
+}
+
+// ==========================================
+// ACCORDION
+// ==========================================
+function toggleAccordion(item) {
+  item.classList.toggle('open');
+}
+
+// ==========================================
+// EXERCISE HELPERS
+// ==========================================
+function showHint(id) {
+  const hint = document.getElementById(id + '-hint');
+  if (hint) hint.style.display = 'flex';
+}
+function showSolution(id) {
+  const sol = document.getElementById(id + '-solution');
+  if (sol) sol.style.display = sol.style.display === 'none' ? 'block' : 'none';
+}
+
+// ==========================================
+// FLOW ANIMATION
+// ==========================================
+function animateFlow(step) {
+  const boxes = document.querySelectorAll('#flowDiagram .flow-box');
+  boxes.forEach(b => { b.style.transform = ''; b.style.boxShadow = ''; });
+  if (boxes[step]) {
+    boxes[step].style.transform = 'scale(1.08)';
+    boxes[step].style.boxShadow = '0 0 20px rgba(99,102,241,.5)';
+  }
+}
+
+function toggleErrorDetail(card) {
+  card.style.transform = card.style.transform === 'scale(1.02)' ? '' : 'scale(1.02)';
+}
+
+// ==========================================
+// QUIZ
+// ==========================================
+const quizData = [
+  {
+    q: "What happens if an error is thrown inside a `try` block?",
+    opts: [
+      "The program crashes immediately",
+      "Execution jumps to the `catch` block",
+      "The `finally` block runs and the error is ignored",
+      "The error is silently swallowed"
+    ],
+    ans: 1,
+    explain: "When an error is thrown in `try`, JavaScript immediately stops executing the try block and jumps to the `catch` block."
+  },
+  {
+    q: "Which block ALWAYS executes regardless of errors?",
+    opts: ["try", "catch", "finally", "else"],
+    ans: 2,
+    explain: "The `finally` block always runs — even if there's a return statement in try or catch!"
+  },
+  {
+    q: "What type of error is thrown by `JSON.parse('invalid')`?",
+    opts: ["TypeError", "ReferenceError", "SyntaxError", "RangeError"],
+    ans: 2,
+    explain: "JSON.parse() throws a SyntaxError when the input string is not valid JSON."
+  },
+  {
+    q: "What does `typeof null` return?",
+    opts: ['"null"', '"undefined"', '"object"', '"boolean"'],
+    ans: 2,
+    explain: 'This is a famous JavaScript quirk! `typeof null` returns "object" — it\'s a bug from the early days of JS that was never fixed.'
+  },
+  {
+    q: "What error type does accessing `undeclaredVar` throw?",
+    opts: ["TypeError", "SyntaxError", "ReferenceError", "RangeError"],
+    ans: 2,
+    explain: "Accessing a variable that hasn't been declared throws a ReferenceError."
+  },
+  {
+    q: "What's wrong with: `throw 'error message'`?",
+    opts: [
+      "It's valid but you lose the stack trace",
+      "Strings can't be thrown",
+      "It throws a TypeError",
+      "Nothing — it's best practice"
+    ],
+    ans: 0,
+    explain: "You CAN throw strings, but you shouldn't. You lose the stack trace, error name, and other useful debugging information."
+  },
+  {
+    q: "What happens when `finally` has a `return` statement?",
+    opts: [
+      "It's ignored",
+      "It overrides the return from try/catch",
+      "It causes a SyntaxError",
+      "It runs after the try/catch return"
+    ],
+    ans: 1,
+    explain: "A return in finally overrides any return from try or catch. This is a common pitfall!"
+  },
+  {
+    q: "Can try-catch catch errors in `setTimeout` callbacks?",
+    opts: [
+      "Yes, always",
+      "Only if the timeout is 0",
+      "No — the callback runs in a different execution context",
+      "Only in strict mode"
+    ],
+    ans: 2,
+    explain: "try-catch only catches synchronous errors. setTimeout callbacks run later in a different execution context, so try-catch around setTimeout won't catch errors inside the callback."
+  },
+  {
+    q: "What does `error.stack` contain?",
+    opts: [
+      "The error message only",
+      "The error code",
+      "A stack trace showing the call chain",
+      "The line number only"
+    ],
+    ans: 2,
+    explain: "error.stack contains the full stack trace — showing the chain of function calls that led to the error, including file names and line numbers."
+  },
+  {
+    q: "When creating a custom error class, what must you call in the constructor?",
+    opts: ["this.init()", "Error()", "super(message)", "new Error()"],
+    ans: 2,
+    explain: "When extending Error, you must call super(message) to properly initialize the Error base class."
+  },
+  {
+    q: "What error does `null.property` throw?",
+    opts: ["ReferenceError", "TypeError", "SyntaxError", "NullError"],
+    ans: 1,
+    explain: "Accessing a property on null throws a TypeError: 'Cannot read properties of null'. There is no NullError in JavaScript."
+  },
+  {
+    q: "Which is the correct way to check an error's type?",
+    opts: [
+      "error.type === 'TypeError'",
+      "error instanceof TypeError",
+      "typeof error === 'TypeError'",
+      "error.constructor === 'TypeError'"
+    ],
+    ans: 1,
+    explain: "`instanceof` is the correct way to check if an error is a specific type. It works with inheritance too!"
+  },
+  {
+    q: "What happens if you re-throw an error inside catch?",
+    opts: [
+      "It's caught by the same catch block again",
+      "It propagates up to the next try-catch",
+      "It's silently ignored",
+      "The program always crashes"
+    ],
+    ans: 1,
+    explain: "Re-thrown errors propagate up the call stack to the nearest enclosing try-catch, or crash the program if none exists."
+  },
+  {
+    q: "What does `console.assert(false, 'msg')` do?",
+    opts: [
+      "Throws an Error",
+      "Logs an error message (doesn't throw)",
+      "Does nothing",
+      "Pauses execution"
+    ],
+    ans: 1,
+    explain: "console.assert() only logs an error message when the condition is false. It does NOT throw an error or stop execution."
+  },
+  {
+    q: "Which causes a RangeError?",
+    opts: [
+      "new Array(-1)",
+      "null.toString()",
+      "undeclaredVar",
+      "JSON.parse('{')"
+    ],
+    ans: 0,
+    explain: "new Array(-1) throws a RangeError because you can't create an array with a negative length."
+  }
+];
+
+let quizAnswers = {};
+let quizSubmitted = false;
+
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  quizData.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-q';
+    div.id = 'quiz-q-' + i;
+    div.innerHTML = `
+      <h4><span class="q-num">${i+1}</span> ${q.q}</h4>
+      <div class="quiz-options">
+        ${q.opts.map((opt, j) => `
+          <div class="quiz-opt" onclick="selectAnswer(${i},${j})" id="qopt-${i}-${j}">
+            <span class="opt-letter">${'ABCD'[j]}</span>
+            <span>${opt}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="quiz-explanation" id="qexp-${i}">${q.explain}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function selectAnswer(qi, oi) {
+  if (quizSubmitted) return;
+  quizAnswers[qi] = oi;
+  for (let j = 0; j < 4; j++) {
+    document.getElementById(`qopt-${qi}-${j}`).classList.remove('selected');
+  }
+  document.getElementById(`qopt-${qi}-${oi}`).classList.add('selected');
+}
+
+function submitQuiz() {
+  quizSubmitted = true;
+  let correct = 0;
+  quizData.forEach((q, i) => {
+    const qDiv = document.getElementById('quiz-q-' + i);
+    const expDiv = document.getElementById('qexp-' + i);
+    expDiv.classList.add('show');
+    
+    if (quizAnswers[i] === q.ans) {
+      correct++;
+      qDiv.classList.add('correct');
+      document.getElementById(`qopt-${i}-${q.ans}`).classList.add('correct-answer');
+    } else {
+      qDiv.classList.add('incorrect');
+      if (quizAnswers[i] !== undefined) {
+        document.getElementById(`qopt-${i}-${quizAnswers[i]}`).classList.add('wrong-answer');
+      }
+      document.getElementById(`qopt-${i}-${q.ans}`).classList.add('correct-answer');
+    }
+  });
+
+  const pct = Math.round((correct / quizData.length) * 100);
+  const scoreDisplay = document.getElementById('quizScore');
+  scoreDisplay.style.display = 'block';
+  document.getElementById('scoreCircle').style.setProperty('--pct', pct);
+  document.getElementById('scoreText').textContent = pct + '%';
+  
+  const title = document.getElementById('scoreTitle');
+  const msg = document.getElementById('scoreMsg');
+  if (pct >= 90) {
+    title.textContent = '🎉 Outstanding!';
+    msg.textContent = `You got ${correct}/${quizData.length} correct! You're ready for that interview!`;
+    launchConfetti();
+  } else if (pct >= 70) {
+    title.textContent = '👏 Great Job!';
+    msg.textContent = `You got ${correct}/${quizData.length} correct! Review the ones you missed.`;
+  } else if (pct >= 50) {
+    title.textContent = '📚 Keep Studying!';
+    msg.textContent = `You got ${correct}/${quizData.length} correct. Review the sections again.`;
+  } else {
+    title.textContent = '💪 Don\'t Give Up!';
+    msg.textContent = `You got ${correct}/${quizData.length} correct. Go through each section carefully.`;
+  }
+
+  document.getElementById('quizSubmitArea').style.display = 'none';
+  scoreDisplay.scrollIntoView({behavior: 'smooth'});
+}
+
+function resetQuiz() {
+  quizSubmitted = false;
+  quizAnswers = {};
+  document.getElementById('quizScore').style.display = 'none';
+  document.getElementById('quizSubmitArea').style.display = 'block';
+  buildQuiz();
+  window.scrollTo({top: document.getElementById('quizContainer').offsetTop - 100, behavior: 'smooth'});
+}
+
+function launchConfetti() {
+  const container = document.getElementById('confettiContainer');
+  const colors = ['#6366f1','#ec4899','#22c55e','#f59e0b','#06b6d4','#a855f7','#ef4444'];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = (6 + Math.random() * 8) + 'px';
+    container.appendChild(piece);
+  }
+  setTimeout(() => container.innerHTML = '', 4000);
+}
+
+// Initialize quiz
+buildQuiz();
+</script>
+</body>
+</html>

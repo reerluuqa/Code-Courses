@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Function Mastery Dojo</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-cyan: #00d4ff;
+            --accent-purple: #bd00ff;
+            --accent-green: #00ff88;
+            --accent-yellow: #ffd700;
+            --accent-red: #ff3366;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --border: #30363d;
+            --success: #238636;
+            --warning: #f0883e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Animation */
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .nav-item.completed .badge {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .xp-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .xp-progress {
+            width: 150px;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Code Blocks */
+        .code-container {
+            background: #1e1e1e;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .code-header {
+            background: var(--bg-tertiary);
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .code-editor {
+            width: 100%;
+            min-height: 150px;
+            background: transparent;
+            color: #d4d4d4;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 1rem;
+            border: none;
+            resize: vertical;
+            outline: none;
+            tab-size: 2;
+        }
+
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .number { color: #b5cea8; }
+        .operator { color: #d4d4d4; }
+
+        /* Interactive Elements */
+        .btn {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn.danger {
+            background: var(--accent-red);
+        }
+
+        /* Visualizers */
+        .visualizer {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1rem 0;
+            min-height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scope-box {
+            border: 2px dashed var(--accent-cyan);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem;
+            position: relative;
+            background: rgba(0, 212, 255, 0.05);
+            transition: all 0.3s;
+        }
+
+        .scope-box.global {
+            border-color: var(--accent-purple);
+            background: rgba(189, 0, 255, 0.05);
+        }
+
+        .scope-label {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: var(--bg-tertiary);
+            padding: 0 0.5rem;
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        .this-arrow {
+            position: absolute;
+            width: 3px;
+            background: var(--accent-yellow);
+            transform-origin: top;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .function-node {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-green);
+            border-radius: 20px;
+            margin: 0.5rem;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .function-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .curry-chain {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .curry-step {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-purple);
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.5s forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Quiz Styles */
+        .quiz-option {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(255, 51, 102, 0.1);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Console Output */
+        .console-output {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 1rem;
+            border-radius: 0 0 8px 8px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border);
+        }
+
+        .console-line {
+            margin: 0.25rem 0;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #111;
+        }
+
+        .console-error { color: var(--accent-red); }
+        .console-warn { color: var(--accent-yellow); }
+
+        /* Progress Indicators */
+        .mastery-check {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .check-item {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .check-item.completed {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: var(--bg-primary);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 2px dotted var(--accent-cyan);
+            cursor: help;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            z-index: 1000;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        /* Pitfall Cards */
+        .pitfall {
+            border-left: 4px solid var(--accent-red);
+            background: rgba(255, 51, 102, 0.05);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .pitfall-title {
+            color: var(--accent-red);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                height: auto;
+                position: relative;
+            }
+            .section-title {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Animation Classes */
+        .fade-in { animation: fadeIn 0.5s; }
+        .slide-up { animation: slideUp 0.5s; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .highlight-pulse {
+            animation: highlightPulse 2s infinite;
+        }
+
+        @keyframes highlightPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0); }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrixCanvas"></canvas>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span>⚔️</span>
+                <span>Function Dojo</span>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Beginner</div>
+                <div class="nav-item active" onclick="loadSection('arrow')">
+                    <span>Arrow Functions</span>
+                    <span class="badge" id="badge-arrow">0/5</span>
+                </div>
+                <div class="nav-item" onclick="loadSection('callbacks')">
+                    <span>Callbacks & HOF</span>
+                    <span class="badge" id="badge-callbacks">0/4</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Advanced</div>
+                <div class="nav-item" onclick="loadSection('currying')">
+                    <span>Currying</span>
+                    <span class="badge" id="badge-currying">0/3</span>
+                </div>
+                <div class="nav-item" onclick="loadSection('partial')">
+                    <span>Partial Application</span>
+                    <span class="badge" id="badge-partial">0/3</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Mastery</div>
+                <div class="nav-item locked" id="nav-final" onclick="loadSection('final')">
+                    <span>🏆 Final Boss</span>
+                    <span class="badge">Locked</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 8px; font-size: 0.9rem;">
+                <strong style="color: var(--accent-cyan);">Current Streak:</strong>
+                <div style="font-size: 2rem; color: var(--accent-yellow);" id="streak">🔥 0</div>
+                <small style="color: var(--text-secondary);">Complete daily to maintain!</small>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="header">
+                <div>
+                    <h1 style="font-size: 1.2rem; color: var(--text-secondary);">Welcome back, Ninja</h1>
+                    <p style="color: var(--text-secondary);">Master JavaScript functions to unlock job opportunities</p>
+                </div>
+                <div class="xp-bar">
+                    <span>Level <span id="level">1</span></span>
+                    <div class="xp-progress">
+                        <div class="xp-fill" id="xpFill"></div>
+                    </div>
+                    <span id="xpText">0/100 XP</span>
+                </div>
+            </div>
+
+            <!-- SECTION: Arrow Functions -->
+            <section id="section-arrow" class="content-section active">
+                <div class="section-header">
+                    <h2 class="section-title">Arrow Function Assassin</h2>
+                    <p class="section-subtitle">Silent, sleek, and lexically scoped. Master the modern function syntax.</p>
+                </div>
+
+                <!-- Theory Card -->
+                <div class="card">
+                    <h3 class="card-title">📚 The Syntax Evolution</h3>
+                    <p>Arrow functions provide a concise syntax and <span class="tooltip" data-tip="Inherits 'this' from parent scope">lexical scoping</span>. But with great power comes great responsibility...</p>
+                    
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Traditional vs Arrow</span>
+                            <button class="btn secondary" onclick="runComparison()">Run Comparison</button>
+                        </div>
+                        <textarea class="code-editor" id="arrow-comparison" readonly>// Traditional Function
+function add(a, b) {
+    return a + b;
+}
+
+// Arrow Function (Explicit return)
+const add = (a, b) => {
+    return a + b;
+};
+
+// Arrow Function (Implicit return) - ONE LINER
+const add = (a, b) => a + b;
+
+// Single parameter (no parentheses needed)
+const square = x => x * x;
+
+// No parameters
+const getRandom = () => Math.random();</textarea>
+                    </div>
+                    <div class="console-output" id="console-arrow"></div>
+                </div>
+
+                <!-- Visualizer: This Binding -->
+                <div class="card">
+                    <h3 class="card-title">🎯 Visualizer: The 'this' Conundrum</h3>
+                    <p>The most critical difference: Arrow functions don't bind their own <code>this</code>.</p>
+                    
+                    <div class="visualizer" id="this-visualizer">
+                        <div style="display: flex; justify-content: space-around; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4 style="margin-bottom: 1rem; color: var(--accent-yellow);">Regular Function</h4>
+                                <div class="scope-box global">
+                                    <span class="scope-label">Global Scope</span>
+                                    <div style="margin-top: 1rem;">
+                                        <div class="function-node" onclick="showThis('regular')">function()</div>
+                                        <div id="regular-this" style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent-red);">
+                                            this = window (or undefined in strict)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="flex: 1; min-width: 300px;">
+                                <h4 style="margin-bottom: 1rem; color: var(--accent-green);">Arrow Function</h4>
+                                <div class="scope-box global">
+                                    <span class="scope-label">Global Scope</span>
+                                    <div class="scope-box" style="margin-top: 1.5rem;">
+                                        <span class="scope-label">Object Method</span>
+                                        <div class="function-node" onclick="showThis('arrow')" style="border-color: var(--accent-cyan);">
+                                            () =>
+                                        </div>
+                                        <div id="arrow-this" style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent-green);">
+                                            this = parent's this
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 2rem;">
+                            <button class="btn" onclick="animateThisBinding()">Animate Execution</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Common Pitfalls -->
+                <div class="card">
+                    <h3 class="card-title">⚠️ Common Traps</h3>
+                    
+                    <div class="pitfall">
+                        <div class="pitfall-title">🚫 The Object Method Trap</div>
+                        <p>Never use arrow functions as object methods if you need access to the object!</p>
+                        <div class="code-container">
+                            <textarea class="code-editor" readonly>const user = {
+    name: 'Alice',
+    sayHi: () => {
+        console.log(`Hi, I'm ${this.name}`); // undefined! 'this' is window
+    },
+    sayHiCorrect() {
+        console.log(`Hi, I'm ${this.name}`); // Alice
+    }
+};</textarea>
+                        </div>
+                    </div>
+
+                    <div class="pitfall">
+                        <div class="pitfall-title">🚫 The Implicit Return Gotcha</div>
+                        <p>Returning objects requires parentheses!</p>
+                        <div class="code-container">
+                            <textarea class="code-editor" readonly>// WRONG: This returns undefined (curly braces = block)
+const makeUser = name => { name: name };
+
+// CORRECT: Wrap in parentheses
+const makeUser = name => ({ name: name });
+// Or use explicit return
+const makeUser = name => {
+    return { name: name };
+};</textarea>
+                        </div>
+                    </div>
+
+                    <div class="pitfall">
+                        <div class="pitfall-title">🚫 No 'arguments' Object</div>
+                        <p>Arrow functions don't have <code>arguments</code>. Use rest parameters instead.</p>
+                        <div class="code-container">
+                            <textarea class="code-editor" readonly>// FAILS
+const sum = () => {
+    console.log(arguments); // ReferenceError or wrong scope
+};
+
+// WORKS
+const sum = (...args) => {
+    return args.reduce((a, b) => a + b, 0);
+};</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Practice -->
+                <div class="card">
+                    <h3 class="card-title">💪 Practice Dojo</h3>
+                    <p>Fix the broken code below:</p>
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Challenge: Fix the Timer</span>
+                            <button class="btn" onclick="checkChallenge('arrow')">Run Code</button>
+                        </div>
+                        <textarea class="code-editor" id="challenge-arrow">const counter = {
+    count: 0,
+    start: function() {
+        setInterval(function() {
+            this.count++;
+            console.log(this.count);
+        }, 1000);
+    }
+};
+
+counter.start(); // NaN, NaN, NaN... Why?</textarea>
+                    </div>
+                    <div class="console-output" id="console-challenge-arrow"></div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button class="btn secondary" onclick="showHint('arrow')">Need a Hint?</button>
+                        <div id="hint-arrow" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+                            💡 Arrow functions don't bind their own <code>this</code>. How can you preserve the context of <code>start</code>?
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz -->
+                <div class="card">
+                    <h3 class="card-title">🎓 Knowledge Check</h3>
+                    <div id="quiz-arrow">
+                        <p><strong>Q1:</strong> What does this arrow function return?</p>
+                        <div class="code-container" style="margin: 1rem 0;">
+                            <code style="display: block; padding: 1rem;">const fn = x => { value: x };</code>
+                        </div>
+                        <div class="quiz-option" onclick="checkQuiz(this, false)">
+                            <span>A)</span> An object <code>{ value: x }</code>
+                        </div>
+                        <div class="quiz-option" onclick="checkQuiz(this, true)">
+                            <span>B)</span> <code>undefined</code> (it's a block with label syntax)
+                        </div>
+                        <div class="quiz-option" onclick="checkQuiz(this, false)">
+                            <span>C)</span> A syntax error
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mastery-check">
+                    <div class="check-item completed">✓</div>
+                    <div class="check-item" id="check-arrow-1">2</div>
+                    <div class="check-item" id="check-arrow-2">3</div>
+                    <div class="check-item" id="check-arrow-3">4</div>
+                    <div class="check-item" id="check-arrow-4">5</div>
+                </div>
+            </section>
+
+            <!-- SECTION: Callbacks & HOF -->
+            <section id="section-callbacks" class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">Callback Commander</h2>
+                    <p class="section-subtitle">Functions that command other functions. Master asynchronous thinking.</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🔄 The Callback Pattern</h3>
+                    <p>A callback is a function passed into another function as an argument to be executed later.</p>
+                    
+                    <div class="visualizer" style="min-height: 200px;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+                            <div class="function-node" style="border-color: var(--accent-purple); font-size: 1.2rem;">
+                                Higher Order Function
+                            </div>
+                            <div style="font-size: 2rem; color: var(--accent-cyan);">→</div>
+                            <div class="function-node" style="border-color: var(--accent-yellow); font-size: 1.2rem;">
+                                Callback Function
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 2rem; color: var(--text-secondary);">
+                            HOFs receive functions | Callbacks are the functions received
+                        </div>
+                    </div>
+
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Creating Custom Map (HOF)</span>
+                            <button class="btn secondary" onclick="runHOFDemo()">Visualize</button>
+                        </div>
+                        <textarea class="code-editor" readonly>// Higher-Order Function: accepts a function
+const myMap = (array, callback) => {
+    const result = [];
+    for (let i = 0; i < array.length; i++) {
+        result.push(callback(array[i], i, array));
+    }
+    return result;
+};
+
+// Usage
+const doubled = myMap([1, 2, 3], x => x * 2);
+console.log(doubled); // [2, 4, 6]</textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">⏱️ Async Callbacks & The Event Loop</h3>
+                    <p>Understanding the call stack vs callback queue is crucial for interviews.</p>
+                    
+                    <div class="visualizer" id="event-loop-viz">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                            <div class="scope-box" style="border-color: var(--accent-red);">
+                                <span class="scope-label">Call Stack (LIFO)</span>
+                                <div id="call-stack" style="min-height: 100px; display: flex; flex-direction: column-reverse; gap: 0.5rem;">
+                                    <div style="color: var(--text-secondary); font-size: 0.9rem;">Click "Simulate" to see execution...</div>
+                                </div>
+                            </div>
+                            <div class="scope-box" style="border-color: var(--accent-yellow);">
+                                <span class="scope-label">Callback Queue (FIFO)</span>
+                                <div id="callback-queue" style="min-height: 100px;"></div>
+                            </div>
+                        </div>
+                        <button class="btn" style="margin-top: 1rem; width: 100%;" onclick="simulateEventLoop()">Simulate: setTimeout(() => console.log('Hi'), 0)</button>
+                    </div>
+                </div>
+
+                <div class="pitfall">
+                    <div class="pitfall-title">🚫 Callback Hell (Pyramid of Doom)</div>
+                    <p>Nested callbacks become unreadable. This is why Promises were introduced, but you must understand the problem!</p>
+                    <div class="code-container">
+                        <textarea class="code-editor" readonly>// ❌ HELL
+getData(function(a) {
+    getMoreData(a, function(b) {
+        getMoreData(b, function(c) {
+            getMoreData(c, function(d) {
+                console.log(d);
+            });
+        });
+    });
+});
+
+// ✅ Refactored with named functions
+getData(handleA);
+
+function handleA(a) {
+    getMoreData(a, handleB);
+}
+
+function handleB(b) {
+    getMoreData(b, handleC);
+}</textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">💪 Challenge: Implement Filter</h3>
+                    <p>Write a higher-order function <code>myFilter</code> that works like Array.prototype.filter</p>
+                    <div class="code-container">
+                        <textarea class="code-editor" id="challenge-callback">// TODO: Implement myFilter
+const myFilter = (array, predicate) => {
+    // Your code here
+};
+
+// Test
+const result = myFilter([1, 2, 3, 4, 5], x => x > 2);
+console.log(result); // Should be [3, 4, 5]</textarea>
+                        <div class="code-header" style="border-top: 1px solid var(--border);">
+                            <button class="btn" onclick="testFilterImplementation()">Test My Code</button>
+                            <button class="btn secondary" onclick="showSolution('filter')">Show Solution</button>
+                        </div>
+                    </div>
+                    <div class="console-output" id="console-filter"></div>
+                </div>
+            </section>
+
+            <!-- SECTION: Currying -->
+            <section id="section-currying" class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">Curry Sensei</h2>
+                    <p class="section-subtitle">Transform functions into sequences of single-argument functions.</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🍛 What is Currying?</h3>
+                    <p>Currying is the technique of translating a function that takes multiple arguments into a sequence of functions that each take a single argument.</p>
+                    
+                    <div class="visualizer">
+                        <div class="curry-chain" id="curry-demo">
+                            <div class="curry-step" style="animation-delay: 0s;">
+                                <strong>multiply(2)(3)(4)</strong>
+                            </div>
+                            <div style="font-size: 2rem; color: var(--accent-cyan);">→</div>
+                            <div class="curry-step" style="animation-delay: 0.5s; border-color: var(--accent-green);">
+                                Returns 24
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 2rem; text-align: center;">
+                            <button class="btn" onclick="animateCurrying()">Step-by-Step Animation</button>
+                        </div>
+                        
+                        <div id="curry-explanation" style="margin-top: 2rem; display: none;">
+                            <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+                                <div class="scope-box" style="width: 100%; max-width: 500px;">
+                                    <span class="scope-label">Step 1: multiply(2)</span>
+                                    <code>returns function(b) { return function(c) { ... } }</code>
+                                </div>
+                                <div style="font-size: 1.5rem;">↓</div>
+                                <div class="scope-box" style="width: 100%; max-width: 500px;">
+                                    <span class="scope-label">Step 2: ... (3)</span>
+                                    <code>returns function(c) { return 2 * 3 * c }</code>
+                                </div>
+                                <div style="font-size: 1.5rem;">↓</div>
+                                <div class="scope-box" style="width: 100%; max-width: 500px;">
+                                    <span class="scope-label">Step 3: ... (4)</span>
+                                    <code>returns 24</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="code-container">
+                        <textarea class="code-editor" readonly>// Manual Currying
+const multiply = a => b => c => a * b * c;
+
+// Using a curry helper (interview gold)
+const curry = fn => {
+    return function curried(...args) {
+        if (args.length >= fn.length) {
+            return fn.apply(this, args);
+        } else {
+            return function(...args2) {
+                return curried.apply(this, args.concat(args2));
+            };
+        }
+    };
+};
+
+// Usage
+const sum = (a, b, c) => a + b + c;
+const curriedSum = curry(sum);
+
+console.log(curriedSum(1)(2)(3)); // 6
+console.log(curriedSum(1, 2)(3)); // 6 (flexible!)</textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🎯 Practical Use Case: Logger</h3>
+                    <p>Currying is perfect for configuration presets!</p>
+                    <div class="code-container">
+                        <textarea class="code-editor" id="curry-logger">const logger = level => timestamp => message => {
+    console.log(`[${level}] ${timestamp}: ${message}`);
+};
+
+// Create specialized loggers
+const errorLogger = logger('ERROR')(new Date().toISOString());
+const infoLogger = logger('INFO')(new Date().toISOString());
+
+errorLogger('Database connection failed'); // [ERROR] 2024-...: Database...
+infoLogger('Server started'); // [INFO] 2024-...: Server...</textarea>
+                        <button class="btn" style="margin: 1rem;" onclick="runLoggerDemo()">Run Logger Demo</button>
+                    </div>
+                    <div class="console-output" id="console-logger"></div>
+                </div>
+
+                <div class="pitfall">
+                    <div class="pitfall-title">🚫 Currying vs Partial Application Confusion</div>
+                    <p>Currying always produces nested unary (single-arg) functions. Partial application fixes some arguments now, others later.</p>
+                </div>
+            </section>
+
+            <!-- SECTION: Partial Application -->
+            <section id="section-partial" class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">Partial Application Phantom</h2>
+                    <p class="section-subtitle">Fix arguments now, execute later. The art of specialization.</p>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🔧 Partial vs Currying</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <th style="text-align: left; padding: 1rem; color: var(--accent-cyan);">Currying</th>
+                            <th style="text-align: left; padding: 1rem; color: var(--accent-green);">Partial Application</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; vertical-align: top;">
+                                f(a,b,c) → f(a)(b)(c)<br>
+                                <small style="color: var(--text-secondary);">Transforms arity</small>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: top;">
+                                f(a,b,c) → f(a, _)(b, c)<br>
+                                <small style="color: var(--text-secondary);">Fixes some args</small>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="code-container">
+                        <textarea class="code-editor" readonly>// Partial Application using bind()
+function greet(greeting, name, punctuation) {
+    return `${greeting}, ${name}${punctuation}`;
+}
+
+const sayHelloTo = greet.bind(null, 'Hello'); // Fix first arg
+sayHelloTo('World', '!'); // "Hello, World!"
+
+// Custom partial implementation
+const partial = (fn, ...fixedArgs) => {
+    return (...remainingArgs) => {
+        return fn(...fixedArgs, ...remainingArgs);
+    };
+};
+
+const multiplyBy5 = partial((a, b) => a * b, 5);
+console.log(multiplyBy5(3)); // 15</textarea>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">💪 Advanced: Placeholder Pattern</h3>
+                    <p>Implement partial application with placeholders (like lodash's <code>_</code>)</p>
+                    <div class="code-container">
+                        <textarea class="code-editor" id="partial-challenge">const _ = Symbol('placeholder');
+
+const partialWithPlaceholder = (fn, ...args) => {
+    return (...nextArgs) => {
+        // TODO: Fill in placeholders with nextArgs
+        const finalArgs = args.map(arg => 
+            arg === _ ? nextArgs.shift() : arg
+        );
+        return fn(...finalArgs, ...nextArgs);
+    };
+};
+
+// Test: Fix middle argument
+const greet = (a, b, c) => `${a} ${b} ${c}`;
+const greetWithHey = partialWithPlaceholder(greet, _, 'Hey', _);
+console.log(greetWithHey('1', '2')); // Should be "1 Hey 2"</textarea>
+                        <button class="btn" onclick="testPartialPlaceholder()">Test Implementation</button>
+                    </div>
+                    <div class="console-output" id="console-partial"></div>
+                </div>
+            </section>
+
+            <!-- SECTION: Final Boss -->
+            <section id="section-final" class="content-section">
+                <div class="section-header" style="text-align: center;">
+                    <h2 class="section-title">👹 The Functional Beast</h2>
+                    <p class="section-subtitle">Compose everything you've learned to defeat the final boss.</p>
+                </div>
+
+                <div class="card" style="border: 2px solid var(--accent-red); background: rgba(255, 51, 102, 0.05);">
+                    <h3 class="card-title" style="color: var(--accent-red);">⚔️ Challenge: The Composition Master</h3>
+                    <p>Create a <code>pipe</code> function that:</p>
+                    <ol style="margin-left: 2rem; color: var(--text-secondary);">
+                        <li>Accepts multiple functions as arguments (rest params)</li>
+                        <li>Returns a new function that takes an initial value</li>
+                        <li>Passes the value through each function left-to-right</li>
+                        <li>Uses arrow functions exclusively</li>
+                    </ol>
+
+                    <div class="code-container" style="margin-top: 1rem;">
+                        <textarea class="code-editor" id="final-boss">// TODO: Implement pipe
+const pipe = (...fns) => {
+    // Your arrow function magic here
+};
+
+// Test Cases
+const add5 = x => x + 5;
+const multiply2 = x => x * 2;
+const toString = x => String(x);
+
+const transform = pipe(add5, multiply2, toString);
+
+console.log(transform(5)); // Should be "20" ((5+5)*2)
+console.log(transform(10)); // Should be "30" ((10+5)*2)</textarea>
+                        <div class="code-header">
+                            <button class="btn danger" onclick="testFinalBoss()">⚔️ Challenge Boss</button>
+                        </div>
+                    </div>
+                    <div class="console-output" id="console-final"></div>
+                </div>
+
+                <div id="victory-screen" style="display: none; text-align: center; padding: 3rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🏆</div>
+                    <h2 style="color: var(--accent-green); margin-bottom: 1rem;">VICTORY!</h2>
+                    <p>You have mastered Advanced JavaScript Functions!</p>
+                    <div style="margin-top: 2rem; padding: 2rem; background: var(--bg-secondary); border-radius: 12px; display: inline-block;">
+                        <h3 style="color: var(--accent-yellow); margin-bottom: 1rem;">Skills Unlocked:</h3>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                            <span style="background: var(--bg-tertiary); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--accent-cyan);">Arrow Functions</span>
+                            <span style="background: var(--bg-tertiary); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--accent-purple);">Callbacks</span>
+                            <span style="background: var(--bg-tertiary); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--accent-green);">Currying</span>
+                            <span style="background: var(--bg-tertiary); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--accent-yellow);">Composition</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Game State
+        const state = {
+            xp: 0,
+            level: 1,
+            completedSections: [],
+            streak: 0,
+            currentSection: 'arrow'
+        };
+
+        // Initialize
+        window.onload = () => {
+            loadProgress();
+            initMatrixRain();
+            updateUI();
+        };
+
+        // Navigation
+        function loadSection(sectionId) {
+            // Check if locked
+            if (sectionId === 'final' && state.completedSections.length < 4) {
+                alert('Complete all previous sections to unlock the Final Boss!');
+                return;
+            }
+
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(`section-${sectionId}`).classList.add('active');
+            event.target.closest('.nav-item').classList.add('active');
+            
+            state.currentSection = sectionId;
+        }
+
+        // XP System
+        function addXP(amount) {
+            state.xp += amount;
+            if (state.xp >= 100) {
+                state.level++;
+                state.xp = state.xp - 100;
+                alert(`🎉 Level Up! You are now Level ${state.level}`);
+            }
+            updateUI();
+            saveProgress();
+        }
+
+        function updateUI() {
+            document.getElementById('xpFill').style.width = `${state.xp}%`;
+            document.getElementById('xpText').textContent = `${state.xp}/100 XP`;
+            document.getElementById('level').textContent = state.level;
+            document.getElementById('streak').textContent = `🔥 ${state.streak}`;
+            
+            // Update badges
+            const sections = ['arrow', 'callbacks', 'currying', 'partial'];
+            sections.forEach((sec, idx) => {
+                const completed = state.completedSections.filter(s => s.startsWith(sec)).length;
+                document.getElementById(`badge-${sec}`).textContent = `${completed}/3`;
+                if (completed >= 3) {
+                    document.getElementById(`badge-${sec}`).parentElement.classList.add('completed');
+                }
+            });
+
+            // Unlock final boss
+            if (state.completedSections.length >= 4) {
+                const finalNav = document.getElementById('nav-final');
+                finalNav.classList.remove('locked');
+                finalNav.querySelector('.badge').textContent = 'Unlocked';
+            }
+        }
+
+        // Progress Persistence
+        function saveProgress() {
+            localStorage.setItem('jsFunctionMastery', JSON.stringify(state));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('jsFunctionMastery');
+            if (saved) {
+                Object.assign(state, JSON.parse(saved));
+            }
+        }
+
+        function completeTask(section, taskId) {
+            const key = `${section}-${taskId}`;
+            if (!state.completedSections.includes(key)) {
+                state.completedSections.push(key);
+                addXP(25);
+                
+                // Mark check item
+                const checkEl = document.getElementById(`check-${section}-${taskId}`);
+                if (checkEl) checkEl.classList.add('completed');
+                
+                saveProgress();
+            }
+        }
+
+        // Arrow Functions Logic
+        function runComparison() {
+            const console = document.getElementById('console-arrow');
+            
+            // Safe execution simulation
+            const add = (a, b) => a + b;
+            const square = x => x * x;
+            
+            console.innerHTML = `
+                <div class="console-line">> add(2, 3)</div>
+                <div class="console-line">${add(2, 3)}</div>
+                <div class="console-line">> square(4)</div>
+                <div class="console-line">${square(4)}</div>
+                <div class="console-line" style="color: var(--accent-green);">✓ Arrow functions work perfectly!</div>
+            `;
+            
+            completeTask('arrow', 1);
+        }
+
+        function showThis(type) {
+            const regular = document.getElementById('regular-this');
+            const arrow = document.getElementById('arrow-this');
+            
+            if (type === 'regular') {
+                regular.textContent = 'this = window (undefined in strict mode)';
+                regular.style.color = 'var(--accent-red)';
+            } else {
+                arrow.textContent = 'this = parent scope (lexical)';
+                arrow.style.color = 'var(--accent-green)';
+            }
+        }
+
+        function animateThisBinding() {
+            const visualizer = document.getElementById('this-visualizer');
+            visualizer.classList.add('highlight-pulse');
+            setTimeout(() => visualizer.classList.remove('highlight-pulse'), 2000);
+            
+            addXP(10);
+        }
+
+        function checkChallenge(section) {
+            const code = document.getElementById(`challenge-${section}`).value;
+            const console = document.getElementById(`console-challenge-${section}`);
+            
+            if (section === 'arrow') {
+                // Check if they fixed the setInterval issue
+                if (code.includes('=>') && !code.includes('function()')) {
+                    console.innerHTML = `
+                        <div class="console-line" style="color: var(--accent-green);">1</div>
+                        <div class="console-line" style="color: var(--accent-green);">2</div>
+                        <div class="console-line" style="color: var(--accent-green);">3</div>
+                        <div class="console-line">...</div>
+                        <div class="console-line" style="color: var(--accent-green);">✓ Fixed! Arrow function preserves 'this' context</div>
+                    `;
+                    completeTask('arrow', 2);
+                    addXP(20);
+                } else {
+                    console.innerHTML = `
+                        <div class="console-line console-error">NaN</div>
+                        <div class="console-line console-error">NaN</div>
+                        <div class="console-line console-error">NaN</div>
+                        <div class="console-line console-warn">Hint: Replace function() with arrow function</div>
+                    `;
+                }
+            }
+        }
+
+        function showHint(section) {
+            document.getElementById(`hint-${section}`).style.display = 'block';
+        }
+
+        // Quiz Logic
+        function checkQuiz(element, isCorrect) {
+            if (isCorrect) {
+                element.classList.add('correct');
+                element.innerHTML += ' ✅';
+                addXP(15);
+                completeTask('arrow', 3);
+            } else {
+                element.classList.add('wrong');
+                setTimeout(() => element.classList.remove('wrong'), 500);
+            }
+        }
+
+        // HOF Logic
+        function runHOFDemo() {
+            const arr = [1, 2, 3];
+            const result = arr.map(x => x * 2);
+            
+            // Visual animation could go here
+            addXP(10);
+        }
+
+        function simulateEventLoop() {
+            const stack = document.getElementById('call-stack');
+            const queue = document.getElementById('callback-queue');
+            
+            stack.innerHTML = '';
+            queue.innerHTML = '';
+            
+            // Step 1: Main script
+            setTimeout(() => {
+                stack.innerHTML = '<div class="function-node" style="font-size: 0.8rem;">main()</div>';
+            }, 0);
+            
+            // Step 2: setTimeout called
+            setTimeout(() => {
+                stack.innerHTML += '<div class="function-node" style="font-size: 0.8rem; border-color: var(--accent-yellow);">setTimeout()</div>';
+            }, 500);
+            
+            // Step 3: Callback queued
+            setTimeout(() => {
+                stack.innerHTML = '<div class="function-node" style="font-size: 0.8rem;">main()</div>';
+                queue.innerHTML = '<div class="function-node" style="font-size: 0.8rem; border-color: var(--accent-green);">callback()</div>';
+            }, 1000);
+            
+            // Step 4: Stack empty, callback moves
+            setTimeout(() => {
+                stack.innerHTML = '<div class="function-node" style="font-size: 0.8rem; border-color: var(--accent-green);">callback()</div>';
+                queue.innerHTML = '';
+            }, 2000);
+            
+            // Step 5: Done
+            setTimeout(() => {
+                stack.innerHTML = '<div style="color: var(--text-secondary); font-size: 0.9rem;">Stack empty</div>';
+                addXP(15);
+                completeTask('callbacks', 1);
+            }, 2500);
+        }
+
+        function testFilterImplementation() {
+            const code = document.getElementById('challenge-callback').value;
+            const console = document.getElementById('console-filter');
+            
+            try {
+                // Create a safe-ish eval context
+                const func = new Function(code + `
+                    try {
+                        const result = myFilter([1, 2, 3, 4, 5], x => x > 2);
+                        if (JSON.stringify(result) === '[3,4,5]') {
+                            return 'SUCCESS';
+                        } else {
+                            return 'Wrong result: ' + JSON.stringify(result);
+                        }
+                    } catch(e) {
+                        return 'Error: ' + e.message;
+                    }
+                `);
+                
+                const result = func();
+                if (result === 'SUCCESS') {
+                    console.innerHTML = '<div class="console-line" style="color: var(--accent-green);">✓ All tests passed! [3, 4, 5]</div>';
+                    completeTask('callbacks', 2);
+                    addXP(25);
+                } else {
+                    console.innerHTML = `<div class="console-line console-error">${result}</div>`;
+                }
+            } catch(e) {
+                console.innerHTML = `<div class="console-line console-error">Syntax Error: ${e.message}</div>`;
+            }
+        }
+
+        function showSolution(type) {
+            if (type === 'filter') {
+                const solution = `const myFilter = (array, predicate) => {
+    const result = [];
+    for (let i = 0; i < array.length; i++) {
+        if (predicate(array[i], i, array)) {
+            result.push(array[i]);
+        }
+    }
+    return result;
+};`;
+                document.getElementById('challenge-callback').value = solution;
+            }
+        }
+
+        // Currying Logic
+        function animateCurrying() {
+            document.getElementById('curry-explanation').style.display = 'block';
+            addXP(10);
+            completeTask('currying', 1);
+        }
+
+        function runLoggerDemo() {
+            const console = document.getElementById('console-logger');
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            
+            console.innerHTML = `
+                <div class="console-line">[ERROR] ${timestamp}: Database connection failed</div>
+                <div class="console-line">[INFO] ${timestamp}: Server started</div>
+            `;
+            completeTask('currying', 2);
+        }
+
+        // Partial Logic
+        function testPartialPlaceholder() {
+            const code = document.getElementById('partial-challenge').value;
+            const console = document.getElementById('console-partial');
+            
+            try {
+                const func = new Function(code + `
+                    try {
+                        const _ = Symbol('placeholder');
+                        const partialWithPlaceholder = (fn, ...args) => {
+                            return (...nextArgs) => {
+                                const finalArgs = args.map(arg => 
+                                    arg === _ ? nextArgs.shift() : arg
+                                );
+                                return fn(...finalArgs, ...nextArgs);
+                            };
+                        };
+                        const greet = (a, b, c) => \`\${a} \${b} \${c}\`;
+                        const greetWithHey = partialWithPlaceholder(greet, _, 'Hey', _);
+                        const result = greetWithHey('1', '2');
+                        if (result === '1 Hey 2') return 'SUCCESS';
+                        return 'Got: ' + result;
+                    } catch(e) {
+                        return 'Error: ' + e.message;
+                    }
+                `);
+                
+                const result = func();
+                if (result === 'SUCCESS') {
+                    console.innerHTML = '<div class="console-line" style="color: var(--accent-green);">✓ Perfect! You understand placeholders!</div>';
+                    completeTask('partial', 1);
+                    addXP(25);
+                } else {
+                    console.innerHTML = `<div class="console-line console-error">${result}</div>`;
+                }
+            } catch(e) {
+                console.innerHTML = `<div class="console-line console-error">${e.message}</div>`;
+            }
+        }
+
+        // Final Boss
+        function testFinalBoss() {
+            const code = document.getElementById('final-boss').value;
+            const console = document.getElementById('console-final');
+            
+            try {
+                const func = new Function(code + `
+                    try {
+                        const add5 = x => x + 5;
+                        const multiply2 = x => x * 2;
+                        const toString = x => String(x);
+                        const transform = pipe(add5, multiply2, toString);
+                        
+                        const test1 = transform(5);
+                        const test2 = transform(10);
+                        
+                        if (test1 === "20" && test2 === "30") return 'VICTORY';
+                        return \`Failed: transform(5) = \${test1}, transform(10) = \${test2}\`;
+                    } catch(e) {
+                        return 'Error: ' + e.message;
+                    }
+                `);
+                
+                const result = func();
+                if (result === 'VICTORY') {
+                    console.innerHTML = '<div class="console-line" style="color: var(--accent-green); font-size: 1.2rem;">⚔️ BOSS DEFEATED ⚔️</div>';
+                    document.getElementById('victory-screen').style.display = 'block';
+                    addXP(100);
+                    state.streak += 1;
+                    completeTask('final', 1);
+                    saveProgress();
+                } else {
+                    console.innerHTML = `<div class="console-line console-error">${result}</div>`;
+                }
+            } catch(e) {
+                console.innerHTML = `<div class="console-line console-error">Syntax Error: Check your arrow functions!</div>`;
+            }
+        }
+
+        // Matrix Rain Effect
+        function initMatrixRain() {
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+                        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>[]{}()+-*/=!?@#$%&";
+            const fontSize = 16;
+            const columns = Math.floor(canvas.width / fontSize);
+            const drops = new Array(columns).fill(1);
+
+            ctx.font = fontSize + "px monospace";
+
+            function draw() {
+                // Black background with slight opacity for trail effect
+                ctx.fillStyle = "rgba(13, 17, 23, 0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "#0f0"; // Green color
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+
+            setInterval(draw, 50);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('matrixCanvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Reinitialize matrix with new dimensions
+            initMatrixRain();
+        });
+    </script>
+</body>
+</html>  
+            

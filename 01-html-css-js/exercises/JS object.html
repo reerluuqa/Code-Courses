@@ -1,0 +1,3478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 JavaScript Objects Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Poppins:wght@400;600;700;800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #00cec9;
+            --accent: #fd79a8;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #e17055;
+            --dark: #2d3436;
+            --light: #dfe6e9;
+            --bg: #0a0a1a;
+            --card-bg: #141428;
+            --code-bg: #1a1a2e;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float linear infinite;
+            opacity: 0.1;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.1; }
+            90% { opacity: 0.1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, #141428, #1a1a35);
+            border-right: 1px solid rgba(108, 92, 231, 0.2);
+            overflow-y: auto;
+            z-index: 100;
+            padding: 20px 0;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 200;
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .sidebar-logo {
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-logo span {
+            display: block;
+            font-size: 12px;
+            -webkit-text-fill-color: #888;
+            margin-top: 5px;
+            font-weight: 400;
+        }
+
+        .nav-section {
+            padding: 10px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--primary);
+            margin-top: 15px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(108, 92, 231, 0.1);
+            color: white;
+            border-left-color: var(--primary);
+        }
+
+        .nav-item .icon {
+            font-size: 18px;
+            width: 25px;
+            text-align: center;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .nav-item.completed .icon {
+            color: var(--success);
+        }
+
+        .progress-bar-container {
+            padding: 20px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 8px;
+            color: #888;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(108, 92, 231, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 40px;
+            max-width: 1000px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 0;
+        }
+
+        /* Section Styles */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            margin-bottom: 30px;
+        }
+
+        .section-header h1 {
+            font-size: 36px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .section-header p {
+            font-size: 16px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .section-header .emoji-banner {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(108, 92, 231, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(108, 92, 231, 0.1);
+        }
+
+        .card h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: var(--secondary);
+        }
+
+        .card p {
+            line-height: 1.8;
+            color: #aaa;
+            margin-bottom: 15px;
+        }
+
+        /* Visual Object Display */
+        .object-visual {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px solid rgba(108, 92, 231, 0.3);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .object-visual .obj-title {
+            color: var(--warning);
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .object-visual .obj-brace {
+            color: var(--accent);
+            font-size: 20px;
+        }
+
+        .object-visual .obj-property {
+            padding: 8px 0 8px 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.3s ease;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .object-visual .obj-property:hover {
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .obj-property .key {
+            color: var(--secondary);
+        }
+
+        .obj-property .colon {
+            color: #888;
+        }
+
+        .obj-property .value-string {
+            color: #a8e6cf;
+        }
+
+        .obj-property .value-number {
+            color: var(--warning);
+        }
+
+        .obj-property .value-boolean {
+            color: var(--accent);
+        }
+
+        .obj-property .value-function {
+            color: #74b9ff;
+        }
+
+        .obj-property .comma {
+            color: #888;
+        }
+
+        .obj-property .tooltip {
+            display: none;
+            position: absolute;
+            background: var(--primary);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .obj-property:hover .tooltip {
+            display: inline-block;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--code-bg);
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+            border: 1px solid rgba(108, 92, 231, 0.2);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(108, 92, 231, 0.1);
+            border-bottom: 1px solid rgba(108, 92, 231, 0.2);
+        }
+
+        .code-header .lang {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .code-header .copy-btn {
+            background: none;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            color: #888;
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .code-header .copy-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .code-content {
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-x: auto;
+            white-space: pre;
+            color: #e0e0e0;
+        }
+
+        .code-content .keyword { color: #c792ea; }
+        .code-content .string { color: #a8e6cf; }
+        .code-content .number { color: #f78c6c; }
+        .code-content .function { color: #82aaff; }
+        .code-content .comment { color: #546e7a; font-style: italic; }
+        .code-content .property { color: #80cbc4; }
+        .code-content .operator { color: #89ddff; }
+        .code-content .variable { color: #eeffff; }
+        .code-content .method { color: #82aaff; }
+        .code-content .console { color: #ffcb6b; }
+        .code-content .bracket { color: #89ddff; }
+        .code-content .boolean { color: #f78c6c; }
+
+        /* Interactive Playground */
+        .playground {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 206, 201, 0.3);
+        }
+
+        .playground-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: rgba(0, 206, 201, 0.1);
+            border-bottom: 1px solid rgba(0, 206, 201, 0.2);
+        }
+
+        .playground-header h3 {
+            color: var(--secondary);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .playground-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .playground-editor {
+            border-right: 1px solid rgba(108, 92, 231, 0.2);
+        }
+
+        .playground-editor textarea {
+            width: 100%;
+            min-height: 200px;
+            background: var(--code-bg);
+            color: #e0e0e0;
+            border: none;
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            resize: vertical;
+            outline: none;
+        }
+
+        .playground-output {
+            background: #0d0d1a;
+            min-height: 200px;
+        }
+
+        .playground-output .output-label {
+            padding: 8px 20px;
+            font-size: 11px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .playground-output .output-content {
+            padding: 15px 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--success);
+            white-space: pre-wrap;
+        }
+
+        .run-btn {
+            background: linear-gradient(135deg, var(--secondary), #00b894);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .run-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 206, 201, 0.3);
+        }
+
+        /* Analogy Box */
+        .analogy-box {
+            background: linear-gradient(135deg, rgba(253, 121, 168, 0.1), rgba(108, 92, 231, 0.1));
+            border: 1px solid rgba(253, 121, 168, 0.3);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+
+        .analogy-box .analogy-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .analogy-box p {
+            color: #bbb;
+            line-height: 1.8;
+        }
+
+        /* Tip Box */
+        .tip-box {
+            background: rgba(0, 184, 148, 0.1);
+            border-left: 4px solid var(--success);
+            border-radius: 0 12px 12px 0;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .tip-box .tip-title {
+            color: var(--success);
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(225, 112, 85, 0.1);
+            border-left: 4px solid var(--danger);
+            border-radius: 0 12px 12px 0;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .warning-box .warning-title {
+            color: var(--danger);
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+        }
+
+        .quiz-question {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .quiz-question-number {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+
+        .quiz-option {
+            display: block;
+            background: rgba(108, 92, 231, 0.05);
+            border: 2px solid rgba(108, 92, 231, 0.15);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary);
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success);
+            background: rgba(0, 184, 148, 0.15);
+            color: var(--success);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--danger);
+            background: rgba(225, 112, 85, 0.15);
+            color: var(--danger);
+        }
+
+        .quiz-option.disabled {
+            pointer-events: none;
+        }
+
+        .quiz-feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .quiz-feedback.correct {
+            background: rgba(0, 184, 148, 0.1);
+            color: var(--success);
+        }
+
+        .quiz-feedback.wrong {
+            background: rgba(225, 112, 85, 0.1);
+            color: var(--danger);
+        }
+
+        /* Exercise Styles */
+        .exercise {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 2px solid rgba(253, 203, 110, 0.3);
+        }
+
+        .exercise-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .exercise-header h3 {
+            color: var(--warning);
+            font-size: 18px;
+        }
+
+        .exercise-difficulty {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .difficulty-easy {
+            background: rgba(0, 184, 148, 0.2);
+            color: var(--success);
+        }
+
+        .difficulty-medium {
+            background: rgba(253, 203, 110, 0.2);
+            color: var(--warning);
+        }
+
+        .difficulty-hard {
+            background: rgba(225, 112, 85, 0.2);
+            color: var(--danger);
+        }
+
+        .exercise textarea {
+            width: 100%;
+            min-height: 150px;
+            background: var(--code-bg);
+            color: #e0e0e0;
+            border: 1px solid rgba(108, 92, 231, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            resize: vertical;
+            outline: none;
+            margin: 10px 0;
+        }
+
+        .exercise textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .exercise-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .check-btn {
+            background: linear-gradient(135deg, var(--warning), #e17055);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .check-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .hint-btn {
+            background: none;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            color: var(--primary);
+            padding: 10px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .hint-btn:hover {
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .solution-btn {
+            background: none;
+            border: 1px solid rgba(253, 121, 168, 0.3);
+            color: var(--accent);
+            padding: 10px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .hint-text, .solution-text {
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(108, 92, 231, 0.05);
+            border-radius: 10px;
+            display: none;
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        .hint-text.show, .solution-text.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .exercise-result {
+            margin-top: 10px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .exercise-result.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-table th {
+            background: rgba(108, 92, 231, 0.2);
+            color: var(--primary);
+            padding: 12px 20px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .comparison-table td {
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(108, 92, 231, 0.05);
+        }
+
+        .comparison-table code {
+            background: var(--code-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--secondary);
+        }
+
+        /* Step by Step Visual */
+        .step-visual {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .step-item {
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .step-item .step-num {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .step-item .step-label {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .step-arrow {
+            color: var(--primary);
+            font-size: 24px;
+        }
+
+        /* Pitfall Card */
+        .pitfall-card {
+            background: linear-gradient(135deg, rgba(225, 112, 85, 0.05), rgba(253, 121, 168, 0.05));
+            border: 1px solid rgba(225, 112, 85, 0.3);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 15px 0;
+        }
+
+        .pitfall-card h4 {
+            color: var(--danger);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pitfall-vs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 15px;
+            align-items: start;
+            margin-top: 15px;
+        }
+
+        .pitfall-wrong, .pitfall-right {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .pitfall-wrong .label {
+            background: rgba(225, 112, 85, 0.2);
+            color: var(--danger);
+            padding: 8px 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .pitfall-right .label {
+            background: rgba(0, 184, 148, 0.2);
+            color: var(--success);
+            padding: 8px 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .pitfall-vs .vs-text {
+            color: #555;
+            font-weight: 700;
+            align-self: center;
+            font-size: 18px;
+        }
+
+        /* Score Display */
+        .score-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary), #5a4bd1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            box-shadow: 0 5px 20px rgba(108, 92, 231, 0.3);
+        }
+
+        .score-display .score-icon {
+            font-size: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .tab-btn {
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.2);
+            color: #888;
+            padding: 8px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Interactive Object Builder */
+        .object-builder {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px dashed rgba(0, 206, 201, 0.3);
+        }
+
+        .builder-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .builder-inputs input {
+            background: var(--code-bg);
+            border: 1px solid rgba(108, 92, 231, 0.2);
+            color: #e0e0e0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .builder-inputs input:focus {
+            border-color: var(--primary);
+        }
+
+        .builder-inputs button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .builder-result {
+            background: var(--code-bg);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            min-height: 80px;
+        }
+
+        /* Animated this keyword visual */
+        .this-visual {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .this-box {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(108, 92, 231, 0.05);
+            border: 2px solid rgba(108, 92, 231, 0.2);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .this-box:hover {
+            border-color: var(--primary);
+            background: rgba(108, 92, 231, 0.1);
+            transform: scale(1.02);
+        }
+
+        .this-box .this-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .this-box .this-label {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .this-box .this-desc {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Nav buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(108, 92, 231, 0.1);
+        }
+
+        .nav-btn {
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            color: var(--primary);
+            padding: 12px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Celebration */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-280px); }
+            .sidebar.show { transform: translateX(0); }
+            .sidebar-toggle { display: block; }
+            .main-content { margin-left: 0; padding: 20px; padding-top: 70px; }
+            .playground-body { grid-template-columns: 1fr; }
+            .pitfall-vs { grid-template-columns: 1fr; }
+            .pitfall-vs .vs-text { text-align: center; }
+            .builder-inputs { grid-template-columns: 1fr; }
+            .score-display { top: 15px; right: 70px; font-size: 12px; padding: 8px 15px; }
+        }
+
+        /* Highlight animation */
+        @keyframes highlight-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(108, 92, 231, 0); }
+            50% { box-shadow: 0 0 0 10px rgba(108, 92, 231, 0.1); }
+        }
+
+        .highlight-new {
+            animation: highlight-pulse 1s ease 2;
+        }
+
+        /* Mini diagram */
+        .mini-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .diagram-box {
+            background: rgba(108, 92, 231, 0.1);
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .diagram-arrow {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        ul, ol {
+            margin: 10px 0 10px 20px;
+            color: #aaa;
+            line-height: 2;
+        }
+
+        li { margin-bottom: 5px; }
+
+        code {
+            background: var(--code-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--secondary);
+        }
+
+        strong { color: white; }
+
+        .inline-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tag-new { background: rgba(0, 206, 201, 0.2); color: var(--secondary); }
+        .tag-important { background: rgba(225, 112, 85, 0.2); color: var(--danger); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(108, 92, 231, 0.3); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="bg-animation" id="bgAnimation"></div>
+
+<div class="score-display">
+    <span class="score-icon">⭐</span>
+    <span>Score: <span id="scoreValue">0</span></span>
+</div>
+
+<button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        🎮 JS Objects
+        <span>Interactive Learning Adventure</span>
+    </div>
+
+    <div class="progress-bar-container">
+        <div class="progress-label">
+            <span>Progress</span>
+            <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <div class="nav-section">📚 Lessons</div>
+    <div class="nav-item active" data-section="welcome" onclick="showSection('welcome')">
+        <span class="icon">🏠</span> Welcome
+    </div>
+    <div class="nav-item" data-section="what-are-objects" onclick="showSection('what-are-objects')">
+        <span class="icon">📦</span> What Are Objects?
+    </div>
+    <div class="nav-item" data-section="creating-objects" onclick="showSection('creating-objects')">
+        <span class="icon">🔨</span> Creating Objects
+    </div>
+    <div class="nav-item" data-section="properties" onclick="showSection('properties')">
+        <span class="icon">🏷️</span> Properties & Access
+    </div>
+    <div class="nav-item" data-section="methods" onclick="showSection('methods')">
+        <span class="icon">⚡</span> Methods
+    </div>
+    <div class="nav-item" data-section="this-keyword" onclick="showSection('this-keyword')">
+        <span class="icon">👆</span> The this Keyword
+    </div>
+    <div class="nav-item" data-section="destructuring" onclick="showSection('destructuring')">
+        <span class="icon">📤</span> Destructuring
+    </div>
+    <div class="nav-item" data-section="object-methods" onclick="showSection('object-methods')">
+        <span class="icon">🧰</span> Object.keys/values/entries
+    </div>
+
+    <div class="nav-section">🎯 Practice</div>
+    <div class="nav-item" data-section="exercises" onclick="showSection('exercises')">
+        <span class="icon">💪</span> Exercises
+        <span class="badge">6</span>
+    </div>
+    <div class="nav-item" data-section="quiz" onclick="showSection('quiz')">
+        <span class="icon">🧠</span> Final Quiz
+        <span class="badge">10</span>
+    </div>
+    <div class="nav-item" data-section="pitfalls" onclick="showSection('pitfalls')">
+        <span class="icon">⚠️</span> Common Pitfalls
+    </div>
+    <div class="nav-item" data-section="cheatsheet" onclick="showSection('cheatsheet')">
+        <span class="icon">📋</span> Cheat Sheet
+    </div>
+</nav>
+
+<main class="main-content" id="mainContent">
+
+    <!-- WELCOME SECTION -->
+    <div class="section active" id="section-welcome">
+        <div class="section-header">
+            <div class="emoji-banner">🎮 📦 🚀</div>
+            <h1>JavaScript Objects Adventure</h1>
+            <p>Welcome to the most fun way to learn JavaScript Objects! Objects are one of the most important concepts in JavaScript — and by the end of this adventure, you'll be an object master!</p>
+        </div>
+
+        <div class="card">
+            <h2>🗺️ What You'll Learn</h2>
+            <div class="step-visual">
+                <div class="step-item">
+                    <div class="step-num">1</div>
+                    <div class="step-label">Object Literals</div>
+                </div>
+                <span class="step-arrow">→</span>
+                <div class="step-item">
+                    <div class="step-num">2</div>
+                    <div class="step-label">Properties & Methods</div>
+                </div>
+                <span class="step-arrow">→</span>
+                <div class="step-item">
+                    <div class="step-num">3</div>
+                    <div class="step-label">The this Keyword</div>
+                </div>
+                <span class="step-arrow">→</span>
+                <div class="step-item">
+                    <div class="step-num">4</div>
+                    <div class="step-label">Destructuring</div>
+                </div>
+                <span class="step-arrow">→</span>
+                <div class="step-item">
+                    <div class="step-num">5</div>
+                    <div class="step-label">Built-in Methods</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analogy-box">
+            <div class="analogy-title">💡 Think of it this way...</div>
+            <p>Imagine you have a <strong>backpack</strong>. Inside your backpack, you can put different things: a <em>name tag</em>, your <em>age</em>, a <em>calculator</em> (that does things). An <strong>object</strong> in JavaScript is just like that backpack — it holds related data and actions together!</p>
+        </div>
+
+        <div class="card">
+            <h2>🎯 How To Use This App</h2>
+            <ul>
+                <li>📖 <strong>Read through each lesson</strong> — they build on each other</li>
+                <li>🖥️ <strong>Try the interactive playgrounds</strong> — edit and run code live</li>
+                <li>💪 <strong>Complete the exercises</strong> — practice makes perfect</li>
+                <li>🧠 <strong>Take the quiz</strong> — test your knowledge</li>
+                <li>⚠️ <strong>Read common pitfalls</strong> — learn from others' mistakes</li>
+                <li>⭐ <strong>Earn points</strong> — for correct answers and completed exercises</li>
+            </ul>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" disabled>← Previous</button>
+            <button class="nav-btn" onclick="showSection('what-are-objects')">Next: What Are Objects? →</button>
+        </div>
+    </div>
+
+    <!-- WHAT ARE OBJECTS SECTION -->
+    <div class="section" id="section-what-are-objects">
+        <div class="section-header">
+            <div class="emoji-banner">📦</div>
+            <h1>What Are Objects?</h1>
+            <p>Objects are collections of related data and functionality, stored as key-value pairs.</p>
+        </div>
+
+        <div class="card">
+            <h2>📦 Objects = Containers for Related Data</h2>
+            <p>In JavaScript, an <strong>object</strong> is a collection of <strong>key-value pairs</strong>. Think of it as a real-world thing described in code!</p>
+
+            <div class="analogy-box">
+                <div class="analogy-title">🪪 Real-World Analogy: An ID Card</div>
+                <p>Your ID card has: <strong>Name</strong> → "Alex", <strong>Age</strong> → 25, <strong>Country</strong> → "USA". Each piece of information has a <em>label</em> (key) and a <em>value</em>. That's exactly what a JavaScript object does!</p>
+            </div>
+
+            <p>Here's your first object — a person represented in JavaScript:</p>
+
+            <div class="object-visual">
+                <div class="obj-title">// 👤 A person object</div>
+                <div class="obj-brace"><span class="keyword">const</span> <span class="variable">person</span> <span class="operator">=</span> {</div>
+                <div class="obj-property">
+                    <span class="key">name</span><span class="colon">:</span>
+                    <span class="value-string">"Alex"</span><span class="comma">,</span>
+                </div>
+                <div class="obj-property">
+                    <span class="key">age</span><span class="colon">:</span>
+                    <span class="value-number">25</span><span class="comma">,</span>
+                </div>
+                <div class="obj-property">
+                    <span class="key">isStudent</span><span class="colon">:</span>
+                    <span class="value-boolean">true</span><span class="comma">,</span>
+                </div>
+                <div class="obj-property">
+                    <span class="key">greet</span><span class="colon">:</span>
+                    <span class="value-function">function() { ... }</span>
+                </div>
+                <div class="obj-brace">}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔑 Key Terminology</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Term</th>
+                    <th>What It Means</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td><strong>Object</strong></td>
+                    <td>A container for related data</td>
+                    <td><code>{ name: "Alex" }</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Property</strong></td>
+                    <td>A key-value pair that holds data</td>
+                    <td><code>name: "Alex"</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Key</strong></td>
+                    <td>The name/label of a property</td>
+                    <td><code>name</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Value</strong></td>
+                    <td>The data stored in a property</td>
+                    <td><code>"Alex"</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Method</strong></td>
+                    <td>A function stored in an object</td>
+                    <td><code>greet: function() {}</code></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>🆚 Objects vs Other Data Types</h2>
+            <p>You already know <strong>primitive types</strong> like strings and numbers. Objects are different — they can hold <em>multiple</em> values!</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="comment">// Primitives hold ONE value</span>
+<span class="keyword">let</span> name <span class="operator">=</span> <span class="string">"Alex"</span>;
+<span class="keyword">let</span> age <span class="operator">=</span> <span class="number">25</span>;
+<span class="keyword">let</span> isStudent <span class="operator">=</span> <span class="boolean">true</span>;
+
+<span class="comment">// Objects hold MANY related values together! 🎉</span>
+<span class="keyword">const</span> person <span class="operator">=</span> {
+    name: <span class="string">"Alex"</span>,
+    age: <span class="number">25</span>,
+    isStudent: <span class="boolean">true</span>
+};
+
+<span class="comment">// Much more organized! 📦</span></div>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <div class="tip-title">💡 Pro Tip</div>
+            <p>Objects can hold ANY data type as values: strings, numbers, booleans, arrays, even other objects!</p>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('welcome')">← Welcome</button>
+            <button class="nav-btn" onclick="showSection('creating-objects')">Next: Creating Objects →</button>
+        </div>
+    </div>
+
+    <!-- CREATING OBJECTS -->
+    <div class="section" id="section-creating-objects">
+        <div class="section-header">
+            <div class="emoji-banner">🔨</div>
+            <h1>Creating Objects</h1>
+            <p>Learn all the ways to create objects in JavaScript.</p>
+        </div>
+
+        <div class="card">
+            <h2>📝 Method 1: Object Literal (Most Common!)</h2>
+            <p>The simplest and most common way to create an object. Just use curly braces <code>{}</code>!</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="comment">// 🎮 Creating a game character</span>
+<span class="keyword">const</span> hero <span class="operator">=</span> {
+    name: <span class="string">"Luna"</span>,
+    health: <span class="number">100</span>,
+    power: <span class="number">75</span>,
+    weapons: [<span class="string">"sword"</span>, <span class="string">"bow"</span>],
+    isAlive: <span class="boolean">true</span>
+};
+
+<span class="comment">// 🐕 A pet object</span>
+<span class="keyword">const</span> pet <span class="operator">=</span> {
+    name: <span class="string">"Buddy"</span>,
+    type: <span class="string">"dog"</span>,
+    age: <span class="number">3</span>,
+    tricks: [<span class="string">"sit"</span>, <span class="string">"shake"</span>, <span class="string">"roll over"</span>]
+};
+
+<span class="comment">// 🏪 Even an empty object!</span>
+<span class="keyword">const</span> emptyObj <span class="operator">=</span> {};</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🏗️ Method 2: new Object() Constructor</h2>
+            <p>Less common, but good to know. Creates an empty object, then add properties one by one.</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> car <span class="operator">=</span> <span class="keyword">new</span> <span class="function">Object</span>();
+car.brand <span class="operator">=</span> <span class="string">"Tesla"</span>;
+car.model <span class="operator">=</span> <span class="string">"Model 3"</span>;
+car.year <span class="operator">=</span> <span class="number">2024</span>;
+car.electric <span class="operator">=</span> <span class="boolean">true</span>;
+
+console.<span class="method">log</span>(car);
+<span class="comment">// { brand: "Tesla", model: "Model 3", year: 2024, electric: true }</span></div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 Best Practice</div>
+                <p>Always prefer <strong>object literals</strong> <code>{}</code> over <code>new Object()</code>. It's shorter, cleaner, and the standard way!</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🧱 Try It! Interactive Object Builder</h2>
+            <p>Build your own object by adding properties:</p>
+
+            <div class="object-builder">
+                <div class="builder-inputs">
+                    <input type="text" id="builderKey" placeholder="Key (e.g., name)">
+                    <input type="text" id="builderValue" placeholder="Value (e.g., Alex)">
+                    <button onclick="addToBuilder()">+ Add</button>
+                </div>
+                <div class="builder-result" id="builderResult">
+                    <span style="color:#c792ea">const</span> <span style="color:#eeffff">myObject</span> <span style="color:#89ddff">=</span> { }<br>
+                    <span style="color:#546e7a">// Add properties above! 👆</span>
+                </div>
+                <button onclick="resetBuilder()" style="margin-top:10px; background:none; border:1px solid #555; color:#888; padding:6px 15px; border-radius:8px; cursor:pointer; font-family:'Poppins',sans-serif; font-size:12px;">🔄 Reset</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎯 Values Can Be Anything!</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> student <span class="operator">=</span> {
+    name: <span class="string">"Emma"</span>,            <span class="comment">// String</span>
+    age: <span class="number">20</span>,                  <span class="comment">// Number</span>
+    isEnrolled: <span class="boolean">true</span>,         <span class="comment">// Boolean</span>
+    grades: [<span class="number">95</span>, <span class="number">87</span>, <span class="number">92</span>],      <span class="comment">// Array</span>
+    address: {                  <span class="comment">// Nested Object! 🤯</span>
+        street: <span class="string">"123 Main St"</span>,
+        city: <span class="string">"New York"</span>
+    },
+    sayHi: <span class="keyword">function</span>() {       <span class="comment">// Function (Method)</span>
+        <span class="keyword">return</span> <span class="string">"Hello!"</span>;
+    }
+};</div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('what-are-objects')">← What Are Objects?</button>
+            <button class="nav-btn" onclick="showSection('properties')">Next: Properties & Access →</button>
+        </div>
+    </div>
+
+    <!-- PROPERTIES & ACCESS -->
+    <div class="section" id="section-properties">
+        <div class="section-header">
+            <div class="emoji-banner">🏷️</div>
+            <h1>Properties & Access</h1>
+            <p>Learn how to read, add, update, and delete object properties.</p>
+        </div>
+
+        <div class="card">
+            <h2>📖 Two Ways to Access Properties</h2>
+
+            <div class="mini-diagram">
+                <div class="diagram-box">
+                    <strong style="color:var(--secondary)">Dot Notation</strong><br>
+                    <code>person.name</code><br>
+                    <small style="color:#888">Clean & simple</small>
+                </div>
+                <span class="diagram-arrow">⚔️</span>
+                <div class="diagram-box">
+                    <strong style="color:var(--accent)">Bracket Notation</strong><br>
+                    <code>person["name"]</code><br>
+                    <small style="color:#888">More flexible</small>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> person <span class="operator">=</span> {
+    name: <span class="string">"Alex"</span>,
+    age: <span class="number">25</span>,
+    <span class="string">"favorite color"</span>: <span class="string">"blue"</span>   <span class="comment">// key with space!</span>
+};
+
+<span class="comment">// ✅ Dot Notation (preferred when possible)</span>
+console.<span class="method">log</span>(person.name);    <span class="comment">// "Alex"</span>
+console.<span class="method">log</span>(person.age);     <span class="comment">// 25</span>
+
+<span class="comment">// ✅ Bracket Notation (required for special keys)</span>
+console.<span class="method">log</span>(person[<span class="string">"name"</span>]);           <span class="comment">// "Alex"</span>
+console.<span class="method">log</span>(person[<span class="string">"favorite color"</span>]); <span class="comment">// "blue"</span>
+
+<span class="comment">// ✅ Bracket with variables</span>
+<span class="keyword">let</span> key <span class="operator">=</span> <span class="string">"age"</span>;
+console.<span class="method">log</span>(person[key]);  <span class="comment">// 25 — Dynamic access!</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔑 When to Use Which?</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Use Dot Notation When...</th>
+                    <th>Use Bracket Notation When...</th>
+                </tr>
+                <tr>
+                    <td>Key is a simple name (no spaces)</td>
+                    <td>Key has spaces or special characters</td>
+                </tr>
+                <tr>
+                    <td>You know the key name ahead of time</td>
+                    <td>Key is stored in a variable</td>
+                </tr>
+                <tr>
+                    <td><code>person.name</code></td>
+                    <td><code>person["favorite color"]</code></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>✏️ Adding & Updating Properties</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> car <span class="operator">=</span> {
+    brand: <span class="string">"Toyota"</span>,
+    year: <span class="number">2020</span>
+};
+
+<span class="comment">// ➕ Adding new properties</span>
+car.color <span class="operator">=</span> <span class="string">"red"</span>;          <span class="comment">// dot notation</span>
+car[<span class="string">"fuel"</span>] <span class="operator">=</span> <span class="string">"gasoline"</span>;  <span class="comment">// bracket notation</span>
+
+<span class="comment">// 🔄 Updating existing properties</span>
+car.year <span class="operator">=</span> <span class="number">2024</span>;             <span class="comment">// was 2020, now 2024</span>
+car.brand <span class="operator">=</span> <span class="string">"Honda"</span>;        <span class="comment">// was "Toyota", now "Honda"</span>
+
+<span class="comment">// 🗑️ Deleting properties</span>
+<span class="keyword">delete</span> car.fuel;
+console.<span class="method">log</span>(car.fuel);       <span class="comment">// undefined</span>
+
+<span class="comment">// 🔍 Checking if property exists</span>
+console.<span class="method">log</span>(<span class="string">"brand"</span> <span class="keyword">in</span> car);  <span class="comment">// true</span>
+console.<span class="method">log</span>(<span class="string">"fuel"</span> <span class="keyword">in</span> car);   <span class="comment">// false (we deleted it)</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🏗️ Nested Object Access</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> user <span class="operator">=</span> {
+    name: <span class="string">"Sara"</span>,
+    address: {
+        street: <span class="string">"456 Oak Ave"</span>,
+        city: <span class="string">"Los Angeles"</span>,
+        zip: <span class="string">"90001"</span>
+    },
+    hobbies: [<span class="string">"reading"</span>, <span class="string">"gaming"</span>, <span class="string">"cooking"</span>]
+};
+
+<span class="comment">// 🔗 Chain dot notation for nested access</span>
+console.<span class="method">log</span>(user.address.city);    <span class="comment">// "Los Angeles"</span>
+console.<span class="method">log</span>(user.address.zip);     <span class="comment">// "90001"</span>
+console.<span class="method">log</span>(user.hobbies[<span class="number">0</span>]);      <span class="comment">// "reading"</span>
+console.<span class="method">log</span>(user.hobbies[<span class="number">2</span>]);      <span class="comment">// "cooking"</span>
+
+<span class="comment">// ⚠️ Accessing non-existent nested prop</span>
+console.<span class="method">log</span>(user.phone);              <span class="comment">// undefined</span>
+<span class="comment">// console.log(user.phone.number);   // ❌ ERROR!</span>
+console.<span class="method">log</span>(user.phone?.number);     <span class="comment">// undefined (safe!)</span></div>
+            </div>
+
+            <div class="tip-box">
+                <div class="tip-title">💡 Optional Chaining (?.) </div>
+                <p>Use <code>?.</code> to safely access nested properties. If the left side is <code>undefined</code> or <code>null</code>, it returns <code>undefined</code> instead of crashing!</p>
+            </div>
+        </div>
+
+        <div class="playground">
+            <div class="playground-header">
+                <h3>🎮 Try It Yourself!</h3>
+                <button class="run-btn" onclick="runPlayground('pg-properties')">▶ Run</button>
+            </div>
+            <div class="playground-body">
+                <div class="playground-editor">
+                    <textarea id="pg-properties">const movie = {
+    title: "Inception",
+    year: 2010,
+    director: "Christopher Nolan",
+    ratings: { imdb: 8.8, rotten: 87 }
+};
+
+// Try accessing different properties:
+console.log(movie.title);
+console.log(movie.ratings.imdb);
+
+// Try adding a new property:
+movie.genre = "Sci-Fi";
+console.log(movie.genre);
+
+// Check if a property exists:
+console.log("year" in movie);</textarea>
+                </div>
+                <div class="playground-output">
+                    <div class="output-label">Output</div>
+                    <div class="output-content" id="output-pg-properties">Click ▶ Run to see output...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('creating-objects')">← Creating Objects</button>
+            <button class="nav-btn" onclick="showSection('methods')">Next: Methods →</button>
+        </div>
+    </div>
+
+    <!-- METHODS SECTION -->
+    <div class="section" id="section-methods">
+        <div class="section-header">
+            <div class="emoji-banner">⚡</div>
+            <h1>Object Methods</h1>
+            <p>Methods are functions that live inside objects — they give objects the ability to DO things!</p>
+        </div>
+
+        <div class="analogy-box">
+            <div class="analogy-title">🤖 Think of Methods Like This...</div>
+            <p>A <strong>phone</strong> has <em>properties</em> (brand, color, storage) and <em>methods</em> (call, text, takePhoto). Properties describe WHAT it is. Methods describe what it can DO!</p>
+        </div>
+
+        <div class="card">
+            <h2>📝 Defining Methods</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> dog <span class="operator">=</span> {
+    name: <span class="string">"Rex"</span>,
+    breed: <span class="string">"Labrador"</span>,
+    energy: <span class="number">100</span>,
+
+    <span class="comment">// Method 1: Function expression (old way)</span>
+    bark: <span class="keyword">function</span>() {
+        <span class="keyword">return</span> <span class="string">"Woof! Woof! 🐕"</span>;
+    },
+
+    <span class="comment">// Method 2: Shorthand (modern & preferred ✅)</span>
+    sit() {
+        <span class="keyword">return</span> <span class="string">"*sits down* 🐕"</span>;
+    },
+
+    <span class="comment">// Method with parameters</span>
+    fetch(item) {
+        <span class="keyword">return</span> <span class="string">`${this.name} fetches the ${item}! 🎾`</span>;
+    }
+};
+
+<span class="comment">// 📞 Calling methods</span>
+console.<span class="method">log</span>(dog.bark());         <span class="comment">// "Woof! Woof! 🐕"</span>
+console.<span class="method">log</span>(dog.sit());          <span class="comment">// "*sits down* 🐕"</span>
+console.<span class="method">log</span>(dog.fetch(<span class="string">"ball"</span>)); <span class="comment">// "Rex fetches the ball! 🎾"</span></div>
+            </div>
+
+            <div class="warning-box">
+                <div class="warning-title">⚠️ Common Mistake</div>
+                <p>Don't forget the parentheses <code>()</code> when calling methods! <code>dog.bark</code> gives you the function itself. <code>dog.bark()</code> actually <em>calls</em> it.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎮 Game Character Example</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> warrior <span class="operator">=</span> {
+    name: <span class="string">"Thorin"</span>,
+    health: <span class="number">100</span>,
+    attack: <span class="number">25</span>,
+    defense: <span class="number">15</span>,
+
+    slash() {
+        <span class="keyword">return</span> <span class="string">`⚔️ ${this.name} slashes for ${this.attack} damage!`</span>;
+    },
+
+    defend() {
+        <span class="keyword">return</span> <span class="string">`🛡️ ${this.name} blocks ${this.defense} damage!`</span>;
+    },
+
+    takeDamage(amount) {
+        <span class="keyword">const</span> actual <span class="operator">=</span> amount <span class="operator">-</span> <span class="keyword">this</span>.defense;
+        <span class="keyword">this</span>.health <span class="operator">-=</span> actual <span class="operator">></span> <span class="number">0</span> <span class="operator">?</span> actual <span class="operator">:</span> <span class="number">0</span>;
+        <span class="keyword">return</span> <span class="string">`💔 ${this.name} has ${this.health} HP left`</span>;
+    },
+
+    status() {
+        <span class="keyword">return</span> <span class="string">`📊 ${this.name} | HP: ${this.health} | ATK: ${this.attack} | DEF: ${this.defense}`</span>;
+    }
+};
+
+console.<span class="method">log</span>(warrior.status());
+console.<span class="method">log</span>(warrior.slash());
+console.<span class="method">log</span>(warrior.takeDamage(<span class="number">30</span>));
+console.<span class="method">log</span>(warrior.status());</div>
+            </div>
+        </div>
+
+        <div class="playground">
+            <div class="playground-header">
+                <h3>🎮 Build a Calculator Object!</h3>
+                <button class="run-btn" onclick="runPlayground('pg-methods')">▶ Run</button>
+            </div>
+            <div class="playground-body">
+                <div class="playground-editor">
+                    <textarea id="pg-methods">const calculator = {
+    result: 0,
+    
+    add(num) {
+        this.result += num;
+        return this;  // allows chaining!
+    },
+    
+    subtract(num) {
+        this.result -= num;
+        return this;
+    },
+    
+    multiply(num) {
+        this.result *= num;
+        return this;
+    },
+    
+    getResult() {
+        return this.result;
+    },
+    
+    reset() {
+        this.result = 0;
+        return this;
+    }
+};
+
+// Method chaining! 🔗
+calculator.add(10).add(5).subtract(3).multiply(2);
+console.log("Result:", calculator.getResult());
+
+calculator.reset();
+console.log("After reset:", calculator.getResult());</textarea>
+                </div>
+                <div class="playground-output">
+                    <div class="output-label">Output</div>
+                    <div class="output-content" id="output-pg-methods">Click ▶ Run to see output...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('properties')">← Properties</button>
+            <button class="nav-btn" onclick="showSection('this-keyword')">Next: The this Keyword →</button>
+        </div>
+    </div>
+
+    <!-- THIS KEYWORD -->
+    <div class="section" id="section-this-keyword">
+        <div class="section-header">
+            <div class="emoji-banner">👆</div>
+            <h1>The <code>this</code> Keyword</h1>
+            <p>One of the trickiest but most important concepts — let's demystify it!</p>
+        </div>
+
+        <div class="analogy-box">
+            <div class="analogy-title">🪞 Think of "this" as a Mirror</div>
+            <p>When you say "I am hungry," the word <strong>"I"</strong> refers to <em>you</em> — the person speaking. In JavaScript, <code>this</code> works the same way. Inside an object's method, <code>this</code> refers to <strong>the object that called the method</strong>.</p>
+        </div>
+
+        <div class="card">
+            <h2>👆 <code>this</code> In Object Methods</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> user <span class="operator">=</span> {
+    firstName: <span class="string">"John"</span>,
+    lastName: <span class="string">"Doe"</span>,
+    age: <span class="number">30</span>,
+
+    <span class="comment">// 'this' refers to the 'user' object</span>
+    getFullName() {
+        <span class="keyword">return</span> <span class="keyword">this</span>.firstName <span class="operator">+</span> <span class="string">" "</span> <span class="operator">+</span> <span class="keyword">this</span>.lastName;
+        <span class="comment">//     ^^^^                         ^^^^</span>
+        <span class="comment">//  "John"                        "Doe"</span>
+    },
+
+    introduce() {
+        <span class="keyword">return</span> <span class="string">`Hi! I'm ${<span class="keyword">this</span>.getFullName()}, age ${<span class="keyword">this</span>.age}`</span>;
+    }
+};
+
+console.<span class="method">log</span>(user.getFullName());  <span class="comment">// "John Doe"</span>
+console.<span class="method">log</span>(user.introduce());    <span class="comment">// "Hi! I'm John Doe, age 30"</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔍 Visualizing <code>this</code></h2>
+            <div class="this-visual">
+                <div class="this-box" onclick="showThisExample('method')">
+                    <div class="this-icon">📦</div>
+                    <div class="this-label">In a Method</div>
+                    <div class="this-desc">this = the object</div>
+                </div>
+                <div class="this-box" onclick="showThisExample('global')">
+                    <div class="this-icon">🌍</div>
+                    <div class="this-label">Global / Alone</div>
+                    <div class="this-desc">this = window</div>
+                </div>
+                <div class="this-box" onclick="showThisExample('arrow')">
+                    <div class="this-icon">➡️</div>
+                    <div class="this-label">Arrow Function</div>
+                    <div class="this-desc">this = parent scope</div>
+                </div>
+            </div>
+            <div id="thisExampleOutput" class="code-block" style="display:none">
+                <div class="code-header">
+                    <span class="lang">Example</span>
+                </div>
+                <div class="code-content" id="thisExampleCode"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Arrow Functions & <code>this</code></h2>
+            <p><strong>Arrow functions do NOT have their own <code>this</code>!</strong> They inherit <code>this</code> from the surrounding scope. This is the #1 pitfall with <code>this</code>.</p>
+
+            <div class="pitfall-vs">
+                <div class="pitfall-wrong">
+                    <div class="label">❌ WRONG — Arrow function</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> cat <span class="operator">=</span> {
+    name: <span class="string">"Whiskers"</span>,
+    <span class="comment">// ❌ Arrow function!</span>
+    meow: () <span class="operator">=></span> {
+        <span class="keyword">return</span> <span class="string">`${<span class="keyword">this</span>.name} says meow`</span>;
+    }
+};
+console.<span class="method">log</span>(cat.meow());
+<span class="comment">// "undefined says meow" 😱</span></div>
+                    </div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="pitfall-right">
+                    <div class="label">✅ CORRECT — Regular function</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> cat <span class="operator">=</span> {
+    name: <span class="string">"Whiskers"</span>,
+    <span class="comment">// ✅ Regular function</span>
+    meow() {
+        <span class="keyword">return</span> <span class="string">`${<span class="keyword">this</span>.name} says meow`</span>;
+    }
+};
+console.<span class="method">log</span>(cat.meow());
+<span class="comment">// "Whiskers says meow" ✅</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="playground">
+            <div class="playground-header">
+                <h3>🎮 Experiment with 'this'</h3>
+                <button class="run-btn" onclick="runPlayground('pg-this')">▶ Run</button>
+            </div>
+            <div class="playground-body">
+                <div class="playground-editor">
+                    <textarea id="pg-this">const person = {
+    name: "Alex",
+    age: 25,
+    hobbies: ["coding", "gaming"],
+    
+    introduce() {
+        return `Hi, I'm ${this.name} and I'm ${this.age}!`;
+    },
+    
+    listHobbies() {
+        return `${this.name}'s hobbies: ${this.hobbies.join(", ")}`;
+    },
+    
+    haveBirthday() {
+        this.age++;
+        return `🎂 Happy Birthday! ${this.name} is now ${this.age}!`;
+    }
+};
+
+console.log(person.introduce());
+console.log(person.listHobbies());
+console.log(person.haveBirthday());
+console.log(person.introduce()); // age changed!</textarea>
+                </div>
+                <div class="playground-output">
+                    <div class="output-label">Output</div>
+                    <div class="output-content" id="output-pg-this">Click ▶ Run to see output...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('methods')">← Methods</button>
+            <button class="nav-btn" onclick="showSection('destructuring')">Next: Destructuring →</button>
+        </div>
+    </div>
+
+    <!-- DESTRUCTURING -->
+    <div class="section" id="section-destructuring">
+        <div class="section-header">
+            <div class="emoji-banner">📤</div>
+            <h1>Object Destructuring</h1>
+            <p>A beautiful way to unpack values from objects into separate variables!</p>
+        </div>
+
+        <div class="analogy-box">
+            <div class="analogy-title">🎁 Think of it as Unwrapping a Gift Box</div>
+            <p>Imagine you have a gift box (object) with items inside. <strong>Destructuring</strong> lets you reach in and grab exactly what you want, giving each item its own name. Instead of carrying the whole box around, you just take what you need!</p>
+        </div>
+
+        <div class="card">
+            <h2>📤 Basic Destructuring</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> person <span class="operator">=</span> {
+    name: <span class="string">"Alex"</span>,
+    age: <span class="number">25</span>,
+    city: <span class="string">"New York"</span>
+};
+
+<span class="comment">// 😴 The OLD way (repetitive!)</span>
+<span class="keyword">const</span> name1 <span class="operator">=</span> person.name;
+<span class="keyword">const</span> age1 <span class="operator">=</span> person.age;
+<span class="keyword">const</span> city1 <span class="operator">=</span> person.city;
+
+<span class="comment">// 🎉 The NEW way (destructuring!)</span>
+<span class="keyword">const</span> { name, age, city } <span class="operator">=</span> person;
+
+console.<span class="method">log</span>(name);  <span class="comment">// "Alex"</span>
+console.<span class="method">log</span>(age);   <span class="comment">// 25</span>
+console.<span class="method">log</span>(city);  <span class="comment">// "New York"</span></div>
+            </div>
+
+            <div class="step-visual">
+                <div class="step-item">
+                    <div class="step-num">📦</div>
+                    <div class="step-label">Object with properties</div>
+                </div>
+                <span class="step-arrow">→</span>
+                <div class="step-item">
+                    <div class="step-num">📤</div>
+                    <div class="step-label">Destructure</div>
+                </div>
+                <span class="step-arrow">→</span>
+                <div class="step-item">
+                    <div class="step-num">✨</div>
+                    <div class="step-label">Individual variables!</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎨 Renaming Variables</h2>
+            <p>You can rename the variables while destructuring!</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> user <span class="operator">=</span> {
+    name: <span class="string">"Emma"</span>,
+    age: <span class="number">22</span>
+};
+
+<span class="comment">// Rename: { originalKey: newName }</span>
+<span class="keyword">const</span> { name: userName, age: userAge } <span class="operator">=</span> user;
+
+console.<span class="method">log</span>(userName);  <span class="comment">// "Emma"</span>
+console.<span class="method">log</span>(userAge);   <span class="comment">// 22</span>
+<span class="comment">// console.log(name);  // ❌ Error! 'name' doesn't exist</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🛡️ Default Values</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> settings <span class="operator">=</span> {
+    theme: <span class="string">"dark"</span>,
+    fontSize: <span class="number">16</span>
+};
+
+<span class="comment">// Default values for missing properties</span>
+<span class="keyword">const</span> { 
+    theme, 
+    fontSize, 
+    language <span class="operator">=</span> <span class="string">"English"</span>,    <span class="comment">// default!</span>
+    notifications <span class="operator">=</span> <span class="boolean">true</span>  <span class="comment">// default!</span>
+} <span class="operator">=</span> settings;
+
+console.<span class="method">log</span>(theme);          <span class="comment">// "dark" (from object)</span>
+console.<span class="method">log</span>(language);       <span class="comment">// "English" (default used)</span>
+console.<span class="method">log</span>(notifications);  <span class="comment">// true (default used)</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🏗️ Nested Destructuring</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> employee <span class="operator">=</span> {
+    name: <span class="string">"Sara"</span>,
+    role: <span class="string">"Developer"</span>,
+    address: {
+        city: <span class="string">"Austin"</span>,
+        state: <span class="string">"TX"</span>,
+        zip: <span class="string">"78701"</span>
+    }
+};
+
+<span class="comment">// Nested destructuring</span>
+<span class="keyword">const</span> { 
+    name, 
+    role, 
+    address: { city, state } 
+} <span class="operator">=</span> employee;
+
+console.<span class="method">log</span>(name);   <span class="comment">// "Sara"</span>
+console.<span class="method">log</span>(city);   <span class="comment">// "Austin"</span>
+console.<span class="method">log</span>(state);  <span class="comment">// "TX"</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚡ Destructuring in Function Parameters</h2>
+            <p>Super common in real code! Instead of passing a whole object, destructure right in the parameters.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="comment">// 😴 Without destructuring</span>
+<span class="keyword">function</span> <span class="function">greetOld</span>(user) {
+    <span class="keyword">return</span> <span class="string">`Hello ${user.name}, age ${user.age}!`</span>;
+}
+
+<span class="comment">// 🎉 With destructuring in parameters!</span>
+<span class="keyword">function</span> <span class="function">greet</span>({ name, age }) {
+    <span class="keyword">return</span> <span class="string">`Hello ${name}, age ${age}!`</span>;
+}
+
+<span class="keyword">const</span> user <span class="operator">=</span> { name: <span class="string">"Alex"</span>, age: <span class="number">25</span>, city: <span class="string">"NYC"</span> };
+console.<span class="method">log</span>(<span class="function">greet</span>(user));  <span class="comment">// "Hello Alex, age 25!"</span>
+
+<span class="comment">// With defaults in parameters</span>
+<span class="keyword">function</span> <span class="function">createUser</span>({ name, role <span class="operator">=</span> <span class="string">"user"</span>, active <span class="operator">=</span> <span class="boolean">true</span> }) {
+    <span class="keyword">return</span> <span class="string">`${name} is a ${role} (active: ${active})`</span>;
+}
+
+console.<span class="method">log</span>(<span class="function">createUser</span>({ name: <span class="string">"Bob"</span> }));
+<span class="comment">// "Bob is a user (active: true)"</span></div>
+            </div>
+        </div>
+
+        <div class="playground">
+            <div class="playground-header">
+                <h3>🎮 Practice Destructuring!</h3>
+                <button class="run-btn" onclick="runPlayground('pg-destructure')">▶ Run</button>
+            </div>
+            <div class="playground-body">
+                <div class="playground-editor">
+                    <textarea id="pg-destructure">const product = {
+    name: "Laptop",
+    price: 999,
+    brand: "TechCo",
+    specs: {
+        ram: "16GB",
+        storage: "512GB SSD",
+        screen: "15 inch"
+    }
+};
+
+// Basic destructuring
+const { name, price, brand } = product;
+console.log(`${name} by ${brand}: $${price}`);
+
+// Nested destructuring
+const { specs: { ram, storage } } = product;
+console.log(`RAM: ${ram}, Storage: ${storage}`);
+
+// With renaming
+const { name: productName, price: cost } = product;
+console.log(`${productName} costs $${cost}`);
+
+// In a function
+function displayProduct({ name, price, specs: { screen } }) {
+    console.log(`${name} ($${price}) - ${screen}`);
+}
+displayProduct(product);</textarea>
+                </div>
+                <div class="playground-output">
+                    <div class="output-label">Output</div>
+                    <div class="output-content" id="output-pg-destructure">Click ▶ Run to see output...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('this-keyword')">← The this Keyword</button>
+            <button class="nav-btn" onclick="showSection('object-methods')">Next: Object.keys/values/entries →</button>
+        </div>
+    </div>
+
+    <!-- OBJECT.KEYS/VALUES/ENTRIES -->
+    <div class="section" id="section-object-methods">
+        <div class="section-header">
+            <div class="emoji-banner">🧰</div>
+            <h1>Object.keys / values / entries</h1>
+            <p>Built-in methods to explore and iterate over objects!</p>
+        </div>
+
+        <div class="card">
+            <h2>🔑 Object.keys() — Get All Keys</h2>
+            <p>Returns an <strong>array</strong> of all the property names (keys).</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> fruit <span class="operator">=</span> {
+    name: <span class="string">"Apple"</span>,
+    color: <span class="string">"red"</span>,
+    calories: <span class="number">95</span>,
+    tasty: <span class="boolean">true</span>
+};
+
+<span class="keyword">const</span> keys <span class="operator">=</span> Object.<span class="method">keys</span>(fruit);
+console.<span class="method">log</span>(keys);
+<span class="comment">// ["name", "color", "calories", "tasty"]</span>
+
+<span class="comment">// Great for counting properties!</span>
+console.<span class="method">log</span>(<span class="string">`Fruit has ${keys.length} properties`</span>);
+<span class="comment">// "Fruit has 4 properties"</span>
+
+<span class="comment">// Loop through keys</span>
+keys.<span class="method">forEach</span>(key <span class="operator">=></span> {
+    console.<span class="method">log</span>(<span class="string">`${key}: ${fruit[key]}`</span>);
+});</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>💎 Object.values() — Get All Values</h2>
+            <p>Returns an <strong>array</strong> of all property values.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> scores <span class="operator">=</span> {
+    math: <span class="number">95</span>,
+    science: <span class="number">88</span>,
+    english: <span class="number">92</span>,
+    history: <span class="number">87</span>
+};
+
+<span class="keyword">const</span> values <span class="operator">=</span> Object.<span class="method">values</span>(scores);
+console.<span class="method">log</span>(values);  <span class="comment">// [95, 88, 92, 87]</span>
+
+<span class="comment">// Calculate average!</span>
+<span class="keyword">const</span> total <span class="operator">=</span> values.<span class="method">reduce</span>((sum, val) <span class="operator">=></span> sum <span class="operator">+</span> val, <span class="number">0</span>);
+<span class="keyword">const</span> average <span class="operator">=</span> total <span class="operator">/</span> values.length;
+console.<span class="method">log</span>(<span class="string">`Average: ${average}`</span>);  <span class="comment">// Average: 90.5</span>
+
+<span class="comment">// Find highest score</span>
+<span class="keyword">const</span> highest <span class="operator">=</span> Math.<span class="method">max</span>(...values);
+console.<span class="method">log</span>(<span class="string">`Highest: ${highest}`</span>);  <span class="comment">// Highest: 95</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Object.entries() — Get Key-Value Pairs</h2>
+            <p>Returns an array of <code>[key, value]</code> pairs. Perfect for looping!</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                    <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> prices <span class="operator">=</span> {
+    coffee: <span class="number">4.99</span>,
+    tea: <span class="number">3.49</span>,
+    juice: <span class="number">5.99</span>,
+    water: <span class="number">1.99</span>
+};
+
+<span class="keyword">const</span> entries <span class="operator">=</span> Object.<span class="method">entries</span>(prices);
+console.<span class="method">log</span>(entries);
+<span class="comment">// [["coffee", 4.99], ["tea", 3.49], ["juice", 5.99], ["water", 1.99]]</span>
+
+<span class="comment">// Loop with destructuring! 🎉</span>
+<span class="keyword">for</span> (<span class="keyword">const</span> [drink, price] <span class="keyword">of</span> entries) {
+    console.<span class="method">log</span>(<span class="string">`☕ ${drink}: $${price}`</span>);
+}
+
+<span class="comment">// Find items under $4</span>
+<span class="keyword">const</span> affordable <span class="operator">=</span> entries
+    .<span class="method">filter</span>(([_, price]) <span class="operator">=></span> price <span class="operator"><</span> <span class="number">4</span>)
+    .<span class="method">map</span>(([drink]) <span class="operator">=></span> drink);
+console.<span class="method">log</span>(<span class="string">`Under $4: ${affordable}`</span>);
+<span class="comment">// Under $4: tea,water</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🆚 Quick Comparison</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Method</th>
+                    <th>Returns</th>
+                    <th>Example Output</th>
+                </tr>
+                <tr>
+                    <td><code>Object.keys(obj)</code></td>
+                    <td>Array of keys</td>
+                    <td><code>["name", "age"]</code></td>
+                </tr>
+                <tr>
+                    <td><code>Object.values(obj)</code></td>
+                    <td>Array of values</td>
+                    <td><code>["Alex", 25]</code></td>
+                </tr>
+                <tr>
+                    <td><code>Object.entries(obj)</code></td>
+                    <td>Array of [key, value]</td>
+                    <td><code>[["name","Alex"],["age",25]]</code></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="playground">
+            <div class="playground-header">
+                <h3>🎮 Explore Object Methods!</h3>
+                <button class="run-btn" onclick="runPlayground('pg-objmethods')">▶ Run</button>
+            </div>
+            <div class="playground-body">
+                <div class="playground-editor">
+                    <textarea id="pg-objmethods">const inventory = {
+    apples: 50,
+    bananas: 30,
+    oranges: 45,
+    grapes: 20,
+    mangoes: 15
+};
+
+// All keys
+console.log("Fruits:", Object.keys(inventory));
+
+// All values  
+console.log("Quantities:", Object.values(inventory));
+
+// Total items
+const total = Object.values(inventory)
+    .reduce((sum, qty) => sum + qty, 0);
+console.log("Total items:", total);
+
+// Display each fruit
+for (const [fruit, qty] of Object.entries(inventory)) {
+    const bar = "🟩".repeat(Math.floor(qty / 10));
+    console.log(`${fruit}: ${bar} (${qty})`);
+}
+
+// Most stocked fruit
+const [topFruit] = Object.entries(inventory)
+    .sort(([,a], [,b]) => b - a)[0];
+console.log(`Most stocked: ${topFruit}`);</textarea>
+                </div>
+                <div class="playground-output">
+                    <div class="output-label">Output</div>
+                    <div class="output-content" id="output-pg-objmethods">Click ▶ Run to see output...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('destructuring')">← Destructuring</button>
+            <button class="nav-btn" onclick="showSection('exercises')">Next: Exercises →</button>
+        </div>
+    </div>
+
+    <!-- EXERCISES -->
+    <div class="section" id="section-exercises">
+        <div class="section-header">
+            <div class="emoji-banner">💪</div>
+            <h1>Practice Exercises</h1>
+            <p>Put your knowledge to the test! Complete these exercises to earn points.</p>
+        </div>
+
+        <!-- Exercise 1 -->
+        <div class="exercise" id="exercise1">
+            <div class="exercise-header">
+                <h3>💪 Exercise 1: Create a Book Object</h3>
+                <span class="exercise-difficulty difficulty-easy">Easy</span>
+            </div>
+            <p style="color:#aaa">Create an object called <code>book</code> with properties: <code>title</code> (string), <code>author</code> (string), <code>pages</code> (number), and <code>isRead</code> (boolean). Then log the title.</p>
+            <textarea id="ex1-code">// Create your book object here:
+
+
+// Log the title:
+</textarea>
+            <div class="exercise-buttons">
+                <button class="check-btn" onclick="checkExercise(1)">✅ Check Answer</button>
+                <button class="hint-btn" onclick="toggleHint(1)">💡 Hint</button>
+                <button class="solution-btn" onclick="toggleSolution(1)">👀 Solution</button>
+            </div>
+            <div class="hint-text" id="hint1">Use curly braces <code>{}</code> to create the object. Remember to use <code>const</code>. Access properties with dot notation!</div>
+            <div class="solution-text" id="solution1"><pre style="color:#a8e6cf; font-family:'Fira Code',monospace;">const book = {
+    title: "The Great Gatsby",
+    author: "F. Scott Fitzgerald",
+    pages: 180,
+    isRead: true
+};
+console.log(book.title);</pre></div>
+            <div class="exercise-result" id="result1"></div>
+        </div>
+
+        <!-- Exercise 2 -->
+        <div class="exercise" id="exercise2">
+            <div class="exercise-header">
+                <h3>💪 Exercise 2: Add a Method</h3>
+                <span class="exercise-difficulty difficulty-easy">Easy</span>
+            </div>
+            <p style="color:#aaa">Create a <code>pet</code> object with <code>name</code> and <code>sound</code> properties, plus a <code>speak()</code> method that returns <code>"[name] says [sound]!"</code> using <code>this</code>.</p>
+            <textarea id="ex2-code">// Create your pet object with a speak() method:
+
+
+// Call the method:
+</textarea>
+            <div class="exercise-buttons">
+                <button class="check-btn" onclick="checkExercise(2)">✅ Check Answer</button>
+                <button class="hint-btn" onclick="toggleHint(2)">💡 Hint</button>
+                <button class="solution-btn" onclick="toggleSolution(2)">👀 Solution</button>
+            </div>
+            <div class="hint-text" id="hint2">Use <code>this.name</code> and <code>this.sound</code> inside the method. Use template literals with <code>${}</code> for clean string building.</div>
+            <div class="solution-text" id="solution2"><pre style="color:#a8e6cf; font-family:'Fira Code',monospace;">const pet = {
+    name: "Buddy",
+    sound: "Woof",
+    speak() {
+        return `${this.name} says ${this.sound}!`;
+    }
+};
+console.log(pet.speak());</pre></div>
+            <div class="exercise-result" id="result2"></div>
+        </div>
+
+        <!-- Exercise 3 -->
+        <div class="exercise" id="exercise3">
+            <div class="exercise-header">
+                <h3>💪 Exercise 3: Destructure This!</h3>
+                <span class="exercise-difficulty difficulty-medium">Medium</span>
+            </div>
+            <p style="color:#aaa">Given the object below, use destructuring to extract <code>name</code>, <code>level</code>, and <code>hp</code> (from stats). Log them all.</p>
+            <textarea id="ex3-code">const character = {
+    name: "Gandalf",
+    level: 99,
+    class: "Wizard",
+    stats: { hp: 500, mp: 999, str: 30 }
+};
+
+// Destructure name, level, and stats.hp here:
+
+
+// Log them:
+</textarea>
+            <div class="exercise-buttons">
+                <button class="check-btn" onclick="checkExercise(3)">✅ Check Answer</button>
+                <button class="hint-btn" onclick="toggleHint(3)">💡 Hint</button>
+                <button class="solution-btn" onclick="toggleSolution(3)">👀 Solution</button>
+            </div>
+            <div class="hint-text" id="hint3">For nested destructuring, use: <code>const { stats: { hp } } = character</code>. You can combine it with regular destructuring on the same line!</div>
+            <div class="solution-text" id="solution3"><pre style="color:#a8e6cf; font-family:'Fira Code',monospace;">const { name, level, stats: { hp } } = character;
+console.log(name);   // "Gandalf"
+console.log(level);  // 99
+console.log(hp);     // 500</pre></div>
+            <div class="exercise-result" id="result3"></div>
+        </div>
+
+        <!-- Exercise 4 -->
+        <div class="exercise" id="exercise4">
+            <div class="exercise-header">
+                <h3>💪 Exercise 4: Object.keys/values Challenge</h3>
+                <span class="exercise-difficulty difficulty-medium">Medium</span>
+            </div>
+            <p style="color:#aaa">Given the <code>scores</code> object, use <code>Object.values()</code> to calculate the average score and <code>Object.keys()</code> to count subjects.</p>
+            <textarea id="ex4-code">const scores = {
+    math: 90,
+    science: 85,
+    english: 92,
+    art: 88
+};
+
+// Count subjects using Object.keys():
+
+
+// Calculate average using Object.values():
+
+
+// Log both results:
+</textarea>
+            <div class="exercise-buttons">
+                <button class="check-btn" onclick="checkExercise(4)">✅ Check Answer</button>
+                <button class="hint-btn" onclick="toggleHint(4)">💡 Hint</button>
+                <button class="solution-btn" onclick="toggleSolution(4)">👀 Solution</button>
+            </div>
+            <div class="hint-text" id="hint4">Use <code>.length</code> to count keys. Use <code>.reduce((sum, val) => sum + val, 0)</code> to sum values, then divide by length.</div>
+            <div class="solution-text" id="solution4"><pre style="color:#a8e6cf; font-family:'Fira Code',monospace;">const subjectCount = Object.keys(scores).length;
+const values = Object.values(scores);
+const average = values.reduce((sum, v) => sum + v, 0) / values.length;
+
+console.log(`Subjects: ${subjectCount}`);  // 4
+console.log(`Average: ${average}`);        // 88.75</pre></div>
+            <div class="exercise-result" id="result4"></div>
+        </div>
+
+        <!-- Exercise 5 -->
+        <div class="exercise" id="exercise5">
+            <div class="exercise-header">
+                <h3>💪 Exercise 5: Bank Account Object</h3>
+                <span class="exercise-difficulty difficulty-hard">Hard</span>
+            </div>
+            <p style="color:#aaa">Create a <code>bankAccount</code> object with: <code>owner</code>, <code>balance</code> (start at 1000), <code>deposit(amount)</code> method, <code>withdraw(amount)</code> method (check if enough funds!), and <code>getStatement()</code> method.</p>
+            <textarea id="ex5-code">// Create the bankAccount object:
+
+
+// Test it:
+// bankAccount.deposit(500);
+// bankAccount.withdraw(200);
+// console.log(bankAccount.getStatement());
+</textarea>
+            <div class="exercise-buttons">
+                <button class="check-btn" onclick="checkExercise(5)">✅ Check Answer</button>
+                <button class="hint-btn" onclick="toggleHint(5)">💡 Hint</button>
+                <button class="solution-btn" onclick="toggleSolution(5)">👀 Solution</button>
+            </div>
+            <div class="hint-text" id="hint5">Use <code>this.balance</code> to access and modify balance. In withdraw, check <code>if (amount > this.balance)</code> first. Return messages from each method.</div>
+            <div class="solution-text" id="solution5"><pre style="color:#a8e6cf; font-family:'Fira Code',monospace;">const bankAccount = {
+    owner: "Alex",
+    balance: 1000,
+    
+    deposit(amount) {
+        this.balance += amount;
+        return `Deposited $${amount}. Balance: $${this.balance}`;
+    },
+    
+    withdraw(amount) {
+        if (amount > this.balance) {
+            return `Insufficient funds! Balance: $${this.balance}`;
+        }
+        this.balance -= amount;
+        return `Withdrew $${amount}. Balance: $${this.balance}`;
+    },
+    
+    getStatement() {
+        return `${this.owner}'s account: $${this.balance}`;
+    }
+};
+
+console.log(bankAccount.deposit(500));
+console.log(bankAccount.withdraw(200));
+console.log(bankAccount.getStatement());</pre></div>
+            <div class="exercise-result" id="result5"></div>
+        </div>
+
+        <!-- Exercise 6 -->
+        <div class="exercise" id="exercise6">
+            <div class="exercise-header">
+                <h3>💪 Exercise 6: Object.entries Transform</h3>
+                <span class="exercise-difficulty difficulty-hard">Hard</span>
+            </div>
+            <p style="color:#aaa">Given an object of temperatures in Celsius, use <code>Object.entries()</code> to create a NEW object with temperatures converted to Fahrenheit (F = C × 9/5 + 32).</p>
+            <textarea id="ex6-code">const celsius = {
+    monday: 20,
+    tuesday: 25,
+    wednesday: 18,
+    thursday: 22,
+    friday: 30
+};
+
+// Convert to Fahrenheit using Object.entries():
+// Hint: Object.fromEntries() can convert back to an object
+
+
+// Log the result:
+</textarea>
+            <div class="exercise-buttons">
+                <button class="check-btn" onclick="checkExercise(6)">✅ Check Answer</button>
+                <button class="hint-btn" onclick="toggleHint(6)">💡 Hint</button>
+                <button class="solution-btn" onclick="toggleSolution(6)">👀 Solution</button>
+            </div>
+            <div class="hint-text" id="hint6">Use <code>Object.entries(celsius).map(([day, temp]) => [day, temp * 9/5 + 32])</code> then wrap with <code>Object.fromEntries()</code>.</div>
+            <div class="solution-text" id="solution6"><pre style="color:#a8e6cf; font-family:'Fira Code',monospace;">const fahrenheit = Object.fromEntries(
+    Object.entries(celsius).map(([day, c]) => [day, c * 9/5 + 32])
+);
+
+console.log(fahrenheit);
+// { monday: 68, tuesday: 77, wednesday: 64.4, thursday: 71.6, friday: 86 }</pre></div>
+            <div class="exercise-result" id="result6"></div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('object-methods')">← Object Methods</button>
+            <button class="nav-btn" onclick="showSection('quiz')">Next: Final Quiz →</button>
+        </div>
+    </div>
+
+    <!-- QUIZ SECTION -->
+    <div class="section" id="section-quiz">
+        <div class="section-header">
+            <div class="emoji-banner">🧠</div>
+            <h1>Final Quiz</h1>
+            <p>Test everything you've learned! 10 questions, earn ⭐ for each correct answer.</p>
+        </div>
+
+        <div id="quizContainer"></div>
+
+        <div class="card" id="quizResults" style="display:none">
+            <h2>🏆 Quiz Complete!</h2>
+            <p id="quizScoreText" style="font-size:24px; font-weight:700; text-align:center; margin:20px 0;"></p>
+            <div style="text-align:center">
+                <button class="run-btn" onclick="resetQuiz()" style="padding:12px 30px;">🔄 Retake Quiz</button>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('exercises')">← Exercises</button>
+            <button class="nav-btn" onclick="showSection('pitfalls')">Next: Common Pitfalls →</button>
+        </div>
+    </div>
+
+    <!-- PITFALLS SECTION -->
+    <div class="section" id="section-pitfalls">
+        <div class="section-header">
+            <div class="emoji-banner">⚠️</div>
+            <h1>Common Pitfalls & Mistakes</h1>
+            <p>Learn from the most common mistakes JavaScript beginners make with objects!</p>
+        </div>
+
+        <div class="pitfall-card">
+            <h4>❌ Pitfall 1: Forgetting parentheses when calling methods</h4>
+            <div class="pitfall-vs">
+                <div class="pitfall-wrong">
+                    <div class="label">❌ WRONG</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content">console.log(dog.bark);
+<span class="comment">// logs the function itself!</span>
+<span class="comment">// ƒ () { return "Woof!"; }</span></div>
+                    </div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="pitfall-right">
+                    <div class="label">✅ CORRECT</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content">console.log(dog.bark());
+<span class="comment">// "Woof!" ✅</span>
+<span class="comment">// () calls the function</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pitfall-card">
+            <h4>❌ Pitfall 2: Using arrow functions for methods with <code>this</code></h4>
+            <div class="pitfall-vs">
+                <div class="pitfall-wrong">
+                    <div class="label">❌ WRONG</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> obj <span class="operator">=</span> {
+    name: <span class="string">"Alex"</span>,
+    greet: () <span class="operator">=></span> {
+        <span class="keyword">return</span> <span class="keyword">this</span>.name;
+        <span class="comment">// undefined! ❌</span>
+    }
+};</div>
+                    </div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="pitfall-right">
+                    <div class="label">✅ CORRECT</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> obj <span class="operator">=</span> {
+    name: <span class="string">"Alex"</span>,
+    greet() {
+        <span class="keyword">return</span> <span class="keyword">this</span>.name;
+        <span class="comment">// "Alex" ✅</span>
+    }
+};</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pitfall-card">
+            <h4>❌ Pitfall 3: Thinking <code>const</code> prevents property changes</h4>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> user <span class="operator">=</span> { name: <span class="string">"Alex"</span>, age: <span class="number">25</span> };
+
+<span class="comment">// ✅ This WORKS! You can change properties</span>
+user.age <span class="operator">=</span> <span class="number">26</span>;           <span class="comment">// OK!</span>
+user.email <span class="operator">=</span> <span class="string">"a@b.com"</span>; <span class="comment">// OK!</span>
+
+<span class="comment">// ❌ This FAILS! Can't reassign the variable</span>
+<span class="comment">// user = { name: "Bob" }; // TypeError!</span>
+
+<span class="comment">// 💡 const prevents REASSIGNMENT, not MUTATION</span></div>
+            </div>
+        </div>
+
+        <div class="pitfall-card">
+            <h4>❌ Pitfall 4: Accessing nested properties without checking</h4>
+            <div class="pitfall-vs">
+                <div class="pitfall-wrong">
+                    <div class="label">❌ CRASHES</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> user <span class="operator">=</span> { name: <span class="string">"Alex"</span> };
+console.log(user.address.city);
+<span class="comment">// TypeError: Cannot read</span>
+<span class="comment">// property of undefined 💥</span></div>
+                    </div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="pitfall-right">
+                    <div class="label">✅ SAFE</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> user <span class="operator">=</span> { name: <span class="string">"Alex"</span> };
+console.log(user.address?.city);
+<span class="comment">// undefined ✅</span>
+<span class="comment">// Optional chaining saves us!</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pitfall-card">
+            <h4>❌ Pitfall 5: Comparing objects with ===</h4>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="lang">JavaScript</span>
+                </div>
+                <div class="code-content"><span class="keyword">const</span> a <span class="operator">=</span> { name: <span class="string">"Alex"</span> };
+<span class="keyword">const</span> b <span class="operator">=</span> { name: <span class="string">"Alex"</span> };
+<span class="keyword">const</span> c <span class="operator">=</span> a;
+
+console.log(a <span class="operator">===</span> b);  <span class="comment">// false! 😱 Different objects in memory</span>
+console.log(a <span class="operator">===</span> c);  <span class="comment">// true! Same reference</span>
+
+<span class="comment">// To compare CONTENTS, use JSON.stringify:</span>
+console.log(JSON.stringify(a) <span class="operator">===</span> JSON.stringify(b));  <span class="comment">// true ✅</span></div>
+            </div>
+        </div>
+
+        <div class="pitfall-card">
+            <h4>❌ Pitfall 6: Destructuring with wrong variable names</h4>
+            <div class="pitfall-vs">
+                <div class="pitfall-wrong">
+                    <div class="label">❌ WRONG</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> obj <span class="operator">=</span> { name: <span class="string">"Alex"</span> };
+<span class="keyword">const</span> { username } <span class="operator">=</span> obj;
+console.log(username);
+<span class="comment">// undefined ❌</span>
+<span class="comment">// 'username' doesn't exist!</span></div>
+                    </div>
+                </div>
+                <div class="vs-text">VS</div>
+                <div class="pitfall-right">
+                    <div class="label">✅ CORRECT</div>
+                    <div class="code-block" style="margin:0;border-radius:0 0 10px 10px">
+                        <div class="code-content"><span class="keyword">const</span> obj <span class="operator">=</span> { name: <span class="string">"Alex"</span> };
+<span class="keyword">const</span> { name: username } <span class="operator">=</span> obj;
+console.log(username);
+<span class="comment">// "Alex" ✅</span>
+<span class="comment">// Rename with : syntax</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('quiz')">← Quiz</button>
+            <button class="nav-btn" onclick="showSection('cheatsheet')">Next: Cheat Sheet →</button>
+        </div>
+    </div>
+
+    <!-- CHEAT SHEET -->
+    <div class="section" id="section-cheatsheet">
+        <div class="section-header">
+            <div class="emoji-banner">📋</div>
+            <h1>Objects Cheat Sheet</h1>
+            <p>Your quick reference guide — bookmark this page!</p>
+        </div>
+
+        <div class="card">
+            <h2>📝 Creating Objects</h2>
+            <div class="code-block">
+                <div class="code-header"><span class="lang">Quick Reference</span></div>
+                <div class="code-content"><span class="comment">// Object Literal (recommended)</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> { key: <span class="string">"value"</span>, num: <span class="number">42</span> };
+
+<span class="comment">// Empty object</span>
+<span class="keyword">const</span> empty <span class="operator">=</span> {};
+
+<span class="comment">// With methods</span>
+<span class="keyword">const</span> obj2 <span class="operator">=</span> { greet() { <span class="keyword">return</span> <span class="string">"hi"</span>; } };</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔑 Access & Modify</h2>
+            <div class="code-block">
+                <div class="code-header"><span class="lang">Quick Reference</span></div>
+                <div class="code-content"><span class="comment">// READ</span>
+obj.key             <span class="comment">// dot notation</span>
+obj[<span class="string">"key"</span>]           <span class="comment">// bracket notation</span>
+obj[variable]       <span class="comment">// dynamic key</span>
+
+<span class="comment">// ADD / UPDATE</span>
+obj.newKey <span class="operator">=</span> <span class="string">"val"</span>;  <span class="comment">// add new property</span>
+obj.key <span class="operator">=</span> <span class="string">"new"</span>;     <span class="comment">// update existing</span>
+
+<span class="comment">// DELETE</span>
+<span class="keyword">delete</span> obj.key;      <span class="comment">// remove property</span>
+
+<span class="comment">// CHECK</span>
+<span class="string">"key"</span> <span class="keyword">in</span> obj         <span class="comment">// true/false</span>
+obj?.deep?.prop     <span class="comment">// optional chaining</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📤 Destructuring</h2>
+            <div class="code-block">
+                <div class="code-header"><span class="lang">Quick Reference</span></div>
+                <div class="code-content"><span class="keyword">const</span> { a, b } <span class="operator">=</span> obj;                  <span class="comment">// basic</span>
+<span class="keyword">const</span> { a: renamed } <span class="operator">=</span> obj;            <span class="comment">// rename</span>
+<span class="keyword">const</span> { a <span class="operator">=</span> <span class="string">"default"</span> } <span class="operator">=</span> obj;          <span class="comment">// default</span>
+<span class="keyword">const</span> { nested: { x } } <span class="operator">=</span> obj;        <span class="comment">// nested</span>
+<span class="keyword">function</span> fn({ a, b }) { }             <span class="comment">// in params</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🧰 Built-in Methods</h2>
+            <div class="code-block">
+                <div class="code-header"><span class="lang">Quick Reference</span></div>
+                <div class="code-content">Object.<span class="method">keys</span>(obj)       <span class="comment">// ["key1", "key2", ...]</span>
+Object.<span class="method">values</span>(obj)     <span class="comment">// ["val1", "val2", ...]</span>
+Object.<span class="method">entries</span>(obj)    <span class="comment">// [["key1","val1"], ["key2","val2"]]</span>
+Object.<span class="method">assign</span>({}, obj) <span class="comment">// shallow copy</span>
+Object.<span class="method">freeze</span>(obj)     <span class="comment">// prevent all changes</span>
+Object.<span class="method">fromEntries</span>(arr)<span class="comment">// array → object</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚡ <code>this</code> Rules</h2>
+            <div class="code-block">
+                <div class="code-header"><span class="lang">Quick Reference</span></div>
+                <div class="code-content"><span class="comment">// In object method → the object</span>
+<span class="keyword">const</span> obj <span class="operator">=</span> { fn() { <span class="keyword">this</span>; <span class="comment">/* = obj */</span> } };
+
+<span class="comment">// ⚠️ Arrow function → parent scope (NOT the object!)</span>
+<span class="keyword">const</span> obj2 <span class="operator">=</span> { fn: () <span class="operator">=></span> { <span class="keyword">this</span>; <span class="comment">/* ≠ obj2! */</span> } };
+
+<span class="comment">// Rule: Use regular functions/shorthand for methods!</span></div>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <div class="tip-title">🎉 Congratulations!</div>
+            <p>You've completed the JavaScript Objects Adventure! Keep practicing and refer back to this cheat sheet whenever you need a reminder. Happy coding! 🚀</p>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="showSection('pitfalls')">← Pitfalls</button>
+            <button class="nav-btn" onclick="showSection('welcome')">🏠 Back to Start</button>
+        </div>
+    </div>
+
+</main>
+
+<div class="celebration" id="celebration"></div>
+
+<script>
+    // =============================================
+    //  APP STATE
+    // =============================================
+    let score = 0;
+    let completedSections = new Set();
+    let quizAnswered = new Set();
+    let exerciseCompleted = new Set();
+    const totalSections = 12;
+    const builderProperties = {};
+
+    // =============================================
+    //  BACKGROUND ANIMATION
+    // =============================================
+    function createParticles() {
+        const bg = document.getElementById('bgAnimation');
+        const colors = ['#6c5ce7', '#00cec9', '#fd79a8', '#fdcb6e', '#00b894'];
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            const size = Math.random() * 6 + 2;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (Math.random() * 20 + 10) + 's';
+            particle.style.animationDelay = (Math.random() * 20) + 's';
+            bg.appendChild(particle);
+        }
+    }
+    createParticles();
+
+    // =============================================
+    //  NAVIGATION
+    // =============================================
+    function showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+        // Show target section
+        const target = document.getElementById('section-' + sectionId);
+        if (target) target.classList.add('active');
+
+        // Update nav
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.section === sectionId) {
+                item.classList.add('active');
+            }
+        });
+
+        // Mark as visited
+        completedSections.add(sectionId);
+        updateProgress();
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Close sidebar on mobile
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.remove('show');
+        }
+    }
+
+    // Sidebar toggle
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    // =============================================
+    //  PROGRESS TRACKING
+    // =============================================
+    function updateProgress() {
+        const percent = Math.round((completedSections.size / totalSections) * 100);
+        document.getElementById('progressPercent').textContent = percent + '%';
+        document.getElementById('progressFill').style.width = percent + '%';
+
+        // Update nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            if (completedSections.has(item.dataset.section)) {
+                item.classList.add('completed');
+            }
+        });
+    }
+
+    // =============================================
+    //  SCORE SYSTEM
+    // =============================================
+    function addScore(points) {
+        score += points;
+        document.getElementById('scoreValue').textContent = score;
+        const el = document.getElementById('scoreValue');
+        el.parentElement.parentElement.style.transform = 'scale(1.2)';
+        setTimeout(() => el.parentElement.parentElement.style.transform = 'scale(1)', 300);
+    }
+
+    // =============================================
+    //  CODE COPY
+    // =============================================
+    function copyCode(btn) {
+        const codeContent = btn.closest('.code-block').querySelector('.code-content');
+        const text = codeContent.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy', 2000);
+        });
+    }
+
+    // =============================================
+    //  PLAYGROUND RUNNER
+    // =============================================
+    function runPlayground(id) {
+        const code = document.getElementById(id).value;
+        const outputId = 'output-' + id;
+        const outputEl = document.getElementById(outputId);
+
+        let output = [];
+        const originalLog = console.log;
+
+        console.log = function (...args) {
+            output.push(args.map(a => {
+                if (typeof a === 'object') return JSON.stringify(a, null, 2);
+                return String(a);
+            }).join(' '));
+        };
+
+        try {
+            eval(code);
+            outputEl.textContent = output.length ? output.join('\n') : '(no output)';
+            outputEl.style.color = '#00b894';
+        } catch (err) {
+            outputEl.textContent = '❌ Error: ' + err.message;
+            outputEl.style.color = '#e17055';
+        }
+
+        console.log = originalLog;
+    }
+
+    // =============================================
+    //  OBJECT BUILDER
+    // =============================================
+    function addToBuilder() {
+        const keyInput = document.getElementById('builderKey');
+        const valueInput = document.getElementById('builderValue');
+        const key = keyInput.value.trim();
+        const value = valueInput.value.trim();
+
+        if (!key || !value) return;
+
+        builderProperties[key] = value;
+        renderBuilder();
+        keyInput.value = '';
+        valueInput.value = '';
+        keyInput.focus();
+    }
+
+    function renderBuilder() {
+        const result = document.getElementById('builderResult');
+        const entries = Object.entries(builderProperties);
+
+        if (entries.length === 0) {
+            result.innerHTML = `<span style="color:#c792ea">const</span> <span style="color:#eeffff">myObject</span> <span style="color:#89ddff">=</span> { }<br><span style="color:#546e7a">// Add properties above! 👆</span>`;
+            return;
+        }
+
+        let html = `<span style="color:#c792ea">const</span> <span style="color:#eeffff">myObject</span> <span style="color:#89ddff">=</span> {\n`;
+        entries.forEach(([k, v], i) => {
+            const isNum = !isNaN(v) && v !== '';
+            const displayVal = isNum ? `<span style="color:#f78c6c">${v}</span>` : `<span style="color:#a8e6cf">"${v}"</span>`;
+            html += `  <span style="color:#80cbc4">${k}</span>: ${displayVal}${i < entries.length - 1 ? ',' : ''}\n`;
+        });
+        html += `};`;
+        result.innerHTML = html;
+    }
+
+    function resetBuilder() {
+        for (const key in builderProperties) delete builderProperties[key];
+        renderBuilder();
+    }
+
+    // =============================================
+    //  THIS KEYWORD EXAMPLES
+    // =============================================
+    function showThisExample(type) {
+        const container = document.getElementById('thisExampleOutput');
+        const code = document.getElementById('thisExampleCode');
+        container.style.display = 'block';
+
+        const examples = {
+            method: `<span class="comment">// In an object method, 'this' = the object itself</span>
+<span class="keyword">const</span> user <span class="operator">=</span> {
+    name: <span class="string">"Alex"</span>,
+    sayName() {
+        console.log(<span class="keyword">this</span>.name);
+        <span class="comment">//          ^^^^ = user object</span>
+        <span class="comment">//          so this.name = "Alex"</span>
+    }
+};
+user.sayName(); <span class="comment">// "Alex"</span>`,
+
+            global: `<span class="comment">// Outside any object, 'this' = window (browser)</span>
+console.log(<span class="keyword">this</span>);
+<span class="comment">// Window { ... } (in browser)</span>
+
+<span class="comment">// In a standalone function (non-strict mode)</span>
+<span class="keyword">function</span> showThis() {
+    console.log(<span class="keyword">this</span>); <span class="comment">// Window</span>
+}
+
+<span class="comment">// 💡 You rarely need 'this' outside objects</span>`,
+
+            arrow: `<span class="comment">// Arrow functions DON'T have their own 'this'</span>
+<span class="comment">// They inherit from the surrounding scope</span>
+
+<span class="keyword">const</span> obj <span class="operator">=</span> {
+    name: <span class="string">"Alex"</span>,
+    
+    <span class="comment">// ❌ Arrow function - 'this' is NOT obj!</span>
+    bad: () <span class="operator">=></span> console.log(<span class="keyword">this</span>.name),
+    
+    <span class="comment">// ✅ Regular function - 'this' IS obj</span>
+    good() { console.log(<span class="keyword">this</span>.name); }
+};
+
+obj.bad();  <span class="comment">// undefined</span>
+obj.good(); <span class="comment">// "Alex"</span>`
+        };
+
+        code.innerHTML = examples[type];
+    }
+
+    // =============================================
+    //  EXERCISES
+    // =============================================
+    function checkExercise(num) {
+        const code = document.getElementById(`ex${num}-code`).value;
+        const resultEl = document.getElementById(`result${num}`);
+        resultEl.classList.add('show');
+
+        let output = [];
+        const originalLog = console.log;
+        console.log = function (...args) {
+            output.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+        };
+
+        try {
+            eval(code);
+            let passed = false;
+
+            switch (num) {
+                case 1:
+                    passed = code.includes('book') && code.includes('title') && code.includes('author') && code.includes('pages') && code.includes('isRead') && output.length > 0;
+                    break;
+                case 2:
+                    passed = code.includes('speak') && code.includes('this.') && output.some(o => o.includes('says'));
+                    break;
+                case 3:
+                    passed = code.includes('const {') && code.includes('name') && code.includes('hp') && output.length >= 2;
+                    break;
+                case 4:
+                    passed = code.includes('Object.keys') && code.includes('Object.values') && output.length >= 1;
+                    break;
+                case 5:
+                    passed = code.includes('deposit') && code.includes('withdraw') && code.includes('this.balance') && output.length >= 1;
+                    break;
+                case 6:
+                    passed = code.includes('Object.entries') && output.length >= 1;
+                    break;
+            }
+
+            if (passed) {
+                resultEl.style.background = 'rgba(0, 184, 148, 0.1)';
+                resultEl.style.color = '#00b894';
+                resultEl.innerHTML = `✅ Great job! Output:<br><pre style="margin-top:8px;color:#a8e6cf">${output.join('\n')}</pre>`;
+                if (!exerciseCompleted.has(num)) {
+                    exerciseCompleted.add(num);
+                    addScore(10);
+                    celebrate();
+                }
+            } else {
+                resultEl.style.background = 'rgba(253, 203, 110, 0.1)';
+                resultEl.style.color = '#fdcb6e';
+                resultEl.innerHTML = `⚡ Almost there! Make sure you're using the right approach. Check the hint or solution for guidance.${output.length ? '<br><pre style="margin-top:8px;color:#aaa">' + output.join('\n') + '</pre>' : ''}`;
+            }
+        } catch (err) {
+            resultEl.style.background = 'rgba(225, 112, 85, 0.1)';
+            resultEl.style.color = '#e17055';
+            resultEl.innerHTML = `❌ Error: ${err.message}`;
+        }
+
+        console.log = originalLog;
+    }
+
+    function toggleHint(num) {
+        document.getElementById(`hint${num}`).classList.toggle('show');
+    }
+
+    function toggleSolution(num) {
+        document.getElementById(`solution${num}`).classList.toggle('show');
+    }
+
+    // =============================================
+    //  QUIZ
+    // =============================================
+    const quizQuestions = [
+        {
+            q: "Which is the correct way to create an object literal?",
+            options: [
+                'const obj = [];',
+                'const obj = {};',
+                'const obj = ();',
+                'const obj = new Array();'
+            ],
+            correct: 1,
+            explanation: "Object literals use curly braces {}. Square brackets [] create arrays."
+        },
+        {
+            q: "How do you access the 'name' property of a person object?",
+            options: [
+                'person(name)',
+                'person->name',
+                'person.name',
+                'person::name'
+            ],
+            correct: 2,
+            explanation: "Dot notation (person.name) is the most common way to access properties."
+        },
+        {
+            q: "What does 'this' refer to inside an object method?",
+            options: [
+                'The global window',
+                'The function itself',
+                'The object that owns the method',
+                'undefined'
+            ],
+            correct: 2,
+            explanation: "In a regular function method, 'this' refers to the object the method belongs to."
+        },
+        {
+            q: "What does Object.keys({a: 1, b: 2, c: 3}) return?",
+            options: [
+                '[1, 2, 3]',
+                '["a", "b", "c"]',
+                '[["a",1], ["b",2], ["c",3]]',
+                '{a: 1, b: 2, c: 3}'
+            ],
+            correct: 1,
+            explanation: "Object.keys() returns an array of the property names (keys) as strings."
+        },
+        {
+            q: "Which destructuring syntax correctly extracts name and age?",
+            options: [
+                'const [name, age] = person;',
+                'const {name, age} = person;',
+                'const (name, age) = person;',
+                'const name, age = person;'
+            ],
+            correct: 1,
+            explanation: "Object destructuring uses curly braces {}. Square brackets [] are for array destructuring."
+        },
+        {
+            q: "Why should you avoid arrow functions for object methods that use 'this'?",
+            options: [
+                "Arrow functions are slower",
+                "Arrow functions can't return values",
+                "Arrow functions don't have their own 'this'",
+                "Arrow functions can't take parameters"
+            ],
+            correct: 2,
+            explanation: "Arrow functions inherit 'this' from the parent scope, so 'this' won't point to the object."
+        },
+        {
+            q: "What is person['favorite color'] an example of?",
+            options: [
+                'Dot notation',
+                'Bracket notation',
+                'Destructuring',
+                'Template literal'
+            ],
+            correct: 1,
+            explanation: "Bracket notation is needed when property names have spaces or special characters."
+        },
+        {
+            q: "What does Object.values({x: 10, y: 20}) return?",
+            options: [
+                '["x", "y"]',
+                '[10, 20]',
+                '[["x",10], ["y",20]]',
+                '30'
+            ],
+            correct: 1,
+            explanation: "Object.values() returns an array of the property values."
+        },
+        {
+            q: 'const {name: userName} = person; — What does this do?',
+            options: [
+                'Creates a variable called name',
+                'Creates a variable called userName with the value of person.name',
+                'Renames the property in the object',
+                'Throws an error'
+            ],
+            correct: 1,
+            explanation: "The syntax {name: userName} extracts person.name and stores it in a variable called userName."
+        },
+        {
+            q: 'const obj = {a: 1}; obj = {b: 2}; — What happens?',
+            options: [
+                'obj becomes {b: 2}',
+                'obj becomes {a: 1, b: 2}',
+                'TypeError — cannot reassign const',
+                'obj becomes {a: 1}'
+            ],
+            correct: 2,
+            explanation: "'const' prevents reassignment of the variable. You CAN modify properties (obj.a = 2) but CANNOT reassign the entire variable."
+        }
+    ];
+
+    function buildQuiz() {
+        const container = document.getElementById('quizContainer');
+        container.innerHTML = '';
+        quizAnswered.clear();
+
+        quizQuestions.forEach((q, i) => {
+            const quizHTML = `
+                <div class="quiz-container" id="quiz-q${i}">
+                    <div class="quiz-question">
+                        <span class="quiz-question-number">${i + 1}</span>
+                        ${q.q}
+                    </div>
+                    ${q.options.map((opt, j) => `
+                        <div class="quiz-option" onclick="answerQuiz(${i}, ${j})" id="quiz-${i}-${j}">
+                            ${opt}
+                        </div>
+                    `).join('')}
+                    <div class="quiz-feedback" id="quiz-feedback-${i}"></div>
+                </div>
+            `;
+            container.innerHTML += quizHTML;
+        });
+    }
+
+    function answerQuiz(questionIdx, answerIdx) {
+        if (quizAnswered.has(questionIdx)) return;
+        quizAnswered.add(questionIdx);
+
+        const q = quizQuestions[questionIdx];
+        const isCorrect = answerIdx === q.correct;
+
+        // Disable all options
+        q.options.forEach((_, j) => {
+            const optEl = document.getElementById(`quiz-${questionIdx}-${j}`);
+            optEl.classList.add('disabled');
+            if (j === q.correct) optEl.classList.add('correct');
+            if (j === answerIdx && !isCorrect) optEl.classList.add('wrong');
+        });
+
+        // Show feedback
+        const feedback = document.getElementById(`quiz-feedback-${questionIdx}`);
+        feedback.classList.add('show');
+        if (isCorrect) {
+            feedback.classList.add('correct');
+            feedback.innerHTML = `✅ Correct! ${q.explanation}`;
+            addScore(5);
+        } else {
+            feedback.classList.add('wrong');
+            feedback.innerHTML = `❌ Not quite. ${q.explanation}`;
+        }
+
+        // Check if all answered
+        if (quizAnswered.size === quizQuestions.length) {
+            const correctCount = [...quizAnswered].filter(idx => {
+                const selectedEl = document.querySelector(`#quiz-q${idx} .quiz-option.correct.disabled`);
+                // Check if the correct answer was the one clicked
+                const clickedCorrect = document.querySelector(`#quiz-q${idx} .quiz-option.wrong`);
+                return !clickedCorrect;
+            }).length;
+
+            setTimeout(() => {
+                const resultsEl = document.getElementById('quizResults');
+                resultsEl.style.display = 'block';
+                // Count correct answers properly
+                let correct = 0;
+                quizQuestions.forEach((q, i) => {
+                    const wrongEl = document.querySelector(`#quiz-q${i} .quiz-option.wrong`);
+                    if (!wrongEl) correct++;
+                });
+                document.getElementById('quizScoreText').textContent = `You got ${correct}/${quizQuestions.length} correct! ${correct >= 8 ? '🏆 Amazing!' : correct >= 5 ? '👍 Good job!' : '📚 Keep studying!'}`;
+                if (correct >= 8) celebrate();
+            }, 1000);
+        }
+    }
+
+    function resetQuiz() {
+        buildQuiz();
+        document.getElementById('quizResults').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Build quiz on load
+    buildQuiz();
+
+    // =============================================
+    //  CELEBRATION
+    // =============================================
+    function celebrate() {
+        const container = document.getElementById('celebration');
+        const colors = ['#6c5ce7', '#00cec9', '#fd79a8', '#fdcb6e', '#00b894', '#ff6b6b', '#48dbfb'];
+        const shapes = ['🎉', '⭐', '🎊', '✨', '🌟', '💫', '🎯'];
+
+        for (let i = 0; i < 40; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+            confetti.style.fontSize = (Math.random() * 20 + 10) + 'px';
+            container.appendChild(confetti);
+        }
+
+        setTimeout(() => container.innerHTML = '', 4000);
+    }
+
+    // =============================================
+    //  INITIALIZE
+    // =============================================
+    completedSections.add('welcome');
+    updateProgress();
+</script>
+
+</body>
+</html>

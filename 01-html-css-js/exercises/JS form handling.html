@@ -1,0 +1,2092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 JS Form Handling Mastery</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a1a;--bg2:#12122a;--bg3:#1a1a3e;--bg4:#222255;
+  --accent:#00d4ff;--accent2:#8b5cf6;--accent3:#f472b6;
+  --green:#10b981;--red:#ef4444;--amber:#f59e0b;--orange:#f97316;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --radius:12px;--shadow:0 8px 32px rgba(0,0,0,.4);
+  --font:'Segoe UI',system-ui,-apple-system,sans-serif;
+  --mono:'Cascadia Code','Fira Code','JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);
+  display:flex;min-height:100vh;line-height:1.7;overflow-x:hidden}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--accent2);border-radius:3px}
+
+/* SIDEBAR */
+#sidebar{
+  width:280px;min-height:100vh;background:var(--bg2);
+  border-right:1px solid rgba(139,92,246,.2);
+  position:fixed;top:0;left:0;z-index:100;
+  display:flex;flex-direction:column;
+  transition:transform .3s ease;
+}
+.sidebar-header{padding:24px 20px;text-align:center;
+  border-bottom:1px solid rgba(139,92,246,.15)}
+.sidebar-header h1{font-size:1.3rem;
+  background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;font-weight:800;letter-spacing:-.5px}
+.sidebar-header p{font-size:.75rem;color:var(--text3);margin-top:4px}
+
+.xp-bar{margin:16px 20px;background:var(--bg);border-radius:20px;
+  height:24px;position:relative;overflow:hidden;
+  border:1px solid rgba(139,92,246,.2)}
+.xp-fill{height:100%;border-radius:20px;transition:width .5s ease;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  min-width:0}
+.xp-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:.7rem;font-weight:700;color:white;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+.nav-links{list-style:none;padding:12px 10px;flex:1;overflow-y:auto}
+.nav-links li{margin:2px 0}
+.nav-links a{display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-radius:8px;color:var(--text2);text-decoration:none;font-size:.88rem;
+  transition:all .2s;cursor:pointer;position:relative;font-weight:500}
+.nav-links a:hover{background:rgba(139,92,246,.1);color:var(--text)}
+.nav-links a.active{background:rgba(0,212,255,.12);color:var(--accent);
+  border-left:3px solid var(--accent)}
+.nav-links a .emoji{font-size:1.1rem;width:24px;text-align:center}
+.nav-links a .check{margin-left:auto;color:var(--green);font-size:.9rem;display:none}
+.nav-links a.completed .check{display:inline}
+
+.hamburger{display:none;position:fixed;top:16px;left:16px;z-index:200;
+  background:var(--bg3);border:1px solid var(--accent2);border-radius:8px;
+  color:var(--text);font-size:1.4rem;padding:8px 12px;cursor:pointer}
+
+/* MAIN */
+#main{margin-left:280px;flex:1;min-height:100vh;padding:32px 40px 80px}
+.section{display:none;max-width:900px;margin:0 auto;animation:fadeIn .4s ease}
+.section.active{display:block}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADINGS */
+.section-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.section-subtitle{color:var(--text2);font-size:1.05rem;margin-bottom:32px;
+  padding-bottom:24px;border-bottom:1px solid rgba(139,92,246,.15)}
+
+h3{color:var(--accent);font-size:1.3rem;margin:32px 0 12px;
+  display:flex;align-items:center;gap:8px}
+h4{color:var(--accent2);font-size:1.05rem;margin:20px 0 8px}
+
+p{margin-bottom:14px;color:var(--text2)}
+strong{color:var(--text)}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid rgba(139,92,246,.15);
+  border-radius:var(--radius);padding:24px;margin:20px 0;
+  box-shadow:var(--shadow);transition:border-color .3s}
+.card:hover{border-color:rgba(0,212,255,.3)}
+.card-title{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px}
+
+.info-box{padding:16px 20px;border-radius:8px;margin:16px 0;font-size:.92rem}
+.info-box.tip{background:rgba(16,185,129,.08);border-left:4px solid var(--green);color:var(--green)}
+.info-box.warn{background:rgba(245,158,11,.08);border-left:4px solid var(--amber);color:var(--amber)}
+.info-box.danger{background:rgba(239,68,68,.08);border-left:4px solid var(--red);color:var(--red)}
+.info-box.info{background:rgba(0,212,255,.08);border-left:4px solid var(--accent);color:var(--accent)}
+.info-box strong{color:inherit}
+
+/* CODE BLOCKS */
+.code-block{background:#0d0d1f;border:1px solid rgba(139,92,246,.2);
+  border-radius:8px;margin:16px 0;overflow:hidden;position:relative}
+.code-header{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 16px;background:rgba(139,92,246,.08);
+  border-bottom:1px solid rgba(139,92,246,.15)}
+.code-header span{font-size:.75rem;color:var(--accent2);font-weight:600;text-transform:uppercase}
+.copy-btn{background:none;border:1px solid var(--text3);color:var(--text3);
+  padding:3px 10px;border-radius:4px;font-size:.7rem;cursor:pointer;
+  transition:all .2s;font-family:var(--font)}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.code-block pre{padding:16px 20px;overflow-x:auto;font-family:var(--mono);
+  font-size:.85rem;line-height:1.8;color:#e2e8f0;margin:0}
+.code-block code{font-family:var(--mono)}
+
+/* Syntax colors */
+.kw{color:#c084fc}.str{color:#34d399}.cm{color:#64748b;font-style:italic}
+.fn{color:#60a5fa}.num{color:#f59e0b}.op{color:#f472b6}.tag{color:#f472b6}
+.attr{color:#60a5fa}.val{color:#34d399}.dom{color:#fbbf24}
+.bool{color:#f97316}.param{color:#fb923c}
+
+/* INLINE CODE */
+code.inline{background:rgba(139,92,246,.15);color:var(--accent);
+  padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:.85rem}
+
+/* DEMO AREAS */
+.demo-area{background:var(--bg3);border:2px dashed rgba(0,212,255,.2);
+  border-radius:var(--radius);padding:24px;margin:16px 0}
+.demo-area h4{color:var(--accent);margin-top:0}
+
+.demo-form{display:flex;flex-direction:column;gap:14px}
+.demo-form label{font-size:.9rem;color:var(--text);font-weight:600;
+  display:flex;flex-direction:column;gap:4px}
+.demo-form input,.demo-form select,.demo-form textarea{
+  padding:10px 14px;border-radius:8px;border:2px solid var(--bg4);
+  background:var(--bg);color:var(--text);font-size:.9rem;
+  font-family:var(--font);transition:border-color .2s;outline:none}
+.demo-form input:focus,.demo-form select:focus,.demo-form textarea:focus{
+  border-color:var(--accent)}
+.demo-form input.valid{border-color:var(--green)!important}
+.demo-form input.invalid{border-color:var(--red)!important}
+.demo-form .error-msg{color:var(--red);font-size:.78rem;font-weight:400;min-height:18px}
+.demo-form .success-msg{color:var(--green);font-size:.78rem;font-weight:400}
+
+.demo-btn{padding:10px 24px;border-radius:8px;border:none;
+  font-family:var(--font);font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:all .2s}
+.demo-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white}
+.demo-btn.primary:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,212,255,.3)}
+.demo-btn.secondary{background:var(--bg4);color:var(--text)}
+.demo-btn.secondary:hover{background:var(--accent2)}
+.demo-btn.danger{background:var(--red);color:white}
+.demo-btn.small{padding:6px 14px;font-size:.8rem}
+
+/* EVENT LOG */
+.event-log{background:var(--bg);border:1px solid rgba(139,92,246,.2);
+  border-radius:8px;max-height:300px;overflow-y:auto;padding:12px;
+  font-family:var(--mono);font-size:.8rem}
+.event-log .log-entry{padding:4px 8px;margin:2px 0;border-radius:4px;
+  display:flex;align-items:center;gap:8px;animation:slideIn .2s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.event-log .log-entry .event-badge{padding:1px 8px;border-radius:4px;
+  font-size:.7rem;font-weight:700;text-transform:uppercase;min-width:70px;text-align:center}
+.badge-submit{background:rgba(239,68,68,.2);color:var(--red)}
+.badge-input{background:rgba(0,212,255,.2);color:var(--accent)}
+.badge-change{background:rgba(139,92,246,.2);color:var(--accent2)}
+.badge-focus{background:rgba(16,185,129,.2);color:var(--green)}
+.badge-blur{background:rgba(249,115,22,.2);color:var(--orange)}
+.badge-keydown{background:rgba(244,114,182,.2);color:var(--accent3)}
+.badge-keyup{background:rgba(245,158,11,.2);color:var(--amber)}
+.badge-reset{background:rgba(100,116,139,.2);color:var(--text3)}
+
+/* SPLIT VIEW */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:16px 0}
+.split.triple{grid-template-columns:1fr 1fr 1fr}
+
+/* QUIZ */
+.quiz-question{background:var(--bg2);border:1px solid rgba(139,92,246,.15);
+  border-radius:var(--radius);padding:24px;margin:16px 0}
+.quiz-question h4{color:var(--text);margin:0 0 16px;font-size:1rem}
+.quiz-question .q-number{color:var(--accent);font-weight:800}
+.quiz-options{display:flex;flex-direction:column;gap:8px}
+.quiz-option{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  border:2px solid var(--bg4);border-radius:8px;cursor:pointer;
+  transition:all .2s;font-size:.9rem}
+.quiz-option:hover{border-color:var(--accent2);background:rgba(139,92,246,.05)}
+.quiz-option.selected{border-color:var(--accent);background:rgba(0,212,255,.08)}
+.quiz-option.correct{border-color:var(--green)!important;background:rgba(16,185,129,.1)!important}
+.quiz-option.wrong{border-color:var(--red)!important;background:rgba(239,68,68,.1)!important}
+.quiz-option input{display:none}
+.quiz-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--text3);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.quiz-option.selected .quiz-radio{border-color:var(--accent)}
+.quiz-option.selected .quiz-radio::after{content:'';width:8px;height:8px;
+  border-radius:50%;background:var(--accent)}
+.quiz-explanation{margin-top:12px;padding:12px;border-radius:8px;
+  font-size:.85rem;display:none}
+.quiz-explanation.show{display:block}
+.quiz-explanation.correct-exp{background:rgba(16,185,129,.08);color:var(--green)}
+.quiz-explanation.wrong-exp{background:rgba(239,68,68,.08);color:var(--red)}
+
+.quiz-score{text-align:center;padding:40px;background:var(--bg2);
+  border-radius:var(--radius);border:2px solid var(--accent2);margin:24px 0}
+.quiz-score .score-number{font-size:3.5rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* EXERCISE */
+.exercise{background:var(--bg2);border:1px solid rgba(139,92,246,.15);
+  border-radius:var(--radius);padding:24px;margin:20px 0}
+.exercise-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.exercise-title{font-size:1.1rem;font-weight:700;color:var(--text)}
+.difficulty{padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase}
+.diff-easy{background:rgba(16,185,129,.15);color:var(--green)}
+.diff-medium{background:rgba(245,158,11,.15);color:var(--amber)}
+.diff-hard{background:rgba(239,68,68,.15);color:var(--red)}
+.exercise textarea{width:100%;min-height:140px;padding:14px;
+  background:#0d0d1f;border:2px solid var(--bg4);border-radius:8px;
+  color:var(--text);font-family:var(--mono);font-size:.85rem;
+  resize:vertical;outline:none;transition:border-color .2s}
+.exercise textarea:focus{border-color:var(--accent)}
+.exercise-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.exercise-result{margin-top:12px;padding:12px;border-radius:8px;font-size:.88rem;display:none}
+.exercise-result.show{display:block}
+.exercise-result.pass{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);color:var(--green)}
+.exercise-result.fail{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+
+.hint-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+  border-radius:8px;padding:12px 16px;margin-top:12px;font-size:.85rem;
+  color:var(--amber);display:none}
+.hint-box.show{display:block}
+.solution-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);
+  border-radius:8px;padding:16px;margin-top:12px;display:none}
+.solution-box.show{display:block}
+.solution-box pre{color:var(--accent);font-family:var(--mono);font-size:.82rem;
+  white-space:pre-wrap}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:-1px;position:relative;z-index:1}
+.tab{padding:8px 20px;border-radius:8px 8px 0 0;border:1px solid transparent;
+  background:var(--bg);color:var(--text3);cursor:pointer;font-size:.85rem;
+  font-weight:600;transition:all .2s;font-family:var(--font)}
+.tab.active{background:var(--bg2);color:var(--accent);border-color:rgba(139,92,246,.15);
+  border-bottom-color:var(--bg2)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* COMPARISON */
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:16px 0;border-radius:var(--radius);overflow:hidden}
+.comp-side{padding:20px}
+.comp-bad{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2)}
+.comp-good{background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2)}
+.comp-label{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.comp-label.bad{color:var(--red)}
+.comp-label.good{color:var(--green)}
+
+/* VISUAL DIAGRAM */
+.flow-diagram{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:20px;background:var(--bg);border-radius:8px;margin:16px 0;justify-content:center}
+.flow-step{padding:10px 18px;border-radius:8px;font-size:.82rem;font-weight:700;
+  text-align:center;min-width:90px}
+.flow-arrow{color:var(--text3);font-size:1.2rem}
+.fs-1{background:rgba(0,212,255,.12);color:var(--accent);border:1px solid rgba(0,212,255,.3)}
+.fs-2{background:rgba(139,92,246,.12);color:var(--accent2);border:1px solid rgba(139,92,246,.3)}
+.fs-3{background:rgba(244,114,182,.12);color:var(--accent3);border:1px solid rgba(244,114,182,.3)}
+.fs-4{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3)}
+.fs-5{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+
+/* CONFETTI */
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+.confetti-piece{position:absolute;width:10px;height:10px;border-radius:2px;
+  animation:confettiFall 2.5s ease-in forwards}
+@keyframes confettiFall{
+  0%{transform:translateY(-20px) rotate(0);opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 24px;border-radius:8px;
+  font-weight:600;font-size:.9rem;z-index:9999;animation:toastIn .3s ease;
+  box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.toast.success{background:var(--green);color:white}
+.toast.error{background:var(--red);color:white}
+.toast.info{background:var(--accent);color:var(--bg)}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0;padding:24px 16px 80px}
+  .hamburger{display:block}
+  .split{grid-template-columns:1fr}
+  .split.triple{grid-template-columns:1fr}
+  .comparison{grid-template-columns:1fr}
+  .section-title{font-size:1.6rem}
+}
+
+/* MISC */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mt-1{margin-top:8px}.mt-2{margin-top:16px}.mt-3{margin-top:24px}
+.mb-1{margin-bottom:8px}.mb-2{margin-bottom:16px}
+.tag{display:inline-block;padding:2px 10px;border-radius:4px;font-size:.75rem;
+  font-weight:700;margin:2px}
+.tag-blue{background:rgba(0,212,255,.12);color:var(--accent)}
+.tag-purple{background:rgba(139,92,246,.12);color:var(--accent2)}
+.tag-green{background:rgba(16,185,129,.12);color:var(--green)}
+.tag-red{background:rgba(239,68,68,.12);color:var(--red)}
+ul.styled{padding-left:20px;margin:12px 0}
+ul.styled li{margin:6px 0;color:var(--text2)}
+ul.styled li::marker{color:var(--accent)}
+.highlight{color:var(--accent);font-weight:600}
+.clear-log-btn{margin-top:8px}
+.separator{height:1px;background:rgba(139,92,246,.1);margin:32px 0}
+.next-section-btn{display:flex;justify-content:flex-end;margin-top:40px}
+.badge-count{background:var(--accent2);color:white;border-radius:50%;
+  width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700}
+.live-indicator{display:inline-block;width:8px;height:8px;border-radius:50%;
+  background:var(--green);animation:pulse 1.5s infinite;margin-right:6px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<button class="hamburger" id="hamburgerBtn">☰</button>
+
+<!-- ================= SIDEBAR ================= -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h1>🎯 Form Mastery</h1>
+    <p>JavaScript Form Handling</p>
+  </div>
+  <div class="xp-bar">
+    <div class="xp-fill" id="xpFill" style="width:0%"></div>
+    <span class="xp-text" id="xpText">0 / 1000 XP</span>
+  </div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#" data-section="intro" class="active"><span class="emoji">🏠</span>Welcome<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="events"><span class="emoji">📡</span>Form Events<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="capturing"><span class="emoji">🎯</span>Capturing Input<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="prevent"><span class="emoji">🛡️</span>preventDefault()<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="validation"><span class="emoji">✅</span>Input Validation<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="formdata"><span class="emoji">📦</span>FormData API<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="mistakes"><span class="emoji">⚠️</span>Common Mistakes<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="exercises"><span class="emoji">💪</span>Exercises<span class="check">✓</span></a></li>
+    <li><a href="#" data-section="quiz"><span class="emoji">🧠</span>Final Quiz<span class="check">✓</span></a></li>
+  </ul>
+</nav>
+
+<!-- ================= MAIN CONTENT ================= -->
+<main id="main">
+
+<!-- ===== SECTION: INTRO ===== -->
+<section id="sec-intro" class="section active">
+  <h2 class="section-title">Welcome to Form Handling Mastery 🎯</h2>
+  <p class="section-subtitle">Your one-stop interactive reference to nail every form-handling question in interviews and on the job.</p>
+
+  <div class="card">
+    <div class="card-title">📋 What You'll Master</div>
+    <div class="grid-2">
+      <div>
+        <ul class="styled">
+          <li><strong>Form Events</strong> — submit, input, change, focus, blur, keydown…</li>
+          <li><strong>Capturing Input</strong> — every method to read user data</li>
+          <li><strong>preventDefault()</strong> — stop the page from reloading</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="styled">
+          <li><strong>Input Validation</strong> — real-time &amp; on-submit patterns</li>
+          <li><strong>FormData API</strong> — modern data handling &amp; fetch</li>
+          <li><strong>Common Mistakes</strong> — traps that trip up devs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3>🗺️ Learning Flow</h3>
+  <div class="flow-diagram">
+    <div class="flow-step fs-1">Form Events</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step fs-2">Capture Input</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step fs-3">preventDefault</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step fs-4">Validation</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step fs-5">FormData</div>
+  </div>
+
+  <div class="info-box tip">
+    <strong>💡 How to use this app:</strong> Work through each section left-to-right. Interact with every demo. Attempt every exercise before peeking at solutions. Take the final quiz. Aim for 1000 XP!
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="navigateTo('events')">Start Learning → Form Events</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: FORM EVENTS ===== -->
+<section id="sec-events" class="section">
+  <h2 class="section-title">📡 Form Events Deep Dive</h2>
+  <p class="section-subtitle">Every event you need to know — see them fire in real-time.</p>
+
+  <h3>📚 The Event Cheat Sheet</h3>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+      <thead><tr style="border-bottom:2px solid var(--bg4)">
+        <th style="text-align:left;padding:8px;color:var(--accent)">Event</th>
+        <th style="text-align:left;padding:8px;color:var(--accent)">Fires When…</th>
+        <th style="text-align:left;padding:8px;color:var(--accent)">Element</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">submit</code></td><td style="padding:8px;color:var(--text2)">Form is submitted (Enter or button click)</td><td style="padding:8px;color:var(--text3)">&lt;form&gt;</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">input</code></td><td style="padding:8px;color:var(--text2)">Value changes <strong>immediately</strong> (every keystroke)</td><td style="padding:8px;color:var(--text3)">input, textarea</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">change</code></td><td style="padding:8px;color:var(--text2)">Value changes <strong>and</strong> element loses focus</td><td style="padding:8px;color:var(--text3)">input, select</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">focus</code></td><td style="padding:8px;color:var(--text2)">Element gains focus (clicked/tabbed into)</td><td style="padding:8px;color:var(--text3)">any focusable</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">blur</code></td><td style="padding:8px;color:var(--text2)">Element <strong>loses</strong> focus</td><td style="padding:8px;color:var(--text3)">any focusable</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">keydown</code></td><td style="padding:8px;color:var(--text2)">Key is pressed down</td><td style="padding:8px;color:var(--text3)">input, document</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">keyup</code></td><td style="padding:8px;color:var(--text2)">Key is released</td><td style="padding:8px;color:var(--text3)">input, document</td></tr>
+        <tr><td style="padding:8px"><code class="inline">reset</code></td><td style="padding:8px;color:var(--text2)">Form is reset</td><td style="padding:8px;color:var(--text3)">&lt;form&gt;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box info">
+    <strong>🔑 Key difference:</strong> <code class="inline">input</code> fires on <em>every keystroke</em> instantly. <code class="inline">change</code> fires only after the user <em>leaves</em> the field (blur). For real-time validation, use <code class="inline">input</code>. For "when the user is done", use <code class="inline">change</code>.
+  </div>
+
+  <h3><span class="live-indicator"></span>Interactive Event Logger</h3>
+  <p>Type in the field below and watch which events fire and in what order:</p>
+
+  <div class="split">
+    <div class="demo-area">
+      <h4>🧪 Try It — Type, Click, Tab!</h4>
+      <form id="eventDemoForm" class="demo-form" onsubmit="return false">
+        <label>Text Input
+          <input type="text" id="eventInput" placeholder="Type here..." autocomplete="off">
+        </label>
+        <label>Select
+          <select id="eventSelect">
+            <option value="">Choose…</option>
+            <option value="a">Option A</option>
+            <option value="b">Option B</option>
+          </select>
+        </label>
+        <label>Checkbox
+          <div><input type="checkbox" id="eventCheck"> I agree</div>
+        </label>
+        <div style="display:flex;gap:8px">
+          <button type="submit" class="demo-btn primary small">Submit</button>
+          <button type="reset" class="demo-btn secondary small">Reset</button>
+        </div>
+      </form>
+    </div>
+    <div>
+      <h4 style="color:var(--accent);margin-bottom:8px">📋 Event Log</h4>
+      <div class="event-log" id="eventLog"></div>
+      <button class="demo-btn secondary small clear-log-btn" onclick="document.getElementById('eventLog').innerHTML=''">Clear Log</button>
+    </div>
+  </div>
+
+  <h3>💻 How to Listen to Form Events</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="cm">// 1. Listen on the FORM element for submit</span>
+<span class="kw">const</span> form = document.<span class="fn">querySelector</span>(<span class="str">'#myForm'</span>);
+
+form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, <span class="kw">function</span>(<span class="param">event</span>) {
+  event.<span class="fn">preventDefault</span>();  <span class="cm">// stop page reload!</span>
+  console.<span class="fn">log</span>(<span class="str">'Form submitted!'</span>);
+});
+
+<span class="cm">// 2. Listen on an INPUT for real-time changes</span>
+<span class="kw">const</span> emailInput = document.<span class="fn">querySelector</span>(<span class="str">'#email'</span>);
+
+emailInput.<span class="fn">addEventListener</span>(<span class="str">'input'</span>, <span class="kw">function</span>(<span class="param">e</span>) {
+  console.<span class="fn">log</span>(<span class="str">'Current value:'</span>, e.target.value);
+});
+
+<span class="cm">// 3. Listen for focus/blur</span>
+emailInput.<span class="fn">addEventListener</span>(<span class="str">'focus'</span>, () => console.<span class="fn">log</span>(<span class="str">'Focused!'</span>));
+emailInput.<span class="fn">addEventListener</span>(<span class="str">'blur'</span>, () => console.<span class="fn">log</span>(<span class="str">'Lost focus'</span>));</code></pre>
+  </div>
+
+  <div class="info-box warn">
+    <strong>⚠️ Gotcha:</strong> Always attach <code class="inline">submit</code> to the <strong>form</strong>, not the button! Clicking submit buttons AND pressing Enter both trigger the form's <code class="inline">submit</code> event. If you only listen on the button click, you miss Enter key submissions.
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="markComplete('events');navigateTo('capturing')">Next → Capturing Input</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: CAPTURING INPUT ===== -->
+<section id="sec-capturing" class="section">
+  <h2 class="section-title">🎯 Capturing Form Input</h2>
+  <p class="section-subtitle">Five ways to get data from your forms — and when to use each.</p>
+
+  <h3>Method 1: getElementById / querySelector</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="cm">// Direct element access</span>
+<span class="kw">const</span> name = document.<span class="fn">getElementById</span>(<span class="str">'name'</span>).value;
+<span class="kw">const</span> email = document.<span class="fn">querySelector</span>(<span class="str">'#email'</span>).value;
+<span class="kw">const</span> age = document.<span class="fn">querySelector</span>(<span class="str">'input[name="age"]'</span>).value;
+
+<span class="cm">// ✅ Good for: grabbing one or two specific values</span>
+<span class="cm">// ❌ Verbose if you have many fields</span></code></pre>
+  </div>
+
+  <h3>Method 2: form.elements (Named Collection)</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">const</span> form = document.<span class="fn">querySelector</span>(<span class="str">'#myForm'</span>);
+
+<span class="cm">// Access by name attribute or id</span>
+<span class="kw">const</span> name  = form.elements.<span class="dom">username</span>.value;
+<span class="kw">const</span> email = form.elements.<span class="dom">email</span>.value;
+<span class="kw">const</span> role  = form.elements[<span class="str">'role'</span>].value;  <span class="cm">// bracket notation works too</span>
+
+<span class="cm">// Access by index</span>
+<span class="kw">const</span> firstField = form.elements[<span class="num">0</span>].value;
+
+<span class="cm">// ✅ Clean, no DOM queries needed, works with name attribute</span></code></pre>
+  </div>
+
+  <h3>Method 3: FormData API (⭐ Modern Best Practice)</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, (<span class="param">e</span>) => {
+  e.<span class="fn">preventDefault</span>();
+  <span class="kw">const</span> formData = <span class="kw">new</span> <span class="fn">FormData</span>(form);
+
+  <span class="cm">// Get individual values</span>
+  <span class="kw">const</span> name = formData.<span class="fn">get</span>(<span class="str">'username'</span>);
+
+  <span class="cm">// Convert to plain object</span>
+  <span class="kw">const</span> data = Object.<span class="fn">fromEntries</span>(formData);
+  console.<span class="fn">log</span>(data); <span class="cm">// { username: "John", email: "j@x.com" }</span>
+
+  <span class="cm">// ✅ Best for: sending data via fetch, handling file uploads</span>
+});</code></pre>
+  </div>
+
+  <h3>Method 4: event.target in the submit handler</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, (<span class="param">e</span>) => {
+  e.<span class="fn">preventDefault</span>();
+
+  <span class="cm">// e.target IS the form element</span>
+  <span class="kw">const</span> name  = e.target.elements.<span class="dom">username</span>.value;
+  <span class="kw">const</span> email = e.target.<span class="dom">email</span>.value; <span class="cm">// shorthand works too!</span>
+
+  <span class="cm">// ✅ Great because you don't need a separate form reference</span>
+});</code></pre>
+  </div>
+
+  <h3>📊 Different Input Types — How to Read Them</h3>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="border-bottom:2px solid var(--bg4)">
+        <th style="text-align:left;padding:8px;color:var(--accent)">Input Type</th>
+        <th style="text-align:left;padding:8px;color:var(--accent)">How to Get Value</th>
+        <th style="text-align:left;padding:8px;color:var(--accent)">Returns</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">text, email, password</code></td><td style="padding:8px;color:var(--text2)"><code class="inline">el.value</code></td><td style="padding:8px;color:var(--text3)">String</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">number, range</code></td><td style="padding:8px;color:var(--text2)"><code class="inline">el.value</code> (still a string!) or <code class="inline">el.valueAsNumber</code></td><td style="padding:8px;color:var(--text3)">String / Number</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">checkbox</code></td><td style="padding:8px;color:var(--text2)"><code class="inline">el.checked</code> (NOT .value!)</td><td style="padding:8px;color:var(--text3)">Boolean</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">radio</code></td><td style="padding:8px;color:var(--text2)"><code class="inline">form.elements.radioName.value</code></td><td style="padding:8px;color:var(--text3)">String (selected radio's value)</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">select</code></td><td style="padding:8px;color:var(--text2)"><code class="inline">el.value</code> or <code class="inline">el.options[el.selectedIndex].text</code></td><td style="padding:8px;color:var(--text3)">String</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">select[multiple]</code></td><td style="padding:8px;color:var(--text2)"><code class="inline">[...el.selectedOptions].map(o => o.value)</code></td><td style="padding:8px;color:var(--text3)">Array</td></tr>
+        <tr><td style="padding:8px"><code class="inline">file</code></td><td style="padding:8px;color:var(--text2)"><code class="inline">el.files</code> (FileList object)</td><td style="padding:8px;color:var(--text3)">FileList</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box danger">
+    <strong>🚨 #1 Interview Trap:</strong> <code class="inline">input[type="number"].value</code> returns a <strong>STRING</strong>, not a number! Use <code class="inline">.valueAsNumber</code> or <code class="inline">Number(el.value)</code> or <code class="inline">+el.value</code> to get an actual number.
+  </div>
+
+  <h3><span class="live-indicator"></span>Interactive Demo — Capture Everything</h3>
+  <div class="split">
+    <div class="demo-area">
+      <h4>🧪 Fill This Form</h4>
+      <form id="captureDemoForm" class="demo-form">
+        <label>Name <input type="text" name="username" placeholder="Your name"></label>
+        <label>Email <input type="email" name="email" placeholder="you@example.com"></label>
+        <label>Age <input type="number" name="age" placeholder="25"></label>
+        <label>Role
+          <select name="role">
+            <option value="">Select…</option>
+            <option value="frontend">Frontend</option>
+            <option value="backend">Backend</option>
+            <option value="fullstack">Fullstack</option>
+          </select>
+        </label>
+        <label><div><input type="checkbox" name="newsletter"> Subscribe to newsletter</div></label>
+        <label>Experience
+          <div style="display:flex;gap:16px;margin-top:4px">
+            <label style="flex-direction:row;gap:4px;align-items:center"><input type="radio" name="exp" value="junior"> Junior</label>
+            <label style="flex-direction:row;gap:4px;align-items:center"><input type="radio" name="exp" value="mid"> Mid</label>
+            <label style="flex-direction:row;gap:4px;align-items:center"><input type="radio" name="exp" value="senior"> Senior</label>
+          </div>
+        </label>
+        <button type="submit" class="demo-btn primary">Capture Data</button>
+      </form>
+    </div>
+    <div>
+      <h4 style="color:var(--accent)">📦 Captured Data</h4>
+      <div id="captureOutput" class="event-log" style="max-height:400px">
+        <p style="color:var(--text3);font-size:.85rem;text-align:center;padding:20px">Fill the form and click "Capture Data" to see the output here.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="markComplete('capturing');navigateTo('prevent')">Next → preventDefault()</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: preventDefault ===== -->
+<section id="sec-prevent" class="section">
+  <h2 class="section-title">🛡️ preventDefault() Explained</h2>
+  <p class="section-subtitle">The single most important method for form handling — and the #1 thing beginners forget.</p>
+
+  <h3>🤔 What happens WITHOUT preventDefault?</h3>
+  <div class="flow-diagram">
+    <div class="flow-step fs-1">User clicks Submit</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step fs-5">Browser sends GET/POST request</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)">PAGE RELOADS 💥</div>
+  </div>
+
+  <div class="flow-diagram">
+    <div class="flow-step fs-1">User clicks Submit</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step fs-4">e.preventDefault()</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" style="background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)">YOUR JS RUNS ✅</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript — The Pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, <span class="kw">function</span>(<span class="param">event</span>) {
+  <span class="cm">// 🛡️ STOP the browser's default form submission</span>
+  event.<span class="fn">preventDefault</span>();
+
+  <span class="cm">// Now YOUR code runs instead</span>
+  <span class="kw">const</span> data = <span class="kw">new</span> <span class="fn">FormData</span>(event.target);
+  console.<span class="fn">log</span>(Object.<span class="fn">fromEntries</span>(data));
+
+  <span class="cm">// Send via fetch, validate, whatever you want!</span>
+});</code></pre>
+  </div>
+
+  <h3>🔬 The Event Object</h3>
+  <p>When an event fires, the browser passes an <strong>event object</strong> to your callback. Here are the key properties for form handling:</p>
+  <div class="card">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead><tr style="border-bottom:2px solid var(--bg4)">
+        <th style="text-align:left;padding:8px;color:var(--accent)">Property/Method</th>
+        <th style="text-align:left;padding:8px;color:var(--accent)">What It Does</th>
+      </tr></thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">e.preventDefault()</code></td><td style="padding:8px;color:var(--text2)">Stops the default browser behavior (form submit, link navigation)</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">e.target</code></td><td style="padding:8px;color:var(--text2)">The element that triggered the event (the form on submit)</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">e.currentTarget</code></td><td style="padding:8px;color:var(--text2)">The element the listener is attached to</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">e.type</code></td><td style="padding:8px;color:var(--text2)">Event name string: "submit", "input", etc.</td></tr>
+        <tr style="border-bottom:1px solid var(--bg4)"><td style="padding:8px"><code class="inline">e.stopPropagation()</code></td><td style="padding:8px;color:var(--text2)">Stops event from bubbling up to parent elements</td></tr>
+        <tr><td style="padding:8px"><code class="inline">e.key</code></td><td style="padding:8px;color:var(--text2)">The key pressed (for keyboard events): "Enter", "a", "Escape"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>preventDefault vs stopPropagation vs return false</h3>
+  <div class="comparison">
+    <div class="comp-side comp-bad">
+      <div class="comp-label bad">❌ return false (old jQuery pattern)</div>
+      <div class="code-block" style="margin:8px 0">
+        <pre><code><span class="cm">// DON'T do this in vanilla JS</span>
+form.<span class="fn">onsubmit</span> = <span class="kw">function</span>() {
+  <span class="cm">// ... your code</span>
+  <span class="kw">return</span> <span class="bool">false</span>; <span class="cm">// unreliable!</span>
+};</code></pre>
+      </div>
+      <p style="font-size:.82rem;color:var(--red)">Only works with <code class="inline">onsubmit</code> property, not <code class="inline">addEventListener</code>. In addEventListener, return false does NOTHING.</p>
+    </div>
+    <div class="comp-side comp-good">
+      <div class="comp-label good">✅ preventDefault (correct way)</div>
+      <div class="code-block" style="margin:8px 0">
+        <pre><code><span class="cm">// ALWAYS do this</span>
+form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, (<span class="param">e</span>) => {
+  e.<span class="fn">preventDefault</span>();
+  <span class="cm">// ... your code</span>
+});</code></pre>
+      </div>
+      <p style="font-size:.82rem;color:var(--green)">Works everywhere, explicit, clear intent. This is the professional pattern.</p>
+    </div>
+  </div>
+
+  <h3><span class="live-indicator"></span>Interactive Demo — See It In Action</h3>
+  <div class="split">
+    <div class="demo-area">
+      <h4>🧪 With preventDefault</h4>
+      <form id="preventedForm" class="demo-form">
+        <label>Type anything <input type="text" name="test" placeholder="Type here…"></label>
+        <button type="submit" class="demo-btn primary small">Submit (no reload!)</button>
+      </form>
+      <div id="preventedOutput" class="mt-2" style="color:var(--green);font-size:.88rem"></div>
+    </div>
+    <div class="demo-area">
+      <h4>🧪 Other Default Behaviors You Can Prevent</h4>
+      <p style="font-size:.85rem">
+        <strong>Links:</strong> <a href="https://google.com" id="preventedLink" style="color:var(--accent)">Click me — I won't navigate!</a><br>
+        <span id="linkOutput" style="color:var(--green);font-size:.82rem"></span>
+      </p>
+      <p style="font-size:.85rem">
+        <strong>Right-click:</strong> Try right-clicking this box:<br>
+        <span id="contextBox" style="display:inline-block;padding:12px 24px;background:var(--bg4);border-radius:8px;cursor:context-menu;margin-top:4px">Right-click me!</span>
+        <br><span id="contextOutput" style="color:var(--green);font-size:.82rem"></span>
+      </p>
+    </div>
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="markComplete('prevent');navigateTo('validation')">Next → Input Validation</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: VALIDATION ===== -->
+<section id="sec-validation" class="section">
+  <h2 class="section-title">✅ Input Validation</h2>
+  <p class="section-subtitle">Client-side validation techniques — from HTML5 built-ins to custom JS patterns.</p>
+
+  <h3>🏗️ Layer 1: HTML5 Built-in Validation</h3>
+  <p>Browsers provide free validation via HTML attributes. Always start here:</p>
+  <div class="code-block">
+    <div class="code-header"><span>HTML</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="val">"email"</span> <span class="attr">required</span><span class="tag">&gt;</span>              <span class="cm">&lt;!-- Must be filled, must look like email --&gt;</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="val">"text"</span> <span class="attr">minlength</span>=<span class="val">"3"</span> <span class="attr">maxlength</span>=<span class="val">"50"</span><span class="tag">&gt;</span>  <span class="cm">&lt;!-- Length limits --&gt;</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="val">"number"</span> <span class="attr">min</span>=<span class="val">"1"</span> <span class="attr">max</span>=<span class="val">"100"</span><span class="tag">&gt;</span>          <span class="cm">&lt;!-- Number range --&gt;</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="val">"text"</span> <span class="attr">pattern</span>=<span class="val">"[A-Za-z]{3,}"</span><span class="tag">&gt;</span>     <span class="cm">&lt;!-- Regex pattern --&gt;</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="val">"url"</span> <span class="attr">required</span><span class="tag">&gt;</span>                <span class="cm">&lt;!-- Must be a valid URL --&gt;</span></code></pre>
+  </div>
+
+  <h3>🏗️ Layer 2: Custom JavaScript Validation</h3>
+  <p>For complex rules, write your own validation logic:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript — Real-time Validation Pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">function</span> <span class="fn">validateEmail</span>(<span class="param">email</span>) {
+  <span class="kw">const</span> regex = <span class="str">/^[^\s@]+@[^\s@]+\.[^\s@]+$/</span>;
+  <span class="kw">return</span> regex.<span class="fn">test</span>(email);
+}
+
+<span class="kw">function</span> <span class="fn">validatePassword</span>(<span class="param">pw</span>) {
+  <span class="kw">const</span> errors = [];
+  <span class="kw">if</span> (pw.length < <span class="num">8</span>) errors.<span class="fn">push</span>(<span class="str">'At least 8 characters'</span>);
+  <span class="kw">if</span> (!<span class="str">/[A-Z]/</span>.<span class="fn">test</span>(pw)) errors.<span class="fn">push</span>(<span class="str">'One uppercase letter'</span>);
+  <span class="kw">if</span> (!<span class="str">/[0-9]/</span>.<span class="fn">test</span>(pw)) errors.<span class="fn">push</span>(<span class="str">'One number'</span>);
+  <span class="kw">if</span> (!<span class="str">/[!@#$%]/</span>.<span class="fn">test</span>(pw)) errors.<span class="fn">push</span>(<span class="str">'One special char (!@#$%)'</span>);
+  <span class="kw">return</span> errors;
+}
+
+emailInput.<span class="fn">addEventListener</span>(<span class="str">'input'</span>, (<span class="param">e</span>) => {
+  <span class="kw">const</span> isValid = <span class="fn">validateEmail</span>(e.target.value);
+  e.target.classList.<span class="fn">toggle</span>(<span class="str">'valid'</span>, isValid);
+  e.target.classList.<span class="fn">toggle</span>(<span class="str">'invalid'</span>, !isValid && e.target.value.length > <span class="num">0</span>);
+  errorSpan.textContent = isValid ? <span class="str">''</span> : <span class="str">'Enter a valid email'</span>;
+});</code></pre>
+  </div>
+
+  <h3>🏗️ Layer 3: Constraint Validation API</h3>
+  <p>The browser gives you a built-in API to check and customize validation:</p>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript — Constraint Validation API</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">const</span> input = document.<span class="fn">querySelector</span>(<span class="str">'#email'</span>);
+
+<span class="cm">// Check if the field is valid</span>
+input.<span class="fn">checkValidity</span>();        <span class="cm">// returns true/false</span>
+input.<span class="fn">reportValidity</span>();       <span class="cm">// shows browser tooltip</span>
+
+<span class="cm">// Access specific validation states</span>
+input.validity.valueMissing;   <span class="cm">// true if required field is empty</span>
+input.validity.typeMismatch;   <span class="cm">// true if email doesn't look right</span>
+input.validity.tooShort;       <span class="cm">// true if below minlength</span>
+input.validity.patternMismatch;<span class="cm">// true if doesn't match pattern</span>
+
+<span class="cm">// Set a custom error message</span>
+input.<span class="fn">setCustomValidity</span>(<span class="str">'Username already taken!'</span>);
+input.<span class="fn">setCustomValidity</span>(<span class="str">''</span>); <span class="cm">// Clear error (MUST do this to unblock form)</span></code></pre>
+  </div>
+
+  <h3>🧩 Validation Strategy: When to Validate?</h3>
+  <div class="flow-diagram">
+    <div class="flow-step fs-1">On Input<br><small style="font-size:.65rem">real-time UX</small></div>
+    <span class="flow-arrow">+</span>
+    <div class="flow-step fs-2">On Blur<br><small style="font-size:.65rem">when user leaves field</small></div>
+    <span class="flow-arrow">+</span>
+    <div class="flow-step fs-3">On Submit<br><small style="font-size:.65rem">final gate check</small></div>
+    <span class="flow-arrow">=</span>
+    <div class="flow-step fs-4">Great UX ✨</div>
+  </div>
+
+  <h3><span class="live-indicator"></span>Interactive Validation Playground</h3>
+  <div class="demo-area">
+    <h4>🧪 Registration Form — Watch Validation In Action</h4>
+    <form id="validationForm" class="demo-form" novalidate>
+      <label>
+        Username (3–20 chars, letters & numbers only)
+        <input type="text" id="valUsername" placeholder="johndoe123" autocomplete="off">
+        <span class="error-msg" id="errUsername"></span>
+      </label>
+      <label>
+        Email
+        <input type="email" id="valEmail" placeholder="you@example.com" autocomplete="off">
+        <span class="error-msg" id="errEmail"></span>
+      </label>
+      <label>
+        Password (8+ chars, 1 uppercase, 1 number, 1 special)
+        <input type="password" id="valPassword" placeholder="••••••••" autocomplete="off">
+        <span class="error-msg" id="errPassword"></span>
+        <div id="passwordStrength" style="display:flex;gap:4px;margin-top:4px">
+          <div class="str-bar" style="flex:1;height:4px;border-radius:2px;background:var(--bg4);transition:background .3s"></div>
+          <div class="str-bar" style="flex:1;height:4px;border-radius:2px;background:var(--bg4);transition:background .3s"></div>
+          <div class="str-bar" style="flex:1;height:4px;border-radius:2px;background:var(--bg4);transition:background .3s"></div>
+          <div class="str-bar" style="flex:1;height:4px;border-radius:2px;background:var(--bg4);transition:background .3s"></div>
+        </div>
+      </label>
+      <label>
+        Confirm Password
+        <input type="password" id="valConfirm" placeholder="••••••••" autocomplete="off">
+        <span class="error-msg" id="errConfirm"></span>
+      </label>
+      <label>
+        Age (18–120)
+        <input type="number" id="valAge" placeholder="25" autocomplete="off">
+        <span class="error-msg" id="errAge"></span>
+      </label>
+      <button type="submit" class="demo-btn primary" id="valSubmitBtn">Register</button>
+      <div id="validationResult" style="margin-top:8px"></div>
+    </form>
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="markComplete('validation');navigateTo('formdata')">Next → FormData API</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: FormData API ===== -->
+<section id="sec-formdata" class="section">
+  <h2 class="section-title">📦 FormData API</h2>
+  <p class="section-subtitle">The modern, clean way to collect, inspect, and send form data.</p>
+
+  <h3>Creating FormData</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="cm">// Method 1: From a form element (grabs ALL named fields)</span>
+<span class="kw">const</span> fd = <span class="kw">new</span> <span class="fn">FormData</span>(document.<span class="fn">querySelector</span>(<span class="str">'#myForm'</span>));
+
+<span class="cm">// Method 2: Create empty and build manually</span>
+<span class="kw">const</span> fd2 = <span class="kw">new</span> <span class="fn">FormData</span>();
+fd2.<span class="fn">append</span>(<span class="str">'username'</span>, <span class="str">'john'</span>);
+fd2.<span class="fn">append</span>(<span class="str">'avatar'</span>, fileInput.files[<span class="num">0</span>]); <span class="cm">// File uploads work!</span></code></pre>
+  </div>
+
+  <h3>FormData Methods</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">const</span> fd = <span class="kw">new</span> <span class="fn">FormData</span>(form);
+
+fd.<span class="fn">get</span>(<span class="str">'username'</span>);          <span class="cm">// "john" — get single value</span>
+fd.<span class="fn">getAll</span>(<span class="str">'hobbies'</span>);       <span class="cm">// ["js","css"] — multiple values (checkboxes)</span>
+fd.<span class="fn">has</span>(<span class="str">'email'</span>);             <span class="cm">// true/false</span>
+fd.<span class="fn">set</span>(<span class="str">'username'</span>, <span class="str">'jane'</span>); <span class="cm">// replace value</span>
+fd.<span class="fn">append</span>(<span class="str">'tag'</span>, <span class="str">'new'</span>);    <span class="cm">// add (can have multiple same-name keys)</span>
+fd.<span class="fn">delete</span>(<span class="str">'secret'</span>);        <span class="cm">// remove a key</span>
+
+<span class="cm">// Iterate over all entries</span>
+<span class="kw">for</span> (<span class="kw">const</span> [key, value] <span class="kw">of</span> fd.<span class="fn">entries</span>()) {
+  console.<span class="fn">log</span>(<span class="str">`${key}: ${value}`</span>);
+}
+
+<span class="cm">// Convert to plain object (⭐ very common pattern)</span>
+<span class="kw">const</span> obj = Object.<span class="fn">fromEntries</span>(fd);
+console.<span class="fn">log</span>(obj); <span class="cm">// { username: "john", email: "j@x.com" }</span>
+
+<span class="cm">// Convert to JSON string</span>
+<span class="kw">const</span> json = JSON.<span class="fn">stringify</span>(Object.<span class="fn">fromEntries</span>(fd));</code></pre>
+  </div>
+
+  <h3>Sending FormData with Fetch</h3>
+  <div class="code-block">
+    <div class="code-header"><span>JavaScript — Common Patterns</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="cm">// Pattern 1: Send as FormData (multipart/form-data) — great for file uploads</span>
+form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, <span class="kw">async</span> (<span class="param">e</span>) => {
+  e.<span class="fn">preventDefault</span>();
+  <span class="kw">const</span> fd = <span class="kw">new</span> <span class="fn">FormData</span>(e.target);
+
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/register'</span>, {
+    method: <span class="str">'POST'</span>,
+    body: fd  <span class="cm">// Browser sets Content-Type automatically!</span>
+  });
+});
+
+<span class="cm">// Pattern 2: Send as JSON</span>
+form.<span class="fn">addEventListener</span>(<span class="str">'submit'</span>, <span class="kw">async</span> (<span class="param">e</span>) => {
+  e.<span class="fn">preventDefault</span>();
+  <span class="kw">const</span> data = Object.<span class="fn">fromEntries</span>(<span class="kw">new</span> <span class="fn">FormData</span>(e.target));
+
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/register'</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    body: JSON.<span class="fn">stringify</span>(data)
+  });
+});</code></pre>
+  </div>
+
+  <div class="info-box warn">
+    <strong>⚠️ Important:</strong> When sending FormData directly as body, do <strong>NOT</strong> set the Content-Type header manually. The browser must set it with the correct multipart boundary. If you set it yourself, file uploads will break!
+  </div>
+
+  <h3><span class="live-indicator"></span>Interactive FormData Inspector</h3>
+  <div class="split">
+    <div class="demo-area">
+      <h4>🧪 Fill & Submit</h4>
+      <form id="formDataDemo" class="demo-form">
+        <label>Name <input type="text" name="name" placeholder="Jane Doe"></label>
+        <label>Email <input type="email" name="email" placeholder="jane@dev.io"></label>
+        <label>Skills (multi-select, hold Ctrl)
+          <select name="skills" multiple size="3" style="padding:4px">
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="js">JavaScript</option>
+            <option value="react">React</option>
+          </select>
+        </label>
+        <label><div><input type="checkbox" name="terms" value="yes"> Accept terms</div></label>
+        <button type="submit" class="demo-btn primary small">Inspect FormData</button>
+      </form>
+    </div>
+    <div>
+      <h4 style="color:var(--accent)">🔍 FormData Entries</h4>
+      <div id="formDataOutput" class="event-log" style="max-height:350px">
+        <p style="color:var(--text3);font-size:.85rem;text-align:center;padding:20px">Submit the form to see FormData entries here.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box danger">
+    <strong>🚨 Gotcha with Object.fromEntries:</strong> If you have multiple values for the same key (like checkboxes or multi-select), <code class="inline">Object.fromEntries()</code> will only keep the <strong>last</strong> value! Use <code class="inline">fd.getAll('key')</code> for multi-value fields.
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="markComplete('formdata');navigateTo('mistakes')">Next → Common Mistakes</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: COMMON MISTAKES ===== -->
+<section id="sec-mistakes" class="section">
+  <h2 class="section-title">⚠️ Common Mistakes & Pitfalls</h2>
+  <p class="section-subtitle">Every trap that catches junior and mid-level developers — and how to avoid them.</p>
+
+  <!-- MISTAKE 1 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #1: Forgetting preventDefault()</div>
+    <div class="comparison">
+      <div class="comp-side comp-bad">
+        <div class="comp-label bad">❌ BUG: Page reloads</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--red)"><code>form.addEventListener('submit', (e) => {
+  // forgot preventDefault!
+  const data = new FormData(form);
+  fetch('/api', { body: data });
+  // 💥 page reloads before fetch completes
+});</code></pre>
+      </div>
+      <div class="comp-side comp-good">
+        <div class="comp-label good">✅ FIX</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--green)"><code>form.addEventListener('submit', (e) => {
+  e.preventDefault(); // ← FIRST LINE!
+  const data = new FormData(form);
+  fetch('/api', { body: data });
+});</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISTAKE 2 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #2: Using .value on Checkboxes</div>
+    <div class="comparison">
+      <div class="comp-side comp-bad">
+        <div class="comp-label bad">❌ BUG: Always truthy</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--red)"><code>const agreed = checkbox.value;
+// ⚠️ .value is always "on" (or the value attr)
+// even when unchecked! It's never falsy.</code></pre>
+      </div>
+      <div class="comp-side comp-good">
+        <div class="comp-label good">✅ FIX: Use .checked</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--green)"><code>const agreed = checkbox.checked;
+// ✅ returns true/false based on check state</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISTAKE 3 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #3: Listening on Button Instead of Form</div>
+    <div class="comparison">
+      <div class="comp-side comp-bad">
+        <div class="comp-label bad">❌ Misses Enter key submissions</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--red)"><code>submitBtn.addEventListener('click', () => {
+  // Only fires on button click
+  // User pressing Enter? MISSED!
+  // Form still submits & reloads
+});</code></pre>
+      </div>
+      <div class="comp-side comp-good">
+        <div class="comp-label good">✅ Listen on the form</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--green)"><code>form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  // Catches BOTH click and Enter
+  // Properly prevents reload
+});</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISTAKE 4 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #4: Number Input Returns String</div>
+    <div class="comparison">
+      <div class="comp-side comp-bad">
+        <div class="comp-label bad">❌ Type coercion bug</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--red)"><code>const age = ageInput.value;
+console.log(age + 5);
+// "255" ← string concatenation, not math!
+console.log(typeof age); // "string"</code></pre>
+      </div>
+      <div class="comp-side comp-good">
+        <div class="comp-label good">✅ Convert explicitly</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--green)"><code>const age = Number(ageInput.value);
+// OR: ageInput.valueAsNumber
+// OR: +ageInput.value
+// OR: parseInt(ageInput.value, 10)
+console.log(age + 5); // 30 ✓</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISTAKE 5 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #5: Client-side Validation Only</div>
+    <p style="color:var(--text2);font-size:.9rem">Client-side validation is for <strong>user experience</strong>. It can always be bypassed (DevTools, curl, Postman). <strong>NEVER</strong> trust it for security. Always validate on the server too.</p>
+    <div class="flow-diagram" style="padding:12px">
+      <div class="flow-step fs-1">Client Validation<br><small>UX only</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step fs-4">Server Validation<br><small>SECURITY</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-step fs-2">Database<br><small>constraints</small></div>
+    </div>
+  </div>
+
+  <!-- MISTAKE 6 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #6: Missing name Attribute</div>
+    <div class="comparison">
+      <div class="comp-side comp-bad">
+        <div class="comp-label bad">❌ FormData can't find it</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--red)"><code>&lt;input type="text" id="email"&gt;
+// ⚠️ No name attribute!
+// new FormData(form) won't include it
+// form.elements.email won't work</code></pre>
+      </div>
+      <div class="comp-side comp-good">
+        <div class="comp-label good">✅ Always add name</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--green)"><code>&lt;input type="text" id="email" name="email"&gt;
+// ✅ FormData picks it up
+// form.elements.email works
+// form.elements['email'] works</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISTAKE 7 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #7: setCustomValidity Without Clearing</div>
+    <div class="comparison">
+      <div class="comp-side comp-bad">
+        <div class="comp-label bad">❌ Form stays invalid forever</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--red)"><code>input.setCustomValidity('Error!');
+// Later when input is valid...
+// Forgot to clear it!
+// Form can NEVER submit now</code></pre>
+      </div>
+      <div class="comp-side comp-good">
+        <div class="comp-label good">✅ Clear when valid</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--green)"><code>if (isInvalid) {
+  input.setCustomValidity('Error!');
+} else {
+  input.setCustomValidity(''); // CLEAR IT!
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- MISTAKE 8 -->
+  <div class="card" style="border-left:4px solid var(--red)">
+    <div class="card-title">❌ Mistake #8: Setting Content-Type with FormData</div>
+    <div class="comparison">
+      <div class="comp-side comp-bad">
+        <div class="comp-label bad">❌ Breaks file uploads</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--red)"><code>fetch('/api', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'multipart/form-data'
+    // ⚠️ Missing boundary string!
+  },
+  body: formData
+});</code></pre>
+      </div>
+      <div class="comp-side comp-good">
+        <div class="comp-label good">✅ Let the browser handle it</div>
+        <pre style="font-family:var(--mono);font-size:.82rem;color:var(--green)"><code>fetch('/api', {
+  method: 'POST',
+  // NO Content-Type header!
+  // Browser adds it WITH boundary
+  body: formData
+});</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="markComplete('mistakes');navigateTo('exercises')">Next → Exercises</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: EXERCISES ===== -->
+<section id="sec-exercises" class="section">
+  <h2 class="section-title">💪 Hands-On Exercises</h2>
+  <p class="section-subtitle">Put your knowledge into practice. Try each exercise before looking at the solution!</p>
+
+  <!-- EXERCISE 1 -->
+  <div class="exercise" id="ex1">
+    <div class="exercise-header">
+      <div class="exercise-title">Exercise 1: Prevent & Capture</div>
+      <span class="difficulty diff-easy">Easy</span>
+    </div>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:12px">Write a submit event handler that: (1) prevents page reload, (2) gets the value of an input with <code class="inline">name="city"</code>, (3) logs it to the console. Assume <code class="inline">form</code> is already defined.</p>
+    <textarea id="ex1Code" spellcheck="false" placeholder="// Write your code here...
+form.addEventListener('submit', function(e) {
+  // your code...
+});">
+</textarea>
+    <div class="exercise-actions">
+      <button class="demo-btn primary small" onclick="checkExercise(1)">Check Answer</button>
+      <button class="demo-btn secondary small" onclick="toggleHint(1)">💡 Hint</button>
+      <button class="demo-btn secondary small" onclick="toggleSolution(1)">👁️ Solution</button>
+    </div>
+    <div class="hint-box" id="hint1">Remember: first call <code class="inline">e.preventDefault()</code>, then use <code class="inline">e.target.elements.city.value</code> or <code class="inline">new FormData(e.target).get('city')</code></div>
+    <div class="exercise-result" id="result1"></div>
+    <div class="solution-box" id="sol1"><pre>form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const city = e.target.elements.city.value;
+  console.log(city);
+});</pre></div>
+  </div>
+
+  <!-- EXERCISE 2 -->
+  <div class="exercise" id="ex2">
+    <div class="exercise-header">
+      <div class="exercise-title">Exercise 2: Real-Time Email Validation</div>
+      <span class="difficulty diff-medium">Medium</span>
+    </div>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:12px">Write an input event listener on <code class="inline">emailInput</code> that checks if the value matches a basic email regex <code class="inline">/^[^\s@]+@[^\s@]+\.[^\s@]+$/</code>. If valid, add class "valid" and remove "invalid". If invalid (and not empty), add "invalid" and remove "valid".</p>
+    <textarea id="ex2Code" spellcheck="false" placeholder="// Write your code here...
+emailInput.addEventListener('input', function(e) {
+  // your code...
+});">
+</textarea>
+    <div class="exercise-actions">
+      <button class="demo-btn primary small" onclick="checkExercise(2)">Check Answer</button>
+      <button class="demo-btn secondary small" onclick="toggleHint(2)">💡 Hint</button>
+      <button class="demo-btn secondary small" onclick="toggleSolution(2)">👁️ Solution</button>
+    </div>
+    <div class="hint-box" id="hint2">Use <code class="inline">regex.test(e.target.value)</code> to check validity. Use <code class="inline">classList.toggle('valid', condition)</code> for cleaner code.</div>
+    <div class="exercise-result" id="result2"></div>
+    <div class="solution-box" id="sol2"><pre>emailInput.addEventListener('input', function(e) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValid = regex.test(e.target.value);
+  const notEmpty = e.target.value.length > 0;
+
+  e.target.classList.toggle('valid', isValid);
+  e.target.classList.toggle('invalid', !isValid && notEmpty);
+});</pre></div>
+  </div>
+
+  <!-- EXERCISE 3 -->
+  <div class="exercise" id="ex3">
+    <div class="exercise-header">
+      <div class="exercise-title">Exercise 3: FormData to JSON</div>
+      <span class="difficulty diff-medium">Medium</span>
+    </div>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:12px">In a submit handler, create a FormData object from the form, convert it to a plain object, then JSON.stringify it. Store the JSON string in a variable called <code class="inline">jsonString</code>.</p>
+    <textarea id="ex3Code" spellcheck="false" placeholder="// Write your code here...
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  // your code to create jsonString...
+});">
+</textarea>
+    <div class="exercise-actions">
+      <button class="demo-btn primary small" onclick="checkExercise(3)">Check Answer</button>
+      <button class="demo-btn secondary small" onclick="toggleHint(3)">💡 Hint</button>
+      <button class="demo-btn secondary small" onclick="toggleSolution(3)">👁️ Solution</button>
+    </div>
+    <div class="hint-box" id="hint3"><code class="inline">new FormData(form)</code> → <code class="inline">Object.fromEntries()</code> → <code class="inline">JSON.stringify()</code></div>
+    <div class="exercise-result" id="result3"></div>
+    <div class="solution-box" id="sol3"><pre>form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd);
+  const jsonString = JSON.stringify(data);
+  console.log(jsonString);
+});</pre></div>
+  </div>
+
+  <!-- EXERCISE 4 -->
+  <div class="exercise" id="ex4">
+    <div class="exercise-header">
+      <div class="exercise-title">Exercise 4: Password Match Validation</div>
+      <span class="difficulty diff-medium">Medium</span>
+    </div>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:12px">Write a submit handler that prevents default, gets "password" and "confirmPassword" field values, checks if they match, and shows an alert if they don't. If they match, log "Passwords match!".</p>
+    <textarea id="ex4Code" spellcheck="false" placeholder="// Write your code here...
+form.addEventListener('submit', function(e) {
+  // your code...
+});">
+</textarea>
+    <div class="exercise-actions">
+      <button class="demo-btn primary small" onclick="checkExercise(4)">Check Answer</button>
+      <button class="demo-btn secondary small" onclick="toggleHint(4)">💡 Hint</button>
+      <button class="demo-btn secondary small" onclick="toggleSolution(4)">👁️ Solution</button>
+    </div>
+    <div class="hint-box" id="hint4">Get both values via <code class="inline">e.target.elements</code>, compare with <code class="inline">===</code>, use an if/else.</div>
+    <div class="exercise-result" id="result4"></div>
+    <div class="solution-box" id="sol4"><pre>form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const pw = e.target.elements.password.value;
+  const confirm = e.target.elements.confirmPassword.value;
+
+  if (pw !== confirm) {
+    alert('Passwords do not match!');
+  } else {
+    console.log('Passwords match!');
+  }
+});</pre></div>
+  </div>
+
+  <!-- EXERCISE 5: LIVE CHALLENGE -->
+  <div class="exercise" id="ex5">
+    <div class="exercise-header">
+      <div class="exercise-title">🏆 Challenge: Build a Working Todo Form</div>
+      <span class="difficulty diff-hard">Hard</span>
+    </div>
+    <p style="color:var(--text2);font-size:.9rem;margin-bottom:12px">The form below should: on submit, prevent default, get the todo text, add it as a new <code class="inline">&lt;li&gt;</code> to the list, and clear the input. Make it work!</p>
+    <div class="demo-area" style="margin-bottom:12px">
+      <form id="todoForm" class="demo-form">
+        <div style="display:flex;gap:8px">
+          <input type="text" name="todo" id="todoInput" placeholder="Enter a todo..." style="flex:1" autocomplete="off">
+          <button type="submit" class="demo-btn primary small">Add</button>
+        </div>
+      </form>
+      <ul id="todoList" style="list-style:none;margin-top:12px;font-size:.9rem">
+      </ul>
+      <p id="todoStatus" style="color:var(--text3);font-size:.82rem;margin-top:8px"></p>
+    </div>
+    <textarea id="ex5Code" spellcheck="false" placeholder="// The form element is: document.getElementById('todoForm')
+// The input is: document.getElementById('todoInput')  
+// The list is: document.getElementById('todoList')
+// Write the event listener to make it work!
+">
+</textarea>
+    <div class="exercise-actions">
+      <button class="demo-btn primary small" onclick="runTodoExercise()">▶ Run My Code</button>
+      <button class="demo-btn secondary small" onclick="toggleSolution(5)">👁️ Solution</button>
+    </div>
+    <div class="exercise-result" id="result5"></div>
+    <div class="solution-box" id="sol5"><pre>const todoForm = document.getElementById('todoForm');
+const todoInput = document.getElementById('todoInput');
+const todoList = document.getElementById('todoList');
+
+todoForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const text = todoInput.value.trim();
+  if (text === '') return;
+
+  const li = document.createElement('li');
+  li.textContent = text;
+  li.style.padding = '8px';
+  li.style.borderBottom = '1px solid rgba(139,92,246,.15)';
+  li.style.color = '#e2e8f0';
+  todoList.appendChild(li);
+  todoInput.value = '';
+  todoInput.focus();
+});</pre></div>
+  </div>
+
+  <div class="next-section-btn">
+    <button class="demo-btn primary" onclick="markComplete('exercises');navigateTo('quiz')">Next → Final Quiz 🧠</button>
+  </div>
+</section>
+
+<!-- ===== SECTION: QUIZ ===== -->
+<section id="sec-quiz" class="section">
+  <h2 class="section-title">🧠 Final Knowledge Quiz</h2>
+  <p class="section-subtitle">15 questions to test your form handling mastery. Score 80%+ to earn the completion badge!</p>
+
+  <div id="quizContainer"></div>
+
+  <div style="text-align:center;margin-top:24px">
+    <button class="demo-btn primary" id="submitQuizBtn" onclick="submitQuiz()" style="padding:14px 48px;font-size:1rem">Submit Quiz</button>
+  </div>
+  <div id="quizScoreContainer" class="quiz-score" style="display:none"></div>
+</section>
+
+</main>
+
+<!-- ================= JAVASCRIPT ================= -->
+<script>
+// ==========================================
+// APP STATE
+// ==========================================
+const state = {
+  xp: 0,
+  maxXp: 1000,
+  completedSections: new Set(),
+  quizAnswered: {},
+  quizSubmitted: false
+};
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function navigateTo(sectionId) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+
+  const sec = document.getElementById('sec-' + sectionId);
+  if (sec) {
+    sec.classList.add('active');
+    sec.scrollIntoView({behavior: 'smooth', block: 'start'});
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  const navLink = document.querySelector(`.nav-links a[data-section="${sectionId}"]`);
+  if (navLink) navLink.classList.add('active');
+
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    navigateTo(link.dataset.section);
+  });
+});
+
+document.getElementById('hamburgerBtn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+// ==========================================
+// XP & PROGRESS
+// ==========================================
+function addXP(amount) {
+  state.xp = Math.min(state.xp + amount, state.maxXp);
+  updateXPBar();
+  showToast(`+${amount} XP!`, 'info');
+}
+
+function updateXPBar() {
+  const pct = (state.xp / state.maxXp) * 100;
+  document.getElementById('xpFill').style.width = pct + '%';
+  document.getElementById('xpText').textContent = `${state.xp} / ${state.maxXp} XP`;
+}
+
+function markComplete(sectionId) {
+  if (!state.completedSections.has(sectionId)) {
+    state.completedSections.add(sectionId);
+    const link = document.querySelector(`.nav-links a[data-section="${sectionId}"]`);
+    if (link) link.classList.add('completed');
+    addXP(100);
+  }
+}
+
+// ==========================================
+// TOAST NOTIFICATIONS
+// ==========================================
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+// ==========================================
+// COPY CODE
+// ==========================================
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+// ==========================================
+// EVENT LOGGER DEMO
+// ==========================================
+(function setupEventLogger() {
+  const form = document.getElementById('eventDemoForm');
+  const input = document.getElementById('eventInput');
+  const select = document.getElementById('eventSelect');
+  const check = document.getElementById('eventCheck');
+  const log = document.getElementById('eventLog');
+
+  let counter = 0;
+
+  function logEvent(eventName, detail, el) {
+    counter++;
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    const badgeClass = 'badge-' + eventName.toLowerCase();
+    entry.innerHTML = `
+      <span style="color:var(--text3);font-size:.7rem;min-width:24px">${counter}</span>
+      <span class="event-badge ${badgeClass}">${eventName}</span>
+      <span style="color:var(--text2);font-size:.8rem">${detail}</span>
+    `;
+    log.insertBefore(entry, log.firstChild);
+    if (log.children.length > 50) log.removeChild(log.lastChild);
+  }
+
+  // Form events
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    logEvent('submit', 'Form submitted!', form);
+  });
+  form.addEventListener('reset', () => logEvent('reset', 'Form reset!', form));
+
+  // Input events
+  ['input', 'change', 'focus', 'blur', 'keydown', 'keyup'].forEach(evt => {
+    input.addEventListener(evt, (e) => {
+      let detail = '';
+      if (evt === 'input' || evt === 'change') detail = `value="${e.target.value}"`;
+      else if (evt === 'keydown' || evt === 'keyup') detail = `key="${e.key}"`;
+      else detail = `on <${e.target.tagName.toLowerCase()}>`;
+      logEvent(evt, detail, input);
+    });
+  });
+
+  // Select events
+  ['change', 'focus', 'blur'].forEach(evt => {
+    select.addEventListener(evt, (e) => {
+      logEvent(evt, `select value="${e.target.value}"`, select);
+    });
+  });
+
+  // Checkbox
+  check.addEventListener('change', (e) => {
+    logEvent('change', `checked=${e.target.checked}`, check);
+  });
+})();
+
+// ==========================================
+// CAPTURE DEMO
+// ==========================================
+(function setupCaptureDemo() {
+  const form = document.getElementById('captureDemoForm');
+  const output = document.getElementById('captureOutput');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // Method 1: form.elements
+    const data = {
+      username: form.elements.username.value,
+      email: form.elements.email.value,
+      age: form.elements.age.value,
+      ageType: typeof form.elements.age.value,
+      ageAsNumber: form.elements.age.valueAsNumber,
+      role: form.elements.role.value,
+      newsletter: form.elements.newsletter.checked,
+      experience: form.elements.exp ? form.elements.exp.value : 'none selected'
+    };
+
+    // Method 2: FormData
+    const fd = new FormData(form);
+    const fdEntries = [...fd.entries()];
+
+    output.innerHTML = `
+      <div style="margin-bottom:12px">
+        <div style="color:var(--accent);font-weight:700;font-size:.82rem;margin-bottom:8px">📋 via form.elements:</div>
+        ${Object.entries(data).map(([k,v]) => `
+          <div class="log-entry" style="background:rgba(0,212,255,.05)">
+            <span style="color:var(--accent);min-width:120px;font-size:.8rem">${k}:</span>
+            <span style="color:var(--text);font-size:.8rem">${JSON.stringify(v)}</span>
+            <span style="color:var(--text3);font-size:.7rem;margin-left:auto">(${typeof v})</span>
+          </div>
+        `).join('')}
+      </div>
+      <div>
+        <div style="color:var(--accent2);font-weight:700;font-size:.82rem;margin-bottom:8px">📦 via FormData entries:</div>
+        ${fdEntries.map(([k,v]) => `
+          <div class="log-entry" style="background:rgba(139,92,246,.05)">
+            <span style="color:var(--accent2);min-width:100px;font-size:.8rem">${k}:</span>
+            <span style="color:var(--text);font-size:.8rem">"${v}"</span>
+          </div>
+        `).join('')}
+      </div>
+      <div style="margin-top:12px">
+        <div style="color:var(--amber);font-weight:700;font-size:.82rem;margin-bottom:4px">🔄 Object.fromEntries(FormData):</div>
+        <pre style="color:var(--amber);font-size:.8rem;background:rgba(245,158,11,.05);padding:8px;border-radius:4px">${JSON.stringify(Object.fromEntries(fd), null, 2)}</pre>
+      </div>
+    `;
+  });
+})();
+
+// ==========================================
+// PREVENTDEFAULT DEMOS
+// ==========================================
+(function setupPreventDemos() {
+  // Prevented form
+  const form = document.getElementById('preventedForm');
+  const output = document.getElementById('preventedOutput');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const val = e.target.elements.test.value;
+    output.innerHTML = `✅ preventDefault worked! Value: "${val}" — Page did NOT reload!`;
+    setTimeout(() => output.innerHTML = '', 3000);
+  });
+
+  // Prevented link
+  const link = document.getElementById('preventedLink');
+  const linkOutput = document.getElementById('linkOutput');
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    linkOutput.textContent = '✅ Link click prevented! You stayed on this page.';
+    setTimeout(() => linkOutput.textContent = '', 3000);
+  });
+
+  // Prevented context menu
+  const box = document.getElementById('contextBox');
+  const contextOutput = document.getElementById('contextOutput');
+  box.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    contextOutput.textContent = '✅ Default context menu prevented!';
+    setTimeout(() => contextOutput.textContent = '', 3000);
+  });
+})();
+
+// ==========================================
+// VALIDATION PLAYGROUND
+// ==========================================
+(function setupValidation() {
+  const form = document.getElementById('validationForm');
+  const username = document.getElementById('valUsername');
+  const email = document.getElementById('valEmail');
+  const password = document.getElementById('valPassword');
+  const confirm = document.getElementById('valConfirm');
+  const age = document.getElementById('valAge');
+
+  const errUsername = document.getElementById('errUsername');
+  const errEmail = document.getElementById('errEmail');
+  const errPassword = document.getElementById('errPassword');
+  const errConfirm = document.getElementById('errConfirm');
+  const errAge = document.getElementById('errAge');
+
+  function validateField(input, errEl, validatorFn) {
+    const result = validatorFn(input.value);
+    errEl.textContent = result.error || '';
+    input.classList.toggle('valid', result.valid && input.value.length > 0);
+    input.classList.toggle('invalid', !result.valid && input.value.length > 0);
+    return result.valid;
+  }
+
+  const validators = {
+    username: (val) => {
+      if (!val) return {valid: false, error: 'Username is required'};
+      if (val.length < 3) return {valid: false, error: 'At least 3 characters'};
+      if (val.length > 20) return {valid: false, error: 'Max 20 characters'};
+      if (!/^[a-zA-Z0-9]+$/.test(val)) return {valid: false, error: 'Letters and numbers only'};
+      return {valid: true, error: ''};
+    },
+    email: (val) => {
+      if (!val) return {valid: false, error: 'Email is required'};
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return {valid: false, error: 'Enter a valid email'};
+      return {valid: true, error: ''};
+    },
+    password: (val) => {
+      if (!val) return {valid: false, error: 'Password is required'};
+      const errors = [];
+      if (val.length < 8) errors.push('8+ chars');
+      if (!/[A-Z]/.test(val)) errors.push('1 uppercase');
+      if (!/[0-9]/.test(val)) errors.push('1 number');
+      if (!/[!@#$%^&*]/.test(val)) errors.push('1 special (!@#$%^&*)');
+      return errors.length ? {valid: false, error: 'Need: ' + errors.join(', ')} : {valid: true, error: ''};
+    },
+    confirm: (val) => {
+      if (!val) return {valid: false, error: 'Please confirm password'};
+      if (val !== password.value) return {valid: false, error: 'Passwords do not match'};
+      return {valid: true, error: ''};
+    },
+    age: (val) => {
+      if (!val) return {valid: false, error: 'Age is required'};
+      const n = Number(val);
+      if (isNaN(n)) return {valid: false, error: 'Must be a number'};
+      if (n < 18) return {valid: false, error: 'Must be 18+'};
+      if (n > 120) return {valid: false, error: 'Must be 120 or less'};
+      return {valid: true, error: ''};
+    }
+  };
+
+  // Real-time validation
+  username.addEventListener('input', () => validateField(username, errUsername, validators.username));
+  email.addEventListener('input', () => validateField(email, errEmail, validators.email));
+  password.addEventListener('input', (e) => {
+    validateField(password, errPassword, validators.password);
+    if (confirm.value) validateField(confirm, errConfirm, validators.confirm);
+    updatePasswordStrength(e.target.value);
+  });
+  confirm.addEventListener('input', () => validateField(confirm, errConfirm, validators.confirm));
+  age.addEventListener('input', () => validateField(age, errAge, validators.age));
+
+  function updatePasswordStrength(pw) {
+    const bars = document.querySelectorAll('#passwordStrength .str-bar');
+    let strength = 0;
+    if (pw.length >= 8) strength++;
+    if (/[A-Z]/.test(pw)) strength++;
+    if (/[0-9]/.test(pw)) strength++;
+    if (/[!@#$%^&*]/.test(pw)) strength++;
+
+    const colors = ['var(--red)', 'var(--orange)', 'var(--amber)', 'var(--green)'];
+    bars.forEach((bar, i) => {
+      bar.style.background = i < strength ? colors[strength - 1] : 'var(--bg4)';
+    });
+  }
+
+  // Submit validation
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v1 = validateField(username, errUsername, validators.username);
+    const v2 = validateField(email, errEmail, validators.email);
+    const v3 = validateField(password, errPassword, validators.password);
+    const v4 = validateField(confirm, errConfirm, validators.confirm);
+    const v5 = validateField(age, errAge, validators.age);
+
+    const result = document.getElementById('validationResult');
+    if (v1 && v2 && v3 && v4 && v5) {
+      result.innerHTML = '<div class="info-box tip"><strong>✅ All fields valid!</strong> Form would be submitted.</div>';
+    } else {
+      result.innerHTML = '<div class="info-box danger"><strong>❌ Fix the errors above</strong> before submitting.</div>';
+    }
+  });
+})();
+
+// ==========================================
+// FORMDATA DEMO
+// ==========================================
+(function setupFormDataDemo() {
+  const form = document.getElementById('formDataDemo');
+  const output = document.getElementById('formDataOutput');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+
+    let html = '';
+
+    // Individual entries
+    html += '<div style="color:var(--accent);font-weight:700;font-size:.82rem;margin-bottom:8px">📋 fd.entries():</div>';
+    for (const [key, value] of fd.entries()) {
+      html += `<div class="log-entry" style="background:rgba(0,212,255,.05)">
+        <span class="event-badge badge-input" style="min-width:60px">${key}</span>
+        <span style="color:var(--text);font-size:.8rem">"${value}"</span>
+      </div>`;
+    }
+
+    // Skills with getAll
+    const skills = fd.getAll('skills');
+    html += `<div style="margin-top:12px;color:var(--accent2);font-weight:700;font-size:.82rem;margin-bottom:4px">📦 fd.getAll('skills'):</div>`;
+    html += `<div class="log-entry" style="background:rgba(139,92,246,.05)">
+      <span style="color:var(--accent2);font-size:.8rem">[${skills.map(s=>'"'+s+'"').join(', ')}]</span>
+    </div>`;
+
+    // Object.fromEntries
+    const obj = Object.fromEntries(fd);
+    html += `<div style="margin-top:12px;color:var(--amber);font-weight:700;font-size:.82rem;margin-bottom:4px">⚠️ Object.fromEntries(fd):</div>`;
+    html += `<pre style="color:var(--amber);font-size:.78rem;background:rgba(245,158,11,.05);padding:8px;border-radius:4px">${JSON.stringify(obj, null, 2)}</pre>`;
+    if (skills.length > 1) {
+      html += `<div style="color:var(--red);font-size:.78rem;margin-top:4px">⚠️ Notice: "skills" only has the LAST value! Multi-values lost with Object.fromEntries.</div>`;
+    }
+
+    // has
+    html += `<div style="margin-top:12px;color:var(--green);font-size:.82rem">fd.has('name'): <strong>${fd.has('name')}</strong> | fd.has('phone'): <strong>${fd.has('phone')}</strong></div>`;
+
+    output.innerHTML = html;
+  });
+})();
+
+// ==========================================
+// EXERCISES
+// ==========================================
+function toggleHint(n) {
+  const h = document.getElementById('hint' + n);
+  h.classList.toggle('show');
+}
+
+function toggleSolution(n) {
+  const s = document.getElementById('sol' + n);
+  s.classList.toggle('show');
+}
+
+function checkExercise(n) {
+  const code = document.getElementById('ex' + n + 'Code').value.trim();
+  const result = document.getElementById('result' + n);
+  let pass = false;
+
+  switch(n) {
+    case 1:
+      pass = code.includes('preventDefault') &&
+             (code.includes('.elements.city.value') || code.includes("get('city')") || code.includes('querySelector') || code.includes('getElementById')) &&
+             code.includes('console.log');
+      break;
+    case 2:
+      pass = code.includes('addEventListener') &&
+             code.includes('input') &&
+             (code.includes('test(') || code.includes('match(')) &&
+             (code.includes('classList') || code.includes('className'));
+      break;
+    case 3:
+      pass = code.includes('preventDefault') &&
+             code.includes('FormData') &&
+             code.includes('fromEntries') &&
+             code.includes('stringify');
+      break;
+    case 4:
+      pass = code.includes('preventDefault') &&
+             code.includes('password') &&
+             code.includes('confirmPassword') &&
+             (code.includes('!==') || code.includes('!=') || code.includes('==='));
+      break;
+  }
+
+  result.className = 'exercise-result show ' + (pass ? 'pass' : 'fail');
+  result.textContent = pass
+    ? '✅ Looks great! Your code contains the right patterns. +50 XP!'
+    : '❌ Not quite — check that you included all required parts. Try again or peek at the hint/solution.';
+
+  if (pass && !result.dataset.scored) {
+    addXP(50);
+    result.dataset.scored = 'true';
+  }
+}
+
+function runTodoExercise() {
+  const code = document.getElementById('ex5Code').value.trim();
+  const result = document.getElementById('result5');
+
+  try {
+    // Clean up previous listeners by replacing the form
+    const oldForm = document.getElementById('todoForm');
+    const newForm = oldForm.cloneNode(true);
+    oldForm.parentNode.replaceChild(newForm, oldForm);
+    document.getElementById('todoList').innerHTML = '';
+
+    // Execute user code
+    eval(code);
+
+    result.className = 'exercise-result show pass';
+    result.textContent = '✅ Code executed! Try submitting the form above to see if it works. +50 XP!';
+    if (!result.dataset.scored) {
+      addXP(50);
+      result.dataset.scored = 'true';
+    }
+  } catch(err) {
+    result.className = 'exercise-result show fail';
+    result.textContent = '❌ Error: ' + err.message;
+  }
+}
+
+// ==========================================
+// QUIZ
+// ==========================================
+const quizQuestions = [
+  {
+    q: 'What does <code>e.preventDefault()</code> do inside a submit event handler?',
+    options: [
+      'Removes the event listener',
+      'Stops the browser from submitting the form and reloading the page',
+      'Prevents other event listeners from firing',
+      'Deletes the form data'
+    ],
+    correct: 1,
+    explanation: 'preventDefault() stops the browser\'s default action for the event. For forms, that means it prevents the HTTP GET/POST submission and page reload.'
+  },
+  {
+    q: 'Which event fires on EVERY keystroke as the user types?',
+    options: ['change', 'input', 'keypress', 'blur'],
+    correct: 1,
+    explanation: 'The "input" event fires immediately on every value change. "change" only fires when the element loses focus. "keypress" is deprecated.'
+  },
+  {
+    q: 'How do you check if a checkbox is checked?',
+    options: [
+      'checkbox.value',
+      'checkbox.checked',
+      'checkbox.isChecked()',
+      'checkbox.getAttribute("checked")'
+    ],
+    correct: 1,
+    explanation: 'The .checked property returns a boolean (true/false). .value always returns the value attribute (default "on"), regardless of check state!'
+  },
+  {
+    q: 'What does <code>input[type="number"].value</code> return?',
+    options: ['Number', 'String', 'Boolean', 'undefined'],
+    correct: 1,
+    explanation: 'ALL .value properties return strings! Even number inputs. Use .valueAsNumber, Number(), parseInt(), or the + operator to get a number.'
+  },
+  {
+    q: 'Why should you listen for "submit" on the form instead of "click" on the button?',
+    options: [
+      'It\'s faster',
+      'It catches both button clicks AND Enter key presses',
+      'It prevents bubbling',
+      'Click events don\'t work on buttons'
+    ],
+    correct: 1,
+    explanation: 'The form\'s submit event fires for both button clicks AND when the user presses Enter in any text input. Listening only on button click misses Enter submissions.'
+  },
+  {
+    q: 'What does <code>Object.fromEntries(new FormData(form))</code> return?',
+    options: [
+      'An array of arrays',
+      'A FormData object',
+      'A plain object with key-value pairs from the form fields',
+      'A JSON string'
+    ],
+    correct: 2,
+    explanation: 'Object.fromEntries() converts an iterable of [key, value] pairs into a plain object. FormData is iterable, so this gives you { fieldName: "value", ... }.'
+  },
+  {
+    q: 'What happens if an input has no <code>name</code> attribute?',
+    options: [
+      'FormData includes it with an empty key',
+      'FormData skips it entirely',
+      'The form throws an error',
+      'The value is set to null'
+    ],
+    correct: 1,
+    explanation: 'FormData only collects fields with a name attribute. No name = invisible to FormData. Always add name attributes to your form fields!'
+  },
+  {
+    q: 'When sending FormData via fetch, should you set the Content-Type header?',
+    options: [
+      'Yes, to "multipart/form-data"',
+      'Yes, to "application/json"',
+      'No, let the browser set it automatically',
+      'Yes, to "application/x-www-form-urlencoded"'
+    ],
+    correct: 2,
+    explanation: 'When the body is FormData, the browser automatically sets Content-Type to multipart/form-data WITH the correct boundary string. Setting it manually breaks file uploads!'
+  },
+  {
+    q: 'What does <code>return false</code> do inside <code>addEventListener</code>?',
+    options: [
+      'Same as preventDefault()',
+      'Same as stopPropagation()',
+      'Both preventDefault and stopPropagation',
+      'Nothing — it has no effect in addEventListener'
+    ],
+    correct: 3,
+    explanation: 'In addEventListener callbacks, return false does NOTHING. It only works with old-style onclick="..." attributes. Always use e.preventDefault() explicitly.'
+  },
+  {
+    q: 'Which is the correct way to access the "email" field via form.elements?',
+    options: [
+      'form.elements("email")',
+      'form.elements.email or form.elements["email"]',
+      'form.getElement("email")',
+      'form.fields.email'
+    ],
+    correct: 1,
+    explanation: 'form.elements is an HTMLFormControlsCollection. Access fields by their name or id attribute using dot notation or bracket notation.'
+  },
+  {
+    q: 'What is the purpose of <code>input.setCustomValidity("")</code>?',
+    options: [
+      'Sets a custom placeholder',
+      'Clears any custom validation error, making the field valid again',
+      'Resets the input value to empty',
+      'Removes all validation rules'
+    ],
+    correct: 1,
+    explanation: 'Passing an empty string to setCustomValidity() clears the custom error. If you forget this, the field stays permanently invalid and the form can never submit!'
+  },
+  {
+    q: 'What is <code>e.target</code> inside a form submit handler?',
+    options: [
+      'The submit button that was clicked',
+      'The form element itself',
+      'The document object',
+      'The window object'
+    ],
+    correct: 1,
+    explanation: 'In a submit event handler, e.target is the form element that was submitted. You can use e.target.elements to access all form fields.'
+  },
+  {
+    q: 'How do you get ALL selected values from a <code>&lt;select multiple&gt;</code>?',
+    options: [
+      'select.value (returns an array)',
+      'select.values()',
+      '[...select.selectedOptions].map(o => o.value)',
+      'select.getAll()'
+    ],
+    correct: 2,
+    explanation: 'select.value only returns the first selected value. For multiple selections, use selectedOptions (an HTMLCollection of selected option elements) and map their values.'
+  },
+  {
+    q: 'Which validation strategy provides the best user experience?',
+    options: [
+      'Validate only on submit',
+      'Validate on every keystroke (input event) with submit as final check',
+      'Use only HTML5 required attribute',
+      'Show all errors at once after submit'
+    ],
+    correct: 1,
+    explanation: 'Real-time validation on input gives instant feedback, while submit validation acts as a final gate. This combination is the gold standard for form UX.'
+  },
+  {
+    q: 'What does <code>e.stopPropagation()</code> do?',
+    options: [
+      'Prevents the default browser action',
+      'Stops the event from bubbling up to parent elements',
+      'Removes the event listener',
+      'Cancels the form submission'
+    ],
+    correct: 1,
+    explanation: 'stopPropagation prevents the event from traveling up the DOM tree to parent elements. It\'s different from preventDefault, which stops the default browser behavior.'
+  }
+];
+
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  let html = '';
+
+  quizQuestions.forEach((q, i) => {
+    html += `<div class="quiz-question" id="qq${i}">
+      <h4><span class="q-number">Q${i+1}.</span> ${q.q}</h4>
+      <div class="quiz-options">
+        ${q.options.map((opt, j) => `
+          <label class="quiz-option" id="qo${i}_${j}" onclick="selectQuizOption(${i}, ${j})">
+            <div class="quiz-radio"></div>
+            <span>${opt}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div class="quiz-explanation" id="qexp${i}"></div>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function selectQuizOption(qIdx, oIdx) {
+  if (state.quizSubmitted) return;
+
+  // Clear previous selection
+  document.querySelectorAll(`#qq${qIdx} .quiz-option`).forEach(opt => opt.classList.remove('selected'));
+
+  // Select new
+  document.getElementById(`qo${qIdx}_${oIdx}`).classList.add('selected');
+  state.quizAnswered[qIdx] = oIdx;
+}
+
+function submitQuiz() {
+  if (state.quizSubmitted) return;
+
+  const total = quizQuestions.length;
+  const answered = Object.keys(state.quizAnswered).length;
+
+  if (answered < total) {
+    showToast(`Answer all questions! (${answered}/${total} done)`, 'error');
+    return;
+  }
+
+  state.quizSubmitted = true;
+  let score = 0;
+
+  quizQuestions.forEach((q, i) => {
+    const userAnswer = state.quizAnswered[i];
+    const isCorrect = userAnswer === q.correct;
+    if (isCorrect) score++;
+
+    // Highlight correct/wrong
+    const selectedEl = document.getElementById(`qo${i}_${userAnswer}`);
+    const correctEl = document.getElementById(`qo${i}_${q.correct}`);
+
+    if (isCorrect) {
+      selectedEl.classList.add('correct');
+    } else {
+      selectedEl.classList.add('wrong');
+      correctEl.classList.add('correct');
+    }
+
+    // Show explanation
+    const exp = document.getElementById(`qexp${i}`);
+    exp.className = `quiz-explanation show ${isCorrect ? 'correct-exp' : 'wrong-exp'}`;
+    exp.innerHTML = `${isCorrect ? '✅ Correct!' : '❌ Wrong.'} ${q.explanation}`;
+  });
+
+  // Show score
+  const pct = Math.round((score / total) * 100);
+  const container = document.getElementById('quizScoreContainer');
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="score-number">${score}/${total}</div>
+    <p style="color:var(--text2);font-size:1.1rem;margin-top:8px">${pct}% — ${
+      pct >= 80 ? '🏆 Outstanding! You\'ve mastered form handling!' :
+      pct >= 60 ? '💪 Good job! Review the mistakes above.' :
+      '📚 Keep studying! Re-read the sections and try again.'
+    }</p>
+  `;
+
+  document.getElementById('submitQuizBtn').style.display = 'none';
+
+  // XP
+  addXP(score * 20);
+  markComplete('quiz');
+
+  // Confetti if high score
+  if (pct >= 80) {
+    launchConfetti();
+  }
+
+  container.scrollIntoView({behavior: 'smooth'});
+}
+
+// ==========================================
+// CONFETTI
+// ==========================================
+function launchConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti';
+  document.body.appendChild(container);
+
+  const colors = ['#00d4ff', '#8b5cf6', '#f472b6', '#10b981', '#f59e0b', '#ef4444'];
+
+  for (let i = 0; i < 100; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = (6 + Math.random() * 8) + 'px';
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => container.remove(), 5000);
+}
+
+// ==========================================
+// INIT
+// ==========================================
+buildQuiz();
+updateXPBar();
+</script>
+</body>
+</html>
