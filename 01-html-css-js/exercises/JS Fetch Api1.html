@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Fetch API & AJAX</title>
+<style>
+    :root {
+      --bg: #0f1117;
+      --bg2: #161822;
+      --bg3: #1e2030;
+      --card: #1e2030;
+      --border: #2e3148;
+      --text: #e2e4f0;
+      --muted: #8890b0;
+      --accent: #7c5cfc;
+      --accent2: #5c9cfc;
+      --green: #3cd88b;
+      --red: #f55;
+      --orange: #ffaa44;
+      --yellow: #ffd644;
+      --pink: #ff6eb4;
+      --cyan: #44ddee;
+      --code-bg: #12131d;
+      --success: #1a4a2a;
+      --error: #4a1a1a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* NAVIGATION */
+    .top-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(15,17,23,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .top-bar .logo {
+      font-size: 18px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .progress-wrap {
+      display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted);
+    }
+
+    .progress-bar-bg {
+      width: 180px; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%; width: 0%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      transition: width 0.5s ease;
+    }
+
+    /* SIDEBAR NAV */
+    .sidebar {
+      position: fixed; left: 0; top: 60px; bottom: 0; width: 260px;
+      background: var(--bg2); border-right: 1px solid var(--border);
+      overflow-y: auto; z-index: 50; padding: 16px 0;
+      transition: transform 0.3s;
+    }
+
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .nav-section-title {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--muted); padding: 16px 20px 6px; font-weight: 700;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; cursor: pointer;
+      font-size: 14px; color: var(--muted);
+      transition: all 0.2s; border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+
+    .nav-item.active {
+      color: var(--accent); border-left-color: var(--accent);
+      background: rgba(124,92,252,0.06);
+    }
+
+    .nav-item.completed .nav-icon { color: var(--green); }
+
+    .nav-icon { font-size: 16px; width: 22px; text-align: center; }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: 260px; margin-top: 60px; padding: 40px 48px 100px;
+      max-width: 920px;
+    }
+
+    .section { display: none; animation: fadeUp 0.4s ease; }
+    .section.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 36px; font-weight: 800; margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--text), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    h2 {
+      font-size: 24px; font-weight: 700; margin: 40px 0 16px;
+      color: var(--text); display: flex; align-items: center; gap: 10px;
+    }
+
+    h3 { font-size: 18px; font-weight: 600; margin: 24px 0 10px; color: var(--accent2); }
+
+    .subtitle { color: var(--muted); font-size: 16px; margin-bottom: 32px; }
+
+    p { margin-bottom: 16px; color: var(--text); font-size: 15px; }
+
+    /* CARDS */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px; margin: 20px 0;
+    }
+
+    .card.highlight {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(124,92,252,0.06), rgba(92,156,252,0.04));
+    }
+
+    .card.warning {
+      border-color: var(--orange);
+      background: rgba(255,170,68,0.05);
+    }
+
+    .card.danger {
+      border-color: var(--red);
+      background: rgba(255,85,85,0.05);
+    }
+
+    .card.success {
+      border-color: var(--green);
+      background: rgba(60,216,139,0.05);
+    }
+
+    .card-label {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+      font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+
+    .card.warning .card-label { color: var(--orange); }
+    .card.danger .card-label { color: var(--red); }
+    .card.success .card-label { color: var(--green); }
+    .card.highlight .card-label { color: var(--accent); }
+
+    /* CODE BLOCKS */
+    .code-wrap {
+      position: relative; margin: 16px 0; border-radius: 10px;
+      overflow: hidden; border: 1px solid var(--border);
+    }
+
+    .code-header {
+      background: var(--bg3); padding: 8px 16px;
+      font-size: 12px; color: var(--muted);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .copy-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 11px;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    pre {
+      background: var(--code-bg); padding: 20px;
+      overflow-x: auto; font-size: 13.5px; line-height: 1.8;
+    }
+
+    pre::-webkit-scrollbar { height: 4px; }
+    pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    code {
+      font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+    }
+
+    .inline-code {
+      background: var(--bg3); padding: 2px 8px; border-radius: 4px;
+      font-size: 13px; color: var(--pink); border: 1px solid var(--border);
+    }
+
+    /* Syntax highlighting */
+    .kw { color: #c792ea; } /* keywords */
+    .fn { color: #82aaff; } /* functions */
+    .str { color: #c3e88d; } /* strings */
+    .num { color: #f78c6c; } /* numbers */
+    .cm { color: #546e7a; font-style: italic; } /* comments */
+    .op { color: #89ddff; } /* operators */
+    .pr { color: #ffcb6b; } /* properties */
+    .const { color: #ff5572; } /* const/error */
+    .param { color: #e2e4f0; }
+
+    /* VISUAL DIAGRAM */
+    .diagram {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px; margin: 24px 0;
+      overflow: hidden; position: relative;
+    }
+
+    .flow-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; flex-wrap: wrap; margin: 16px 0;
+    }
+
+    .flow-box {
+      padding: 14px 22px; border-radius: 10px; font-size: 14px;
+      font-weight: 600; text-align: center; min-width: 120px;
+      border: 2px solid; transition: all 0.3s;
+    }
+
+    .flow-box.browser { background: rgba(124,92,252,0.12); border-color: var(--accent); color: var(--accent); }
+    .flow-box.network { background: rgba(255,170,68,0.12); border-color: var(--orange); color: var(--orange); }
+    .flow-box.server { background: rgba(60,216,139,0.12); border-color: var(--green); color: var(--green); }
+    .flow-box.promise { background: rgba(92,156,252,0.12); border-color: var(--accent2); color: var(--accent2); }
+    .flow-box.data { background: rgba(68,221,238,0.12); border-color: var(--cyan); color: var(--cyan); }
+
+    .flow-arrow {
+      font-size: 22px; color: var(--muted);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .flow-label {
+      font-size: 11px; color: var(--muted); text-align: center;
+      margin-top: 4px;
+    }
+
+    /* ANIMATION DIAGRAM */
+    .anim-diagram {
+      position: relative; height: 180px; margin: 24px 0;
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+
+    .anim-packet {
+      position: absolute; width: 30px; height: 30px;
+      border-radius: 50%; top: 50%; transform: translateY(-50%);
+    }
+
+    /* INTERACTIVE PLAYGROUND */
+    .playground {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin: 24px 0;
+    }
+
+    .playground-header {
+      background: var(--bg3); padding: 12px 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .playground-title {
+      font-size: 14px; font-weight: 600; color: var(--accent2);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .run-btn {
+      background: linear-gradient(135deg, var(--accent), #6040ee);
+      color: #fff; border: none; padding: 8px 20px;
+      border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+      transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+
+    .run-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(124,92,252,0.3); }
+    .run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .playground-editor {
+      padding: 0;
+    }
+
+    .playground-editor textarea {
+      width: 100%; min-height: 180px; padding: 20px;
+      background: var(--code-bg); color: var(--text); border: none;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13.5px; line-height: 1.7; resize: vertical;
+      outline: none;
+    }
+
+    .playground-output {
+      border-top: 1px solid var(--border); padding: 16px 20px;
+      min-height: 60px; max-height: 300px; overflow-y: auto;
+      font-family: 'Fira Code', monospace; font-size: 13px;
+      background: #0a0b12;
+    }
+
+    .output-line {
+      padding: 3px 0; display: flex; align-items: flex-start; gap: 8px;
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .output-line.log { color: var(--text); }
+    .output-line.error { color: var(--red); }
+    .output-line.success { color: var(--green); }
+    .output-line.info { color: var(--accent2); }
+    .output-line.loading { color: var(--orange); }
+
+    .output-prefix {
+      color: var(--muted); font-size: 11px; margin-top: 2px;
+      min-width: 14px;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex; gap: 4px; margin: 20px 0 0;
+      border-bottom: 1px solid var(--border); padding-bottom: 0;
+    }
+
+    .tab {
+      padding: 10px 20px; cursor: pointer; font-size: 14px;
+      color: var(--muted); border-bottom: 2px solid transparent;
+      transition: all 0.2s; font-weight: 500;
+    }
+
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .tab-content { display: none; padding: 20px 0; }
+    .tab-content.active { display: block; animation: fadeUp 0.3s; }
+
+    /* QUIZ */
+    .quiz-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 28px; margin: 20px 0;
+    }
+
+    .quiz-question {
+      font-size: 16px; font-weight: 600; margin-bottom: 20px;
+      display: flex; gap: 10px;
+    }
+
+    .quiz-num {
+      background: var(--accent); color: #fff; width: 28px; height: 28px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0; margin-top: -2px;
+    }
+
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+
+    .quiz-option {
+      padding: 14px 18px; border: 2px solid var(--border);
+      border-radius: 8px; cursor: pointer; font-size: 14px;
+      transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .quiz-option:hover { border-color: var(--accent); background: rgba(124,92,252,0.05); }
+
+    .quiz-option.selected { border-color: var(--accent); background: rgba(124,92,252,0.1); }
+    .quiz-option.correct { border-color: var(--green); background: rgba(60,216,139,0.1); }
+    .quiz-option.wrong { border-color: var(--red); background: rgba(255,85,85,0.1); }
+    .quiz-option.disabled { pointer-events: none; }
+
+    .quiz-option .marker {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid var(--border); display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+      font-size: 12px; transition: all 0.2s;
+    }
+
+    .quiz-option.correct .marker { border-color: var(--green); background: var(--green); color: #000; }
+    .quiz-option.wrong .marker { border-color: var(--red); background: var(--red); color: #fff; }
+
+    .quiz-explanation {
+      margin-top: 16px; padding: 16px; border-radius: 8px;
+      font-size: 14px; display: none;
+    }
+
+    .quiz-explanation.show { display: block; animation: fadeUp 0.3s; }
+    .quiz-explanation.correct-exp { background: rgba(60,216,139,0.08); border: 1px solid rgba(60,216,139,0.2); color: var(--green); }
+    .quiz-explanation.wrong-exp { background: rgba(255,85,85,0.08); border: 1px solid rgba(255,85,85,0.2); color: var(--red); }
+
+    /* EXERCISE */
+    .exercise-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin: 24px 0;
+    }
+
+    .exercise-header {
+      background: linear-gradient(135deg, rgba(124,92,252,0.1), rgba(60,216,139,0.05));
+      padding: 20px 24px; border-bottom: 1px solid var(--border);
+    }
+
+    .exercise-title {
+      font-size: 16px; font-weight: 700; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .exercise-desc { color: var(--muted); font-size: 14px; }
+
+    .exercise-body { padding: 0; }
+
+    .exercise-body textarea {
+      width: 100%; min-height: 200px; padding: 20px;
+      background: var(--code-bg); color: var(--text); border: none;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13.5px; line-height: 1.7; resize: vertical;
+      outline: none; border-bottom: 1px solid var(--border);
+    }
+
+    .exercise-actions {
+      padding: 16px 24px; display: flex; gap: 12px; align-items: center;
+    }
+
+    .hint-btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .hint-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+    .exercise-result {
+      padding: 0 24px 16px; font-size: 14px;
+    }
+
+    .hint-text {
+      padding: 0 24px 16px; color: var(--orange); font-size: 13px;
+      display: none; font-style: italic;
+    }
+
+    .hint-text.show { display: block; }
+
+    /* STATUS BADGE */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 12px; font-size: 11px;
+      font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .badge.get { background: rgba(60,216,139,0.15); color: var(--green); }
+    .badge.post { background: rgba(92,156,252,0.15); color: var(--accent2); }
+    .badge.put { background: rgba(255,170,68,0.15); color: var(--orange); }
+    .badge.delete { background: rgba(255,85,85,0.15); color: var(--red); }
+
+    /* HTTP STATUS TABLE */
+    .status-table {
+      width: 100%; border-collapse: collapse; margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .status-table th {
+      text-align: left; padding: 10px 16px;
+      background: var(--bg3); color: var(--muted); font-size: 12px;
+      text-transform: uppercase; letter-spacing: 1px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .status-table td {
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+    }
+
+    .status-code {
+      font-family: 'Fira Code', monospace; font-weight: 700;
+      display: inline-block; min-width: 36px;
+    }
+
+    .status-code.s2 { color: var(--green); }
+    .status-code.s3 { color: var(--cyan); }
+    .status-code.s4 { color: var(--orange); }
+    .status-code.s5 { color: var(--red); }
+
+    /* COMPARISON TABLE */
+    .compare-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;
+    }
+
+    .compare-card {
+      padding: 20px; border-radius: 10px; border: 1px solid var(--border);
+    }
+
+    .compare-card.good {
+      background: rgba(60,216,139,0.04); border-color: rgba(60,216,139,0.2);
+    }
+
+    .compare-card.bad {
+      background: rgba(255,85,85,0.04); border-color: rgba(255,85,85,0.2);
+    }
+
+    .compare-label {
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 12px;
+    }
+
+    .compare-card.good .compare-label { color: var(--green); }
+    .compare-card.bad .compare-label { color: var(--red); }
+
+    /* BUTTONS */
+    .btn {
+      padding: 10px 24px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-weight: 600; transition: all 0.2s; border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #6040ee);
+      color: #fff;
+    }
+
+    .btn-primary:hover { box-shadow: 0 4px 16px rgba(124,92,252,0.3); transform: translateY(-1px); }
+
+    .btn-outline {
+      background: none; border: 1px solid var(--border); color: var(--text);
+    }
+
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .nav-buttons {
+      display: flex; justify-content: space-between; margin-top: 48px;
+      padding-top: 24px; border-top: 1px solid var(--border);
+    }
+
+    /* KEY CONCEPT BOX */
+    .key-concept {
+      background: linear-gradient(135deg, rgba(124,92,252,0.08), rgba(92,156,252,0.05));
+      border: 1px solid rgba(124,92,252,0.2);
+      border-radius: 12px; padding: 24px; margin: 24px 0;
+      position: relative; overflow: hidden;
+    }
+
+    .key-concept::before {
+      content: '💡'; position: absolute; top: -10px; right: -10px;
+      font-size: 60px; opacity: 0.08;
+    }
+
+    .key-concept h4 {
+      color: var(--accent); font-size: 14px; margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    /* SCORE DISPLAY */
+    .score-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px; text-align: center; margin: 24px 0;
+    }
+
+    .score-num {
+      font-size: 64px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* LISTS */
+    ul, ol { padding-left: 24px; margin: 12px 0; }
+    li { margin: 6px 0; font-size: 15px; }
+
+    /* BURGER MENU for mobile */
+    .burger { display: none; background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer; }
+
+    /* LOADING SPINNER */
+    .spinner {
+      display: inline-block; width: 16px; height: 16px;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* TOOLTIP */
+    .tip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--border); color: var(--muted);
+      font-size: 11px; cursor: help; font-weight: 700;
+      position: relative;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 860px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; padding: 30px 20px 80px; }
+      .burger { display: block; }
+      .compare-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 28px; }
+    }
+
+    /* LIVE REQUEST VISUALIZER */
+    .request-viz {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px; margin: 20px 0;
+      position: relative; min-height: 120px;
+    }
+
+    .viz-step {
+      display: flex; align-items: center; gap: 12px;
+      padding: 8px 0; opacity: 0.3; transition: all 0.4s;
+    }
+
+    .viz-step.active { opacity: 1; }
+
+    .viz-dot {
+      width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    .viz-dot.pending { background: var(--orange); }
+    .viz-dot.success { background: var(--green); }
+    .viz-dot.error { background: var(--red); }
+
+    .viz-label { font-size: 13px; }
+
+    /* COLLAPSIBLE */
+    .collapsible-header {
+      padding: 14px 18px; background: var(--bg3);
+      border: 1px solid var(--border); border-radius: 8px;
+      cursor: pointer; display: flex; justify-content: space-between;
+      align-items: center; font-weight: 600; font-size: 14px;
+      margin: 8px 0; transition: all 0.2s;
+    }
+
+    .collapsible-header:hover { border-color: var(--accent); }
+
+    .collapsible-body {
+      max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+    }
+
+    .collapsible-body.open { max-height: 2000px; }
+
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+
+    .tag.easy { background: rgba(60,216,139,0.15); color: var(--green); }
+    .tag.medium { background: rgba(255,170,68,0.15); color: var(--orange); }
+    .tag.hard { background: rgba(255,85,85,0.15); color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <button class="burger" onclick="toggleSidebar()">☰</button>
+    <div class="logo">⚡ Fetch API Mastery</div>
+  </div>
+  <div class="progress-wrap">
+    <span id="progressText">0 / 8</span>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="nav-section-title">Getting Started</div>
+  <div class="nav-item active" data-section="intro" onclick="goTo('intro')">
+    <span class="nav-icon">🌐</span> What is AJAX & Fetch?
+  </div>
+
+  <div class="nav-section-title">Core Concepts</div>
+  <div class="nav-item" data-section="basics" onclick="goTo('basics')">
+    <span class="nav-icon">📡</span> Fetch Basics
+  </div>
+  <div class="nav-item" data-section="options" onclick="goTo('options')">
+    <span class="nav-icon">⚙️</span> Request Options
+  </div>
+  <div class="nav-item" data-section="response" onclick="goTo('response')">
+    <span class="nav-icon">📦</span> Response Handling
+  </div>
+  <div class="nav-item" data-section="errors" onclick="goTo('errors')">
+    <span class="nav-icon">🛡️</span> Error Handling
+  </div>
+
+  <div class="nav-section-title">Practice</div>
+  <div class="nav-item" data-section="pitfalls" onclick="goTo('pitfalls')">
+    <span class="nav-icon">⚠️</span> Mistakes & Pitfalls
+  </div>
+  <div class="nav-item" data-section="quiz" onclick="goTo('quiz')">
+    <span class="nav-icon">🧠</span> Quiz (10 Questions)
+  </div>
+  <div class="nav-item" data-section="exercises" onclick="goTo('exercises')">
+    <span class="nav-icon">💪</span> Exercises
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="mainContent">
+
+  <!-- ===== SECTION 1: INTRO ===== -->
+  <div class="section active" id="sec-intro">
+    <h1>What is AJAX & Fetch API?</h1>
+    <p class="subtitle">Communicate with servers without reloading the page — the foundation of modern web apps.</p>
+
+    <div class="key-concept">
+      <h4>💡 Key Concept</h4>
+      <p style="margin:0"><strong>AJAX</strong> (Asynchronous JavaScript And XML) lets you send and receive data from a server <em>in the background</em>. The <strong>Fetch API</strong> is the modern, promise-based way to do AJAX in JavaScript.</p>
+    </div>
+
+    <h2>🔄 The Request-Response Cycle</h2>
+    <p>Every time you use Fetch, this is what happens:</p>
+
+    <div class="diagram">
+      <div class="flow-row">
+        <div>
+          <div class="flow-box browser">🖥️ Your Code</div>
+          <div class="flow-label">calls fetch()</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div>
+          <div class="flow-box network">📡 HTTP Request</div>
+          <div class="flow-label">GET, POST, etc.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div>
+          <div class="flow-box server">🌍 Server / API</div>
+          <div class="flow-label">processes request</div>
+        </div>
+      </div>
+      <div class="flow-row">
+        <div>
+          <div class="flow-box data">📋 Use the Data</div>
+          <div class="flow-label">update the page</div>
+        </div>
+        <div class="flow-arrow">←</div>
+        <div>
+          <div class="flow-box promise">⏳ Promise</div>
+          <div class="flow-label">.then() / await</div>
+        </div>
+        <div class="flow-arrow">←</div>
+        <div>
+          <div class="flow-box server">📤 Response</div>
+          <div class="flow-label">JSON, text, etc.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>📜 A Brief History</h2>
+    <div class="card">
+      <p><strong>Before Fetch</strong>, we used <code class="inline-code">XMLHttpRequest</code> (XHR) — verbose, callback-based, and hard to read:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span>❌ The Old Way — XMLHttpRequest</span></div>
+        <pre><code><span class="cm">// Verbose and confusing — don't use this anymore!</span>
+<span class="kw">const</span> <span class="param">xhr</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">XMLHttpRequest</span>();
+<span class="param">xhr</span>.<span class="fn">open</span>(<span class="str">'GET'</span>, <span class="str">'https://api.example.com/data'</span>);
+<span class="param">xhr</span>.<span class="pr">onreadystatechange</span> <span class="op">=</span> <span class="kw">function</span>() {
+  <span class="kw">if</span> (<span class="param">xhr</span>.<span class="pr">readyState</span> <span class="op">===</span> <span class="num">4</span> <span class="op">&&</span> <span class="param">xhr</span>.<span class="pr">status</span> <span class="op">===</span> <span class="num">200</span>) {
+    <span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="fn">JSON.parse</span>(<span class="param">xhr</span>.<span class="pr">responseText</span>);
+    <span class="fn">console.log</span>(<span class="param">data</span>);
+  }
+};
+<span class="param">xhr</span>.<span class="fn">send</span>();</code></pre>
+      </div>
+
+      <p><strong>With Fetch</strong>, everything becomes clean and promise-based:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span>✅ The Modern Way — Fetch API</span></div>
+        <pre><code><span class="fn">fetch</span>(<span class="str">'https://api.example.com/data'</span>)
+  .<span class="fn">then</span>(<span class="param">response</span> <span class="op">=></span> <span class="param">response</span>.<span class="fn">json</span>())
+  .<span class="fn">then</span>(<span class="param">data</span> <span class="op">=></span> <span class="fn">console.log</span>(<span class="param">data</span>))
+  .<span class="fn">catch</span>(<span class="param">error</span> <span class="op">=></span> <span class="fn">console.error</span>(<span class="param">error</span>));</code></pre>
+      </div>
+    </div>
+
+    <h2>⚡ Why Learn Fetch?</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0;">
+      <div class="card" style="text-align:center;padding:20px;">
+        <div style="font-size:32px;margin-bottom:8px;">🏗️</div>
+        <strong>Build Real Apps</strong>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 0">Load data, submit forms, interact with APIs</p>
+      </div>
+      <div class="card" style="text-align:center;padding:20px;">
+        <div style="font-size:32px;margin-bottom:8px;">💼</div>
+        <strong>Job Interviews</strong>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 0">Fetch questions appear in almost every JS interview</p>
+      </div>
+      <div class="card" style="text-align:center;padding:20px;">
+        <div style="font-size:32px;margin-bottom:8px;">🔌</div>
+        <strong>API Integration</strong>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 0">Connect to REST APIs, GraphQL, third-party services</p>
+      </div>
+      <div class="card" style="text-align:center;padding:20px;">
+        <div style="font-size:32px;margin-bottom:8px;">⚛️</div>
+        <strong>Framework Ready</strong>
+        <p style="font-size:13px;color:var(--muted);margin:6px 0 0">React, Vue, Angular all use Fetch under the hood</p>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <div></div>
+      <button class="btn btn-primary" onclick="goTo('basics')">Start Learning: Fetch Basics →</button>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 2: FETCH BASICS ===== -->
+  <div class="section" id="sec-basics">
+    <h1>Fetch Basics</h1>
+    <p class="subtitle">Learn the fundamental syntax, promises, and async/await patterns.</p>
+
+    <h2>📡 The Simplest Fetch</h2>
+    <p><code class="inline-code">fetch(url)</code> makes a GET request and returns a <strong>Promise</strong>.</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <span>Basic GET Request</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code><span class="cm">// fetch() returns a Promise that resolves to a Response object</span>
+<span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts/1'</span>)
+  .<span class="fn">then</span>(<span class="param">response</span> <span class="op">=></span> {
+    <span class="fn">console.log</span>(<span class="param">response</span>);        <span class="cm">// Response object</span>
+    <span class="fn">console.log</span>(<span class="param">response</span>.<span class="pr">status</span>);  <span class="cm">// 200</span>
+    <span class="fn">console.log</span>(<span class="param">response</span>.<span class="pr">ok</span>);      <span class="cm">// true</span>
+    <span class="kw">return</span> <span class="param">response</span>.<span class="fn">json</span>();     <span class="cm">// Parse JSON body</span>
+  })
+  .<span class="fn">then</span>(<span class="param">data</span> <span class="op">=></span> {
+    <span class="fn">console.log</span>(<span class="param">data</span>);           <span class="cm">// The actual data!</span>
+  });</code></pre>
+    </div>
+
+    <div class="key-concept">
+      <h4>💡 Two-Step Process</h4>
+      <p style="margin:0">Fetch always requires <strong>two steps</strong>:<br>
+      1. <code class="inline-code">fetch(url)</code> → gives you the Response object (headers arrived)<br>
+      2. <code class="inline-code">response.json()</code> → reads and parses the body (also a Promise!)</p>
+    </div>
+
+    <h2>⏳ Async/Await Syntax</h2>
+    <p>The cleaner, more readable way to write Fetch calls:</p>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <span>Async/Await — The Preferred Way</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code><span class="kw">async function</span> <span class="fn">getPost</span>() {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts/1'</span>);
+  <span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+  <span class="fn">console.log</span>(<span class="param">data</span>.<span class="pr">title</span>);
+}
+
+<span class="fn">getPost</span>();</code></pre>
+    </div>
+
+    <h2>🎮 Try It Live!</h2>
+    <p>Click <strong>Run</strong> to make a real API call right here:</p>
+
+    <div class="playground">
+      <div class="playground-header">
+        <div class="playground-title">▶️ Live Playground</div>
+        <button class="run-btn" onclick="runPlayground('pg-basics')">
+          ▶ Run
+        </button>
+      </div>
+      <div class="playground-editor">
+        <textarea id="pg-basics">// Try fetching a post from JSONPlaceholder API
+const response = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+const data = await response.json();
+
+console.log('Status:', response.status);
+console.log('Title:', data.title);
+console.log('Full data:', data);</textarea>
+      </div>
+      <div class="playground-output" id="pg-basics-output">
+        <div class="output-line info"><span class="output-prefix">ℹ</span> Click "Run" to execute the code</div>
+      </div>
+    </div>
+
+    <h2>📋 Fetching a List</h2>
+    <div class="code-wrap">
+      <div class="code-header">
+        <span>Fetching Multiple Items</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code><span class="kw">async function</span> <span class="fn">getUsers</span>() {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/users'</span>);
+  <span class="kw">const</span> <span class="param">users</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+
+  <span class="cm">// users is an array — loop through it!</span>
+  <span class="param">users</span>.<span class="fn">forEach</span>(<span class="param">user</span> <span class="op">=></span> {
+    <span class="fn">console.log</span>(<span class="str">`</span><span class="op">${</span><span class="param">user</span>.<span class="pr">name</span><span class="op">}</span> <span class="str">-</span> <span class="op">${</span><span class="param">user</span>.<span class="pr">email</span><span class="op">}</span><span class="str">`</span>);
+  });
+}
+
+<span class="fn">getUsers</span>();</code></pre>
+    </div>
+
+    <div class="playground">
+      <div class="playground-header">
+        <div class="playground-title">▶️ Fetch Users</div>
+        <button class="run-btn" onclick="runPlayground('pg-users')">▶ Run</button>
+      </div>
+      <div class="playground-editor">
+        <textarea id="pg-users">const response = await fetch('https://jsonplaceholder.typicode.com/users');
+const users = await response.json();
+
+console.log(`Found ${users.length} users:\n`);
+
+users.forEach((user, i) => {
+  console.log(`${i + 1}. ${user.name} (${user.email})`);
+});</textarea>
+      </div>
+      <div class="playground-output" id="pg-users-output">
+        <div class="output-line info"><span class="output-prefix">ℹ</span> Click "Run" to fetch users</div>
+      </div>
+    </div>
+
+    <h2>🔗 Query Parameters</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>Adding Query Parameters</span></div>
+      <pre><code><span class="cm">// Method 1: Manual string</span>
+<span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts?userId=1'</span>);
+
+<span class="cm">// Method 2: URLSearchParams (cleaner for multiple params)</span>
+<span class="kw">const</span> <span class="param">params</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URLSearchParams</span>({
+  <span class="pr">userId</span>: <span class="num">1</span>,
+  <span class="pr">_limit</span>: <span class="num">5</span>
+});
+
+<span class="fn">fetch</span>(<span class="str">`https://jsonplaceholder.typicode.com/posts?</span><span class="op">${</span><span class="param">params</span><span class="op">}</span><span class="str">`</span>);
+
+<span class="cm">// Method 3: URL object</span>
+<span class="kw">const</span> <span class="param">url</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">URL</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts'</span>);
+<span class="param">url</span>.<span class="pr">searchParams</span>.<span class="fn">set</span>(<span class="str">'userId'</span>, <span class="num">1</span>);
+<span class="param">url</span>.<span class="pr">searchParams</span>.<span class="fn">set</span>(<span class="str">'_limit'</span>, <span class="num">5</span>);
+<span class="fn">fetch</span>(<span class="param">url</span>);</code></pre>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline" onclick="goTo('intro')">← Back</button>
+      <button class="btn btn-primary" onclick="goTo('options')">Request Options →</button>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 3: REQUEST OPTIONS ===== -->
+  <div class="section" id="sec-options">
+    <h1>Request Options</h1>
+    <p class="subtitle">Control HTTP methods, headers, and request bodies for full API interaction.</p>
+
+    <h2>⚙️ The Options Object</h2>
+    <p><code class="inline-code">fetch(url, options)</code> accepts a second argument to configure the request:</p>
+
+    <div class="code-wrap">
+      <div class="code-header"><span>Full Options Object</span></div>
+      <pre><code><span class="fn">fetch</span>(<span class="str">'https://api.example.com/data'</span>, {
+  <span class="pr">method</span>:  <span class="str">'POST'</span>,              <span class="cm">// HTTP method</span>
+  <span class="pr">headers</span>: {                       <span class="cm">// Request headers</span>
+    <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+    <span class="str">'Authorization'</span>: <span class="str">'Bearer token123'</span>
+  },
+  <span class="pr">body</span>: <span class="fn">JSON.stringify</span>({           <span class="cm">// Request body</span>
+    <span class="pr">name</span>: <span class="str">'John'</span>,
+    <span class="pr">email</span>: <span class="str">'john@example.com'</span>
+  }),
+  <span class="pr">mode</span>:    <span class="str">'cors'</span>,               <span class="cm">// CORS mode</span>
+  <span class="pr">credentials</span>: <span class="str">'include'</span>,        <span class="cm">// Send cookies</span>
+  <span class="pr">signal</span>:  <span class="param">controller</span>.<span class="pr">signal</span>    <span class="cm">// AbortController signal</span>
+});</code></pre>
+    </div>
+
+    <h2>📨 HTTP Methods</h2>
+    <div style="display:grid;gap:12px;margin:16px 0;">
+      <div class="card" style="display:flex;align-items:center;gap:16px;padding:16px 20px;">
+        <span class="badge get">GET</span>
+        <div><strong>Read</strong> data from the server. The default method. No body.</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:16px;padding:16px 20px;">
+        <span class="badge post">POST</span>
+        <div><strong>Create</strong> a new resource. Sends data in the body.</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:16px;padding:16px 20px;">
+        <span class="badge put">PUT</span>
+        <div><strong>Update</strong> an existing resource (full replacement).</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:16px;padding:16px 20px;">
+        <span class="badge put">PATCH</span>
+        <div><strong>Partially update</strong> an existing resource.</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:16px;padding:16px 20px;">
+        <span class="badge delete">DELETE</span>
+        <div><strong>Remove</strong> a resource from the server.</div>
+      </div>
+    </div>
+
+    <h2>📤 POST — Creating Data</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>Creating a New Post</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">createPost</span>() {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts'</span>, {
+    <span class="pr">method</span>: <span class="str">'POST'</span>,
+    <span class="pr">headers</span>: {
+      <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>  <span class="cm">// ← IMPORTANT!</span>
+    },
+    <span class="pr">body</span>: <span class="fn">JSON.stringify</span>({
+      <span class="pr">title</span>: <span class="str">'My New Post'</span>,
+      <span class="pr">body</span>: <span class="str">'This is the content'</span>,
+      <span class="pr">userId</span>: <span class="num">1</span>
+    })
+  });
+
+  <span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+  <span class="fn">console.log</span>(<span class="str">'Created!'</span>, <span class="param">data</span>);  <span class="cm">// { id: 101, title: ... }</span>
+}</code></pre>
+    </div>
+
+    <div class="playground">
+      <div class="playground-header">
+        <div class="playground-title">▶️ Try POST Request</div>
+        <button class="run-btn" onclick="runPlayground('pg-post')">▶ Run</button>
+      </div>
+      <div class="playground-editor">
+        <textarea id="pg-post">const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    title: 'My Awesome Post',
+    body: 'Learning Fetch API is fun!',
+    userId: 1
+  })
+});
+
+const data = await response.json();
+console.log('Status:', response.status);   // 201 = Created
+console.log('New post ID:', data.id);
+console.log('Full response:', data);</textarea>
+      </div>
+      <div class="playground-output" id="pg-post-output">
+        <div class="output-line info"><span class="output-prefix">ℹ</span> Click "Run" to create a post</div>
+      </div>
+    </div>
+
+    <h2>✏️ PUT & PATCH — Updating Data</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>PUT — Full Update</span></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">updatePost</span>() {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts/1'</span>, {
+    <span class="pr">method</span>: <span class="str">'PUT'</span>,
+    <span class="pr">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    <span class="pr">body</span>: <span class="fn">JSON.stringify</span>({
+      <span class="pr">id</span>: <span class="num">1</span>,
+      <span class="pr">title</span>: <span class="str">'Updated Title'</span>,
+      <span class="pr">body</span>: <span class="str">'Updated body'</span>,
+      <span class="pr">userId</span>: <span class="num">1</span>
+    })
+  });
+
+  <span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+  <span class="fn">console.log</span>(<span class="str">'Updated:'</span>, <span class="param">data</span>);
+}</code></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header"><span>PATCH — Partial Update</span></div>
+      <pre><code><span class="cm">// Only send the fields you want to change</span>
+<span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts/1'</span>, {
+  <span class="pr">method</span>: <span class="str">'PATCH'</span>,
+  <span class="pr">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+  <span class="pr">body</span>: <span class="fn">JSON.stringify</span>({
+    <span class="pr">title</span>: <span class="str">'Only updating the title'</span>  <span class="cm">// Other fields unchanged</span>
+  })
+});</code></pre>
+    </div>
+
+    <h2>🗑️ DELETE — Removing Data</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>DELETE Request</span></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">deletePost</span>() {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts/1'</span>, {
+    <span class="pr">method</span>: <span class="str">'DELETE'</span>
+  });
+
+  <span class="fn">console.log</span>(<span class="param">response</span>.<span class="pr">status</span>);  <span class="cm">// 200</span>
+  <span class="fn">console.log</span>(<span class="str">'Post deleted!'</span>);
+}</code></pre>
+    </div>
+
+    <h2>🔐 Common Headers</h2>
+    <div class="card">
+      <table class="status-table">
+        <tr><th>Header</th><th>Purpose</th><th>Example</th></tr>
+        <tr>
+          <td><code class="inline-code">Content-Type</code></td>
+          <td>What format is the body</td>
+          <td style="font-size:13px"><code class="inline-code">application/json</code></td>
+        </tr>
+        <tr>
+          <td><code class="inline-code">Authorization</code></td>
+          <td>Authentication token</td>
+          <td style="font-size:13px"><code class="inline-code">Bearer abc123</code></td>
+        </tr>
+        <tr>
+          <td><code class="inline-code">Accept</code></td>
+          <td>What format you want back</td>
+          <td style="font-size:13px"><code class="inline-code">application/json</code></td>
+        </tr>
+      </table>
+    </div>
+
+    <h2>⏱️ AbortController — Cancelling Requests</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>Cancel a Request / Set Timeout</span></div>
+      <pre><code><span class="cm">// Create a controller</span>
+<span class="kw">const</span> <span class="param">controller</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">AbortController</span>();
+
+<span class="cm">// Auto-cancel after 5 seconds</span>
+<span class="fn">setTimeout</span>(() <span class="op">=></span> <span class="param">controller</span>.<span class="fn">abort</span>(), <span class="num">5000</span>);
+
+<span class="kw">try</span> {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.example.com/data'</span>, {
+    <span class="pr">signal</span>: <span class="param">controller</span>.<span class="pr">signal</span>  <span class="cm">// ← Pass the signal</span>
+  });
+  <span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+} <span class="kw">catch</span> (<span class="param">err</span>) {
+  <span class="kw">if</span> (<span class="param">err</span>.<span class="pr">name</span> <span class="op">===</span> <span class="str">'AbortError'</span>) {
+    <span class="fn">console.log</span>(<span class="str">'Request was cancelled!'</span>);
+  }
+}</code></pre>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline" onclick="goTo('basics')">← Fetch Basics</button>
+      <button class="btn btn-primary" onclick="goTo('response')">Response Handling →</button>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 4: RESPONSE HANDLING ===== -->
+  <div class="section" id="sec-response">
+    <h1>Response Handling</h1>
+    <p class="subtitle">Understand the Response object, status codes, and different data formats.</p>
+
+    <h2>📦 The Response Object</h2>
+    <p>When <code class="inline-code">fetch()</code> resolves, you get a <strong>Response</strong> object with these key properties:</p>
+
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h3 style="margin-top:0;color:var(--accent);">Properties</h3>
+          <div style="font-size:14px;line-height:2.2;">
+            <code class="inline-code">response.ok</code> — <span style="color:var(--muted)">true if 200-299</span><br>
+            <code class="inline-code">response.status</code> — <span style="color:var(--muted)">HTTP status code</span><br>
+            <code class="inline-code">response.statusText</code> — <span style="color:var(--muted)">e.g. "OK"</span><br>
+            <code class="inline-code">response.headers</code> — <span style="color:var(--muted)">Headers object</span><br>
+            <code class="inline-code">response.url</code> — <span style="color:var(--muted)">final URL</span><br>
+            <code class="inline-code">response.redirected</code> — <span style="color:var(--muted)">was redirected?</span>
+          </div>
+        </div>
+        <div>
+          <h3 style="margin-top:0;color:var(--green);">Body Methods</h3>
+          <div style="font-size:14px;line-height:2.2;">
+            <code class="inline-code">.json()</code> — <span style="color:var(--muted)">parse as JSON</span><br>
+            <code class="inline-code">.text()</code> — <span style="color:var(--muted)">as plain text</span><br>
+            <code class="inline-code">.blob()</code> — <span style="color:var(--muted)">as binary Blob</span><br>
+            <code class="inline-code">.formData()</code> — <span style="color:var(--muted)">as FormData</span><br>
+            <code class="inline-code">.arrayBuffer()</code> — <span style="color:var(--muted)">as ArrayBuffer</span><br>
+            <span style="color:var(--orange);font-size:12px;">⚠️ Body can only be read ONCE!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>📊 HTTP Status Codes</h2>
+    <div class="card">
+      <table class="status-table">
+        <tr><th>Code</th><th>Meaning</th><th>response.ok</th></tr>
+        <tr><td><span class="status-code s2">200</span></td><td>OK — Success</td><td style="color:var(--green)">✓ true</td></tr>
+        <tr><td><span class="status-code s2">201</span></td><td>Created — Resource created</td><td style="color:var(--green)">✓ true</td></tr>
+        <tr><td><span class="status-code s2">204</span></td><td>No Content — Success, no body</td><td style="color:var(--green)">✓ true</td></tr>
+        <tr><td><span class="status-code s3">301</span></td><td>Moved Permanently</td><td style="color:var(--muted)">✗ false</td></tr>
+        <tr><td><span class="status-code s4">400</span></td><td>Bad Request</td><td style="color:var(--red)">✗ false</td></tr>
+        <tr><td><span class="status-code s4">401</span></td><td>Unauthorized — Not logged in</td><td style="color:var(--red)">✗ false</td></tr>
+        <tr><td><span class="status-code s4">403</span></td><td>Forbidden — No permission</td><td style="color:var(--red)">✗ false</td></tr>
+        <tr><td><span class="status-code s4">404</span></td><td>Not Found</td><td style="color:var(--red)">✗ false</td></tr>
+        <tr><td><span class="status-code s5">500</span></td><td>Internal Server Error</td><td style="color:var(--red)">✗ false</td></tr>
+      </table>
+    </div>
+
+    <div class="card warning">
+      <div class="card-label">⚠️ Critical Gotcha</div>
+      <p><strong>Fetch does NOT reject on HTTP errors!</strong> A 404 or 500 response is still a "successful" fetch — the promise resolves, only <code class="inline-code">response.ok</code> is <code class="inline-code">false</code>. You must check it yourself!</p>
+    </div>
+
+    <h2>✅ Checking Response Status</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>Proper Status Checking</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">fetchData</span>(<span class="param">url</span>) {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="param">url</span>);
+
+  <span class="cm">// Always check response.ok!</span>
+  <span class="kw">if</span> (<span class="op">!</span><span class="param">response</span>.<span class="pr">ok</span>) {
+    <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`HTTP error! Status: </span><span class="op">${</span><span class="param">response</span>.<span class="pr">status</span><span class="op">}</span><span class="str">`</span>);
+  }
+
+  <span class="kw">return</span> <span class="param">response</span>.<span class="fn">json</span>();
+}</code></pre>
+    </div>
+
+    <h2>🔀 Different Response Formats</h2>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(event, 'resp-tabs', 0)">JSON</div>
+      <div class="tab" onclick="switchTab(event, 'resp-tabs', 1)">Text</div>
+      <div class="tab" onclick="switchTab(event, 'resp-tabs', 2)">Blob (Images)</div>
+      <div class="tab" onclick="switchTab(event, 'resp-tabs', 3)">Headers</div>
+    </div>
+    <div id="resp-tabs">
+      <div class="tab-content active">
+        <div class="code-wrap">
+          <div class="code-header"><span>JSON Response (most common)</span></div>
+          <pre><code><span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts/1'</span>);
+<span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+<span class="cm">// data is now a regular JavaScript object</span>
+<span class="fn">console.log</span>(<span class="param">data</span>.<span class="pr">title</span>);</code></pre>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="code-wrap">
+          <div class="code-header"><span>Text Response (HTML, CSV, etc.)</span></div>
+          <pre><code><span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/page.html'</span>);
+<span class="kw">const</span> <span class="param">html</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">text</span>();
+<span class="cm">// html is a plain string</span>
+<span class="param">document</span>.<span class="pr">body</span>.<span class="pr">innerHTML</span> <span class="op">=</span> <span class="param">html</span>;</code></pre>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="code-wrap">
+          <div class="code-header"><span>Blob Response (images, files)</span></div>
+          <pre><code><span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://picsum.photos/200'</span>);
+<span class="kw">const</span> <span class="param">blob</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">blob</span>();
+<span class="kw">const</span> <span class="param">imgUrl</span> <span class="op">=</span> <span class="fn">URL.createObjectURL</span>(<span class="param">blob</span>);
+
+<span class="kw">const</span> <span class="param">img</span> <span class="op">=</span> <span class="param">document</span>.<span class="fn">createElement</span>(<span class="str">'img'</span>);
+<span class="param">img</span>.<span class="pr">src</span> <span class="op">=</span> <span class="param">imgUrl</span>;
+<span class="param">document</span>.<span class="pr">body</span>.<span class="fn">appendChild</span>(<span class="param">img</span>);</code></pre>
+        </div>
+      </div>
+      <div class="tab-content">
+        <div class="code-wrap">
+          <div class="code-header"><span>Reading Response Headers</span></div>
+          <pre><code><span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://jsonplaceholder.typicode.com/posts'</span>);
+
+<span class="cm">// Get a specific header</span>
+<span class="kw">const</span> <span class="param">contentType</span> <span class="op">=</span> <span class="param">response</span>.<span class="pr">headers</span>.<span class="fn">get</span>(<span class="str">'content-type'</span>);
+<span class="fn">console.log</span>(<span class="param">contentType</span>); <span class="cm">// "application/json; charset=utf-8"</span>
+
+<span class="cm">// Loop through all headers</span>
+<span class="kw">for</span> (<span class="kw">const</span> [<span class="param">key</span>, <span class="param">value</span>] <span class="kw">of</span> <span class="param">response</span>.<span class="pr">headers</span>) {
+  <span class="fn">console.log</span>(<span class="str">`</span><span class="op">${</span><span class="param">key</span><span class="op">}</span><span class="str">: </span><span class="op">${</span><span class="param">value</span><span class="op">}</span><span class="str">`</span>);
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h2>🎮 Explore Response Properties</h2>
+    <div class="playground">
+      <div class="playground-header">
+        <div class="playground-title">▶️ Response Inspector</div>
+        <button class="run-btn" onclick="runPlayground('pg-response')">▶ Run</button>
+      </div>
+      <div class="playground-editor">
+        <textarea id="pg-response">const response = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+
+console.log('=== Response Properties ===');
+console.log('ok:', response.ok);
+console.log('status:', response.status);
+console.log('statusText:', response.statusText);
+console.log('url:', response.url);
+console.log('type:', response.type);
+console.log('redirected:', response.redirected);
+console.log('');
+console.log('=== Headers ===');
+console.log('content-type:', response.headers.get('content-type'));
+
+const data = await response.json();
+console.log('');
+console.log('=== Parsed Data ===');
+console.log('title:', data.title);</textarea>
+      </div>
+      <div class="playground-output" id="pg-response-output">
+        <div class="output-line info"><span class="output-prefix">ℹ</span> Click "Run" to inspect a response</div>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline" onclick="goTo('options')">← Request Options</button>
+      <button class="btn btn-primary" onclick="goTo('errors')">Error Handling →</button>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 5: ERROR HANDLING ===== -->
+  <div class="section" id="sec-errors">
+    <h1>Error Handling</h1>
+    <p class="subtitle">The most important skill — handle failures gracefully so your app doesn't break.</p>
+
+    <h2>🚨 Two Types of Errors</h2>
+
+    <div class="compare-grid">
+      <div class="compare-card bad">
+        <div class="compare-label">🔴 Network Errors (fetch rejects)</div>
+        <ul style="font-size:14px;">
+          <li>No internet connection</li>
+          <li>DNS lookup failure</li>
+          <li>Server unreachable</li>
+          <li>CORS blocked</li>
+          <li>Request aborted</li>
+        </ul>
+        <p style="font-size:13px;color:var(--red);margin-top:12px;">→ Promise <strong>rejects</strong>, goes to <code class="inline-code">.catch()</code></p>
+      </div>
+      <div class="compare-card" style="border-color:var(--orange);">
+        <div class="compare-label" style="color:var(--orange);">🟡 HTTP Errors (fetch resolves!)</div>
+        <ul style="font-size:14px;">
+          <li>404 Not Found</li>
+          <li>401 Unauthorized</li>
+          <li>500 Server Error</li>
+          <li>403 Forbidden</li>
+          <li>Any non-2xx status</li>
+        </ul>
+        <p style="font-size:13px;color:var(--orange);margin-top:12px;">→ Promise <strong>resolves</strong>! You must check <code class="inline-code">response.ok</code></p>
+      </div>
+    </div>
+
+    <div class="card danger">
+      <div class="card-label">🔥 #1 Mistake Developers Make</div>
+      <p style="margin:0;">Forgetting that <strong>fetch does NOT throw on 404 or 500 errors</strong>. The promise resolves successfully — only network failures cause rejection. This is the most common source of bugs!</p>
+    </div>
+
+    <h2>🛡️ Complete Error Handling Pattern</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>✅ Production-Ready Error Handling</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">fetchData</span>(<span class="param">url</span>) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="param">url</span>);
+
+    <span class="cm">// Step 1: Check for HTTP errors</span>
+    <span class="kw">if</span> (<span class="op">!</span><span class="param">response</span>.<span class="pr">ok</span>) {
+      <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`HTTP </span><span class="op">${</span><span class="param">response</span>.<span class="pr">status</span><span class="op">}</span><span class="str">: </span><span class="op">${</span><span class="param">response</span>.<span class="pr">statusText</span><span class="op">}</span><span class="str">`</span>);
+    }
+
+    <span class="cm">// Step 2: Parse the response</span>
+    <span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+    <span class="kw">return</span> <span class="param">data</span>;
+
+  } <span class="kw">catch</span> (<span class="param">error</span>) {
+    <span class="cm">// Catches BOTH network errors AND our thrown HTTP errors</span>
+    <span class="kw">if</span> (<span class="param">error</span>.<span class="pr">name</span> <span class="op">===</span> <span class="str">'AbortError'</span>) {
+      <span class="fn">console.log</span>(<span class="str">'Request was cancelled'</span>);
+    } <span class="kw">else if</span> (<span class="param">error</span> <span class="kw">instanceof</span> <span class="fn">TypeError</span>) {
+      <span class="fn">console.error</span>(<span class="str">'Network error:'</span>, <span class="param">error</span>.<span class="pr">message</span>);
+    } <span class="kw">else</span> {
+      <span class="fn">console.error</span>(<span class="str">'Error:'</span>, <span class="param">error</span>.<span class="pr">message</span>);
+    }
+    <span class="kw">return</span> <span class="kw">null</span>;
+  }
+}</code></pre>
+    </div>
+
+    <h2>🎮 See Errors in Action</h2>
+    <div class="playground">
+      <div class="playground-header">
+        <div class="playground-title">▶️ Error Scenarios</div>
+        <button class="run-btn" onclick="runPlayground('pg-errors')">▶ Run</button>
+      </div>
+      <div class="playground-editor">
+        <textarea id="pg-errors">// Test 1: Successful request
+try {
+  const r1 = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+  console.log('Test 1 - Status:', r1.status, '| ok:', r1.ok);
+} catch(e) { console.log('Test 1 - Network error:', e.message); }
+
+// Test 2: 404 Not Found (fetch does NOT reject!)
+try {
+  const r2 = await fetch('https://jsonplaceholder.typicode.com/posts/99999');
+  console.log('Test 2 - Status:', r2.status, '| ok:', r2.ok);
+  console.log('  ↳ See? No error thrown! You must check .ok yourself');
+
+  if (!r2.ok) {
+    throw new Error(`HTTP ${r2.status}`);
+  }
+} catch(e) { console.log('Test 2 - Caught:', e.message); }
+
+// Test 3: Network error (invalid URL)
+try {
+  const r3 = await fetch('https://this-does-not-exist-xyz.com/api');
+  console.log('Test 3 - Status:', r3.status);
+} catch(e) { console.log('Test 3 - Network error caught:', e.message); }</textarea>
+      </div>
+      <div class="playground-output" id="pg-errors-output">
+        <div class="output-line info"><span class="output-prefix">ℹ</span> Click "Run" to test error scenarios</div>
+      </div>
+    </div>
+
+    <h2>🔄 Retry Pattern</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>Retry Failed Requests</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">fetchWithRetry</span>(<span class="param">url</span>, <span class="param">retries</span> <span class="op">=</span> <span class="num">3</span>, <span class="param">delay</span> <span class="op">=</span> <span class="num">1000</span>) {
+  <span class="kw">for</span> (<span class="kw">let</span> <span class="param">i</span> <span class="op">=</span> <span class="num">0</span>; <span class="param">i</span> <span class="op"><</span> <span class="param">retries</span>; <span class="param">i</span><span class="op">++</span>) {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="param">url</span>);
+      <span class="kw">if</span> (<span class="op">!</span><span class="param">response</span>.<span class="pr">ok</span>) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`HTTP </span><span class="op">${</span><span class="param">response</span>.<span class="pr">status</span><span class="op">}</span><span class="str">`</span>);
+      <span class="kw">return await</span> <span class="param">response</span>.<span class="fn">json</span>();
+    } <span class="kw">catch</span> (<span class="param">error</span>) {
+      <span class="fn">console.log</span>(<span class="str">`Attempt </span><span class="op">${</span><span class="param">i</span> <span class="op">+</span> <span class="num">1</span><span class="op">}</span><span class="str"> failed:</span><span class="str">`</span>, <span class="param">error</span>.<span class="pr">message</span>);
+      <span class="kw">if</span> (<span class="param">i</span> <span class="op"><</span> <span class="param">retries</span> <span class="op">-</span> <span class="num">1</span>) {
+        <span class="kw">await new</span> <span class="fn">Promise</span>(<span class="param">r</span> <span class="op">=></span> <span class="fn">setTimeout</span>(<span class="param">r</span>, <span class="param">delay</span>));
+      }
+    }
+  }
+  <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'All retries failed'</span>);
+}</code></pre>
+    </div>
+
+    <h2>🎯 Loading States Pattern</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>Complete UI Pattern</span></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">loadUsers</span>() {
+  <span class="kw">const</span> <span class="param">container</span> <span class="op">=</span> <span class="param">document</span>.<span class="fn">getElementById</span>(<span class="str">'users'</span>);
+
+  <span class="cm">// Show loading state</span>
+  <span class="param">container</span>.<span class="pr">innerHTML</span> <span class="op">=</span> <span class="str">'&lt;p&gt;Loading...&lt;/p&gt;'</span>;
+
+  <span class="kw">try</span> {
+    <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/users'</span>);
+    <span class="kw">if</span> (<span class="op">!</span><span class="param">response</span>.<span class="pr">ok</span>) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`HTTP </span><span class="op">${</span><span class="param">response</span>.<span class="pr">status</span><span class="op">}</span><span class="str">`</span>);
+
+    <span class="kw">const</span> <span class="param">users</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();
+
+    <span class="cm">// Show data</span>
+    <span class="param">container</span>.<span class="pr">innerHTML</span> <span class="op">=</span> <span class="param">users</span>
+      .<span class="fn">map</span>(<span class="param">u</span> <span class="op">=></span> <span class="str">`&lt;div&gt;</span><span class="op">${</span><span class="param">u</span>.<span class="pr">name</span><span class="op">}</span><span class="str">&lt;/div&gt;`</span>)
+      .<span class="fn">join</span>(<span class="str">''</span>);
+
+  } <span class="kw">catch</span> (<span class="param">error</span>) {
+    <span class="cm">// Show error state</span>
+    <span class="param">container</span>.<span class="pr">innerHTML</span> <span class="op">=</span> <span class="str">`&lt;p class="error"&gt;Failed: </span><span class="op">${</span><span class="param">error</span>.<span class="pr">message</span><span class="op">}</span><span class="str">&lt;/p&gt;`</span>;
+  }
+}</code></pre>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline" onclick="goTo('response')">← Response Handling</button>
+      <button class="btn btn-primary" onclick="goTo('pitfalls')">Mistakes & Pitfalls →</button>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 6: PITFALLS ===== -->
+  <div class="section" id="sec-pitfalls">
+    <h1>⚠️ Common Mistakes & Pitfalls</h1>
+    <p class="subtitle">Avoid these traps that trip up even experienced developers.</p>
+
+    <!-- PITFALL 1 -->
+    <div class="card danger">
+      <div class="card-label">❌ Pitfall #1: Not Checking response.ok</div>
+      <div class="compare-grid" style="margin:12px 0 0;">
+        <div class="compare-card bad">
+          <div class="compare-label">❌ Wrong</div>
+          <pre style="padding:12px;font-size:12.5px;margin:0;background:rgba(255,85,85,0.05);border-radius:6px;"><code><span class="cm">// This WON'T catch 404 or 500!</span>
+<span class="fn">fetch</span>(<span class="str">'/api/user/999'</span>)
+  .<span class="fn">then</span>(<span class="param">r</span> <span class="op">=></span> <span class="param">r</span>.<span class="fn">json</span>())
+  .<span class="fn">then</span>(<span class="param">data</span> <span class="op">=></span> <span class="fn">showUser</span>(<span class="param">data</span>))
+  .<span class="fn">catch</span>(<span class="param">err</span> <span class="op">=></span> <span class="fn">showError</span>(<span class="param">err</span>));</code></pre>
+        </div>
+        <div class="compare-card good">
+          <div class="compare-label">✅ Correct</div>
+          <pre style="padding:12px;font-size:12.5px;margin:0;background:rgba(60,216,139,0.05);border-radius:6px;"><code><span class="fn">fetch</span>(<span class="str">'/api/user/999'</span>)
+  .<span class="fn">then</span>(<span class="param">r</span> <span class="op">=></span> {
+    <span class="kw">if</span> (<span class="op">!</span><span class="param">r</span>.<span class="pr">ok</span>) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="param">r</span>.<span class="pr">status</span>);
+    <span class="kw">return</span> <span class="param">r</span>.<span class="fn">json</span>();
+  })
+  .<span class="fn">then</span>(<span class="param">data</span> <span class="op">=></span> <span class="fn">showUser</span>(<span class="param">data</span>))
+  .<span class="fn">catch</span>(<span class="param">err</span> <span class="op">=></span> <span class="fn">showError</span>(<span class="param">err</span>));</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- PITFALL 2 -->
+    <div class="card danger">
+      <div class="card-label">❌ Pitfall #2: Forgetting to JSON.stringify the Body</div>
+      <div class="compare-grid" style="margin:12px 0 0;">
+        <div class="compare-card bad">
+          <div class="compare-label">❌ Wrong</div>
+          <pre style="padding:12px;font-size:12.5px;margin:0;background:rgba(255,85,85,0.05);border-radius:6px;"><code><span class="cm">// Sends "[object Object]"!</span>
+<span class="fn">fetch</span>(<span class="str">'/api/users'</span>, {
+  <span class="pr">method</span>: <span class="str">'POST'</span>,
+  <span class="pr">body</span>: { <span class="pr">name</span>: <span class="str">'John'</span> }
+});</code></pre>
+        </div>
+        <div class="compare-card good">
+          <div class="compare-label">✅ Correct</div>
+          <pre style="padding:12px;font-size:12.5px;margin:0;background:rgba(60,216,139,0.05);border-radius:6px;"><code><span class="fn">fetch</span>(<span class="str">'/api/users'</span>, {
+  <span class="pr">method</span>: <span class="str">'POST'</span>,
+  <span class="pr">headers</span>: {
+    <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>
+  },
+  <span class="pr">body</span>: <span class="fn">JSON.stringify</span>({<span class="pr">name</span>:<span class="str">'John'</span>})
+});</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- PITFALL 3 -->
+    <div class="card danger">
+      <div class="card-label">❌ Pitfall #3: Reading Body Twice</div>
+      <pre style="padding:16px;font-size:13px;margin:12px 0 0;background:var(--code-bg);border-radius:8px;"><code><span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/data'</span>);
+<span class="kw">const</span> <span class="param">text</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">text</span>();     <span class="cm">// ← First read: OK</span>
+<span class="kw">const</span> <span class="param">json</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();     <span class="cm">// ← ERROR! Body already consumed!</span>
+
+<span class="cm">// Fix: Clone the response if you need to read it twice</span>
+<span class="kw">const</span> <span class="param">clone</span> <span class="op">=</span> <span class="param">response</span>.<span class="fn">clone</span>();
+<span class="kw">const</span> <span class="param">text2</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">text</span>();
+<span class="kw">const</span> <span class="param">json2</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">clone</span>.<span class="fn">json</span>();       <span class="cm">// ← Works!</span></code></pre>
+    </div>
+
+    <!-- PITFALL 4 -->
+    <div class="card danger">
+      <div class="card-label">❌ Pitfall #4: Missing await</div>
+      <pre style="padding:16px;font-size:13px;margin:12px 0 0;background:var(--code-bg);border-radius:8px;"><code><span class="cm">// ❌ Logs a Promise object, NOT the data!</span>
+<span class="kw">async function</span> <span class="fn">getData</span>() {
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/data'</span>);
+  <span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="param">response</span>.<span class="fn">json</span>();    <span class="cm">// ← Missing await!</span>
+  <span class="fn">console.log</span>(<span class="param">data</span>);               <span class="cm">// Promise {&lt;pending&gt;}</span>
+}
+
+<span class="cm">// ✅ Always await .json()</span>
+<span class="kw">const</span> <span class="param">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="param">response</span>.<span class="fn">json</span>();  <span class="cm">// ← Correct!</span></code></pre>
+    </div>
+
+    <!-- PITFALL 5 -->
+    <div class="card danger">
+      <div class="card-label">❌ Pitfall #5: Using Fetch with GET body</div>
+      <pre style="padding:16px;font-size:13px;margin:12px 0 0;background:var(--code-bg);border-radius:8px;"><code><span class="cm">// ❌ GET requests CANNOT have a body!</span>
+<span class="fn">fetch</span>(<span class="str">'/api/search'</span>, {
+  <span class="pr">method</span>: <span class="str">'GET'</span>,
+  <span class="pr">body</span>: <span class="fn">JSON.stringify</span>({ <span class="pr">query</span>: <span class="str">'test'</span> })  <span class="cm">// ← TypeError!</span>
+});
+
+<span class="cm">// ✅ Use query parameters instead</span>
+<span class="fn">fetch</span>(<span class="str">'/api/search?query=test'</span>);</code></pre>
+    </div>
+
+    <!-- PITFALL 6 -->
+    <div class="card warning">
+      <div class="card-label">⚠️ Pitfall #6: CORS Issues</div>
+      <p style="margin:8px 0;">When calling APIs from a different domain, you may see:</p>
+      <pre style="padding:12px;font-size:12px;margin:8px 0;background:var(--code-bg);border-radius:6px;color:var(--red);"><code>Access to fetch at 'https://api.other.com' from origin
+'http://localhost:3000' has been blocked by CORS policy</code></pre>
+      <p style="margin:8px 0;font-size:14px;"><strong>CORS is a server-side issue</strong>. The server must include <code class="inline-code">Access-Control-Allow-Origin</code> headers. You can't fix it from the frontend alone.</p>
+    </div>
+
+    <h2>✅ Best Practices Checklist</h2>
+    <div class="card success">
+      <ul style="font-size:14px;line-height:2;">
+        <li>✅ Always check <code class="inline-code">response.ok</code> before reading the body</li>
+        <li>✅ Always use <code class="inline-code">try/catch</code> with async/await</li>
+        <li>✅ Always set <code class="inline-code">Content-Type</code> header for POST/PUT/PATCH</li>
+        <li>✅ Always <code class="inline-code">JSON.stringify()</code> the body object</li>
+        <li>✅ Always <code class="inline-code">await</code> both <code class="inline-code">fetch()</code> and <code class="inline-code">.json()</code></li>
+        <li>✅ Show loading/error states in the UI</li>
+        <li>✅ Use AbortController for cancellable requests</li>
+        <li>✅ Create a reusable fetch wrapper function</li>
+      </ul>
+    </div>
+
+    <h2>🏗️ Reusable Fetch Wrapper</h2>
+    <div class="code-wrap">
+      <div class="code-header"><span>Use This in Every Project</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="kw">async function</span> <span class="fn">api</span>(<span class="param">endpoint</span>, <span class="param">options</span> <span class="op">=</span> {}) {
+  <span class="kw">const</span> <span class="param">config</span> <span class="op">=</span> {
+    <span class="pr">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    ...<span class="param">options</span>,
+  };
+
+  <span class="kw">if</span> (<span class="param">config</span>.<span class="pr">body</span> <span class="op">&&</span> <span class="kw">typeof</span> <span class="param">config</span>.<span class="pr">body</span> <span class="op">===</span> <span class="str">'object'</span>) {
+    <span class="param">config</span>.<span class="pr">body</span> <span class="op">=</span> <span class="fn">JSON.stringify</span>(<span class="param">config</span>.<span class="pr">body</span>);
+  }
+
+  <span class="kw">const</span> <span class="param">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="param">endpoint</span>, <span class="param">config</span>);
+
+  <span class="kw">if</span> (<span class="op">!</span><span class="param">response</span>.<span class="pr">ok</span>) {
+    <span class="kw">const</span> <span class="param">error</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">Error</span>(<span class="str">`API Error: </span><span class="op">${</span><span class="param">response</span>.<span class="pr">status</span><span class="op">}</span><span class="str">`</span>);
+    <span class="param">error</span>.<span class="pr">status</span> <span class="op">=</span> <span class="param">response</span>.<span class="pr">status</span>;
+    <span class="kw">throw</span> <span class="param">error</span>;
+  }
+
+  <span class="kw">if</span> (<span class="param">response</span>.<span class="pr">status</span> <span class="op">===</span> <span class="num">204</span>) <span class="kw">return null</span>;
+  <span class="kw">return</span> <span class="param">response</span>.<span class="fn">json</span>();
+}
+
+<span class="cm">// Usage — clean and safe!</span>
+<span class="kw">const</span> <span class="param">users</span>   <span class="op">=</span> <span class="kw">await</span> <span class="fn">api</span>(<span class="str">'/api/users'</span>);
+<span class="kw">const</span> <span class="param">newUser</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">api</span>(<span class="str">'/api/users'</span>, {
+  <span class="pr">method</span>: <span class="str">'POST'</span>,
+  <span class="pr">body</span>: { <span class="pr">name</span>: <span class="str">'John'</span> }  <span class="cm">// auto-stringified!</span>
+});</code></pre>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline" onclick="goTo('errors')">← Error Handling</button>
+      <button class="btn btn-primary" onclick="goTo('quiz')">Take the Quiz →</button>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 7: QUIZ ===== -->
+  <div class="section" id="sec-quiz">
+    <h1>🧠 Knowledge Check</h1>
+    <p class="subtitle">Test your understanding with 10 questions. Let's see what you've learned!</p>
+
+    <div id="quizContainer"></div>
+
+    <div id="quizResults" style="display:none;">
+      <div class="score-card">
+        <div style="font-size:16px;color:var(--muted);margin-bottom:8px;">Your Score</div>
+        <div class="score-num" id="quizScore">0/10</div>
+        <p id="quizMessage" style="margin-top:12px;color:var(--muted);"></p>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="resetQuiz()">🔄 Try Again</button>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin:24px 0;" id="quizSubmitArea">
+      <button class="btn btn-primary" onclick="submitQuiz()" id="submitQuizBtn" disabled>
+        Submit All Answers
+      </button>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px;" id="quizProgress">Answer all 10 questions to submit</p>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline" onclick="goTo('pitfalls')">← Pitfalls</button>
+      <button class="btn btn-primary" onclick="goTo('exercises')">Exercises →</button>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 8: EXERCISES ===== -->
+  <div class="section" id="sec-exercises">
+    <h1>💪 Hands-On Exercises</h1>
+    <p class="subtitle">Practice makes perfect. Complete these challenges using real API calls.</p>
+
+    <!-- Exercise 1 -->
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title">
+          <span>Exercise 1: Fetch a Todo</span>
+          <span class="tag easy">Easy</span>
+        </div>
+        <div class="exercise-desc">Fetch the todo with ID 5 from JSONPlaceholder and log its title and completion status.</div>
+      </div>
+      <div class="exercise-body">
+        <textarea id="ex-1">// Fetch todo #5 from: https://jsonplaceholder.typicode.com/todos/5
+// Log the title and whether it's completed
+
+</textarea>
+      </div>
+      <div class="exercise-actions">
+        <button class="run-btn" onclick="runExercise(1)">▶ Run</button>
+        <button class="hint-btn" onclick="toggleHint(1)">💡 Hint</button>
+        <button class="hint-btn" onclick="showSolution(1)">📖 Solution</button>
+      </div>
+      <div class="hint-text" id="hint-1">Use <code class="inline-code">await fetch(url)</code>, then <code class="inline-code">await response.json()</code>, then access <code class="inline-code">data.title</code> and <code class="inline-code">data.completed</code>.</div>
+      <div class="playground-output" id="ex-1-output"></div>
+      <div class="exercise-result" id="ex-1-result"></div>
+    </div>
+
+    <!-- Exercise 2 -->
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title">
+          <span>Exercise 2: Create a Post with Error Handling</span>
+          <span class="tag medium">Medium</span>
+        </div>
+        <div class="exercise-desc">Create a new post using POST method. Include proper headers, JSON.stringify the body, check response.ok, and wrap in try/catch.</div>
+      </div>
+      <div class="exercise-body">
+        <textarea id="ex-2">// POST to: https://jsonplaceholder.typicode.com/posts
+// Send: { title: "My Post", body: "Hello World", userId: 1 }
+// Include proper error handling!
+
+</textarea>
+      </div>
+      <div class="exercise-actions">
+        <button class="run-btn" onclick="runExercise(2)">▶ Run</button>
+        <button class="hint-btn" onclick="toggleHint(2)">💡 Hint</button>
+        <button class="hint-btn" onclick="showSolution(2)">📖 Solution</button>
+      </div>
+      <div class="hint-text" id="hint-2">Remember: method: 'POST', headers with Content-Type, body with JSON.stringify, check response.ok, wrap in try/catch.</div>
+      <div class="playground-output" id="ex-2-output"></div>
+      <div class="exercise-result" id="ex-2-result"></div>
+    </div>
+
+    <!-- Exercise 3 -->
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title">
+          <span>Exercise 3: Fetch Multiple & Filter</span>
+          <span class="tag medium">Medium</span>
+        </div>
+        <div class="exercise-desc">Fetch all todos, then filter to show only completed ones. Log how many are completed out of the total.</div>
+      </div>
+      <div class="exercise-body">
+        <textarea id="ex-3">// Fetch all todos from: https://jsonplaceholder.typicode.com/todos
+// Filter for completed ones
+// Log: "X out of Y todos are completed"
+// Log the first 5 completed todo titles
+
+</textarea>
+      </div>
+      <div class="exercise-actions">
+        <button class="run-btn" onclick="runExercise(3)">▶ Run</button>
+        <button class="hint-btn" onclick="toggleHint(3)">💡 Hint</button>
+        <button class="hint-btn" onclick="showSolution(3)">📖 Solution</button>
+      </div>
+      <div class="hint-text" id="hint-3">After getting the array, use <code class="inline-code">.filter(todo => todo.completed)</code> and <code class="inline-code">.slice(0, 5)</code> for the first 5.</div>
+      <div class="playground-output" id="ex-3-output"></div>
+      <div class="exercise-result" id="ex-3-result"></div>
+    </div>
+
+    <!-- Exercise 4 -->
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title">
+          <span>Exercise 4: Parallel Requests</span>
+          <span class="tag hard">Hard</span>
+        </div>
+        <div class="exercise-desc">Use <code class="inline-code">Promise.all()</code> to fetch a user AND their posts at the same time. This is faster than sequential requests!</div>
+      </div>
+      <div class="exercise-body">
+        <textarea id="ex-4">// Fetch these TWO URLs at the same time using Promise.all:
+// User: https://jsonplaceholder.typicode.com/users/1
+// Posts: https://jsonplaceholder.typicode.com/posts?userId=1
+// Log the user's name and how many posts they have
+
+</textarea>
+      </div>
+      <div class="exercise-actions">
+        <button class="run-btn" onclick="runExercise(4)">▶ Run</button>
+        <button class="hint-btn" onclick="toggleHint(4)">💡 Hint</button>
+        <button class="hint-btn" onclick="showSolution(4)">📖 Solution</button>
+      </div>
+      <div class="hint-text" id="hint-4">Use <code class="inline-code">const [userRes, postsRes] = await Promise.all([fetch(url1), fetch(url2)])</code>, then parse each with <code class="inline-code">.json()</code>.</div>
+      <div class="playground-output" id="ex-4-output"></div>
+      <div class="exercise-result" id="ex-4-result"></div>
+    </div>
+
+    <!-- Exercise 5 -->
+    <div class="exercise-card">
+      <div class="exercise-header">
+        <div class="exercise-title">
+          <span>Exercise 5: Build a Search Function</span>
+          <span class="tag hard">Hard</span>
+        </div>
+        <div class="exercise-desc">Create a function that searches posts by title keyword. Use query params, handle errors, and return formatted results.</div>
+      </div>
+      <div class="exercise-body">
+        <textarea id="ex-5">// Create: async function searchPosts(keyword)
+// 1. Fetch all posts from https://jsonplaceholder.typicode.com/posts
+// 2. Filter posts whose title includes the keyword (case-insensitive)
+// 3. Return array of { id, title } objects
+// 4. Include full error handling
+// 5. Call it with keyword "qui" and log results
+
+</textarea>
+      </div>
+      <div class="exercise-actions">
+        <button class="run-btn" onclick="runExercise(5)">▶ Run</button>
+        <button class="hint-btn" onclick="toggleHint(5)">💡 Hint</button>
+        <button class="hint-btn" onclick="showSolution(5)">📖 Solution</button>
+      </div>
+      <div class="hint-text" id="hint-5">Use <code class="inline-code">.filter(p => p.title.toLowerCase().includes(keyword.toLowerCase()))</code> and <code class="inline-code">.map(p => ({ id: p.id, title: p.title }))</code>.</div>
+      <div class="playground-output" id="ex-5-output"></div>
+      <div class="exercise-result" id="ex-5-result"></div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn btn-outline" onclick="goTo('quiz')">← Quiz</button>
+      <button class="btn btn-primary" onclick="goTo('intro')">🔄 Start Over</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ========================================================
+// APP STATE & NAVIGATION
+// ========================================================
+const sections = ['intro','basics','options','response','errors','pitfalls','quiz','exercises'];
+let currentSection = 'intro';
+const visitedSections = new Set(['intro']);
+
+function goTo(sectionId) {
+  currentSection = sectionId;
+  visitedSections.add(sectionId);
+
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + sectionId).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('active');
+    if (visitedSections.has(n.dataset.section)) {
+      n.classList.add('completed');
+    }
+  });
+  document.querySelector(`.nav-item[data-section="${sectionId}"]`).classList.add('active');
+
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Close sidebar on mobile
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function updateProgress() {
+  const pct = (visitedSections.size / sections.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${visitedSections.size} / ${sections.length}`;
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ========================================================
+// CODE COPY
+// ========================================================
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// ========================================================
+// TABS
+// ========================================================
+function switchTab(e, containerId, index) {
+  const container = document.getElementById(containerId);
+  const wrap = e.target.closest('.section') || document;
+  const tabs = e.target.parentElement.querySelectorAll('.tab');
+  const contents = container.querySelectorAll('.tab-content');
+
+  tabs.forEach(t => t.classList.remove('active'));
+  contents.forEach(c => c.classList.remove('active'));
+
+  tabs[index].classList.add('active');
+  contents[index].classList.add('active');
+}
+
+// ========================================================
+// PLAYGROUND RUNNER
+// ========================================================
+async function runPlayground(id) {
+  const textarea = document.getElementById(id);
+  const output = document.getElementById(id + '-output');
+  const code = textarea.value;
+
+  output.innerHTML = '<div class="output-line loading"><span class="output-prefix">⏳</span> Running...</div>';
+
+  const logs = [];
+  const fakeConsole = {
+    log: (...args) => logs.push({ type: 'log', msg: args.map(formatArg).join(' ') }),
+    error: (...args) => logs.push({ type: 'error', msg: args.map(formatArg).join(' ') }),
+    warn: (...args) => logs.push({ type: 'loading', msg: args.map(formatArg).join(' ') }),
+    info: (...args) => logs.push({ type: 'info', msg: args.map(formatArg).join(' ') }),
+  };
+
+  try {
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    const fn = new AsyncFunction('console', code);
+    await fn(fakeConsole);
+
+    if (logs.length === 0) {
+      logs.push({ type: 'info', msg: '(no output)' });
+    }
+  } catch (err) {
+    logs.push({ type: 'error', msg: `Error: ${err.message}` });
+  }
+
+  output.innerHTML = logs.map(l =>
+    `<div class="output-line ${l.type}"><span class="output-prefix">${
+      l.type === 'error' ? '✗' : l.type === 'info' ? 'ℹ' : '›'
+    }</span>${escapeHtml(l.msg)}</div>`
+  ).join('');
+}
+
+function formatArg(arg) {
+  if (arg === null) return 'null';
+  if (arg === undefined) return 'undefined';
+  if (typeof arg === 'object') {
+    try { return JSON.stringify(arg, null, 2); } catch(e) { return String(arg); }
+  }
+  return String(arg);
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ========================================================
+// EXERCISE RUNNER
+// ========================================================
+const solutions = {
+  1: `const response = await fetch('https://jsonplaceholder.typicode.com/todos/5');
+const todo = await response.json();
+console.log('Title:', todo.title);
+console.log('Completed:', todo.completed);`,
+
+  2: `try {
+  const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title: 'My Post',
+      body: 'Hello World',
+      userId: 1
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(\`HTTP error! Status: \${response.status}\`);
+  }
+
+  const data = await response.json();
+  console.log('Created post with ID:', data.id);
+  console.log('Full response:', data);
+} catch (error) {
+  console.error('Failed:', error.message);
+}`,
+
+  3: `const response = await fetch('https://jsonplaceholder.typicode.com/todos');
+const todos = await response.json();
+
+const completed = todos.filter(todo => todo.completed);
+console.log(\`\${completed.length} out of \${todos.length} todos are completed\\n\`);
+
+console.log('First 5 completed:');
+completed.slice(0, 5).forEach((todo, i) => {
+  console.log(\`  \${i + 1}. \${todo.title}\`);
+});`,
+
+  4: `const [userRes, postsRes] = await Promise.all([
+  fetch('https://jsonplaceholder.typicode.com/users/1'),
+  fetch('https://jsonplaceholder.typicode.com/posts?userId=1')
+]);
+
+const user = await userRes.json();
+const posts = await postsRes.json();
+
+console.log('User:', user.name);
+console.log('Email:', user.email);
+console.log('Number of posts:', posts.length);
+console.log('\\nPost titles:');
+posts.slice(0, 3).forEach(p => console.log(' -', p.title));`,
+
+  5: `async function searchPosts(keyword) {
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts');
+    if (!response.ok) throw new Error(\`HTTP \${response.status}\`);
+
+    const posts = await response.json();
+    return posts
+      .filter(p => p.title.toLowerCase().includes(keyword.toLowerCase()))
+      .map(p => ({ id: p.id, title: p.title }));
+  } catch (error) {
+    console.error('Search failed:', error.message);
+    return [];
+  }
+}
+
+const results = await searchPosts('qui');
+console.log(\`Found \${results.length} posts matching "qui":\\n\`);
+results.forEach(r => console.log(\`  [\${r.id}] \${r.title}\`));`
+};
+
+async function runExercise(num) {
+  const textarea = document.getElementById('ex-' + num);
+  const output = document.getElementById('ex-' + num + '-output');
+  const code = textarea.value;
+
+  output.innerHTML = '<div class="output-line loading"><span class="output-prefix">⏳</span> Running...</div>';
+
+  const logs = [];
+  const fakeConsole = {
+    log: (...args) => logs.push({ type: 'log', msg: args.map(formatArg).join(' ') }),
+    error: (...args) => logs.push({ type: 'error', msg: args.map(formatArg).join(' ') }),
+    warn: (...args) => logs.push({ type: 'loading', msg: args.map(formatArg).join(' ') }),
+    info: (...args) => logs.push({ type: 'info', msg: args.map(formatArg).join(' ') }),
+  };
+
+  try {
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    const fn = new AsyncFunction('console', code);
+    await fn(fakeConsole);
+
+    if (logs.length === 0) {
+      logs.push({ type: 'info', msg: '(no output — make sure to use console.log!)' });
+    }
+  } catch (err) {
+    logs.push({ type: 'error', msg: `Error: ${err.message}` });
+  }
+
+  output.innerHTML = logs.map(l =>
+    `<div class="output-line ${l.type}"><span class="output-prefix">${
+      l.type === 'error' ? '✗' : l.type === 'info' ? 'ℹ' : '›'
+    }</span>${escapeHtml(l.msg)}</div>`
+  ).join('');
+}
+
+function toggleHint(num) {
+  const el = document.getElementById('hint-' + num);
+  el.classList.toggle('show');
+}
+
+function showSolution(num) {
+  const textarea = document.getElementById('ex-' + num);
+  textarea.value = solutions[num];
+}
+
+// ========================================================
+// QUIZ
+// ========================================================
+const quizData = [
+  {
+    q: "What does fetch() return?",
+    options: ["A Response object", "A Promise", "JSON data", "An XMLHttpRequest"],
+    correct: 1,
+    explanation: "fetch() always returns a Promise that resolves to a Response object. You then need to call .json() or .text() to read the body."
+  },
+  {
+    q: "What happens when fetch gets a 404 response?",
+    options: [
+      "The promise rejects with an error",
+      "It throws a TypeError",
+      "The promise resolves normally (response.ok is false)",
+      "It returns null"
+    ],
+    correct: 2,
+    explanation: "This is the #1 gotcha! Fetch only rejects on network failures. A 404 is a valid HTTP response, so the promise resolves — but response.ok will be false."
+  },
+  {
+    q: "Which is the correct way to send JSON in a POST request?",
+    options: [
+      "body: { name: 'John' }",
+      "body: JSON.stringify({ name: 'John' })",
+      "data: { name: 'John' }",
+      "json: { name: 'John' }"
+    ],
+    correct: 1,
+    explanation: "The body must be a string, not an object. Use JSON.stringify() to convert it. Also set Content-Type header to 'application/json'."
+  },
+  {
+    q: "How many times can you read a Response body?",
+    options: ["Unlimited times", "Twice", "Once", "Depends on the server"],
+    correct: 2,
+    explanation: "Response body is a stream and can only be consumed once. If you need to read it twice, use response.clone() before the first read."
+  },
+  {
+    q: "What's the default HTTP method for fetch()?",
+    options: ["POST", "GET", "PUT", "HEAD"],
+    correct: 1,
+    explanation: "If you don't specify a method in the options, fetch defaults to GET."
+  },
+  {
+    q: "Which error does fetch throw for network failures?",
+    options: ["HttpError", "NetworkError", "TypeError", "FetchError"],
+    correct: 2,
+    explanation: "When the network is down or the request can't be made at all, fetch rejects with a TypeError."
+  },
+  {
+    q: "What's the correct way to add query parameters?",
+    options: [
+      "fetch('/api', { params: { id: 1 } })",
+      "fetch('/api', { query: { id: 1 } })",
+      "fetch('/api?id=1')",
+      "fetch('/api').query({ id: 1 })"
+    ],
+    correct: 2,
+    explanation: "Fetch doesn't have a params or query option. Append query parameters directly to the URL string, or use URLSearchParams."
+  },
+  {
+    q: "What header must you set when sending JSON in the body?",
+    options: [
+      "Accept: application/json",
+      "Content-Type: application/json",
+      "Data-Type: json",
+      "Body-Format: json"
+    ],
+    correct: 1,
+    explanation: "Content-Type tells the server what format the request body is in. For JSON data, set it to 'application/json'."
+  },
+  {
+    q: "How do you cancel an in-flight fetch request?",
+    options: [
+      "fetch.cancel()",
+      "response.abort()",
+      "Use AbortController and pass its signal to fetch",
+      "Set timeout: 0 in options"
+    ],
+    correct: 2,
+    explanation: "Create an AbortController, pass controller.signal in the fetch options, then call controller.abort() to cancel."
+  },
+  {
+    q: "What does response.ok check?",
+    options: [
+      "If the response has a body",
+      "If the status is exactly 200",
+      "If the status is in the range 200-299",
+      "If the response is valid JSON"
+    ],
+    correct: 2,
+    explanation: "response.ok is true when the HTTP status code is between 200 and 299 (inclusive). This covers 200, 201, 204, etc."
+  }
+];
+
+let quizAnswers = {};
+
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = quizData.map((q, i) => `
+    <div class="quiz-card" id="quiz-${i}">
+      <div class="quiz-question">
+        <div class="quiz-num">${i + 1}</div>
+        <div>${q.q}</div>
+      </div>
+      <div class="quiz-options">
+        ${q.options.map((opt, j) => `
+          <div class="quiz-option" data-quiz="${i}" data-option="${j}" onclick="selectOption(${i}, ${j})">
+            <div class="marker">${String.fromCharCode(65 + j)}</div>
+            <div>${opt}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="quiz-explanation" id="quiz-exp-${i}"></div>
+    </div>
+  `).join('');
+}
+
+function selectOption(quizIdx, optIdx) {
+  // Remove previous selection for this question
+  document.querySelectorAll(`.quiz-option[data-quiz="${quizIdx}"]`).forEach(el => {
+    el.classList.remove('selected');
+  });
+
+  // Mark selected
+  const option = document.querySelector(`.quiz-option[data-quiz="${quizIdx}"][data-option="${optIdx}"]`);
+  option.classList.add('selected');
+
+  quizAnswers[quizIdx] = optIdx;
+
+  // Update progress
+  const answered = Object.keys(quizAnswers).length;
+  document.getElementById('quizProgress').textContent = `${answered} of ${quizData.length} answered`;
+  document.getElementById('submitQuizBtn').disabled = answered < quizData.length;
+}
+
+function submitQuiz() {
+  let correct = 0;
+
+  quizData.forEach((q, i) => {
+    const userAnswer = quizAnswers[i];
+    const options = document.querySelectorAll(`.quiz-option[data-quiz="${i}"]`);
+
+    options.forEach(o => {
+      o.classList.add('disabled');
+      o.classList.remove('selected');
+    });
+
+    // Show correct
+    options[q.correct].classList.add('correct');
+
+    // Show wrong if user was wrong
+    if (userAnswer !== q.correct) {
+      options[userAnswer].classList.add('wrong');
+    } else {
+      correct++;
+    }
+
+    // Show explanation
+    const exp = document.getElementById(`quiz-exp-${i}`);
+    exp.className = `quiz-explanation show ${userAnswer === q.correct ? 'correct-exp' : 'wrong-exp'}`;
+    exp.innerHTML = `${userAnswer === q.correct ? '✅' : '❌'} ${q.explanation}`;
+  });
+
+  // Show results
+  document.getElementById('quizResults').style.display = 'block';
+  document.getElementById('quizScore').textContent = `${correct}/${quizData.length}`;
+  document.getElementById('quizSubmitArea').style.display = 'none';
+
+  const pct = (correct / quizData.length) * 100;
+  let msg = '';
+  if (pct === 100) msg = "🎉 Perfect score! You're a Fetch API master!";
+  else if (pct >= 80) msg = "🌟 Great job! You've got a solid understanding!";
+  else if (pct >= 60) msg = "👍 Good effort! Review the sections you missed.";
+  else if (pct >= 40) msg = "📖 Keep studying! Review the lessons and try again.";
+  else msg = "💪 Don't give up! Go through the lessons again.";
+
+  document.getElementById('quizMessage').textContent = msg;
+
+  document.getElementById('quizResults').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetQuiz() {
+  quizAnswers = {};
+  buildQuiz();
+  document.getElementById('quizResults').style.display = 'none';
+  document.getElementById('quizSubmitArea').style.display = 'block';
+  document.getElementById('submitQuizBtn').disabled = true;
+  document.getElementById('quizProgress').textContent = `Answer all ${quizData.length} questions to submit`;
+}
+
+// ========================================================
+// INIT
+// ========================================================
+buildQuiz();
+updateProgress();
+
+// Handle clicks outside sidebar on mobile
+document.getElementById('mainContent').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'TEXTAREA') return;
+  const idx = sections.indexOf(currentSection);
+  if (e.key === 'ArrowRight' && idx < sections.length - 1) goTo(sections[idx + 1]);
+  if (e.key === 'ArrowLeft' && idx > 0) goTo(sections[idx - 1]);
+});
+</script>
+
+</body>
+</html>

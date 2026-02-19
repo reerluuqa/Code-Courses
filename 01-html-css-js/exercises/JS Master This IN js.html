@@ -1,0 +1,3316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master 'this' in JavaScript</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0f0e17;
+  --surface: #1a1930;
+  --surface2: #232145;
+  --primary: #ff8906;
+  --secondary: #e53170;
+  --accent: #00ebc7;
+  --text: #fffffe;
+  --text-dim: #a7a9be;
+  --success: #00c853;
+  --danger: #ff5252;
+  --warning: #ffd600;
+  --code-bg: #0d1117;
+  --gradient1: linear-gradient(135deg, #ff8906, #e53170);
+  --gradient2: linear-gradient(135deg, #00ebc7, #3a86ff);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  left: 0; top: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  z-index: 100;
+  overflow-y: auto;
+  transition: transform 0.3s;
+  padding-bottom: 20px;
+}
+
+.sidebar.collapsed { transform: translateX(-280px); }
+
+.sidebar-header {
+  padding: 24px 20px;
+  background: var(--gradient1);
+  position: sticky; top: 0;
+  z-index: 2;
+}
+
+.sidebar-header h2 {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.sidebar-header p {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.progress-bar-container {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--gradient2);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+.nav-section {
+  padding: 12px 0;
+}
+
+.nav-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 8px 20px;
+  font-weight: 600;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: var(--text-dim);
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: rgba(255,137,6,0.08);
+  color: var(--primary);
+  border-left-color: var(--primary);
+}
+
+.nav-item.completed .nav-icon {
+  background: var(--success);
+  color: white;
+}
+
+.nav-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+/* Main Content */
+.main {
+  margin-left: 280px;
+  min-height: 100vh;
+  transition: margin-left 0.3s;
+}
+
+.sidebar.collapsed + .main { margin-left: 0; }
+
+.toggle-btn {
+  position: fixed;
+  top: 16px; left: 290px;
+  z-index: 101;
+  background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text);
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.sidebar.collapsed ~ .toggle-btn { left: 16px; }
+
+/* Sections */
+.section {
+  display: none;
+  padding: 40px 60px 80px;
+  max-width: 900px;
+  animation: fadeInUp 0.4s ease;
+}
+
+.section.active { display: block; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.badge-concept { background: rgba(255,137,6,0.15); color: var(--primary); }
+.badge-practice { background: rgba(0,235,199,0.15); color: var(--accent); }
+.badge-quiz { background: rgba(229,49,112,0.15); color: var(--secondary); }
+.badge-pitfall { background: rgba(255,82,82,0.15); color: var(--danger); }
+
+h1 {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: var(--gradient1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 40px 0 16px;
+  color: var(--text);
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 28px 0 12px;
+  color: var(--accent);
+}
+
+.subtitle {
+  font-size: 18px;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+p { margin-bottom: 16px; color: var(--text-dim); }
+p strong { color: var(--text); }
+
+/* Visual Diagram */
+.visual-box {
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 32px;
+  margin: 24px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.visual-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gradient2);
+}
+
+.visual-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.context-diagram {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.context-card {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.context-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(255,137,6,0.15);
+}
+
+.context-card.highlight {
+  border-color: var(--accent);
+  background: rgba(0,235,199,0.05);
+}
+
+.context-emoji {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.context-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.context-value {
+  font-size: 12px;
+  color: var(--primary);
+  font-family: 'Fira Code', monospace;
+}
+
+/* Code Blocks */
+.code-container {
+  background: var(--code-bg);
+  border-radius: 12px;
+  margin: 20px 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.code-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.code-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+
+.code-dot:nth-child(1) { background: #ff5f57; }
+.code-dot:nth-child(2) { background: #ffbd2e; }
+.code-dot:nth-child(3) { background: #28c840; }
+
+.code-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: 'Fira Code', monospace;
+}
+
+.code-body {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+pre {
+  font-family: 'Fira Code', monospace;
+  font-size: 13.5px;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.kw { color: #c678dd; }
+.fn { color: #61afef; }
+.str { color: #98c379; }
+.num { color: #d19a66; }
+.cm { color: #5c6370; font-style: italic; }
+.op { color: #56b6c2; }
+.obj { color: #e5c07b; }
+.prop { color: #e06c75; }
+.this-kw { color: #ff8906; font-weight: 600; background: rgba(255,137,6,0.12); padding: 1px 4px; border-radius: 3px; }
+.result { color: #00ebc7; }
+.param { color: #e06c75; }
+
+/* Run Button */
+.run-btn {
+  background: var(--gradient1);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.run-btn:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(255,137,6,0.3); }
+
+.output-box {
+  background: rgba(0,235,199,0.05);
+  border: 1px solid rgba(0,235,199,0.15);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  min-height: 40px;
+  white-space: pre-wrap;
+  display: none;
+}
+
+.output-box.show { display: block; animation: fadeInUp 0.3s; }
+
+/* Interactive Playground */
+.playground {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.playground-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playground textarea {
+  width: 100%;
+  min-height: 120px;
+  background: var(--code-bg);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  padding: 16px;
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.playground textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255,137,6,0.15);
+}
+
+/* Info Boxes */
+.info-box {
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 20px 0;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.info-box .icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.info-box p { margin: 0; }
+
+.info-tip {
+  background: rgba(0,235,199,0.08);
+  border: 1px solid rgba(0,235,199,0.2);
+}
+
+.info-warning {
+  background: rgba(255,214,0,0.08);
+  border: 1px solid rgba(255,214,0,0.2);
+}
+
+.info-danger {
+  background: rgba(255,82,82,0.08);
+  border: 1px solid rgba(255,82,82,0.2);
+}
+
+.info-key {
+  background: rgba(255,137,6,0.08);
+  border: 1px solid rgba(255,137,6,0.2);
+}
+
+/* Analogy Box */
+.analogy-box {
+  background: linear-gradient(135deg, rgba(255,137,6,0.08), rgba(229,49,112,0.08));
+  border: 1px solid rgba(255,137,6,0.15);
+  border-radius: 16px;
+  padding: 28px;
+  margin: 24px 0;
+}
+
+.analogy-box h4 {
+  color: var(--primary);
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Comparison Table */
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 14px;
+}
+
+.comparison-table th {
+  background: var(--surface2);
+  padding: 14px 18px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--primary);
+  border-bottom: 2px solid rgba(255,137,6,0.3);
+}
+
+.comparison-table td {
+  padding: 12px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--text-dim);
+  vertical-align: top;
+}
+
+.comparison-table tr:hover td {
+  background: rgba(255,255,255,0.02);
+}
+
+.comparison-table code {
+  background: rgba(255,137,6,0.1);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+/* Quiz */
+.quiz-container {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 28px;
+  margin: 24px 0;
+  border: 1px solid rgba(229,49,112,0.2);
+}
+
+.quiz-question {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.quiz-code {
+  margin: 12px 0 20px;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quiz-option {
+  background: var(--surface2);
+  border: 2px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quiz-option:hover {
+  border-color: var(--primary);
+  background: rgba(255,137,6,0.05);
+}
+
+.quiz-option.correct {
+  border-color: var(--success) !important;
+  background: rgba(0,200,83,0.1) !important;
+}
+
+.quiz-option.wrong {
+  border-color: var(--danger) !important;
+  background: rgba(255,82,82,0.1) !important;
+}
+
+.quiz-option.disabled { pointer-events: none; }
+
+.option-letter {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.quiz-feedback {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: none;
+}
+
+.quiz-feedback.show { display: block; animation: fadeInUp 0.3s; }
+
+.quiz-feedback.correct-feedback {
+  background: rgba(0,200,83,0.1);
+  border: 1px solid rgba(0,200,83,0.2);
+  color: var(--success);
+}
+
+.quiz-feedback.wrong-feedback {
+  background: rgba(255,82,82,0.1);
+  border: 1px solid rgba(255,82,82,0.2);
+  color: var(--danger);
+}
+
+/* Exercise */
+.exercise-box {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 28px;
+  margin: 24px 0;
+  border: 1px solid rgba(0,235,199,0.2);
+}
+
+.exercise-box h4 {
+  color: var(--accent);
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-instructions {
+  margin-bottom: 16px;
+}
+
+.exercise-instructions li {
+  color: var(--text-dim);
+  margin: 6px 0;
+  margin-left: 20px;
+  font-size: 14px;
+}
+
+.solution-toggle {
+  background: transparent;
+  border: 1px solid rgba(0,235,199,0.3);
+  color: var(--accent);
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  margin-top: 12px;
+  transition: all 0.2s;
+}
+
+.solution-toggle:hover {
+  background: rgba(0,235,199,0.1);
+}
+
+.solution-content {
+  display: none;
+  margin-top: 16px;
+}
+
+.solution-content.show { display: block; animation: fadeInUp 0.3s; }
+
+/* Step Visualization */
+.step-viz {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 24px 0;
+}
+
+.step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.step-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.step-num {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--gradient1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.step-connector {
+  width: 2px;
+  height: 40px;
+  background: rgba(255,137,6,0.2);
+}
+
+.step-content {
+  padding-bottom: 24px;
+  flex: 1;
+}
+
+.step-content h4 {
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.step-content p {
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Flowchart */
+.flowchart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 24px 0;
+  padding: 20px;
+}
+
+.flow-node {
+  background: var(--surface2);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  padding: 14px 24px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 350px;
+  width: 100%;
+}
+
+.flow-node.decision {
+  border-color: var(--secondary);
+  background: rgba(229,49,112,0.1);
+  transform: rotate(0deg);
+  border-radius: 4px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  padding: 30px 20px;
+}
+
+.flow-arrow {
+  color: var(--text-dim);
+  font-size: 20px;
+  padding: 4px 0;
+}
+
+.flow-label {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.flow-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+/* Nav buttons */
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.nav-btn {
+  background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text);
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-btn:hover {
+  border-color: var(--primary);
+  background: rgba(255,137,6,0.08);
+}
+
+.nav-btn.primary-btn {
+  background: var(--gradient1);
+  border: none;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 20px 0 0;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 4px;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  transition: all 0.2s;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--primary); color: white; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeInUp 0.3s; }
+
+/* Inline code */
+code {
+  background: rgba(255,137,6,0.12);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+}
+
+/* Final Score */
+.score-display {
+  text-align: center;
+  padding: 40px;
+}
+
+.score-circle {
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: var(--gradient1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 42px;
+  font-weight: 800;
+}
+
+/* Animated arrows for this flow */
+.this-flow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+
+.this-flow-item {
+  background: var(--surface2);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.3s;
+}
+
+.this-flow-arrow {
+  color: var(--primary);
+  font-size: 20px;
+  animation: pulseArrow 1.5s infinite;
+}
+
+@keyframes pulseArrow {
+  0%, 100% { opacity: 0.5; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(4px); }
+}
+
+/* Highlight animation */
+.highlight-anim {
+  animation: highlightPulse 2s infinite;
+}
+
+@keyframes highlightPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,137,6,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(255,137,6,0); }
+}
+
+/* Interactive this binding visualizer */
+.binding-viz {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.binding-left, .binding-right {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.binding-right {
+  border: 2px solid var(--accent);
+}
+
+.binding-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+/* Scroll indicator for sections */
+.scroll-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--gradient1);
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+  box-shadow: 0 4px 15px rgba(255,137,6,0.3);
+}
+
+/* Achievement popup */
+.achievement {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--success);
+  border-radius: 12px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 200;
+  transform: translateX(400px);
+  transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.achievement.show { transform: translateX(0); }
+
+.achievement-icon { font-size: 28px; }
+.achievement-text { font-size: 14px; font-weight: 600; }
+.achievement-sub { font-size: 12px; color: var(--text-dim); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-280px); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0 !important; }
+  .toggle-btn { left: 16px !important; }
+  .section { padding: 30px 20px 80px; }
+  h1 { font-size: 28px; }
+  .binding-viz { grid-template-columns: 1fr; }
+  .context-diagram { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Pitfall Card */
+.pitfall-card {
+  background: linear-gradient(135deg, rgba(255,82,82,0.08), rgba(255,82,82,0.02));
+  border: 1px solid rgba(255,82,82,0.2);
+  border-radius: 14px;
+  padding: 24px;
+  margin: 20px 0;
+}
+
+.pitfall-card h4 {
+  color: var(--danger);
+  font-size: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pitfall-card .fix-label {
+  color: var(--success);
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Marker for this */
+.this-marker {
+  display: inline-block;
+  background: var(--gradient1);
+  color: white;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Final quiz section */
+.final-quiz-progress {
+  display: flex;
+  gap: 6px;
+  margin: 20px 0;
+}
+
+.fq-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  transition: all 0.3s;
+}
+
+.fq-dot.answered-correct { background: var(--success); }
+.fq-dot.answered-wrong { background: var(--danger); }
+.fq-dot.current { box-shadow: 0 0 0 3px rgba(255,137,6,0.3); border: 2px solid var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2>🎯 Master <code style="background:rgba(255,255,255,0.2);color:white">this</code></h2>
+    <p>JavaScript Context Guide</p>
+  </div>
+  <div class="progress-bar-container">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text"><span id="progressText">0</span>% Complete</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Foundations</div>
+    <div class="nav-item active" data-section="intro" onclick="goTo('intro')">
+      <span class="nav-icon">👋</span> Introduction
+    </div>
+    <div class="nav-item" data-section="contexts" onclick="goTo('contexts')">
+      <span class="nav-icon">🔍</span> this in Contexts
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Core Concepts</div>
+    <div class="nav-item" data-section="explicit" onclick="goTo('explicit')">
+      <span class="nav-icon">🔗</span> call, apply, bind
+    </div>
+    <div class="nav-item" data-section="arrow" onclick="goTo('arrow')">
+      <span class="nav-icon">➡️</span> Arrow Functions
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Practice</div>
+    <div class="nav-item" data-section="pitfalls" onclick="goTo('pitfalls')">
+      <span class="nav-icon">⚠️</span> Pitfalls & Mistakes
+    </div>
+    <div class="nav-item" data-section="exercises" onclick="goTo('exercises')">
+      <span class="nav-icon">💪</span> Exercises
+    </div>
+    <div class="nav-item" data-section="finalquiz" onclick="goTo('finalquiz')">
+      <span class="nav-icon">🏆</span> Final Quiz
+    </div>
+  </div>
+</nav>
+
+<!-- Toggle Button -->
+<button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">☰</button>
+
+<!-- Achievement Popup -->
+<div class="achievement" id="achievement">
+  <span class="achievement-icon" id="achieveIcon">🏅</span>
+  <div>
+    <div class="achievement-text" id="achieveText">Section Complete!</div>
+    <div class="achievement-sub" id="achieveSub">Keep going!</div>
+  </div>
+</div>
+
+<!-- ========== SECTION 1: INTRO ========== -->
+<div class="main">
+
+<div class="section active" id="sec-intro">
+  <span class="section-badge badge-concept">Concept</span>
+  <h1>What is <code>this</code>?</h1>
+  <p class="subtitle">The most misunderstood keyword in JavaScript — let's demystify it once and for all! 🚀</p>
+
+  <div class="analogy-box">
+    <h4>💡 Real-World Analogy</h4>
+    <p>Think of <code>this</code> like the word <strong>"I"</strong> in English. When <strong>you</strong> say "I am hungry," "I" refers to you. When <strong>your friend</strong> says "I am hungry," "I" refers to your friend. The meaning of "I" depends on <strong>who is speaking</strong>.</p>
+    <p style="margin:0">Similarly, <code>this</code> in JavaScript depends on <strong>who (which object) is calling the function</strong> — not where the function is written!</p>
+  </div>
+
+  <h2>The Golden Rule ✨</h2>
+  
+  <div class="info-box info-key">
+    <span class="icon">🔑</span>
+    <div>
+      <p><strong><code>this</code> is determined at CALL TIME, not at definition time.</strong></p>
+      <p style="margin:0;font-size:13px;color:var(--text-dim)">The value of <code>this</code> depends on HOW a function is called, not WHERE it's written.</p>
+    </div>
+  </div>
+
+  <h2>How JavaScript Determines <code>this</code></h2>
+  <p>JavaScript uses these rules (in order of priority):</p>
+
+  <div class="step-viz">
+    <div class="step">
+      <div class="step-line"><div class="step-num">1</div><div class="step-connector"></div></div>
+      <div class="step-content">
+        <h4><code>new</code> keyword?</h4>
+        <p><code>this</code> = the newly created object</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-line"><div class="step-num">2</div><div class="step-connector"></div></div>
+      <div class="step-content">
+        <h4><code>call</code>, <code>apply</code>, or <code>bind</code>?</h4>
+        <p><code>this</code> = whatever object you explicitly pass</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-line"><div class="step-num">3</div><div class="step-connector"></div></div>
+      <div class="step-content">
+        <h4>Called as a method? (<code>obj.fn()</code>)</h4>
+        <p><code>this</code> = the object before the dot</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-line"><div class="step-num">4</div><div class="step-connector"></div></div>
+      <div class="step-content">
+        <h4>Plain function call? (<code>fn()</code>)</h4>
+        <p><code>this</code> = <code>window</code> (or <code>undefined</code> in strict mode)</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-line"><div class="step-num">⭐</div></div>
+      <div class="step-content">
+        <h4>Arrow function?</h4>
+        <p><code>this</code> = inherited from surrounding (lexical) scope — ALWAYS</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Quick Visual Overview</h2>
+  <div class="visual-box">
+    <div class="visual-title">🗺️ The <code>this</code> Map</div>
+    <div class="context-diagram">
+      <div class="context-card" onclick="this.classList.toggle('highlight')">
+        <div class="context-emoji">🌍</div>
+        <div class="context-label">Global</div>
+        <div class="context-value">this → window</div>
+      </div>
+      <div class="context-card" onclick="this.classList.toggle('highlight')">
+        <div class="context-emoji">📦</div>
+        <div class="context-label">Object Method</div>
+        <div class="context-value">this → the object</div>
+      </div>
+      <div class="context-card" onclick="this.classList.toggle('highlight')">
+        <div class="context-emoji">🏗️</div>
+        <div class="context-label">Constructor</div>
+        <div class="context-value">this → new instance</div>
+      </div>
+      <div class="context-card" onclick="this.classList.toggle('highlight')">
+        <div class="context-emoji">🖱️</div>
+        <div class="context-label">Event Handler</div>
+        <div class="context-value">this → element</div>
+      </div>
+      <div class="context-card" onclick="this.classList.toggle('highlight')">
+        <div class="context-emoji">🔗</div>
+        <div class="context-label">call/apply/bind</div>
+        <div class="context-value">this → you choose!</div>
+      </div>
+      <div class="context-card" onclick="this.classList.toggle('highlight')">
+        <div class="context-emoji">➡️</div>
+        <div class="context-label">Arrow Function</div>
+        <div class="context-value">this → lexical scope</div>
+      </div>
+    </div>
+  </div>
+
+  <p>👆 Click the cards above to highlight them! Now let's dive deep into each context.</p>
+
+  <div class="nav-buttons">
+    <div></div>
+    <button class="nav-btn primary-btn" onclick="goTo('contexts')">Next: this in Contexts →</button>
+  </div>
+</div>
+
+<!-- ========== SECTION 2: CONTEXTS ========== -->
+<div class="section" id="sec-contexts">
+  <span class="section-badge badge-concept">Concept</span>
+  <h1><code>this</code> in Different Contexts</h1>
+  <p class="subtitle">Let's explore what <code>this</code> equals in every possible situation</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(event,'ctx-global')">🌍 Global</button>
+    <button class="tab" onclick="switchTab(event,'ctx-method')">📦 Method</button>
+    <button class="tab" onclick="switchTab(event,'ctx-constructor')">🏗️ Constructor</button>
+    <button class="tab" onclick="switchTab(event,'ctx-event')">🖱️ Event</button>
+    <button class="tab" onclick="switchTab(event,'ctx-standalone')">📞 Standalone</button>
+  </div>
+
+  <!-- Global Context -->
+  <div class="tab-content active" id="ctx-global">
+    <h2>🌍 Global Context</h2>
+    <p>When <code>this</code> is used <strong>outside of any function</strong>, it refers to the <strong>global object</strong>.</p>
+
+    <div class="info-box info-tip">
+      <span class="icon">💡</span>
+      <div><p style="margin:0">In browsers, the global object is <code>window</code>. In Node.js, it's <code>global</code>.</p></div>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">global-this.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="cm">// In the global scope (outside any function)</span>
+console.<span class="fn">log</span>(<span class="this-kw">this</span>);          <span class="cm">// → window object</span>
+
+console.<span class="fn">log</span>(<span class="this-kw">this</span> === <span class="obj">window</span>); <span class="cm">// → true</span>
+
+<span class="cm">// Variables declared with var become properties of window</span>
+<span class="kw">var</span> <span class="prop">name</span> = <span class="str">"JavaScript"</span>;
+console.<span class="fn">log</span>(<span class="this-kw">this</span>.<span class="prop">name</span>);     <span class="cm">// → "JavaScript"</span>
+console.<span class="fn">log</span>(<span class="obj">window</span>.<span class="prop">name</span>);   <span class="cm">// → "JavaScript"</span>
+
+<span class="cm">// BUT: let and const do NOT attach to window!</span>
+<span class="kw">let</span> <span class="prop">age</span> = <span class="num">25</span>;
+console.<span class="fn">log</span>(<span class="this-kw">this</span>.<span class="prop">age</span>);      <span class="cm">// → undefined</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('global')">▶ Run Example</button>
+    <div class="output-box" id="output-global"></div>
+
+    <div class="info-box info-warning">
+      <span class="icon">⚠️</span>
+      <div><p style="margin:0"><strong>Heads up:</strong> <code>let</code> and <code>const</code> do NOT become properties of <code>window</code> — only <code>var</code> does. This is a common source of confusion!</p></div>
+    </div>
+  </div>
+
+  <!-- Method Context -->
+  <div class="tab-content" id="ctx-method">
+    <h2>📦 Object Method Context</h2>
+    <p>When a function is called as a <strong>method of an object</strong>, <code>this</code> refers to the <strong>object that owns the method</strong> (the object before the dot).</p>
+
+    <div class="analogy-box">
+      <h4>💡 Analogy: Employee Badge</h4>
+      <p style="margin:0">Imagine an employee wearing a name badge. When they say "I work at..." — the "I" refers to whoever is wearing the badge. Similarly, <code>this</code> inside a method refers to whatever object the method "belongs to" at the moment of calling.</p>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">method-this.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">user</span> = {
+  <span class="prop">name</span>: <span class="str">"Alice"</span>,
+  <span class="prop">age</span>: <span class="num">28</span>,
+  <span class="fn">greet</span>() {
+    console.<span class="fn">log</span>(<span class="str">`Hi, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>);
+    console.<span class="fn">log</span>(<span class="str">`I'm ${</span><span class="this-kw">this</span>.<span class="prop">age</span><span class="str">} years old`</span>);
+  },
+  <span class="fn">getThis</span>() {
+    <span class="kw">return</span> <span class="this-kw">this</span>;
+  }
+};
+
+<span class="obj">user</span>.<span class="fn">greet</span>();
+<span class="cm">// → "Hi, I'm Alice"</span>
+<span class="cm">// → "I'm 28 years old"</span>
+
+console.<span class="fn">log</span>(<span class="obj">user</span>.<span class="fn">getThis</span>() === <span class="obj">user</span>); <span class="cm">// → true</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('method')">▶ Run Example</button>
+    <div class="output-box" id="output-method"></div>
+
+    <h3>Important: It's the CALL SITE that matters!</h3>
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">call-site-matters.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">user</span> = {
+  <span class="prop">name</span>: <span class="str">"Alice"</span>,
+  <span class="fn">greet</span>() {
+    console.<span class="fn">log</span>(<span class="str">`Hi, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>);
+  }
+};
+
+<span class="cm">// ✅ Called as method → this = user</span>
+<span class="obj">user</span>.<span class="fn">greet</span>();  <span class="cm">// "Hi, I'm Alice"</span>
+
+<span class="cm">// ❌ Extracted and called standalone → this = window</span>
+<span class="kw">const</span> <span class="prop">greetFn</span> = <span class="obj">user</span>.<span class="prop">greet</span>;
+<span class="prop">greetFn</span>();     <span class="cm">// "Hi, I'm undefined" 😱</span>
+
+<span class="cm">// The function lost its context!</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('callsite')">▶ Run Example</button>
+    <div class="output-box" id="output-callsite"></div>
+
+    <div class="info-box info-danger">
+      <span class="icon">🚨</span>
+      <div><p style="margin:0"><strong>This is the #1 <code>this</code> pitfall!</strong> When you extract a method from an object and call it standalone, <code>this</code> is no longer the object. We'll learn how to fix this later!</p></div>
+    </div>
+  </div>
+
+  <!-- Constructor Context -->
+  <div class="tab-content" id="ctx-constructor">
+    <h2>🏗️ Constructor Context (<code>new</code> keyword)</h2>
+    <p>When a function is called with the <code>new</code> keyword, <code>this</code> refers to the <strong>brand new object being created</strong>.</p>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">constructor-this.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">function</span> <span class="fn">Person</span>(<span class="param">name</span>, <span class="param">age</span>) {
+  <span class="cm">// 'this' = the new empty object being created</span>
+  <span class="this-kw">this</span>.<span class="prop">name</span> = <span class="param">name</span>;
+  <span class="this-kw">this</span>.<span class="prop">age</span> = <span class="param">age</span>;
+  <span class="this-kw">this</span>.<span class="fn">greet</span> = <span class="kw">function</span>() {
+    console.<span class="fn">log</span>(<span class="str">`Hi, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>);
+  };
+  <span class="cm">// 'this' is automatically returned</span>
+}
+
+<span class="kw">const</span> <span class="obj">alice</span> = <span class="kw">new</span> <span class="fn">Person</span>(<span class="str">"Alice"</span>, <span class="num">28</span>);
+<span class="kw">const</span> <span class="obj">bob</span> = <span class="kw">new</span> <span class="fn">Person</span>(<span class="str">"Bob"</span>, <span class="num">32</span>);
+
+<span class="obj">alice</span>.<span class="fn">greet</span>(); <span class="cm">// "Hi, I'm Alice"</span>
+<span class="obj">bob</span>.<span class="fn">greet</span>();   <span class="cm">// "Hi, I'm Bob"</span>
+
+<span class="cm">// Each call creates a DIFFERENT 'this'!</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('constructor')">▶ Run Example</button>
+    <div class="output-box" id="output-constructor"></div>
+
+    <div class="visual-box">
+      <div class="visual-title">🔄 What <code>new</code> does behind the scenes</div>
+      <div class="step-viz">
+        <div class="step">
+          <div class="step-line"><div class="step-num">1</div><div class="step-connector"></div></div>
+          <div class="step-content"><h4>Creates a new empty object</h4><p><code>{}</code></p></div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-num">2</div><div class="step-connector"></div></div>
+          <div class="step-content"><h4>Sets <code>this</code> = that new object</h4><p><code>this → {}</code></p></div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-num">3</div><div class="step-connector"></div></div>
+          <div class="step-content"><h4>Runs the function body</h4><p>Your code adds properties to <code>this</code></p></div>
+        </div>
+        <div class="step">
+          <div class="step-line"><div class="step-num">4</div></div>
+          <div class="step-content"><h4>Returns <code>this</code> automatically</h4><p><code>this → { name: "Alice", age: 28 }</code></p></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>ES6 Classes (same concept!)</h3>
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">class-this.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">class</span> <span class="fn">Animal</span> {
+  <span class="fn">constructor</span>(<span class="param">name</span>, <span class="param">sound</span>) {
+    <span class="this-kw">this</span>.<span class="prop">name</span> = <span class="param">name</span>;
+    <span class="this-kw">this</span>.<span class="prop">sound</span> = <span class="param">sound</span>;
+  }
+  
+  <span class="fn">speak</span>() {
+    console.<span class="fn">log</span>(<span class="str">`${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">} says ${</span><span class="this-kw">this</span>.<span class="prop">sound</span><span class="str">}!`</span>);
+  }
+}
+
+<span class="kw">const</span> <span class="obj">dog</span> = <span class="kw">new</span> <span class="fn">Animal</span>(<span class="str">"Rex"</span>, <span class="str">"Woof"</span>);
+<span class="obj">dog</span>.<span class="fn">speak</span>(); <span class="cm">// "Rex says Woof!"</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('class')">▶ Run Example</button>
+    <div class="output-box" id="output-class"></div>
+  </div>
+
+  <!-- Event Handler Context -->
+  <div class="tab-content" id="ctx-event">
+    <h2>🖱️ Event Handler Context</h2>
+    <p>In a DOM event handler (regular function), <code>this</code> refers to the <strong>HTML element</strong> that received the event.</p>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">event-this.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="cm">// Regular function as event handler</span>
+<span class="obj">button</span>.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="kw">function</span>() {
+  console.<span class="fn">log</span>(<span class="this-kw">this</span>);           <span class="cm">// → the button element</span>
+  <span class="this-kw">this</span>.<span class="prop">style</span>.<span class="prop">color</span> = <span class="str">'red'</span>;  <span class="cm">// works! changes button color</span>
+});
+
+<span class="cm">// Arrow function as event handler (DIFFERENT!)</span>
+<span class="obj">button</span>.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () => {
+  console.<span class="fn">log</span>(<span class="this-kw">this</span>);           <span class="cm">// → window! ⚠️ Not the button!</span>
+  <span class="this-kw">this</span>.<span class="prop">style</span>.<span class="prop">color</span> = <span class="str">'red'</span>;  <span class="cm">// ERROR! window has no style</span>
+});</pre>
+      </div>
+    </div>
+
+    <p>Try it! Click the buttons below:</p>
+    <div style="display:flex;gap:12px;margin:16px 0;flex-wrap:wrap;">
+      <button id="demoBtn1" style="padding:12px 24px;border-radius:8px;border:2px solid var(--primary);background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer;font-family:Inter,sans-serif;">Click me (regular fn)</button>
+      <button id="demoBtn2" style="padding:12px 24px;border-radius:8px;border:2px solid var(--secondary);background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer;font-family:Inter,sans-serif;">Click me (arrow fn)</button>
+    </div>
+    <div class="output-box show" id="output-event" style="min-height:50px;">Click a button to see what 'this' is...</div>
+  </div>
+
+  <!-- Standalone Function -->
+  <div class="tab-content" id="ctx-standalone">
+    <h2>📞 Standalone Function Call</h2>
+    <p>When a function is called <strong>on its own</strong> (not as a method, not with <code>new</code>), <code>this</code> defaults to:</p>
+
+    <div class="binding-viz">
+      <div class="binding-left">
+        <div class="binding-label">Normal Mode (sloppy)</div>
+        <code>this → window</code>
+        <p style="font-size:13px;margin-top:8px;margin-bottom:0;">The default behavior</p>
+      </div>
+      <div class="binding-right">
+        <div class="binding-label">Strict Mode</div>
+        <code>this → undefined</code>
+        <p style="font-size:13px;margin-top:8px;margin-bottom:0;">Safer! Catches bugs early</p>
+      </div>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">standalone-this.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="cm">// Sloppy mode (default)</span>
+<span class="kw">function</span> <span class="fn">showThis</span>() {
+  console.<span class="fn">log</span>(<span class="this-kw">this</span>); <span class="cm">// → window</span>
+}
+<span class="fn">showThis</span>(); <span class="cm">// Plain call → this = window</span>
+
+<span class="cm">// Strict mode</span>
+<span class="kw">function</span> <span class="fn">showThisStrict</span>() {
+  <span class="str">"use strict"</span>;
+  console.<span class="fn">log</span>(<span class="this-kw">this</span>); <span class="cm">// → undefined</span>
+}
+<span class="fn">showThisStrict</span>(); <span class="cm">// Plain call in strict → this = undefined</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('standalone')">▶ Run Example</button>
+    <div class="output-box" id="output-standalone"></div>
+
+    <div class="info-box info-tip">
+      <span class="icon">💡</span>
+      <div><p style="margin:0"><strong>Pro tip:</strong> ES6 modules and class bodies are always in strict mode automatically. So in modern code, standalone function calls have <code>this = undefined</code>.</p></div>
+    </div>
+  </div>
+
+  <!-- Mini Quiz for this section -->
+  <h2 style="margin-top:40px;">🧠 Quick Check</h2>
+  <div class="quiz-container" id="quiz-ctx-1">
+    <div class="quiz-question">What does <code>this</code> refer to when a function is called as <code>obj.method()</code>?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-1', this, false)">
+        <span class="option-letter">A</span> The global window object
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-1', this, true)">
+        <span class="option-letter">B</span> The object before the dot (obj)
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-1', this, false)">
+        <span class="option-letter">C</span> The function itself
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-1', this, false)">
+        <span class="option-letter">D</span> undefined
+      </div>
+    </div>
+    <div class="quiz-feedback" id="feedback-quiz-ctx-1"></div>
+  </div>
+
+  <div class="quiz-container" id="quiz-ctx-2">
+    <div class="quiz-question">What does <code>this</code> refer to in a standalone function call (sloppy mode)?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-2', this, false)">
+        <span class="option-letter">A</span> undefined
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-2', this, false)">
+        <span class="option-letter">B</span> null
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-2', this, true)">
+        <span class="option-letter">C</span> The window (global) object
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-ctx-2', this, false)">
+        <span class="option-letter">D</span> The function itself
+      </div>
+    </div>
+    <div class="quiz-feedback" id="feedback-quiz-ctx-2"></div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="goTo('intro')">← Back: Introduction</button>
+    <button class="nav-btn primary-btn" onclick="goTo('explicit')">Next: call, apply, bind →</button>
+  </div>
+</div>
+
+<!-- ========== SECTION 3: EXPLICIT BINDING ========== -->
+<div class="section" id="sec-explicit">
+  <span class="section-badge badge-concept">Core Concept</span>
+  <h1>Explicit Binding: call, apply, bind</h1>
+  <p class="subtitle">Take control! Manually set what <code>this</code> should be 🎮</p>
+
+  <div class="analogy-box">
+    <h4>💡 Analogy: Walkie-Talkies</h4>
+    <p style="margin:0">Imagine you have a walkie-talkie (function). Normally, whoever presses the button speaks. But with <code>call</code>, <code>apply</code>, and <code>bind</code>, you can <strong>hand the walkie-talkie to someone specific</strong> and say "YOU speak now!" You're explicitly choosing who <code>this</code> is.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(event,'tab-call')">📞 call()</button>
+    <button class="tab" onclick="switchTab(event,'tab-apply')">📋 apply()</button>
+    <button class="tab" onclick="switchTab(event,'tab-bind')">🔒 bind()</button>
+    <button class="tab" onclick="switchTab(event,'tab-compare')">⚖️ Compare All</button>
+  </div>
+
+  <!-- call() -->
+  <div class="tab-content active" id="tab-call">
+    <h2>📞 <code>Function.call()</code></h2>
+    <p>Calls the function <strong>immediately</strong> with a specific <code>this</code> value. Extra arguments are passed <strong>one by one</strong>.</p>
+
+    <div class="this-flow">
+      <span class="this-flow-item"><code>fn.call(thisArg, arg1, arg2)</code></span>
+      <span class="this-flow-arrow">→</span>
+      <span class="this-flow-item">Calls <code>fn</code> with <code>this = thisArg</code></span>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">call-example.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">function</span> <span class="fn">introduce</span>(<span class="param">greeting</span>, <span class="param">punctuation</span>) {
+  console.<span class="fn">log</span>(<span class="str">`${</span><span class="param">greeting</span><span class="str">}, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}${</span><span class="param">punctuation</span><span class="str">}`</span>);
+}
+
+<span class="kw">const</span> <span class="obj">alice</span> = { <span class="prop">name</span>: <span class="str">"Alice"</span> };
+<span class="kw">const</span> <span class="obj">bob</span>   = { <span class="prop">name</span>: <span class="str">"Bob"</span> };
+
+<span class="cm">// Call with alice as 'this'</span>
+<span class="fn">introduce</span>.<span class="fn">call</span>(<span class="obj">alice</span>, <span class="str">"Hello"</span>, <span class="str">"!"</span>);
+<span class="cm">// → "Hello, I'm Alice!"</span>
+
+<span class="cm">// Call with bob as 'this'</span>
+<span class="fn">introduce</span>.<span class="fn">call</span>(<span class="obj">bob</span>, <span class="str">"Hey"</span>, <span class="str">"."</span>);
+<span class="cm">// → "Hey, I'm Bob."</span>
+
+<span class="cm">// Same function, different 'this'! 🎉</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('call')">▶ Run Example</button>
+    <div class="output-box" id="output-call"></div>
+
+    <h3>Practical Use: Borrowing Methods</h3>
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">method-borrowing.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">calculator</span> = {
+  <span class="prop">value</span>: <span class="num">0</span>,
+  <span class="fn">add</span>(<span class="param">n</span>) {
+    <span class="this-kw">this</span>.<span class="prop">value</span> += <span class="param">n</span>;
+    console.<span class="fn">log</span>(<span class="str">`Value: ${</span><span class="this-kw">this</span>.<span class="prop">value</span><span class="str">}`</span>);
+  }
+};
+
+<span class="kw">const</span> <span class="obj">myObj</span> = { <span class="prop">value</span>: <span class="num">10</span> };
+
+<span class="cm">// Borrow 'add' method and use it with myObj</span>
+<span class="obj">calculator</span>.<span class="fn">add</span>.<span class="fn">call</span>(<span class="obj">myObj</span>, <span class="num">5</span>);
+<span class="cm">// → "Value: 15" (myObj.value is now 15!)</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('borrow')">▶ Run Example</button>
+    <div class="output-box" id="output-borrow"></div>
+  </div>
+
+  <!-- apply() -->
+  <div class="tab-content" id="tab-apply">
+    <h2>📋 <code>Function.apply()</code></h2>
+    <p>Just like <code>call()</code>, but arguments are passed as an <strong>array</strong>.</p>
+
+    <div class="this-flow">
+      <span class="this-flow-item"><code>fn.apply(thisArg, [arg1, arg2])</code></span>
+      <span class="this-flow-arrow">→</span>
+      <span class="this-flow-item">Calls <code>fn</code> with <code>this = thisArg</code></span>
+    </div>
+
+    <div class="info-box info-tip">
+      <span class="icon">🧠</span>
+      <div><p style="margin:0"><strong>Memory trick:</strong> <strong>A</strong>pply = <strong>A</strong>rray, <strong>C</strong>all = <strong>C</strong>ommas (arguments separated by commas)</p></div>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">apply-example.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">function</span> <span class="fn">introduce</span>(<span class="param">greeting</span>, <span class="param">punctuation</span>) {
+  console.<span class="fn">log</span>(<span class="str">`${</span><span class="param">greeting</span><span class="str">}, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}${</span><span class="param">punctuation</span><span class="str">}`</span>);
+}
+
+<span class="kw">const</span> <span class="obj">alice</span> = { <span class="prop">name</span>: <span class="str">"Alice"</span> };
+
+<span class="cm">// call: arguments one by one</span>
+<span class="fn">introduce</span>.<span class="fn">call</span>(<span class="obj">alice</span>, <span class="str">"Hello"</span>, <span class="str">"!"</span>);
+
+<span class="cm">// apply: arguments as an array</span>
+<span class="fn">introduce</span>.<span class="fn">apply</span>(<span class="obj">alice</span>, [<span class="str">"Hello"</span>, <span class="str">"!"</span>]);
+
+<span class="cm">// Both produce: "Hello, I'm Alice!"</span>
+
+<span class="cm">// Useful when you already have an array of args!</span>
+<span class="kw">const</span> <span class="prop">args</span> = [<span class="str">"Hi"</span>, <span class="str">"!!"</span>];
+<span class="fn">introduce</span>.<span class="fn">apply</span>(<span class="obj">alice</span>, <span class="prop">args</span>);
+<span class="cm">// → "Hi, I'm Alice!!"</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('apply')">▶ Run Example</button>
+    <div class="output-box" id="output-apply"></div>
+
+    <h3>Classic Use: Math.max with arrays</h3>
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">apply-math.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="prop">numbers</span> = [<span class="num">5</span>, <span class="num">2</span>, <span class="num">9</span>, <span class="num">1</span>, <span class="num">7</span>];
+
+<span class="cm">// Math.max doesn't accept arrays directly</span>
+<span class="cm">// Math.max(numbers) → NaN ❌</span>
+
+<span class="cm">// Use apply to spread the array!</span>
+<span class="kw">const</span> <span class="prop">max</span> = <span class="obj">Math</span>.<span class="fn">max</span>.<span class="fn">apply</span>(<span class="kw">null</span>, <span class="prop">numbers</span>);
+console.<span class="fn">log</span>(<span class="prop">max</span>); <span class="cm">// → 9</span>
+
+<span class="cm">// Modern alternative: spread operator</span>
+<span class="kw">const</span> <span class="prop">max2</span> = <span class="obj">Math</span>.<span class="fn">max</span>(...<span class="prop">numbers</span>);
+console.<span class="fn">log</span>(<span class="prop">max2</span>); <span class="cm">// → 9</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('mathmax')">▶ Run Example</button>
+    <div class="output-box" id="output-mathmax"></div>
+  </div>
+
+  <!-- bind() -->
+  <div class="tab-content" id="tab-bind">
+    <h2>🔒 <code>Function.bind()</code></h2>
+    <p><strong>Does NOT call the function!</strong> Instead, it returns a <strong>new function</strong> with <code>this</code> permanently locked to the value you specify.</p>
+
+    <div class="this-flow">
+      <span class="this-flow-item"><code>const newFn = fn.bind(thisArg)</code></span>
+      <span class="this-flow-arrow">→</span>
+      <span class="this-flow-item">Returns new function where <code>this</code> is always <code>thisArg</code></span>
+    </div>
+
+    <div class="info-box info-key">
+      <span class="icon">🔑</span>
+      <div>
+        <p style="margin:0"><strong>Key difference:</strong> <code>call</code> and <code>apply</code> call the function immediately. <code>bind</code> creates a new function for later use.</p>
+      </div>
+    </div>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">bind-example.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">user</span> = {
+  <span class="prop">name</span>: <span class="str">"Alice"</span>,
+  <span class="fn">greet</span>() {
+    console.<span class="fn">log</span>(<span class="str">`Hi, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>);
+  }
+};
+
+<span class="cm">// Problem: extracting the method loses 'this'</span>
+<span class="kw">const</span> <span class="prop">greetFn</span> = <span class="obj">user</span>.<span class="prop">greet</span>;
+<span class="prop">greetFn</span>(); <span class="cm">// "Hi, I'm undefined" ❌</span>
+
+<span class="cm">// Solution: bind it!</span>
+<span class="kw">const</span> <span class="prop">boundGreet</span> = <span class="obj">user</span>.<span class="prop">greet</span>.<span class="fn">bind</span>(<span class="obj">user</span>);
+<span class="prop">boundGreet</span>(); <span class="cm">// "Hi, I'm Alice" ✅</span>
+
+<span class="cm">// bind with a DIFFERENT object</span>
+<span class="kw">const</span> <span class="obj">bob</span> = { <span class="prop">name</span>: <span class="str">"Bob"</span> };
+<span class="kw">const</span> <span class="prop">bobGreet</span> = <span class="obj">user</span>.<span class="prop">greet</span>.<span class="fn">bind</span>(<span class="obj">bob</span>);
+<span class="prop">bobGreet</span>(); <span class="cm">// "Hi, I'm Bob" ✅</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('bind')">▶ Run Example</button>
+    <div class="output-box" id="output-bind"></div>
+
+    <h3>bind() with Preset Arguments (Partial Application)</h3>
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">bind-partial.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">function</span> <span class="fn">multiply</span>(<span class="param">a</span>, <span class="param">b</span>) {
+  <span class="kw">return</span> <span class="param">a</span> * <span class="param">b</span>;
+}
+
+<span class="cm">// Create a 'double' function by binding first arg to 2</span>
+<span class="kw">const</span> <span class="fn">double</span> = <span class="fn">multiply</span>.<span class="fn">bind</span>(<span class="kw">null</span>, <span class="num">2</span>);
+console.<span class="fn">log</span>(<span class="fn">double</span>(<span class="num">5</span>));  <span class="cm">// → 10</span>
+console.<span class="fn">log</span>(<span class="fn">double</span>(<span class="num">10</span>)); <span class="cm">// → 20</span>
+
+<span class="cm">// Create a 'triple' function</span>
+<span class="kw">const</span> <span class="fn">triple</span> = <span class="fn">multiply</span>.<span class="fn">bind</span>(<span class="kw">null</span>, <span class="num">3</span>);
+console.<span class="fn">log</span>(<span class="fn">triple</span>(<span class="num">5</span>));  <span class="cm">// → 15</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('partial')">▶ Run Example</button>
+    <div class="output-box" id="output-partial"></div>
+  </div>
+
+  <!-- Compare All -->
+  <div class="tab-content" id="tab-compare">
+    <h2>⚖️ Comparison: call vs apply vs bind</h2>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th><code>call()</code></th>
+          <th><code>apply()</code></th>
+          <th><code>bind()</code></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Executes immediately?</strong></td>
+          <td>✅ Yes</td>
+          <td>✅ Yes</td>
+          <td>❌ No (returns new fn)</td>
+        </tr>
+        <tr>
+          <td><strong>Arguments</strong></td>
+          <td>One by one</td>
+          <td>As an array</td>
+          <td>One by one (preset)</td>
+        </tr>
+        <tr>
+          <td><strong>Syntax</strong></td>
+          <td><code>fn.call(obj, a, b)</code></td>
+          <td><code>fn.apply(obj, [a,b])</code></td>
+          <td><code>fn.bind(obj, a, b)</code></td>
+        </tr>
+        <tr>
+          <td><strong>Returns</strong></td>
+          <td>Function's return value</td>
+          <td>Function's return value</td>
+          <td>A new bound function</td>
+        </tr>
+        <tr>
+          <td><strong>Best for</strong></td>
+          <td>One-time calls</td>
+          <td>Array of args</td>
+          <td>Callbacks, event handlers</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-container">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">all-three.js</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">function</span> <span class="fn">greet</span>(<span class="param">greeting</span>) {
+  <span class="kw">return</span> <span class="str">`${</span><span class="param">greeting</span><span class="str">}, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>;
+}
+
+<span class="kw">const</span> <span class="obj">person</span> = { <span class="prop">name</span>: <span class="str">"Alice"</span> };
+
+<span class="cm">// call - invoke now, args by comma</span>
+<span class="fn">greet</span>.<span class="fn">call</span>(<span class="obj">person</span>, <span class="str">"Hi"</span>);     <span class="cm">// "Hi, I'm Alice"</span>
+
+<span class="cm">// apply - invoke now, args as array</span>
+<span class="fn">greet</span>.<span class="fn">apply</span>(<span class="obj">person</span>, [<span class="str">"Hi"</span>]);  <span class="cm">// "Hi, I'm Alice"</span>
+
+<span class="cm">// bind - return new function for later</span>
+<span class="kw">const</span> <span class="prop">greetAlice</span> = <span class="fn">greet</span>.<span class="fn">bind</span>(<span class="obj">person</span>);
+<span class="prop">greetAlice</span>(<span class="str">"Hi"</span>);            <span class="cm">// "Hi, I'm Alice"</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('allthree')">▶ Run Example</button>
+    <div class="output-box" id="output-allthree"></div>
+  </div>
+
+  <!-- Quiz -->
+  <h2 style="margin-top:40px;">🧠 Quick Check</h2>
+  <div class="quiz-container" id="quiz-exp-1">
+    <div class="quiz-question">What does <code>bind()</code> return?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-1', this, false)">
+        <span class="option-letter">A</span> The return value of the function
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-1', this, false)">
+        <span class="option-letter">B</span> undefined
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-1', this, true)">
+        <span class="option-letter">C</span> A new function with <code>this</code> permanently set
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-1', this, false)">
+        <span class="option-letter">D</span> The original function unchanged
+      </div>
+    </div>
+    <div class="quiz-feedback" id="feedback-quiz-exp-1"></div>
+  </div>
+
+  <div class="quiz-container" id="quiz-exp-2">
+    <div class="quiz-question">What's the key difference between <code>call()</code> and <code>apply()</code>?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-2', this, false)">
+        <span class="option-letter">A</span> call() is faster
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-2', this, true)">
+        <span class="option-letter">B</span> call() takes args individually, apply() takes an array
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-2', this, false)">
+        <span class="option-letter">C</span> apply() doesn't set 'this'
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-exp-2', this, false)">
+        <span class="option-letter">D</span> call() returns a new function
+      </div>
+    </div>
+    <div class="quiz-feedback" id="feedback-quiz-exp-2"></div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="goTo('contexts')">← Back: Contexts</button>
+    <button class="nav-btn primary-btn" onclick="goTo('arrow')">Next: Arrow Functions →</button>
+  </div>
+</div>
+
+<!-- ========== SECTION 4: ARROW FUNCTIONS ========== -->
+<div class="section" id="sec-arrow">
+  <span class="section-badge badge-concept">Core Concept</span>
+  <h1>Arrow Functions & <code>this</code></h1>
+  <p class="subtitle">Arrow functions play by completely different rules! ➡️</p>
+
+  <div class="info-box info-key">
+    <span class="icon">🔑</span>
+    <div>
+      <p><strong>THE Rule:</strong> Arrow functions do NOT have their own <code>this</code>.</p>
+      <p style="margin:0">They <strong>inherit</strong> <code>this</code> from the surrounding (lexical) scope where they were <strong>defined</strong>.</p>
+    </div>
+  </div>
+
+  <div class="analogy-box">
+    <h4>💡 Analogy: The Chameleon vs The Stubborn Cat</h4>
+    <p><strong>Regular functions</strong> are like chameleons 🦎 — they change <code>this</code> depending on their environment (how they're called).</p>
+    <p style="margin:0"><strong>Arrow functions</strong> are like stubborn cats 🐱 — they keep the <code>this</code> from where they were born, no matter where you put them!</p>
+  </div>
+
+  <h2>Visual Comparison</h2>
+  <div class="binding-viz">
+    <div class="binding-left">
+      <div class="binding-label">🦎 Regular Function</div>
+      <p style="font-size:13px;color:var(--text)"><code>this</code> = determined by <strong>how it's called</strong></p>
+      <ul style="font-size:13px;color:var(--text-dim);padding-left:18px;margin:8px 0 0">
+        <li><code>obj.fn()</code> → <code>this = obj</code></li>
+        <li><code>fn()</code> → <code>this = window</code></li>
+        <li><code>fn.call(x)</code> → <code>this = x</code></li>
+      </ul>
+    </div>
+    <div class="binding-right">
+      <div class="binding-label">🐱 Arrow Function</div>
+      <p style="font-size:13px;color:var(--text)"><code>this</code> = captured from <strong>where it's defined</strong></p>
+      <ul style="font-size:13px;color:var(--text-dim);padding-left:18px;margin:8px 0 0">
+        <li>Always the enclosing scope's <code>this</code></li>
+        <li>Can't be changed with call/apply/bind!</li>
+        <li>No surprises — ever!</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Example: The Big Difference</h2>
+  <div class="code-container">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+      <span class="code-label">arrow-vs-regular.js</span>
+    </div>
+    <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">person</span> = {
+  <span class="prop">name</span>: <span class="str">"Alice"</span>,
+  
+  <span class="cm">// Regular function: 'this' = person ✅</span>
+  <span class="fn">regularGreet</span>: <span class="kw">function</span>() {
+    console.<span class="fn">log</span>(<span class="str">`Regular: Hi, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>);
+  },
+  
+  <span class="cm">// Arrow function: 'this' = surrounding scope (window!) ❌</span>
+  <span class="fn">arrowGreet</span>: () => {
+    console.<span class="fn">log</span>(<span class="str">`Arrow: Hi, I'm ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>);
+  }
+};
+
+<span class="obj">person</span>.<span class="fn">regularGreet</span>(); <span class="cm">// "Regular: Hi, I'm Alice" ✅</span>
+<span class="obj">person</span>.<span class="fn">arrowGreet</span>();   <span class="cm">// "Arrow: Hi, I'm undefined" ❌</span></pre>
+    </div>
+  </div>
+  <button class="run-btn" onclick="runExample('arrowvs')">▶ Run Example</button>
+  <div class="output-box" id="output-arrowvs"></div>
+
+  <div class="info-box info-danger">
+    <span class="icon">🚨</span>
+    <div><p style="margin:0"><strong>Never use arrow functions as object methods!</strong> They won't get the object as <code>this</code>. The arrow function looks at the surrounding scope — which is the global scope, not the object.</p></div>
+  </div>
+
+  <h2>When Arrow Functions SHINE ✨</h2>
+  <p>Arrow functions are perfect inside methods, where you WANT to keep the outer <code>this</code>:</p>
+
+  <div class="code-container">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+      <span class="code-label">arrow-shines.js</span>
+    </div>
+    <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">team</span> = {
+  <span class="prop">name</span>: <span class="str">"Avengers"</span>,
+  <span class="prop">members</span>: [<span class="str">"Tony"</span>, <span class="str">"Steve"</span>, <span class="str">"Natasha"</span>],
+  
+  <span class="fn">showMembers</span>() {
+    <span class="cm">// ❌ Regular function: 'this' gets lost inside forEach</span>
+    <span class="cm">// this.members.forEach(function(member) {</span>
+    <span class="cm">//   console.log(`${member} is in ${this.name}`); // this.name = undefined!</span>
+    <span class="cm">// });</span>
+    
+    <span class="cm">// ✅ Arrow function: inherits 'this' from showMembers</span>
+    <span class="this-kw">this</span>.<span class="prop">members</span>.<span class="fn">forEach</span>((<span class="param">member</span>) => {
+      console.<span class="fn">log</span>(<span class="str">`${</span><span class="param">member</span><span class="str">} is in ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>);
+    });
+  }
+};
+
+<span class="obj">team</span>.<span class="fn">showMembers</span>();
+<span class="cm">// "Tony is in Avengers"</span>
+<span class="cm">// "Steve is in Avengers"</span>
+<span class="cm">// "Natasha is in Avengers"</span></pre>
+    </div>
+  </div>
+  <button class="run-btn" onclick="runExample('arrowshine')">▶ Run Example</button>
+  <div class="output-box" id="output-arrowshine"></div>
+
+  <h2>Arrow functions + setTimeout</h2>
+  <div class="code-container">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+      <span class="code-label">arrow-settimeout.js</span>
+    </div>
+    <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">timer</span> = {
+  <span class="prop">seconds</span>: <span class="num">0</span>,
+  
+  <span class="fn">start</span>() {
+    <span class="cm">// ❌ Regular function: 'this' = window inside setTimeout</span>
+    <span class="cm">// setInterval(function() {</span>
+    <span class="cm">//   this.seconds++;  // window.seconds++ — WRONG!</span>
+    <span class="cm">// }, 1000);</span>
+    
+    <span class="cm">// ✅ Arrow function: 'this' = timer object</span>
+    <span class="fn">setInterval</span>(() => {
+      <span class="this-kw">this</span>.<span class="prop">seconds</span>++;
+      console.<span class="fn">log</span>(<span class="str">`Elapsed: ${</span><span class="this-kw">this</span>.<span class="prop">seconds</span><span class="str">}s`</span>);
+    }, <span class="num">1000</span>);
+  }
+};
+
+<span class="obj">timer</span>.<span class="fn">start</span>();
+<span class="cm">// "Elapsed: 1s", "Elapsed: 2s", ...</span></pre>
+    </div>
+  </div>
+
+  <h2>Can you bind/call/apply arrow functions?</h2>
+  <div class="info-box info-warning">
+    <span class="icon">⚠️</span>
+    <div><p style="margin:0"><strong>No!</strong> <code>call()</code>, <code>apply()</code>, and <code>bind()</code> do NOT change <code>this</code> for arrow functions. The <code>this</code> argument is simply ignored. Arrow functions are stubborn! 🐱</p></div>
+  </div>
+
+  <div class="code-container">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+      <span class="code-label">arrow-cant-bind.js</span>
+    </div>
+    <div class="code-body">
+<pre><span class="kw">const</span> <span class="fn">arrowFn</span> = () => {
+  console.<span class="fn">log</span>(<span class="this-kw">this</span>); <span class="cm">// Always window (or whatever the enclosing this is)</span>
+};
+
+<span class="kw">const</span> <span class="obj">obj</span> = { <span class="prop">name</span>: <span class="str">"test"</span> };
+
+<span class="fn">arrowFn</span>.<span class="fn">call</span>(<span class="obj">obj</span>);    <span class="cm">// Still window! call is ignored</span>
+<span class="fn">arrowFn</span>.<span class="fn">apply</span>(<span class="obj">obj</span>);   <span class="cm">// Still window! apply is ignored</span>
+
+<span class="kw">const</span> <span class="prop">bound</span> = <span class="fn">arrowFn</span>.<span class="fn">bind</span>(<span class="obj">obj</span>);
+<span class="prop">bound</span>();              <span class="cm">// Still window! bind is ignored</span></pre>
+    </div>
+  </div>
+  <button class="run-btn" onclick="runExample('arrowbind')">▶ Run Example</button>
+  <div class="output-box" id="output-arrowbind"></div>
+
+  <h2>📋 When to Use What</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr><th>Use Case</th><th>Regular Function</th><th>Arrow Function</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Object methods</td>
+        <td>✅ Use this</td>
+        <td>❌ Avoid</td>
+      </tr>
+      <tr>
+        <td>Callbacks inside methods</td>
+        <td>⚠️ Need workaround</td>
+        <td>✅ Perfect!</td>
+      </tr>
+      <tr>
+        <td>Event handlers</td>
+        <td>✅ Gets the element</td>
+        <td>⚠️ Gets outer this</td>
+      </tr>
+      <tr>
+        <td>Constructors</td>
+        <td>✅ Works with new</td>
+        <td>❌ Can't use new</td>
+      </tr>
+      <tr>
+        <td>setTimeout/setInterval</td>
+        <td>⚠️ Loses this</td>
+        <td>✅ Keeps this</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Quiz -->
+  <h2>🧠 Quick Check</h2>
+  <div class="quiz-container" id="quiz-arrow-1">
+    <div class="quiz-question">What does <code>this</code> refer to in an arrow function?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz('quiz-arrow-1', this, false)">
+        <span class="option-letter">A</span> The object that called it
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-arrow-1', this, true)">
+        <span class="option-letter">B</span> The <code>this</code> from the enclosing scope where it was defined
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-arrow-1', this, false)">
+        <span class="option-letter">C</span> Always <code>undefined</code>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-arrow-1', this, false)">
+        <span class="option-letter">D</span> The arrow function itself
+      </div>
+    </div>
+    <div class="quiz-feedback" id="feedback-quiz-arrow-1"></div>
+  </div>
+
+  <div class="quiz-container" id="quiz-arrow-2">
+    <div class="quiz-question">Can you change an arrow function's <code>this</code> with <code>.call()</code>?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz('quiz-arrow-2', this, false)">
+        <span class="option-letter">A</span> Yes, just like regular functions
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-arrow-2', this, true)">
+        <span class="option-letter">B</span> No, arrow functions ignore the <code>this</code> argument
+      </div>
+      <div class="quiz-option" onclick="checkQuiz('quiz-arrow-2', this, false)">
+        <span class="option-letter">C</span> Yes, but only with <code>.bind()</code>
+      </div>
+    </div>
+    <div class="quiz-feedback" id="feedback-quiz-arrow-2"></div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="goTo('explicit')">← Back: call, apply, bind</button>
+    <button class="nav-btn primary-btn" onclick="goTo('pitfalls')">Next: Pitfalls & Mistakes →</button>
+  </div>
+</div>
+
+<!-- ========== SECTION 5: PITFALLS ========== -->
+<div class="section" id="sec-pitfalls">
+  <span class="section-badge badge-pitfall">Common Mistakes</span>
+  <h1>⚠️ Common <code>this</code> Pitfalls</h1>
+  <p class="subtitle">Learn from the mistakes everyone makes (so you don't have to!) 🛡️</p>
+
+  <!-- Pitfall 1 -->
+  <div class="pitfall-card">
+    <h4>💥 Pitfall #1: Extracting a Method</h4>
+    <p style="color:var(--text-dim)">Assigning an object's method to a variable loses the <code>this</code> context.</p>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">❌ The Bug</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">user</span> = {
+  <span class="prop">name</span>: <span class="str">"Alice"</span>,
+  <span class="fn">greet</span>() { console.<span class="fn">log</span>(<span class="str">`Hi, ${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}`</span>); }
+};
+
+<span class="kw">const</span> <span class="prop">fn</span> = <span class="obj">user</span>.<span class="prop">greet</span>; <span class="cm">// Extracting the method!</span>
+<span class="prop">fn</span>(); <span class="cm">// "Hi, undefined" 😱 — this = window, not user</span></pre>
+      </div>
+    </div>
+    <div class="fix-label">✅ Fix: Use bind()</div>
+    <div class="code-container" style="margin:8px 0">
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="prop">fn</span> = <span class="obj">user</span>.<span class="prop">greet</span>.<span class="fn">bind</span>(<span class="obj">user</span>);
+<span class="prop">fn</span>(); <span class="cm">// "Hi, Alice" ✅</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('pitfall1')">▶ See Both</button>
+    <div class="output-box" id="output-pitfall1"></div>
+  </div>
+
+  <!-- Pitfall 2 -->
+  <div class="pitfall-card">
+    <h4>💥 Pitfall #2: Callback Functions</h4>
+    <p style="color:var(--text-dim)">Passing a method as a callback loses <code>this</code> — the callback is called as a standalone function.</p>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">❌ The Bug</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">counter</span> = {
+  <span class="prop">count</span>: <span class="num">0</span>,
+  <span class="fn">increment</span>() {
+    <span class="this-kw">this</span>.<span class="prop">count</span>++;
+    console.<span class="fn">log</span>(<span class="this-kw">this</span>.<span class="prop">count</span>);
+  }
+};
+
+<span class="cm">// Passing as callback — 'this' is lost!</span>
+<span class="fn">setTimeout</span>(<span class="obj">counter</span>.<span class="prop">increment</span>, <span class="num">1000</span>);
+<span class="cm">// → NaN (this.count = window.count = undefined, undefined++ = NaN)</span></pre>
+      </div>
+    </div>
+    <div class="fix-label">✅ Fix 1: Use bind()</div>
+    <div class="code-container" style="margin:8px 0">
+      <div class="code-body">
+<pre><span class="fn">setTimeout</span>(<span class="obj">counter</span>.<span class="prop">increment</span>.<span class="fn">bind</span>(<span class="obj">counter</span>), <span class="num">1000</span>); <span class="cm">// → 1 ✅</span></pre>
+      </div>
+    </div>
+    <div class="fix-label">✅ Fix 2: Wrap in arrow function</div>
+    <div class="code-container" style="margin:8px 0">
+      <div class="code-body">
+<pre><span class="fn">setTimeout</span>(() => <span class="obj">counter</span>.<span class="fn">increment</span>(), <span class="num">1000</span>); <span class="cm">// → 1 ✅</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('pitfall2')">▶ See All Approaches</button>
+    <div class="output-box" id="output-pitfall2"></div>
+  </div>
+
+  <!-- Pitfall 3 -->
+  <div class="pitfall-card">
+    <h4>💥 Pitfall #3: Arrow Functions as Methods</h4>
+    <p style="color:var(--text-dim)">Using arrow functions as object methods means <code>this</code> won't be the object.</p>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">❌ The Bug</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">dog</span> = {
+  <span class="prop">name</span>: <span class="str">"Rex"</span>,
+  <span class="fn">bark</span>: () => {
+    console.<span class="fn">log</span>(<span class="str">`${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">} says woof!`</span>);
+    <span class="cm">// this = window, not dog!</span>
+  }
+};
+
+<span class="obj">dog</span>.<span class="fn">bark</span>(); <span class="cm">// "undefined says woof!" 😱</span></pre>
+      </div>
+    </div>
+    <div class="fix-label">✅ Fix: Use regular function or shorthand method</div>
+    <div class="code-container" style="margin:8px 0">
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">dog</span> = {
+  <span class="prop">name</span>: <span class="str">"Rex"</span>,
+  <span class="fn">bark</span>() { <span class="cm">// shorthand method syntax ✅</span>
+    console.<span class="fn">log</span>(<span class="str">`${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">} says woof!`</span>);
+  }
+};
+<span class="obj">dog</span>.<span class="fn">bark</span>(); <span class="cm">// "Rex says woof!" ✅</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('pitfall3')">▶ See Both</button>
+    <div class="output-box" id="output-pitfall3"></div>
+  </div>
+
+  <!-- Pitfall 4 -->
+  <div class="pitfall-card">
+    <h4>💥 Pitfall #4: <code>this</code> Inside Nested Functions</h4>
+    <p style="color:var(--text-dim)">A regular function inside a method creates a new <code>this</code> context.</p>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">❌ The Bug</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">obj</span> = {
+  <span class="prop">value</span>: <span class="num">42</span>,
+  <span class="fn">getValue</span>() {
+    console.<span class="fn">log</span>(<span class="this-kw">this</span>.<span class="prop">value</span>);  <span class="cm">// 42 ✅ (this = obj)</span>
+    
+    <span class="kw">function</span> <span class="fn">inner</span>() {
+      console.<span class="fn">log</span>(<span class="this-kw">this</span>.<span class="prop">value</span>); <span class="cm">// undefined ❌ (this = window!)</span>
+    }
+    <span class="fn">inner</span>();
+  }
+};</pre>
+      </div>
+    </div>
+    <div class="fix-label">✅ Fix 1: Arrow function</div>
+    <div class="code-container" style="margin:8px 0">
+      <div class="code-body">
+<pre><span class="fn">getValue</span>() {
+  <span class="kw">const</span> <span class="fn">inner</span> = () => {
+    console.<span class="fn">log</span>(<span class="this-kw">this</span>.<span class="prop">value</span>); <span class="cm">// 42 ✅ inherits from getValue</span>
+  };
+  <span class="fn">inner</span>();
+}</pre>
+      </div>
+    </div>
+    <div class="fix-label">✅ Fix 2: Save <code>this</code> in a variable (old-school)</div>
+    <div class="code-container" style="margin:8px 0">
+      <div class="code-body">
+<pre><span class="fn">getValue</span>() {
+  <span class="kw">const</span> <span class="prop">self</span> = <span class="this-kw">this</span>; <span class="cm">// save reference</span>
+  <span class="kw">function</span> <span class="fn">inner</span>() {
+    console.<span class="fn">log</span>(<span class="prop">self</span>.<span class="prop">value</span>); <span class="cm">// 42 ✅</span>
+  }
+  <span class="fn">inner</span>();
+}</pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('pitfall4')">▶ See All Approaches</button>
+    <div class="output-box" id="output-pitfall4"></div>
+  </div>
+
+  <!-- Pitfall 5 -->
+  <div class="pitfall-card">
+    <h4>💥 Pitfall #5: forEach / map / filter with <code>this</code></h4>
+    <p style="color:var(--text-dim)">Array methods use regular function callbacks, which create a new <code>this</code>.</p>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-header">
+        <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+        <span class="code-label">❌ The Bug</span>
+      </div>
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">classroom</span> = {
+  <span class="prop">teacher</span>: <span class="str">"Mr. Smith"</span>,
+  <span class="prop">students</span>: [<span class="str">"Alice"</span>, <span class="str">"Bob"</span>],
+  
+  <span class="fn">rollCall</span>() {
+    <span class="this-kw">this</span>.<span class="prop">students</span>.<span class="fn">forEach</span>(<span class="kw">function</span>(<span class="param">student</span>) {
+      <span class="cm">// ❌ this = window, not classroom!</span>
+      console.<span class="fn">log</span>(<span class="str">`${</span><span class="this-kw">this</span>.<span class="prop">teacher</span><span class="str">} calls ${</span><span class="param">student</span><span class="str">}`</span>);
+    });
+  }
+};
+
+<span class="obj">classroom</span>.<span class="fn">rollCall</span>();
+<span class="cm">// "undefined calls Alice" ❌</span>
+<span class="cm">// "undefined calls Bob" ❌</span></pre>
+      </div>
+    </div>
+    <div class="fix-label">✅ Fix: Use arrow function in callback</div>
+    <div class="code-container" style="margin:8px 0">
+      <div class="code-body">
+<pre><span class="fn">rollCall</span>() {
+  <span class="this-kw">this</span>.<span class="prop">students</span>.<span class="fn">forEach</span>((<span class="param">student</span>) => { <span class="cm">// Arrow! ✅</span>
+    console.<span class="fn">log</span>(<span class="str">`${</span><span class="this-kw">this</span>.<span class="prop">teacher</span><span class="str">} calls ${</span><span class="param">student</span><span class="str">}`</span>);
+  });
+}
+<span class="cm">// "Mr. Smith calls Alice" ✅</span>
+<span class="cm">// "Mr. Smith calls Bob" ✅</span></pre>
+      </div>
+    </div>
+    <button class="run-btn" onclick="runExample('pitfall5')">▶ See Both</button>
+    <div class="output-box" id="output-pitfall5"></div>
+  </div>
+
+  <h2>📋 Cheat Sheet: Avoiding <code>this</code> Pitfalls</h2>
+  <div class="visual-box">
+    <div class="visual-title">🛡️ Defense Strategies</div>
+    <table class="comparison-table" style="margin:0">
+      <thead>
+        <tr><th>Situation</th><th>Problem</th><th>Solution</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Extracting a method</td>
+          <td><code>this</code> = window</td>
+          <td>Use <code>.bind(obj)</code></td>
+        </tr>
+        <tr>
+          <td>setTimeout / setInterval</td>
+          <td><code>this</code> = window</td>
+          <td>Arrow fn or <code>.bind()</code></td>
+        </tr>
+        <tr>
+          <td>forEach / map callback</td>
+          <td><code>this</code> = window</td>
+          <td>Arrow fn</td>
+        </tr>
+        <tr>
+          <td>Nested regular functions</td>
+          <td><code>this</code> = window</td>
+          <td>Arrow fn or <code>self = this</code></td>
+        </tr>
+        <tr>
+          <td>Object method</td>
+          <td>Arrow fn = wrong <code>this</code></td>
+          <td>Use regular function</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="goTo('arrow')">← Back: Arrow Functions</button>
+    <button class="nav-btn primary-btn" onclick="goTo('exercises')">Next: Exercises →</button>
+  </div>
+</div>
+
+<!-- ========== SECTION 6: EXERCISES ========== -->
+<div class="section" id="sec-exercises">
+  <span class="section-badge badge-practice">Practice</span>
+  <h1>💪 Exercises</h1>
+  <p class="subtitle">Put your knowledge to the test! Try to solve each one before looking at the solution.</p>
+
+  <!-- Exercise 1 -->
+  <div class="exercise-box">
+    <h4>🏋️ Exercise 1: Predict the Output</h4>
+    <div class="exercise-instructions">
+      <p>What will each <code>console.log</code> output? Think carefully before checking!</p>
+    </div>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">car</span> = {
+  <span class="prop">brand</span>: <span class="str">"Tesla"</span>,
+  <span class="fn">getBrand</span>() {
+    <span class="kw">return</span> <span class="this-kw">this</span>.<span class="prop">brand</span>;
+  }
+};
+
+console.<span class="fn">log</span>(<span class="obj">car</span>.<span class="fn">getBrand</span>());           <span class="cm">// #1: ???</span>
+
+<span class="kw">const</span> <span class="prop">getBrandFn</span> = <span class="obj">car</span>.<span class="prop">getBrand</span>;
+console.<span class="fn">log</span>(<span class="prop">getBrandFn</span>());              <span class="cm">// #2: ???</span>
+
+<span class="kw">const</span> <span class="prop">boundFn</span> = <span class="obj">car</span>.<span class="prop">getBrand</span>.<span class="fn">bind</span>(<span class="obj">car</span>);
+console.<span class="fn">log</span>(<span class="prop">boundFn</span>());                 <span class="cm">// #3: ???</span>
+
+<span class="kw">const</span> <span class="obj">otherCar</span> = { <span class="prop">brand</span>: <span class="str">"BMW"</span> };
+console.<span class="fn">log</span>(<span class="obj">car</span>.<span class="prop">getBrand</span>.<span class="fn">call</span>(<span class="obj">otherCar</span>)); <span class="cm">// #4: ???</span></pre>
+      </div>
+    </div>
+    <button class="solution-toggle" onclick="toggleSolution('sol-1')">👁️ Show Solution</button>
+    <div class="solution-content" id="sol-1">
+      <div class="code-container">
+        <div class="code-body">
+<pre><span class="cm">// #1: "Tesla"     — car.getBrand() → this = car ✅</span>
+<span class="cm">// #2: undefined   — getBrandFn() → standalone call → this = window ❌</span>
+<span class="cm">// #3: "Tesla"     — boundFn() → bind locked this = car ✅</span>
+<span class="cm">// #4: "BMW"       — call(otherCar) → this = otherCar ✅</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="exercise-box">
+    <h4>🏋️ Exercise 2: Fix the Bug</h4>
+    <div class="exercise-instructions">
+      <p>This code has a <code>this</code> bug. Fix it using THREE different methods!</p>
+    </div>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">playlist</span> = {
+  <span class="prop">name</span>: <span class="str">"Road Trip Mix"</span>,
+  <span class="prop">songs</span>: [<span class="str">"Bohemian Rhapsody"</span>, <span class="str">"Hotel California"</span>, <span class="str">"Stairway to Heaven"</span>],
+  
+  <span class="fn">display</span>() {
+    <span class="this-kw">this</span>.<span class="prop">songs</span>.<span class="fn">forEach</span>(<span class="kw">function</span>(<span class="param">song</span>) {
+      <span class="cm">// BUG: this.name is undefined here!</span>
+      console.<span class="fn">log</span>(<span class="str">`♫ ${</span><span class="param">song</span><span class="str">} — from "${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}"`</span>);
+    });
+  }
+};
+
+<span class="obj">playlist</span>.<span class="fn">display</span>();</pre>
+      </div>
+    </div>
+    <button class="solution-toggle" onclick="toggleSolution('sol-2')">👁️ Show Solution</button>
+    <div class="solution-content" id="sol-2">
+      <p><strong>Fix 1:</strong> Arrow function</p>
+      <div class="code-container" style="margin:8px 0">
+        <div class="code-body">
+<pre><span class="this-kw">this</span>.<span class="prop">songs</span>.<span class="fn">forEach</span>((<span class="param">song</span>) => {  <span class="cm">// Arrow function!</span>
+  console.<span class="fn">log</span>(<span class="str">`♫ ${</span><span class="param">song</span><span class="str">} — from "${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}"`</span>);
+});</pre>
+        </div>
+      </div>
+      <p><strong>Fix 2:</strong> bind</p>
+      <div class="code-container" style="margin:8px 0">
+        <div class="code-body">
+<pre><span class="this-kw">this</span>.<span class="prop">songs</span>.<span class="fn">forEach</span>(<span class="kw">function</span>(<span class="param">song</span>) {
+  console.<span class="fn">log</span>(<span class="str">`♫ ${</span><span class="param">song</span><span class="str">} — from "${</span><span class="this-kw">this</span>.<span class="prop">name</span><span class="str">}"`</span>);
+}.<span class="fn">bind</span>(<span class="this-kw">this</span>)); <span class="cm">// bind to the current this!</span></pre>
+        </div>
+      </div>
+      <p><strong>Fix 3:</strong> self = this</p>
+      <div class="code-container" style="margin:8px 0">
+        <div class="code-body">
+<pre><span class="fn">display</span>() {
+  <span class="kw">const</span> <span class="prop">self</span> = <span class="this-kw">this</span>;
+  <span class="this-kw">this</span>.<span class="prop">songs</span>.<span class="fn">forEach</span>(<span class="kw">function</span>(<span class="param">song</span>) {
+    console.<span class="fn">log</span>(<span class="str">`♫ ${</span><span class="param">song</span><span class="str">} — from "${</span><span class="prop">self</span>.<span class="prop">name</span><span class="str">}"`</span>);
+  });
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="exercise-box">
+    <h4>🏋️ Exercise 3: Build a Calculator</h4>
+    <div class="exercise-instructions">
+      <p>Create a calculator object that supports method chaining using <code>this</code>:</p>
+      <li>Methods: <code>add(n)</code>, <code>subtract(n)</code>, <code>multiply(n)</code>, <code>getResult()</code></li>
+      <li>Each method (except getResult) should return <code>this</code> for chaining</li>
+      <li>Should work like: <code>calc.add(5).subtract(2).multiply(3).getResult()</code> → 9</li>
+    </div>
+
+    <div class="playground">
+      <div class="playground-title">✏️ Your Code</div>
+      <textarea id="exercise3-code" spellcheck="false">const calc = {
+  result: 0,
+  
+  add(n) {
+    // Your code here
+  },
+  
+  subtract(n) {
+    // Your code here
+  },
+  
+  multiply(n) {
+    // Your code here
+  },
+  
+  getResult() {
+    console.log('Result:', this.result);
+    return this.result;
+  }
+};
+
+// Test it:
+calc.add(10).subtract(3).multiply(2).getResult();
+// Should log: "Result: 14"</textarea>
+      <button class="run-btn" onclick="runPlayground('exercise3-code', 'output-ex3')" style="margin-top:12px">▶ Run My Code</button>
+      <div class="output-box" id="output-ex3"></div>
+    </div>
+
+    <button class="solution-toggle" onclick="toggleSolution('sol-3')">👁️ Show Solution</button>
+    <div class="solution-content" id="sol-3">
+      <div class="code-container">
+        <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">calc</span> = {
+  <span class="prop">result</span>: <span class="num">0</span>,
+  
+  <span class="fn">add</span>(<span class="param">n</span>) {
+    <span class="this-kw">this</span>.<span class="prop">result</span> += <span class="param">n</span>;
+    <span class="kw">return</span> <span class="this-kw">this</span>; <span class="cm">// enables chaining!</span>
+  },
+  
+  <span class="fn">subtract</span>(<span class="param">n</span>) {
+    <span class="this-kw">this</span>.<span class="prop">result</span> -= <span class="param">n</span>;
+    <span class="kw">return</span> <span class="this-kw">this</span>;
+  },
+  
+  <span class="fn">multiply</span>(<span class="param">n</span>) {
+    <span class="this-kw">this</span>.<span class="prop">result</span> *= <span class="param">n</span>;
+    <span class="kw">return</span> <span class="this-kw">this</span>;
+  },
+  
+  <span class="fn">getResult</span>() {
+    console.<span class="fn">log</span>(<span class="str">'Result:'</span>, <span class="this-kw">this</span>.<span class="prop">result</span>);
+    <span class="kw">return</span> <span class="this-kw">this</span>.<span class="prop">result</span>;
+  }
+};
+
+<span class="obj">calc</span>.<span class="fn">add</span>(<span class="num">10</span>).<span class="fn">subtract</span>(<span class="num">3</span>).<span class="fn">multiply</span>(<span class="num">2</span>).<span class="fn">getResult</span>();
+<span class="cm">// → "Result: 14"</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="exercise-box">
+    <h4>🏋️ Exercise 4: Predict the Tricky Output</h4>
+    <div class="exercise-instructions">
+      <p>This one requires careful thinking. What does each line output?</p>
+    </div>
+    <div class="code-container" style="margin:12px 0">
+      <div class="code-body">
+<pre><span class="kw">const</span> <span class="obj">obj</span> = {
+  <span class="prop">x</span>: <span class="num">10</span>,
+  <span class="fn">getX</span>() { <span class="kw">return</span> <span class="this-kw">this</span>.<span class="prop">x</span>; },
+  <span class="fn">getXArrow</span>: () => <span class="this-kw">this</span>.<span class="prop">x</span>
+};
+
+console.<span class="fn">log</span>(<span class="obj">obj</span>.<span class="fn">getX</span>());       <span class="cm">// #1: ???</span>
+console.<span class="fn">log</span>(<span class="obj">obj</span>.<span class="fn">getXArrow</span>()); <span class="cm">// #2: ???</span>
+
+<span class="kw">const</span> <span class="obj">obj2</span> = { <span class="prop">x</span>: <span class="num">20</span>, <span class="fn">getX</span>: <span class="obj">obj</span>.<span class="prop">getX</span> };
+console.<span class="fn">log</span>(<span class="obj">obj2</span>.<span class="fn">getX</span>());      <span class="cm">// #3: ???</span></pre>
+      </div>
+    </div>
+    <button class="solution-toggle" onclick="toggleSolution('sol-4')">👁️ Show Solution</button>
+    <div class="solution-content" id="sol-4">
+      <div class="code-container">
+        <div class="code-body">
+<pre><span class="cm">// #1: 10        — obj.getX() → this = obj → obj.x = 10</span>
+<span class="cm">// #2: undefined — getXArrow is arrow fn → this = window → window.x = undefined</span>
+<span class="cm">// #3: 20        — obj2.getX() → this = obj2 → obj2.x = 20</span>
+<span class="cm">// Remember: regular functions get 'this' from the calling object!</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="goTo('pitfalls')">← Back: Pitfalls</button>
+    <button class="nav-btn primary-btn" onclick="goTo('finalquiz')">Next: Final Quiz →</button>
+  </div>
+</div>
+
+<!-- ========== SECTION 7: FINAL QUIZ ========== -->
+<div class="section" id="sec-finalquiz">
+  <span class="section-badge badge-quiz">Final Challenge</span>
+  <h1>🏆 Final Quiz</h1>
+  <p class="subtitle">10 questions to prove your <code>this</code> mastery!</p>
+
+  <div class="final-quiz-progress" id="fqProgress"></div>
+  
+  <div id="finalQuizContainer"></div>
+  
+  <div id="finalQuizResult" style="display:none;"></div>
+
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="goTo('exercises')">← Back: Exercises</button>
+    <button class="nav-btn primary-btn" onclick="restartFinalQuiz()">🔄 Restart Quiz</button>
+  </div>
+</div>
+
+</div> <!-- end .main -->
+
+<script>
+// ====== APP STATE ======
+const state = {
+  currentSection: 'intro',
+  completedSections: new Set(),
+  quizAnswers: {},
+  totalQuizzes: 0,
+  correctQuizzes: 0,
+  finalQuizCurrent: 0,
+  finalQuizScore: 0,
+  finalQuizAnswered: []
+};
+
+const sections = ['intro', 'contexts', 'explicit', 'arrow', 'pitfalls', 'exercises', 'finalquiz'];
+
+// ====== NAVIGATION ======
+function goTo(sectionId) {
+  // Mark current as completed
+  if (state.currentSection && state.currentSection !== sectionId) {
+    state.completedSections.add(state.currentSection);
+  }
+  state.currentSection = sectionId;
+
+  // Update sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('sec-' + sectionId);
+  if (target) {
+    target.classList.add('active');
+    target.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.section === sectionId) item.classList.add('active');
+    if (state.completedSections.has(item.dataset.section)) item.classList.add('completed');
+  });
+
+  updateProgress();
+
+  // Close sidebar on mobile
+  if (window.innerWidth <= 900) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
+}
+
+function updateProgress() {
+  const pct = Math.round((state.completedSections.size / sections.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct;
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  if (window.innerWidth <= 900) {
+    sb.classList.toggle('open');
+  } else {
+    sb.classList.toggle('collapsed');
+  }
+}
+
+// ====== TABS ======
+function switchTab(e, tabId) {
+  const tabGroup = e.target.closest('.section');
+  tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tabGroup.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// ====== CODE EXAMPLES ======
+function showOutput(id, text) {
+  const el = document.getElementById('output-' + id);
+  el.textContent = text;
+  el.classList.add('show');
+}
+
+function runExample(id) {
+  let output = [];
+  const log = (...args) => output.push(args.map(a => {
+    if (a === undefined) return 'undefined';
+    if (a === null) return 'null';
+    if (typeof a === 'object') {
+      if (a === window) return '[Window object]';
+      try { return JSON.stringify(a); } catch(e) { return String(a); }
+    }
+    return String(a);
+  }).join(' '));
+
+  try {
+    switch(id) {
+      case 'global':
+        log('this === window:', true);
+        log('In browser global scope, this = window');
+        var nameG = "JavaScript";
+        log('var name → this.name:', nameG);
+        log('let age = 25 → this.age:', undefined);
+        break;
+
+      case 'method': {
+        const user = { name: "Alice", age: 28, greet() { log(`Hi, I'm ${this.name}`); log(`I'm ${this.age} years old`); }, getThis() { return this; } };
+        user.greet();
+        log('user.getThis() === user:', true);
+        break;
+      }
+
+      case 'callsite': {
+        const user = { name: "Alice", greet() { log(`Hi, I'm ${this.name}`); } };
+        log('--- user.greet() ---');
+        user.greet();
+        log('--- const fn = user.greet; fn() ---');
+        const greetFn = user.greet;
+        log(`Hi, I'm ${undefined}`);
+        log('💡 The function lost its context!');
+        break;
+      }
+
+      case 'constructor': {
+        function Person(name, age) { this.name = name; this.age = age; this.greet = function() { log(`Hi, I'm ${this.name}`); }; }
+        const alice = new Person("Alice", 28);
+        const bob = new Person("Bob", 32);
+        alice.greet();
+        bob.greet();
+        log('Each call creates a DIFFERENT this!');
+        break;
+      }
+
+      case 'class': {
+        class Animal { constructor(name, sound) { this.name = name; this.sound = sound; } speak() { log(`${this.name} says ${this.sound}!`); } }
+        const dog = new Animal("Rex", "Woof");
+        dog.speak();
+        break;
+      }
+
+      case 'standalone':
+        log('function showThis() { log(this); }');
+        log('showThis() →', '[Window object]');
+        log('');
+        log('"use strict"');
+        log('showThisStrict() →', 'undefined');
+        break;
+
+      case 'call': {
+        function introduce(greeting, punc) { log(`${greeting}, I'm ${this.name}${punc}`); }
+        const alice = { name: "Alice" };
+        const bob = { name: "Bob" };
+        introduce.call(alice, "Hello", "!");
+        introduce.call(bob, "Hey", ".");
+        break;
+      }
+
+      case 'borrow': {
+        const calculator = { value: 0, add(n) { this.value += n; log(`Value: ${this.value}`); } };
+        const myObj = { value: 10 };
+        calculator.add.call(myObj, 5);
+        log('myObj.value is now:', myObj.value);
+        break;
+      }
+
+      case 'apply': {
+        function introduce(greeting, punc) { log(`${greeting}, I'm ${this.name}${punc}`); }
+        const alice = { name: "Alice" };
+        log('--- call ---');
+        introduce.call(alice, "Hello", "!");
+        log('--- apply ---');
+        introduce.apply(alice, ["Hello", "!"]);
+        log('--- apply with array ---');
+        const args = ["Hi", "!!"];
+        introduce.apply(alice, args);
+        break;
+      }
+
+      case 'mathmax': {
+        const numbers = [5, 2, 9, 1, 7];
+        const max = Math.max.apply(null, numbers);
+        log('Math.max.apply(null, [5,2,9,1,7]):', max);
+        const max2 = Math.max(...numbers);
+        log('Math.max(...numbers):', max2);
+        break;
+      }
+
+      case 'bind': {
+        const user = { name: "Alice", greet() { log(`Hi, I'm ${this.name}`); } };
+        log('--- Unbound ---');
+        const fn = user.greet;
+        log(`Hi, I'm ${undefined}`, '❌');
+        log('--- Bound to user ---');
+        const boundGreet = user.greet.bind(user);
+        boundGreet();
+        log('--- Bound to bob ---');
+        const bob = { name: "Bob" };
+        const bobGreet = user.greet.bind(bob);
+        bobGreet();
+        break;
+      }
+
+      case 'partial': {
+        function multiply(a, b) { return a * b; }
+        const double = multiply.bind(null, 2);
+        log('double(5):', double(5));
+        log('double(10):', double(10));
+        const triple = multiply.bind(null, 3);
+        log('triple(5):', triple(5));
+        break;
+      }
+
+      case 'allthree': {
+        function greet(greeting) { return `${greeting}, I'm ${this.name}`; }
+        const person = { name: "Alice" };
+        log('call:', greet.call(person, "Hi"));
+        log('apply:', greet.apply(person, ["Hi"]));
+        const greetAlice = greet.bind(person);
+        log('bind then call:', greetAlice("Hi"));
+        break;
+      }
+
+      case 'arrowvs': {
+        const person = {
+          name: "Alice",
+          regularGreet: function() { log(`Regular: Hi, I'm ${this.name}`); },
+          arrowGreet: undefined
+        };
+        person.regularGreet();
+        log(`Arrow: Hi, I'm ${undefined}`, '(arrow fn gets window.name)');
+        break;
+      }
+
+      case 'arrowshine': {
+        const team = {
+          name: "Avengers",
+          members: ["Tony", "Steve", "Natasha"],
+          showMembers() {
+            this.members.forEach((member) => {
+              log(`${member} is in ${this.name}`);
+            });
+          }
+        };
+        team.showMembers();
+        break;
+      }
+
+      case 'arrowbind':
+        log('Arrow function + call(obj): this is still [Window]');
+        log('Arrow function + apply(obj): this is still [Window]');
+        log('Arrow function + bind(obj)(): this is still [Window]');
+        log('');
+        log('🐱 Arrow functions are stubborn! They NEVER change their this.');
+        break;
+
+      case 'pitfall1': {
+        const user = { name: "Alice", greet() { log(`Hi, ${this.name}`); } };
+        log('❌ Extracted method:');
+        log(`Hi, undefined`);
+        log('');
+        log('✅ With bind:');
+        const fn = user.greet.bind(user);
+        fn();
+        break;
+      }
+
+      case 'pitfall2': {
+        const counter = { count: 0, increment() { this.count++; log('count:', this.count); } };
+        log('❌ setTimeout(counter.increment, ...):');
+        log('count: NaN  (this = window)');
+        log('');
+        log('✅ Fix with bind:');
+        counter.increment.bind(counter)();
+        log('');
+        log('✅ Fix with arrow wrapper:');
+        counter.count = 0;
+        (() => counter.increment())();
+        break;
+      }
+
+      case 'pitfall3': {
+        log('❌ Arrow method:');
+        log(`undefined says woof! (arrow fn → this = window)`);
+        log('');
+        log('✅ Regular method:');
+        const dog = { name: "Rex", bark() { log(`${this.name} says woof!`); } };
+        dog.bark();
+        break;
+      }
+
+      case 'pitfall4': {
+        log('❌ Nested regular function:');
+        const obj = {
+          value: 42,
+          getValue() {
+            log('Outer this.value:', this.value);
+            const inner = () => { log('Arrow inner this.value:', this.value); };
+            inner();
+          }
+        };
+        log('outer: 42, inner regular: undefined');
+        log('');
+        log('✅ Fix with arrow function:');
+        obj.getValue();
+        break;
+      }
+
+      case 'pitfall5': {
+        log('❌ Regular function callback:');
+        log('undefined calls Alice');
+        log('undefined calls Bob');
+        log('');
+        log('✅ Arrow function callback:');
+        const classroom = {
+          teacher: "Mr. Smith",
+          students: ["Alice", "Bob"],
+          rollCall() {
+            this.students.forEach((student) => {
+              log(`${this.teacher} calls ${student}`);
+            });
+          }
+        };
+        classroom.rollCall();
+        break;
+      }
+    }
+  } catch(e) {
+    output.push('Error: ' + e.message);
+  }
+
+  showOutput(id, output.join('\n'));
+}
+
+// ====== PLAYGROUND ======
+function runPlayground(textareaId, outputId) {
+  const code = document.getElementById(textareaId).value;
+  const el = document.getElementById(outputId);
+  let output = [];
+  
+  const originalLog = console.log;
+  console.log = (...args) => {
+    output.push(args.map(a => {
+      if (a === undefined) return 'undefined';
+      if (a === null) return 'null';
+      if (typeof a === 'object') try { return JSON.stringify(a); } catch(e) { return String(a); }
+      return String(a);
+    }).join(' '));
+  };
+
+  try {
+    eval(code);
+    el.textContent = output.join('\n') || '(no output)';
+  } catch(e) {
+    el.textContent = '❌ Error: ' + e.message;
+  }
+
+  console.log = originalLog;
+  el.classList.add('show');
+}
+
+// ====== QUIZZES ======
+function checkQuiz(quizId, optionEl, isCorrect) {
+  const container = document.getElementById(quizId);
+  const options = container.querySelectorAll('.quiz-option');
+  const feedback = document.getElementById('feedback-' + quizId);
+  
+  if (state.quizAnswers[quizId]) return;
+  state.quizAnswers[quizId] = true;
+
+  options.forEach(opt => {
+    opt.classList.add('disabled');
+  });
+
+  if (isCorrect) {
+    optionEl.classList.add('correct');
+    feedback.className = 'quiz-feedback show correct-feedback';
+    feedback.textContent = '✅ Correct! Great understanding!';
+    state.correctQuizzes++;
+  } else {
+    optionEl.classList.add('wrong');
+    options.forEach(opt => {
+      if (opt.onclick && opt.onclick.toString().includes('true')) {
+        // find correct one
+      }
+    });
+    // Mark correct answer
+    const allOpts = Array.from(options);
+    // We need to find which one is correct
+    allOpts.forEach(opt => {
+      const onclickStr = opt.getAttribute('onclick');
+      if (onclickStr && onclickStr.includes('true')) {
+        opt.classList.add('correct');
+      }
+    });
+    feedback.className = 'quiz-feedback show wrong-feedback';
+    feedback.textContent = '❌ Not quite! Check the correct answer highlighted in green.';
+  }
+  state.totalQuizzes++;
+}
+
+// ====== SOLUTIONS ======
+function toggleSolution(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('show');
+  const btn = el.previousElementSibling;
+  if (el.classList.contains('show')) {
+    btn.textContent = '🙈 Hide Solution';
+  } else {
+    btn.textContent = '👁️ Show Solution';
+  }
+}
+
+// ====== EVENT HANDLER DEMO ======
+document.getElementById('demoBtn1').addEventListener('click', function() {
+  const output = document.getElementById('output-event');
+  output.textContent = `Regular function handler:\nthis = <${this.tagName}> element\nthis.textContent = "${this.textContent}"`;
+  this.style.borderColor = '#00ebc7';
+  setTimeout(() => { this.style.borderColor = '#ff8906'; }, 1500);
+});
+
+document.getElementById('demoBtn2').addEventListener('click', () => {
+  const output = document.getElementById('output-event');
+  output.textContent = `Arrow function handler:\nthis = [Window object] ⚠️\nArrow function inherits 'this' from outer scope (window)\nIt does NOT get the clicked element!`;
+});
+
+// ====== ACHIEVEMENT ======
+function showAchievement(icon, text, sub) {
+  const el = document.getElementById('achievement');
+  document.getElementById('achieveIcon').textContent = icon;
+  document.getElementById('achieveText').textContent = text;
+  document.getElementById('achieveSub').textContent = sub;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ====== FINAL QUIZ ======
+const finalQuizQuestions = [
+  {
+    q: "What does `this` refer to in the global scope (browser, sloppy mode)?",
+    code: "console.log(this);",
+    options: ["undefined", "null", "window", "document"],
+    correct: 2,
+    explanation: "In browser global scope (sloppy mode), `this` is the `window` object."
+  },
+  {
+    q: "What will this code output?",
+    code: `const obj = { name: "Alice", greet() { return this.name; } };\nconst fn = obj.greet;\nconsole.log(fn());`,
+    options: ["'Alice'", "undefined", "Error", "null"],
+    correct: 1,
+    explanation: "When a method is extracted and called standalone, `this` is window (no name property = undefined)."
+  },
+  {
+    q: "What does `bind()` do?",
+    code: "const bound = fn.bind(obj);",
+    options: [
+      "Calls fn immediately with obj as this",
+      "Returns a new function with this permanently set to obj",
+      "Changes fn's this to obj forever",
+      "Deletes fn and creates a copy"
+    ],
+    correct: 1,
+    explanation: "bind() returns a NEW function with `this` permanently set to the given object. It does not call the original function."
+  },
+  {
+    q: "What will this output?",
+    code: `const obj = {\n  x: 42,\n  getX: () => this.x\n};\nconsole.log(obj.getX());`,
+    options: ["42", "undefined", "Error", "null"],
+    correct: 1,
+    explanation: "Arrow functions don't have their own `this` — they inherit from the enclosing scope. The object literal does NOT create a scope, so `this` is window."
+  },
+  {
+    q: "What's the difference between `call()` and `apply()`?",
+    code: "fn.call(obj, a, b)  vs  fn.apply(obj, [a, b])",
+    options: [
+      "call is faster",
+      "apply can set this, call cannot",
+      "call takes args individually, apply takes an array",
+      "They're completely identical"
+    ],
+    correct: 2,
+    explanation: "The only difference: call() takes arguments individually (commas), apply() takes them as an array."
+  },
+  {
+    q: "What will this code output?",
+    code: `function greet() { console.log(this.name); }\nconst alice = { name: "Alice" };\nconst bob = { name: "Bob" };\n\nconst fn = greet.bind(alice);\nfn.call(bob);`,
+    options: ["'Bob'", "'Alice'", "undefined", "Error"],
+    correct: 1,
+    explanation: "Once a function is bound with bind(), its `this` cannot be changed — not even with call() or apply()! bind() is permanent."
+  },
+  {
+    q: "Which is the correct way to keep `this` in a setTimeout inside a method?",
+    code: `const obj = {\n  name: "test",\n  start() { setTimeout(???, 1000); }\n};`,
+    options: [
+      "function() { console.log(this.name); }",
+      "() => { console.log(this.name); }",
+      "Both work equally well",
+      "Neither works"
+    ],
+    correct: 1,
+    explanation: "Arrow functions inherit `this` from the enclosing scope (the start method), so `this` correctly refers to obj."
+  },
+  {
+    q: "In an event handler using a regular function, what is `this`?",
+    code: `button.addEventListener('click', function() {\n  console.log(this);\n});`,
+    options: ["window", "The button element", "undefined", "The event object"],
+    correct: 1,
+    explanation: "In a regular function event handler, `this` refers to the DOM element that the event listener is attached to."
+  },
+  {
+    q: "What will this output?",
+    code: `const obj = {\n  count: 0,\n  increment() {\n    [1, 2, 3].forEach(function(n) {\n      this.count += n;\n    });\n    console.log(this.count);\n  }\n};\nobj.increment();`,
+    options: ["6", "0", "NaN", "undefined"],
+    correct: 1,
+    explanation: "The regular function inside forEach creates its own `this` (= window). So `this.count` inside the callback is window.count (undefined), but obj.count remains 0."
+  },
+  {
+    q: "What does `new` do to `this`?",
+    code: `function Dog(name) {\n  this.name = name;\n}\nconst rex = new Dog("Rex");`,
+    options: [
+      "Sets this to window",
+      "Sets this to the Dog function",
+      "Creates a new object and sets this to it",
+      "Sets this to undefined"
+    ],
+    correct: 2,
+    explanation: "The `new` keyword creates a brand new empty object, sets `this` to point to it, runs the constructor, then returns the object."
+  }
+];
+
+function initFinalQuiz() {
+  state.finalQuizCurrent = 0;
+  state.finalQuizScore = 0;
+  state.finalQuizAnswered = new Array(finalQuizQuestions.length).fill(null);
+  renderFinalQuizProgress();
+  renderFinalQuizQuestion();
+  document.getElementById('finalQuizResult').style.display = 'none';
+}
+
+function renderFinalQuizProgress() {
+  const container = document.getElementById('fqProgress');
+  container.innerHTML = '';
+  for (let i = 0; i < finalQuizQuestions.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'fq-dot';
+    if (i === state.finalQuizCurrent) dot.classList.add('current');
+    if (state.finalQuizAnswered[i] === true) dot.classList.add('answered-correct');
+    if (state.finalQuizAnswered[i] === false) dot.classList.add('answered-wrong');
+    container.appendChild(dot);
+  }
+}
+
+function renderFinalQuizQuestion() {
+  const container = document.getElementById('finalQuizContainer');
+  const q = finalQuizQuestions[state.finalQuizCurrent];
+  
+  if (!q) {
+    showFinalResults();
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="quiz-container" style="border-color: rgba(255,137,6,0.3);">
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Question ${state.finalQuizCurrent + 1} of ${finalQuizQuestions.length}</div>
+      <div class="quiz-question">${q.q}</div>
+      <div class="code-container" style="margin:12px 0">
+        <div class="code-header">
+          <div class="code-dots"><span class="code-dot"></span><span class="code-dot"></span><span class="code-dot"></span></div>
+          <span class="code-label">question.js</span>
+        </div>
+        <div class="code-body"><pre style="font-size:13px;">${escapeHtml(q.code)}</pre></div>
+      </div>
+      <div class="quiz-options" id="fq-options">
+        ${q.options.map((opt, i) => `
+          <div class="quiz-option" onclick="answerFinalQuiz(${i})">
+            <span class="option-letter">${String.fromCharCode(65+i)}</span>
+            ${escapeHtml(opt)}
+          </div>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="fq-feedback"></div>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function answerFinalQuiz(idx) {
+  const q = finalQuizQuestions[state.finalQuizCurrent];
+  const options = document.querySelectorAll('#fq-options .quiz-option');
+  const feedback = document.getElementById('fq-feedback');
+  
+  if (state.finalQuizAnswered[state.finalQuizCurrent] !== null) return;
+
+  options.forEach(opt => opt.classList.add('disabled'));
+  
+  const isCorrect = idx === q.correct;
+  state.finalQuizAnswered[state.finalQuizCurrent] = isCorrect;
+  
+  if (isCorrect) {
+    options[idx].classList.add('correct');
+    state.finalQuizScore++;
+    feedback.className = 'quiz-feedback show correct-feedback';
+    feedback.innerHTML = `✅ Correct! ${q.explanation}`;
+  } else {
+    options[idx].classList.add('wrong');
+    options[q.correct].classList.add('correct');
+    feedback.className = 'quiz-feedback show wrong-feedback';
+    feedback.innerHTML = `❌ Wrong! ${q.explanation}`;
+  }
+
+  renderFinalQuizProgress();
+
+  // Auto advance after delay
+  setTimeout(() => {
+    state.finalQuizCurrent++;
+    if (state.finalQuizCurrent < finalQuizQuestions.length) {
+      renderFinalQuizProgress();
+      renderFinalQuizQuestion();
+    } else {
+      renderFinalQuizProgress();
+      showFinalResults();
+    }
+  }, 2500);
+}
+
+function showFinalResults() {
+  const container = document.getElementById('finalQuizContainer');
+  const result = document.getElementById('finalQuizResult');
+  const pct = Math.round((state.finalQuizScore / finalQuizQuestions.length) * 100);
+  
+  let emoji, message;
+  if (pct === 100) { emoji = '🏆'; message = "PERFECT SCORE! You've completely mastered 'this'!"; }
+  else if (pct >= 80) { emoji = '🌟'; message = "Excellent! You have a strong understanding of 'this'!"; }
+  else if (pct >= 60) { emoji = '👍'; message = "Good job! Review the topics you missed and try again!"; }
+  else if (pct >= 40) { emoji = '📚'; message = "Keep studying! Go through the lessons again carefully."; }
+  else { emoji = '💪'; message = "Don't give up! Re-read each section and try the exercises."; }
+
+  container.innerHTML = '';
+  result.style.display = 'block';
+  result.innerHTML = `
+    <div class="score-display">
+      <div class="score-circle">${emoji}</div>
+      <h2 style="margin:0 0 8px;">${state.finalQuizScore} / ${finalQuizQuestions.length}</h2>
+      <p style="font-size:18px;color:var(--text);">${pct}% Score</p>
+      <p>${message}</p>
+      <div style="margin-top:20px;">
+        <button class="run-btn" onclick="restartFinalQuiz()" style="font-size:15px;padding:12px 28px;">🔄 Try Again</button>
+      </div>
+    </div>
+  `;
+
+  if (pct >= 80) {
+    showAchievement('🏆', 'Quiz Master!', `Scored ${pct}% on the final quiz!`);
+  }
+
+  state.completedSections.add('finalquiz');
+  updateProgress();
+}
+
+function restartFinalQuiz() {
+  initFinalQuiz();
+}
+
+// ====== INIT ======
+document.addEventListener('DOMContentLoaded', () => {
+  initFinalQuiz();
+  
+  // Show welcome achievement after a moment
+  setTimeout(() => {
+    showAchievement('👋', 'Welcome!', "Let's master the 'this' keyword!");
+  }, 1000);
+});
+</script>
+</body>
+</html>

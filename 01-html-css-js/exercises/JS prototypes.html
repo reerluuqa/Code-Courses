@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Prototypes: Robot Factory</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --primary: #38bdf8;
+            --secondary: #a78bfa;
+            --text: #f8fafc;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --code-bg: #020617;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--surface);
+            padding: 1rem 2rem;
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #00000033;
+        }
+
+        button.tab-btn {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--primary);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button.tab-btn:hover, button.tab-btn.active {
+            background: var(--primary);
+            color: var(--bg);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            color: #e2e8f0;
+            border-left: 4px solid var(--secondary);
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--primary);
+        }
+
+        /* Visualizer Styles */
+        .chain-container {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: var(--code-bg);
+            border-radius: 8px;
+            min-height: 100px;
+        }
+
+        .box {
+            background: var(--surface);
+            border: 2px solid var(--primary);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .box h4 { margin: 0 0 0.5rem 0; color: var(--secondary); }
+        .box p { margin: 0; font-size: 0.9rem; }
+
+        .arrow {
+            color: var(--primary);
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem;
+        }
+        .btn:hover { background: #8b5cf6; }
+
+        /* Pitfalls & Quiz */
+        .pitfall {
+            border-left: 4px solid var(--danger);
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .quiz-card {
+            background: var(--code-bg);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .quiz-options label {
+            display: block;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            padding: 0.5rem;
+            background: var(--surface);
+            border-radius: 4px;
+        }
+        .quiz-options label:hover {
+            background: #334155;
+        }
+        .feedback { margin-top: 1rem; font-weight: bold; }
+        .correct { color: var(--success); }
+        .incorrect { color: var(--danger); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🤖 JS Prototypes: Robot Factory</h1>
+        <p>Master Prototypal Inheritance for your next interview</p>
+    </header>
+
+    <nav>
+        <button class="tab-btn active" onclick="openTab('learn')">📖 Learn</button>
+        <button class="tab-btn" onclick="openTab('visualize')">👀 Visualize</button>
+        <button class="tab-btn" onclick="openTab('pitfalls')">⚠️ Pitfalls</button>
+        <button class="tab-btn" onclick="openTab('quiz')">📝 Quiz</button>
+        <button class="tab-btn" onclick="openTab('exercise')">💪 Exercise</button>
+    </nav>
+
+    <div class="container">
+        
+        <!-- LEARN SECTION -->
+        <div id="learn" class="tab-content active">
+            <h2>The Golden Rule of Prototypes</h2>
+            <p>Every object in JavaScript has a hidden property called <code>[[Prototype]]</code> (accessible via <code>__proto__</code> or <code>Object.getPrototypeOf()</code>). If you ask an object for a property it doesn't have, it looks at its prototype. If the prototype doesn't have it, it looks at the prototype's prototype... until it reaches <code>null</code>. This is the <strong>Prototype Chain</strong>.</p>
+            
+            <h3>1. Constructor Functions</h3>
+            <p>Before <code>class</code> existed, we used functions to build objects.</p>
+            <pre>
+function Robot(name) {
+    this.name = name; // Instance property
+}
+// Prototype method: Shared among ALL instances
+Robot.prototype.sayHi = function() {
+    console.log("Beep boop, I am " + this.name);
+};
+
+const bot1 = new Robot("R2D2");
+bot1.sayHi(); // bot1 doesn't have sayHi, but its prototype does!</pre>
+
+            <h3>2. Object.create()</h3>
+            <p>This is the cleanest way to do inheritance. It creates a brand new object, and sets its <code>__proto__</code> to whatever object you pass in.</p>
+            <pre>
+const robotMethods = {
+    charge: function() { console.log("Charging battery..."); }
+};
+
+// Create a new object that inherits from robotMethods
+const bot2 = Object.create(robotMethods);
+bot2.name = "Wall-E";
+bot2.charge(); // Finds charge() on the prototype</pre>
+        </div>
+
+        <!-- VISUALIZE SECTION -->
+        <div id="visualize" class="tab-content">
+            <h2>The Prototype Chain Visualizer</h2>
+            <p>Click the buttons to create robots using different methods and watch the Prototype Chain form in real-time!</p>
+            
+            <button class="btn" onclick="visualizeConstructor()">1. Build via Constructor (new Robot)</button>
+            <button class="btn" onclick="visualizeObjectCreate()">2. Build via Object.create()</button>
+            <button class="btn" onclick="visualizeInheritance()">3. Drone inherits Robot (Chain)</button>
+            
+            <div style="margin-top: 1rem;">
+                <strong>Console Output:</strong>
+                <pre id="vis-console">Awaiting commands...</pre>
+            </div>
+
+            <h3>Prototype Chain Map:</h3>
+            <div id="chain-container" class="chain-container">
+                <!-- Visualizer nodes will be injected here -->
+                <p style="color: gray;">Select a build method above...</p>
+            </div>
+        </div>
+
+        <!-- PITFALLS SECTION -->
+        <div id="pitfalls" class="tab-content">
+            <h2>🚨 Common Interview Mistakes</h2>
+            
+            <div class="pitfall">
+                <h3>1. Forgetting the <code>new</code> keyword</h3>
+                <pre>
+function Robot(name) { this.name = name; }
+const bot = Robot("R2"); // ERROR!</pre>
+                <p><strong>Why it fails:</strong> Without <code>new</code>, <code>this</code> points to the global object (window). <code>bot</code> will be undefined, and you just created a global variable called <code>window.name</code>!</p>
+            </div>
+
+            <div class="pitfall">
+                <h3>2. Arrow functions in Prototypes</h3>
+                <pre>
+Robot.prototype.sayHi = () => { console.log(this.name); }</pre>
+                <p><strong>Why it fails:</strong> Arrow functions do NOT bind their own <code>this</code>. <code>this</code> will refer to the surrounding scope (usually Window). Always use regular <code>function()</code> for prototype methods.</p>
+            </div>
+
+            <div class="pitfall">
+                <h3>3. Mutating <code>Object.prototype</code></h3>
+                <pre>
+Object.prototype.myCustomFunc = function() { ... }</pre>
+                <p><strong>Why it fails:</strong> NEVER do this. It's called "monkey patching". Every single object in your app (arrays, functions, dates) will now inherit this property, causing massive bugs in <code>for...in</code> loops.</p>
+            </div>
+        </div>
+
+        <!-- QUIZ SECTION -->
+        <div id="quiz" class="tab-content">
+            <h2>Test Your Knowledge</h2>
+            
+            <div class="quiz-card" id="q1">
+                <p><strong>1. What is the value of <code>Object.getPrototypeOf(Object.prototype)</code>?</strong></p>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q1" value="wrong"> Object</label>
+                    <label><input type="radio" name="q1" value="wrong"> undefined</label>
+                    <label><input type="radio" name="q1" value="correct"> null</label>
+                </div>
+                <button class="btn" onclick="checkAnswer('q1')">Submit</button>
+                <div class="feedback"></div>
+            </div>
+
+            <div class="quiz-card" id="q2">
+                <p><strong>2. How do you check if a property belongs to the object itself, and NOT its prototype?</strong></p>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q2" value="wrong"> object.includes('prop')</label>
+                    <label><input type="radio" name="q2" value="correct"> object.hasOwnProperty('prop')</label>
+                    <label><input type="radio" name="q2" value="wrong"> 'prop' in object</label>
+                </div>
+                <button class="btn" onclick="checkAnswer('q2')">Submit</button>
+                <div class="feedback"></div>
+            </div>
+
+            <div class="quiz-card" id="q3">
+                <p><strong>3. If I use <code>const obj = Object.create(null);</code>, what happens?</strong></p>
+                <div class="quiz-options">
+                    <label><input type="radio" name="q3" value="wrong"> It throws an error.</label>
+                    <label><input type="radio" name="q3" value="correct"> It creates a completely blank object with NO prototype chain.</label>
+                    <label><input type="radio" name="q3" value="wrong"> It creates a normal object inheriting from Object.prototype.</label>
+                </div>
+                <button class="btn" onclick="checkAnswer('q3')">Submit</button>
+                <div class="feedback"></div>
+            </div>
+        </div>
+
+        <!-- EXERCISE SECTION -->
+        <div id="exercise" class="tab-content">
+            <h2>Coding Exercise: Prototypal Inheritance</h2>
+            <p><strong>Task:</strong> Read the requirements below. Think about how you would write the code to link the prototypes. Then click "Reveal Solution" to see if your mental model is correct.</p>
+            
+            <div style="background: var(--surface); padding: 1rem; border-radius: 4px;">
+                <p>1. Create a Constructor function <code>Vehicle</code> that takes a <code>speed</code>.<br>
+                   2. Add a <code>move()</code> method to <code>Vehicle.prototype</code>.<br>
+                   3. Create a <code>Car</code> Constructor that inherits from <code>Vehicle</code>.<br>
+                   4. Correctly link <code>Car.prototype</code> to <code>Vehicle.prototype</code>.</p>
+            </div>
+
+            <button class="btn" style="margin-top: 1rem;" onclick="document.getElementById('solution').style.display='block'">Reveal Solution</button>
+            
+            <div id="solution" style="display: none; margin-top: 1rem;">
+                <pre>
+// 1. Vehicle Constructor
+function Vehicle(speed) {
+    this.speed = speed;
+}
+
+// 2. Vehicle Prototype Method
+Vehicle.prototype.move = function() {
+    console.log("Moving at " + this.speed);
+};
+
+// 3. Car Constructor
+function Car(speed, brand) {
+    // Call parent constructor to bind 'this'
+    Vehicle.call(this, speed); 
+    this.brand = brand;
+}
+
+// 4. THE CRITICAL STEP: Link Prototypes
+Car.prototype = Object.create(Vehicle.prototype);
+
+// 5. Fix the constructor pointer (Best Practice)
+Car.prototype.constructor = Car;</pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Tab Navigation Logic
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Quiz Logic
+        function checkAnswer(questionId) {
+            const selected = document.querySelector(`input[name="${questionId}"]:checked`);
+            const feedbackEl = document.querySelector(`#${questionId} .feedback`);
+            
+            if (!selected) {
+                feedbackEl.innerHTML = "<span class='incorrect'>Please select an option.</span>";
+                return;
+            }
+
+            if (selected.value === 'correct') {
+                feedbackEl.innerHTML = "<span class='correct'>✅ Correct! Excellent job.</span>";
+            } else {
+                let hint = "";
+                if(questionId === 'q1') hint = " The chain has to end somewhere to prevent infinite loops!";
+                if(questionId === 'q2') hint = " The 'in' operator checks the prototype chain too. We want to check ONLY the object itself.";
+                if(questionId === 'q3') hint = " This is often used to create 'Dictionary' objects that won't accidentally inherit properties like toString().";
+                feedbackEl.innerHTML = `<span class='incorrect'>❌ Incorrect.${hint}</span>`;
+            }
+        }
+
+        // Visualizer Engine
+        const visConsole = document.getElementById('vis-console');
+        const chainContainer = document.getElementById('chain-container');
+
+        function renderChain(nodes) {
+            chainContainer.innerHTML = '';
+            nodes.forEach((node, index) => {
+                const box = document.createElement('div');
+                box.className = 'box';
+                box.innerHTML = `<h4>${node.title}</h4><p>${node.desc}</p>`;
+                chainContainer.appendChild(box);
+
+                if (index < nodes.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'arrow';
+                    arrow.innerHTML = '➔';
+                    chainContainer.appendChild(arrow);
+                }
+            });
+        }
+
+        function visualizeConstructor() {
+            visConsole.innerHTML = `function Robot(name) { this.name = name; }
+const bot1 = new Robot("T-800");
+
+bot1.name // found on bot1
+bot1.toString() // found on Object.prototype`;
+
+            renderChain([
+                { title: "bot1 (Instance)", desc: "{ name: 'T-800' }" },
+                { title: "Robot.prototype", desc: "{ constructor: Robot }" },
+                { title: "Object.prototype", desc: "{ toString, hasOwnProperty... }" },
+                { title: "null", desc: "End of chain" }
+            ]);
+        }
+
+        function visualizeObjectCreate() {
+            visConsole.innerHTML = `const robotProto = { fly: function(){} };
+const bot2 = Object.create(robotProto);
+bot2.name = "Astro";`;
+
+            renderChain([
+                { title: "bot2 (Instance)", desc: "{ name: 'Astro' }" },
+                { title: "robotProto", desc: "{ fly: function() }" },
+                { title: "Object.prototype", desc: "Built-in methods" },
+                { title: "null", desc: "End of chain" }
+            ]);
+        }
+
+        function visualizeInheritance() {
+            visConsole.innerHTML = `// Drone inheriting from Robot
+function Drone(name) { Robot.call(this, name); }
+Drone.prototype = Object.create(Robot.prototype);
+const myDrone = new Drone("Predator");`;
+
+            renderChain([
+                { title: "myDrone", desc: "{ name: 'Predator' }" },
+                { title: "Drone.prototype", desc: "{ constructor: Drone }" },
+                { title: "Robot.prototype", desc: "{ sayHi: function() }" },
+                { title: "Object.prototype", desc: "Built-in methods" },
+                { title: "null", desc: "End of chain" }
+            ]);
+        }
+    </script>
+</body>
+</html>

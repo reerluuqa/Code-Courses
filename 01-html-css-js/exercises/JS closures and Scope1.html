@@ -1,0 +1,2792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Closures & Scope — Interactive Learning</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap');
+
+    :root {
+      --bg: #0f1117;
+      --bg2: #161822;
+      --bg3: #1e2030;
+      --accent: #7c3aed;
+      --accent2: #a78bfa;
+      --accent3: #c4b5fd;
+      --green: #10b981;
+      --green-bg: #064e3b;
+      --red: #ef4444;
+      --red-bg: #7f1d1d;
+      --yellow: #f59e0b;
+      --yellow-bg: #78350f;
+      --blue: #3b82f6;
+      --blue-bg: #1e3a5f;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --border: #2d3148;
+      --code-bg: #1a1c2e;
+      --scope-global: #ef4444;
+      --scope-outer: #f59e0b;
+      --scope-inner: #10b981;
+      --scope-block: #3b82f6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      width: 280px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      z-index: 100;
+      overflow-y: auto;
+      transition: transform 0.3s;
+    }
+    .sidebar.collapsed { transform: translateX(-280px); }
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-header h2 {
+      font-size: 18px;
+      color: var(--accent2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-header p {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+    .progress-bar-container {
+      margin: 12px 20px;
+      background: var(--bg3);
+      border-radius: 10px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      border-radius: 10px;
+      transition: width 0.5s;
+      width: 0%;
+    }
+    .progress-text {
+      font-size: 11px;
+      color: var(--text3);
+      padding: 2px 20px 12px;
+    }
+    .nav-section {
+      padding: 12px 0;
+    }
+    .nav-section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text3);
+      padding: 8px 20px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+      font-size: 14px;
+      color: var(--text2);
+    }
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+    .nav-item.active {
+      background: var(--bg3);
+      border-left-color: var(--accent);
+      color: var(--accent2);
+    }
+    .nav-item.completed .nav-icon {
+      background: var(--green);
+      color: #fff;
+    }
+    .nav-icon {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+    .nav-item.active .nav-icon {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* Main Content */
+    .main {
+      margin-left: 280px;
+      min-height: 100vh;
+      transition: margin 0.3s;
+    }
+    .main.expanded { margin-left: 0; }
+
+    .toggle-btn {
+      position: fixed;
+      top: 16px;
+      left: 290px;
+      z-index: 101;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: left 0.3s;
+    }
+    .toggle-btn.shifted { left: 10px; }
+
+    /* Sections */
+    .section {
+      display: none;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 40px 100px;
+      animation: fadeIn 0.4s;
+    }
+    .section.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--accent2);
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--accent2), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .section-subtitle {
+      font-size: 18px;
+      color: var(--text2);
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 40px 0 16px;
+      color: var(--text);
+    }
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: var(--accent3);
+    }
+
+    p { margin-bottom: 16px; color: var(--text2); }
+
+    /* Info boxes */
+    .info-box {
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      border-left: 4px solid;
+    }
+    .info-box.concept {
+      background: rgba(124,58,237,0.1);
+      border-color: var(--accent);
+    }
+    .info-box.tip {
+      background: rgba(16,185,129,0.1);
+      border-color: var(--green);
+    }
+    .info-box.warning {
+      background: rgba(245,158,11,0.1);
+      border-color: var(--yellow);
+    }
+    .info-box.danger {
+      background: rgba(239,68,68,0.1);
+      border-color: var(--red);
+    }
+    .info-box-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .info-box.concept .info-box-title { color: var(--accent2); }
+    .info-box.tip .info-box-title { color: var(--green); }
+    .info-box.warning .info-box-title { color: var(--yellow); }
+    .info-box.danger .info-box-title { color: var(--red); }
+    .info-box p:last-child { margin-bottom: 0; }
+
+    /* Code blocks */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text3);
+    }
+    .code-header .dots {
+      display: flex;
+      gap: 6px;
+    }
+    .code-header .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .code-header .dot:nth-child(1) { background: var(--red); }
+    .code-header .dot:nth-child(2) { background: var(--yellow); }
+    .code-header .dot:nth-child(3) { background: var(--green); }
+    .code-content {
+      padding: 16px 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .code-content .keyword { color: #c792ea; }
+    .code-content .function { color: #82aaff; }
+    .code-content .string { color: #c3e88d; }
+    .code-content .number { color: #f78c6c; }
+    .code-content .comment { color: #546e7a; font-style: italic; }
+    .code-content .variable { color: #f07178; }
+    .code-content .operator { color: #89ddff; }
+    .code-content .output { color: var(--green); }
+    .code-content .highlight-line {
+      background: rgba(124,58,237,0.15);
+      display: block;
+      margin: 0 -20px;
+      padding: 0 20px;
+      border-left: 3px solid var(--accent);
+    }
+
+    /* Interactive playground */
+    .playground {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+    .playground-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+    .playground-title {
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent2);
+    }
+    .playground-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+    .playground-body.single {
+      grid-template-columns: 1fr;
+    }
+    .playground-editor {
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .playground-editor textarea {
+      width: 100%;
+      min-height: 200px;
+      background: transparent;
+      color: var(--text);
+      border: none;
+      padding: 16px;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      tab-size: 2;
+    }
+    .playground-output {
+      padding: 16px;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      background: var(--bg);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .playground-output .log-line {
+      padding: 2px 0;
+      color: var(--text2);
+    }
+    .playground-output .log-line.error {
+      color: var(--red);
+    }
+    .playground-output .log-line.success {
+      color: var(--green);
+    }
+    .run-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .run-btn:hover { background: #059669; transform: scale(1.05); }
+    .reset-btn {
+      background: transparent;
+      color: var(--text3);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-right: 8px;
+      transition: all 0.2s;
+    }
+    .reset-btn:hover { border-color: var(--text3); color: var(--text2); }
+
+    /* Scope Visualizer */
+    .scope-viz {
+      margin: 24px 0;
+      padding: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .scope-viz-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent2);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .scope-box {
+      border: 2px dashed;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 8px 0;
+      position: relative;
+      transition: all 0.3s;
+    }
+    .scope-box.global {
+      border-color: var(--scope-global);
+      background: rgba(239,68,68,0.05);
+    }
+    .scope-box.outer {
+      border-color: var(--scope-outer);
+      background: rgba(245,158,11,0.05);
+    }
+    .scope-box.inner {
+      border-color: var(--scope-inner);
+      background: rgba(16,185,129,0.05);
+    }
+    .scope-box.block {
+      border-color: var(--scope-block);
+      background: rgba(59,130,246,0.05);
+    }
+    .scope-label {
+      position: absolute;
+      top: -10px;
+      left: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 0 8px;
+      background: var(--bg2);
+    }
+    .scope-box.global .scope-label { color: var(--scope-global); }
+    .scope-box.outer .scope-label { color: var(--scope-outer); }
+    .scope-box.inner .scope-label { color: var(--scope-inner); }
+    .scope-box.block .scope-label { color: var(--scope-block); }
+    .scope-var {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      margin: 4px;
+    }
+    .scope-box.global .scope-var { background: rgba(239,68,68,0.15); color: var(--scope-global); }
+    .scope-box.outer .scope-var { background: rgba(245,158,11,0.15); color: var(--scope-outer); }
+    .scope-box.inner .scope-var { background: rgba(16,185,129,0.15); color: var(--scope-inner); }
+    .scope-box.block .scope-var { background: rgba(59,130,246,0.15); color: var(--scope-block); }
+
+    .scope-fn-label {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+
+    /* Animated arrows */
+    .arrow-chain {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    .arrow-node {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Fira Code', monospace;
+      animation: pulseNode 2s infinite;
+    }
+    .arrow-node:nth-child(1) { background: rgba(16,185,129,0.2); color: var(--green); animation-delay: 0s; }
+    .arrow-node:nth-child(3) { background: rgba(245,158,11,0.2); color: var(--yellow); animation-delay: 0.3s; }
+    .arrow-node:nth-child(5) { background: rgba(239,68,68,0.2); color: var(--red); animation-delay: 0.6s; }
+    .arrow-sep {
+      font-size: 20px;
+      color: var(--text3);
+      padding: 0 8px;
+    }
+    @keyframes pulseNode {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Quiz */
+    .quiz-container {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 20px 0;
+    }
+    .quiz-question {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .quiz-question code {
+      background: var(--code-bg);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+    }
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .quiz-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+    .quiz-option:hover {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.05);
+    }
+    .quiz-option.selected {
+      border-color: var(--accent);
+      background: rgba(124,58,237,0.1);
+    }
+    .quiz-option.correct {
+      border-color: var(--green) !important;
+      background: rgba(16,185,129,0.1) !important;
+    }
+    .quiz-option.wrong {
+      border-color: var(--red) !important;
+      background: rgba(239,68,68,0.1) !important;
+    }
+    .quiz-option .radio {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .quiz-option.selected .radio {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+    .quiz-option.correct .radio {
+      border-color: var(--green);
+      background: var(--green);
+    }
+    .quiz-option.wrong .radio {
+      border-color: var(--red);
+      background: var(--red);
+    }
+    .quiz-option code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+    }
+    .quiz-check-btn {
+      margin-top: 16px;
+      padding: 10px 24px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .quiz-check-btn:hover { background: #6d28d9; }
+    .quiz-check-btn:disabled { opacity: 0.5; cursor: default; }
+    .quiz-feedback {
+      margin-top: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.correct {
+      background: rgba(16,185,129,0.1);
+      border: 1px solid var(--green);
+      color: var(--green);
+    }
+    .quiz-feedback.wrong {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid var(--red);
+      color: var(--red);
+    }
+    .quiz-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      margin-right: 8px;
+    }
+
+    /* Exercise */
+    .exercise-box {
+      background: var(--bg2);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    .exercise-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .exercise-desc {
+      color: var(--text2);
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .hint-btn {
+      background: transparent;
+      border: 1px solid var(--yellow);
+      color: var(--yellow);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .hint-btn:hover { background: rgba(245,158,11,0.1); }
+    .hint-text {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(245,158,11,0.1);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--yellow);
+    }
+    .hint-text.show { display: block; }
+
+    /* Analogy box */
+    .analogy {
+      background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(16,185,129,0.1));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin: 20px 0;
+    }
+    .analogy-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent3);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .analogy p { color: var(--text2); margin-bottom: 0; }
+
+    /* Visual cards */
+    .concept-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .concept-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .concept-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 30px rgba(124,58,237,0.2);
+    }
+    .concept-card .card-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    .concept-card .card-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .concept-card .card-desc {
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    /* Step by step */
+    .step-list {
+      margin: 16px 0;
+    }
+    .step-item {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .step-number {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-content {
+      flex: 1;
+    }
+    .step-content strong {
+      color: var(--text);
+    }
+
+    /* Navigation footer */
+    .nav-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .nav-btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .nav-btn.prev {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .nav-btn.prev:hover { border-color: var(--accent); color: var(--text); }
+    .nav-btn.next {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+    }
+    .nav-btn.next:hover { background: #6d28d9; }
+
+    /* Interactive Scope Viz */
+    .interactive-viz {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    .viz-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .viz-step-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .viz-step-btn:hover, .viz-step-btn.active {
+      border-color: var(--accent);
+      color: var(--accent2);
+      background: rgba(124,58,237,0.1);
+    }
+
+    /* Comparison table */
+    .compare-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px 0;
+      border: 1px solid var(--border);
+    }
+    .compare-table th {
+      background: var(--bg3);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 13px;
+      color: var(--accent2);
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table td {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text2);
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+    }
+
+    /* Confetti */
+    .confetti-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .confetti-piece {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      animation: confettiFall 3s forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Score display */
+    .final-score {
+      text-align: center;
+      padding: 40px;
+      background: var(--bg2);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      margin: 24px 0;
+    }
+    .score-number {
+      font-size: 64px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent2), var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .score-label {
+      font-size: 18px;
+      color: var(--text2);
+      margin-top: 8px;
+    }
+
+    /* Completion marker */
+    .section-complete-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: all 0.3s;
+    }
+    .section-complete-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+    .section-complete-btn.completed {
+      background: var(--green);
+      cursor: default;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-280px); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .toggle-btn { left: 10px; }
+      .section { padding: 24px 16px 80px; }
+      h1 { font-size: 28px; }
+      .playground-body { grid-template-columns: 1fr; }
+      .playground-editor { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    /* Animated backpack */
+    .closure-backpack {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin: 24px 0;
+      flex-wrap: wrap;
+    }
+    .backpack-item {
+      text-align: center;
+      padding: 16px 20px;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.3s;
+      min-width: 120px;
+    }
+    .backpack-item.active {
+      border-color: var(--green);
+      background: rgba(16,185,129,0.1);
+      transform: scale(1.05);
+    }
+    .backpack-emoji { font-size: 28px; margin-bottom: 6px; }
+    .backpack-label { font-size: 12px; color: var(--text3); }
+    .backpack-value {
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      color: var(--green);
+      margin-top: 4px;
+    }
+
+    .closure-arrow {
+      font-size: 24px;
+      color: var(--text3);
+      animation: bounce 1s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+    }
+
+    /* Tab System */
+    .tab-container {
+      margin: 20px 0;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .tab-header {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: var(--text2); }
+    .tab-btn.active {
+      color: var(--accent2);
+      border-bottom-color: var(--accent);
+    }
+    .tab-content {
+      display: none;
+      padding: 20px;
+    }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2>🔐 Closures & Scope</h2>
+    <p>Interactive JavaScript Course</p>
+  </div>
+  <div class="progress-bar-container">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+  <div class="progress-text" id="progressText">0 / 8 completed</div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Foundations</div>
+    <div class="nav-item active" data-section="0">
+      <div class="nav-icon">1</div>
+      <span>Welcome & Overview</span>
+    </div>
+    <div class="nav-item" data-section="1">
+      <div class="nav-icon">2</div>
+      <span>What is Scope?</span>
+    </div>
+    <div class="nav-item" data-section="2">
+      <div class="nav-icon">3</div>
+      <span>Lexical Scope Chain</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Closures</div>
+    <div class="nav-item" data-section="3">
+      <div class="nav-icon">4</div>
+      <span>Understanding Closures</span>
+    </div>
+    <div class="nav-item" data-section="4">
+      <div class="nav-icon">5</div>
+      <span>Closure Patterns</span>
+    </div>
+    <div class="nav-item" data-section="5">
+      <div class="nav-icon">6</div>
+      <span>Data Privacy</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">Mastery</div>
+    <div class="nav-item" data-section="6">
+      <div class="nav-icon">7</div>
+      <span>Common Pitfalls ⚠️</span>
+    </div>
+    <div class="nav-item" data-section="7">
+      <div class="nav-icon">8</div>
+      <span>Final Quiz 🏆</span>
+    </div>
+  </div>
+</aside>
+
+<button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">☰</button>
+
+<!-- Main Content -->
+<main class="main" id="main">
+
+  <!-- ==================== SECTION 0: Welcome ==================== -->
+  <div class="section active" id="section-0">
+    <div class="section-badge">📚 Chapter 1 of 8</div>
+    <h1>Welcome to Closures & Scope!</h1>
+    <p class="section-subtitle">Master one of JavaScript's most powerful (and misunderstood) features.</p>
+
+    <div class="analogy">
+      <div class="analogy-title">🧠 Why This Matters</div>
+      <p>Closures appear in nearly every JavaScript codebase. Understanding them unlocks the ability to write private data, factory functions, event handlers, callbacks, and much more. After this course, closures will feel like second nature!</p>
+    </div>
+
+    <h2>What You'll Learn</h2>
+    <div class="concept-cards">
+      <div class="concept-card">
+        <div class="card-icon">🔭</div>
+        <div class="card-title">Scope</div>
+        <div class="card-desc">Where variables live and who can access them</div>
+      </div>
+      <div class="concept-card">
+        <div class="card-icon">⛓️</div>
+        <div class="card-title">Scope Chain</div>
+        <div class="card-desc">How JavaScript looks up variables through nested scopes</div>
+      </div>
+      <div class="concept-card">
+        <div class="card-icon">🎒</div>
+        <div class="card-title">Closures</div>
+        <div class="card-desc">Functions that remember their birthplace</div>
+      </div>
+      <div class="concept-card">
+        <div class="card-icon">🔐</div>
+        <div class="card-title">Data Privacy</div>
+        <div class="card-desc">Hiding data using closures</div>
+      </div>
+      <div class="concept-card">
+        <div class="card-icon">🏭</div>
+        <div class="card-title">Patterns</div>
+        <div class="card-desc">Real-world closure patterns you'll use daily</div>
+      </div>
+      <div class="concept-card">
+        <div class="card-icon">⚠️</div>
+        <div class="card-title">Pitfalls</div>
+        <div class="card-desc">Common mistakes and how to avoid them</div>
+      </div>
+    </div>
+
+    <div class="info-box tip">
+      <div class="info-box-title">💡 How to Use This Course</div>
+      <p>Each section has <strong>visual explanations</strong>, <strong>live code playgrounds</strong>, and <strong>quizzes</strong>. Run the code, modify it, break it — that's the best way to learn! Mark each section complete when you're ready.</p>
+    </div>
+
+    <button class="section-complete-btn" onclick="completeSection(0)">✅ I'm Ready — Let's Go!</button>
+
+    <div class="nav-footer">
+      <div></div>
+      <button class="nav-btn next" onclick="goToSection(1)">Next: What is Scope? →</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 1: What is Scope? ==================== -->
+  <div class="section" id="section-1">
+    <div class="section-badge">📚 Chapter 2 of 8</div>
+    <h1>What is Scope?</h1>
+    <p class="section-subtitle">Scope determines where variables can be accessed in your code.</p>
+
+    <div class="analogy">
+      <div class="analogy-title">🏠 Real-World Analogy</div>
+      <p>Think of scope like <strong>rooms in a house</strong>. Items (variables) in the living room (global scope) can be seen by everyone. But items in your bedroom (function scope) are private — only you can see them. You CAN look out of your room to see the living room, but people in the living room CAN'T peek into your bedroom!</p>
+    </div>
+
+    <h2>The 3 Types of Scope</h2>
+
+    <div class="concept-cards">
+      <div class="concept-card" style="border-top: 3px solid var(--scope-global);">
+        <div class="card-icon">🌍</div>
+        <div class="card-title">Global Scope</div>
+        <div class="card-desc">Variables declared outside any function. Accessible everywhere.</div>
+      </div>
+      <div class="concept-card" style="border-top: 3px solid var(--scope-outer);">
+        <div class="card-icon">📦</div>
+        <div class="card-title">Function Scope</div>
+        <div class="card-desc">Variables declared inside a function. Only accessible within that function.</div>
+      </div>
+      <div class="concept-card" style="border-top: 3px solid var(--scope-block);">
+        <div class="card-icon">🧱</div>
+        <div class="card-title">Block Scope</div>
+        <div class="card-desc">Variables declared with let/const inside { }. Only accessible within that block.</div>
+      </div>
+    </div>
+
+    <h2>See It In Action</h2>
+
+    <div class="scope-viz">
+      <div class="scope-viz-title">🔭 Visual Scope Map</div>
+      <div class="scope-box global">
+        <span class="scope-label">🌍 Global Scope</span>
+        <div class="scope-var">name = "Alice"</div>
+        <div class="scope-fn-label" style="margin-top:12px">function greet() {</div>
+        <div class="scope-box outer">
+          <span class="scope-label">📦 Function Scope — greet()</span>
+          <div class="scope-var">greeting = "Hello"</div>
+          <div class="scope-fn-label" style="margin-top:12px">if (true) {</div>
+          <div class="scope-box block">
+            <span class="scope-label">🧱 Block Scope — if</span>
+            <div class="scope-var">message = greeting + " " + name</div>
+            <p style="font-size:12px; color:var(--green); margin:8px 0 0;">✅ Can access: message, greeting, name</p>
+          </div>
+          <p style="font-size:12px; color:var(--yellow); margin:8px 0 0;">⚠️ Can access: greeting, name — but NOT message (let/const)</p>
+        </div>
+        <p style="font-size:12px; color:var(--red); margin:8px 0 0;">❌ Can access: name — but NOT greeting or message</p>
+      </div>
+    </div>
+
+    <h2>var vs let vs const — Scope Differences</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Keyword</th>
+          <th>Scope</th>
+          <th>Redeclare?</th>
+          <th>Reassign?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>var</code></td>
+          <td>Function scope (ignores blocks!)</td>
+          <td>✅ Yes</td>
+          <td>✅ Yes</td>
+        </tr>
+        <tr>
+          <td><code>let</code></td>
+          <td>Block scope</td>
+          <td>❌ No</td>
+          <td>✅ Yes</td>
+        </tr>
+        <tr>
+          <td><code>const</code></td>
+          <td>Block scope</td>
+          <td>❌ No</td>
+          <td>❌ No</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>🧪 Try It Yourself</h2>
+
+    <div class="playground" id="playground-scope">
+      <div class="playground-header">
+        <div class="playground-title">🎮 Scope Playground</div>
+        <div>
+          <button class="reset-btn" onclick="resetPlayground('scope')">Reset</button>
+          <button class="run-btn" onclick="runPlayground('scope')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <div class="playground-editor">
+          <textarea id="editor-scope">// Try changing var to let and see what happens!
+var globalVar = "I'm global!";
+
+function testScope() {
+  var functionVar = "I'm in a function!";
+  
+  if (true) {
+    var varInBlock = "var ignores blocks!";
+    let letInBlock = "let respects blocks!";
+    console.log("Inside block:", varInBlock);
+    console.log("Inside block:", letInBlock);
+  }
+  
+  console.log("Outside block:", varInBlock);  // Works!
+  // console.log(letInBlock);  // Uncomment me = ERROR!
+  console.log("Function var:", functionVar);
+}
+
+testScope();
+console.log("Global:", globalVar);
+// console.log(functionVar);  // Uncomment me = ERROR!</textarea>
+        </div>
+        <div class="playground-output" id="output-scope"></div>
+      </div>
+    </div>
+
+    <h2>Quick Quiz</h2>
+
+    <div class="quiz-container" id="quiz-scope-1">
+      <div class="quiz-question">
+        <span class="quiz-number">1</span>
+        What will <code>console.log(x)</code> output?
+      </div>
+      <div class="code-block">
+        <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>quiz.js</span></div>
+        <div class="code-content"><span class="keyword">if</span> (<span class="number">true</span>) {
+  <span class="keyword">var</span> x = <span class="number">10</span>;
+}
+console.<span class="function">log</span>(x);</div>
+      </div>
+      <div class="quiz-options">
+        <div class="quiz-option" data-answer="a" onclick="selectQuiz(this)"><div class="radio"></div><code>undefined</code></div>
+        <div class="quiz-option" data-answer="b" onclick="selectQuiz(this)"><div class="radio"></div><code>10</code> — var is function/global scoped, not block scoped</div>
+        <div class="quiz-option" data-answer="c" onclick="selectQuiz(this)"><div class="radio"></div>ReferenceError</div>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQuiz('quiz-scope-1', 'b')">Check Answer</button>
+      <div class="quiz-feedback" id="feedback-quiz-scope-1"></div>
+    </div>
+
+    <div class="quiz-container" id="quiz-scope-2">
+      <div class="quiz-question">
+        <span class="quiz-number">2</span>
+        What will <code>console.log(y)</code> output?
+      </div>
+      <div class="code-block">
+        <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>quiz.js</span></div>
+        <div class="code-content"><span class="keyword">if</span> (<span class="number">true</span>) {
+  <span class="keyword">let</span> y = <span class="number">20</span>;
+}
+console.<span class="function">log</span>(y);</div>
+      </div>
+      <div class="quiz-options">
+        <div class="quiz-option" data-answer="a" onclick="selectQuiz(this)"><div class="radio"></div><code>undefined</code></div>
+        <div class="quiz-option" data-answer="b" onclick="selectQuiz(this)"><div class="radio"></div><code>20</code></div>
+        <div class="quiz-option" data-answer="c" onclick="selectQuiz(this)"><div class="radio"></div>ReferenceError — let is block scoped!</div>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQuiz('quiz-scope-2', 'c')">Check Answer</button>
+      <div class="quiz-feedback" id="feedback-quiz-scope-2"></div>
+    </div>
+
+    <button class="section-complete-btn" onclick="completeSection(1)">✅ Mark Section Complete</button>
+
+    <div class="nav-footer">
+      <button class="nav-btn prev" onclick="goToSection(0)">← Previous</button>
+      <button class="nav-btn next" onclick="goToSection(2)">Next: Lexical Scope Chain →</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 2: Lexical Scope Chain ==================== -->
+  <div class="section" id="section-2">
+    <div class="section-badge">📚 Chapter 3 of 8</div>
+    <h1>The Lexical Scope Chain</h1>
+    <p class="section-subtitle">How JavaScript finds variables by looking "outward" through nested scopes.</p>
+
+    <div class="info-box concept">
+      <div class="info-box-title">🔑 Key Concept: "Lexical" Means "Where It's Written"</div>
+      <p>Lexical scope is determined at <strong>write time</strong>, not run time. Where you physically write a function in your code determines what variables it can access. It's like a birth certificate — your function is forever connected to where it was born!</p>
+    </div>
+
+    <h2>How the Scope Chain Works</h2>
+
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <strong>JavaScript looks for a variable in the current scope first.</strong>
+          <p style="color:var(--text3);font-size:13px;margin:4px 0 0;">If found → uses it!</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <strong>If not found, it looks in the parent (outer) scope.</strong>
+          <p style="color:var(--text3);font-size:13px;margin:4px 0 0;">Then the grandparent scope, and so on...</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <strong>This continues all the way up to the global scope.</strong>
+          <p style="color:var(--text3);font-size:13px;margin:4px 0 0;">If still not found → ReferenceError! 💥</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow-chain">
+      <div class="arrow-node">Inner Scope</div>
+      <div class="arrow-sep">→</div>
+      <div class="arrow-node">Outer Scope</div>
+      <div class="arrow-sep">→</div>
+      <div class="arrow-node">Global Scope</div>
+    </div>
+
+    <h2>Interactive Visualization</h2>
+
+    <div class="interactive-viz" id="scope-chain-viz">
+      <div class="viz-controls">
+        <button class="viz-step-btn active" onclick="showScopeStep(0)">Step 1: Setup</button>
+        <button class="viz-step-btn" onclick="showScopeStep(1)">Step 2: Call outer()</button>
+        <button class="viz-step-btn" onclick="showScopeStep(2)">Step 3: Call inner()</button>
+        <button class="viz-step-btn" onclick="showScopeStep(3)">Step 4: Lookup "a"</button>
+        <button class="viz-step-btn" onclick="showScopeStep(4)">Step 5: Lookup "b"</button>
+        <button class="viz-step-btn" onclick="showScopeStep(5)">Step 6: Lookup "c"</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div class="code-block" style="margin:0;">
+            <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>scope-chain.js</span></div>
+            <div class="code-content" id="scope-chain-code"><span class="keyword">const</span> a = <span class="string">"global-a"</span>;
+
+<span class="keyword">function</span> <span class="function">outer</span>() {
+  <span class="keyword">const</span> b = <span class="string">"outer-b"</span>;
+  
+  <span class="keyword">function</span> <span class="function">inner</span>() {
+    <span class="keyword">const</span> c = <span class="string">"inner-c"</span>;
+    console.<span class="function">log</span>(c); <span class="comment">// ?</span>
+    console.<span class="function">log</span>(b); <span class="comment">// ?</span>
+    console.<span class="function">log</span>(a); <span class="comment">// ?</span>
+  }
+  
+  <span class="function">inner</span>();
+}
+
+<span class="function">outer</span>();</div>
+          </div>
+        </div>
+        <div id="scope-chain-visual">
+          <div class="scope-box global">
+            <span class="scope-label">🌍 Global</span>
+            <div class="scope-var" id="sv-a">a = "global-a"</div>
+            <div class="scope-box outer" style="margin-top:12px;" id="scope-outer-box">
+              <span class="scope-label">📦 outer()</span>
+              <div class="scope-var" id="sv-b">b = "outer-b"</div>
+              <div class="scope-box inner" style="margin-top:12px;" id="scope-inner-box">
+                <span class="scope-label">🧱 inner()</span>
+                <div class="scope-var" id="sv-c">c = "inner-c"</div>
+                <div id="lookup-result" style="margin-top:8px;font-size:12px;color:var(--text3);"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box warning">
+      <div class="info-box-title">⚠️ Important Rule</div>
+      <p>The scope chain <strong>only goes UP</strong> (outward), never DOWN (inward). A parent function <strong>cannot</strong> access variables inside its child functions!</p>
+    </div>
+
+    <h2>🧪 Try It Yourself</h2>
+
+    <div class="playground" id="playground-chain">
+      <div class="playground-header">
+        <div class="playground-title">🎮 Scope Chain Explorer</div>
+        <div>
+          <button class="reset-btn" onclick="resetPlayground('chain')">Reset</button>
+          <button class="run-btn" onclick="runPlayground('chain')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <div class="playground-editor">
+          <textarea id="editor-chain">const planet = "Earth";
+
+function continent() {
+  const cont = "Europe";
+  
+  function country() {
+    const cntry = "France";
+    
+    function city() {
+      const cty = "Paris";
+      // This function can see ALL variables above!
+      console.log(cty + ", " + cntry + ", " + cont + ", " + planet);
+    }
+    
+    city();
+    // console.log(cty); // ❌ Can't see inside city()!
+  }
+  
+  country();
+}
+
+continent();</textarea>
+        </div>
+        <div class="playground-output" id="output-chain"></div>
+      </div>
+    </div>
+
+    <h2>Quick Quiz</h2>
+
+    <div class="quiz-container" id="quiz-chain-1">
+      <div class="quiz-question">
+        <span class="quiz-number">1</span>
+        What does "lexical" in "lexical scope" mean?
+      </div>
+      <div class="quiz-options">
+        <div class="quiz-option" data-answer="a" onclick="selectQuiz(this)"><div class="radio"></div>Scope is determined at run time by where the function is called</div>
+        <div class="quiz-option" data-answer="b" onclick="selectQuiz(this)"><div class="radio"></div>Scope is determined at write time by where the function is defined in the code</div>
+        <div class="quiz-option" data-answer="c" onclick="selectQuiz(this)"><div class="radio"></div>Scope only applies to variables declared with <code>let</code></div>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQuiz('quiz-chain-1', 'b')">Check Answer</button>
+      <div class="quiz-feedback" id="feedback-quiz-chain-1"></div>
+    </div>
+
+    <button class="section-complete-btn" onclick="completeSection(2)">✅ Mark Section Complete</button>
+
+    <div class="nav-footer">
+      <button class="nav-btn prev" onclick="goToSection(1)">← Previous</button>
+      <button class="nav-btn next" onclick="goToSection(3)">Next: Understanding Closures →</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 3: Understanding Closures ==================== -->
+  <div class="section" id="section-3">
+    <div class="section-badge">📚 Chapter 4 of 8</div>
+    <h1>Understanding Closures</h1>
+    <p class="section-subtitle">The moment everything clicks! 💡</p>
+
+    <div class="info-box concept">
+      <div class="info-box-title">🔑 Definition</div>
+      <p>A <strong>closure</strong> is when a function <strong>remembers</strong> and can access variables from its outer (parent) scope, <strong>even after the parent function has finished executing</strong>.</p>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-title">🎒 The Backpack Analogy</div>
+      <p>When a function is created, it packs a <strong>backpack</strong> (closure) with all the variables from its surrounding scope. Even when the function travels far away (gets returned or passed elsewhere), it still carries that backpack and can reach into it anytime!</p>
+    </div>
+
+    <h2>Your First Closure</h2>
+
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>first-closure.js</span></div>
+      <div class="code-content"><span class="keyword">function</span> <span class="function">createGreeter</span>() {
+  <span class="keyword">const</span> name = <span class="string">"Alice"</span>;  <span class="comment">// ← This variable lives in createGreeter's scope</span>
+  
+  <span class="keyword">function</span> <span class="function">greet</span>() {
+    console.<span class="function">log</span>(<span class="string">"Hello, "</span> + name + <span class="string">"!"</span>);  <span class="comment">// ← greet() uses 'name' from parent</span>
+  }
+  
+  <span class="keyword">return</span> greet;  <span class="comment">// ← Return the inner function</span>
+}
+
+<span class="keyword">const</span> myGreeter = <span class="function">createGreeter</span>();  <span class="comment">// createGreeter() is DONE executing</span>
+<span class="comment">// Yet...</span>
+<span class="function">myGreeter</span>();  <span class="comment">// "Hello, Alice!" ← It still remembers 'name'!</span>
+<span class="comment">//                🎒 That's the closure! The backpack!</span></div>
+    </div>
+
+    <h2>Visualizing the Closure</h2>
+
+    <div class="closure-backpack">
+      <div class="backpack-item">
+        <div class="backpack-emoji">📦</div>
+        <div class="backpack-label">createGreeter()</div>
+        <div class="backpack-value">executes & returns</div>
+      </div>
+      <div class="closure-arrow">→</div>
+      <div class="backpack-item active">
+        <div class="backpack-emoji">🎒</div>
+        <div class="backpack-label">greet() carries</div>
+        <div class="backpack-value">name = "Alice"</div>
+      </div>
+      <div class="closure-arrow">→</div>
+      <div class="backpack-item">
+        <div class="backpack-emoji">🗣️</div>
+        <div class="backpack-label">myGreeter()</div>
+        <div class="backpack-value">"Hello, Alice!"</div>
+      </div>
+    </div>
+
+    <h2>Closure with Changing State</h2>
+    <p>Closures don't just remember values — they keep a <strong>live reference</strong> to the variable!</p>
+
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>counter-closure.js</span></div>
+      <div class="code-content"><span class="keyword">function</span> <span class="function">createCounter</span>() {
+  <span class="keyword">let</span> count = <span class="number">0</span>;  <span class="comment">// ← Private variable!</span>
+  
+  <span class="keyword">return</span> <span class="keyword">function</span>() {
+    count++;  <span class="comment">// ← Modifies the closed-over variable</span>
+    <span class="keyword">return</span> count;
+  };
+}
+
+<span class="keyword">const</span> counter = <span class="function">createCounter</span>();
+console.<span class="function">log</span>(<span class="function">counter</span>());  <span class="comment">// 1</span>
+console.<span class="function">log</span>(<span class="function">counter</span>());  <span class="comment">// 2</span>
+console.<span class="function">log</span>(<span class="function">counter</span>());  <span class="comment">// 3</span>
+<span class="comment">// Each call increments the SAME 'count' variable!</span>
+
+<span class="comment">// Each createCounter() call creates a NEW closure:</span>
+<span class="keyword">const</span> counter2 = <span class="function">createCounter</span>();
+console.<span class="function">log</span>(<span class="function">counter2</span>());  <span class="comment">// 1 ← Fresh count!</span></div>
+    </div>
+
+    <h2>🧪 Playground: Build a Counter</h2>
+
+    <div class="playground" id="playground-closure">
+      <div class="playground-header">
+        <div class="playground-title">🎮 Closure Playground</div>
+        <div>
+          <button class="reset-btn" onclick="resetPlayground('closure')">Reset</button>
+          <button class="run-btn" onclick="runPlayground('closure')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <div class="playground-editor">
+          <textarea id="editor-closure">function createCounter() {
+  let count = 0;
+  
+  return function() {
+    count++;
+    return count;
+  };
+}
+
+const counter = createCounter();
+console.log("Call 1:", counter());
+console.log("Call 2:", counter());
+console.log("Call 3:", counter());
+
+// Try: Create counter2 and see it has its own count!
+const counter2 = createCounter();
+console.log("Counter2, Call 1:", counter2());
+console.log("Back to counter1:", counter());</textarea>
+        </div>
+        <div class="playground-output" id="output-closure"></div>
+      </div>
+    </div>
+
+    <h2>Exercise: Create a Multiplier</h2>
+
+    <div class="exercise-box">
+      <div class="exercise-title">🏋️ Exercise: Closure Factory</div>
+      <div class="exercise-desc">Create a function <code>createMultiplier(x)</code> that returns a new function. The returned function should take a number <code>y</code> and return <code>x * y</code>.</div>
+      <div class="playground" id="playground-exercise1">
+        <div class="playground-header">
+          <div class="playground-title">✏️ Your Solution</div>
+          <div>
+            <button class="reset-btn" onclick="resetPlayground('exercise1')">Reset</button>
+            <button class="run-btn" onclick="runPlayground('exercise1')">▶ Run</button>
+          </div>
+        </div>
+        <div class="playground-body">
+          <div class="playground-editor">
+            <textarea id="editor-exercise1">// Create a function createMultiplier(x)
+// that returns a function which multiplies by x
+
+function createMultiplier(x) {
+  // Your code here!
+  // Hint: return a function that uses x
+}
+
+// Test your solution:
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+console.log("double(5):", double(5));   // Should print 10
+console.log("triple(5):", triple(5));   // Should print 15
+console.log("double(10):", double(10)); // Should print 20</textarea>
+          </div>
+          <div class="playground-output" id="output-exercise1"></div>
+        </div>
+      </div>
+      <button class="hint-btn" onclick="toggleHint('hint-ex1')">💡 Show Hint</button>
+      <div class="hint-text" id="hint-ex1">
+        Return a function from createMultiplier that takes parameter <code>y</code> and returns <code>x * y</code>. The inner function will "close over" the <code>x</code> parameter!
+        <br><br><code>function createMultiplier(x) { return function(y) { return x * y; }; }</code>
+      </div>
+    </div>
+
+    <h2>Quiz</h2>
+
+    <div class="quiz-container" id="quiz-closure-1">
+      <div class="quiz-question">
+        <span class="quiz-number">1</span>
+        What makes this a closure?
+      </div>
+      <div class="code-block">
+        <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>quiz.js</span></div>
+        <div class="code-content"><span class="keyword">function</span> <span class="function">outer</span>() {
+  <span class="keyword">let</span> secret = <span class="number">42</span>;
+  <span class="keyword">return</span> () => secret;
+}
+<span class="keyword">const</span> getSecret = <span class="function">outer</span>();
+console.<span class="function">log</span>(<span class="function">getSecret</span>());</div>
+      </div>
+      <div class="quiz-options">
+        <div class="quiz-option" data-answer="a" onclick="selectQuiz(this)"><div class="radio"></div>The arrow function accesses <code>secret</code> from its parent even after <code>outer()</code> has finished</div>
+        <div class="quiz-option" data-answer="b" onclick="selectQuiz(this)"><div class="radio"></div>Because we used <code>let</code> instead of <code>var</code></div>
+        <div class="quiz-option" data-answer="c" onclick="selectQuiz(this)"><div class="radio"></div>Because arrow functions always create closures</div>
+      </div>
+      <button class="quiz-check-btn" onclick="checkQuiz('quiz-closure-1', 'a')">Check Answer</button>
+      <div class="quiz-feedback" id="feedback-quiz-closure-1"></div>
+    </div>
+
+    <button class="section-complete-btn" onclick="completeSection(3)">✅ Mark Section Complete</button>
+
+    <div class="nav-footer">
+      <button class="nav-btn prev" onclick="goToSection(2)">← Previous</button>
+      <button class="nav-btn next" onclick="goToSection(4)">Next: Closure Patterns →</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 4: Closure Patterns ==================== -->
+  <div class="section" id="section-4">
+    <div class="section-badge">📚 Chapter 5 of 8</div>
+    <h1>Closure Patterns</h1>
+    <p class="section-subtitle">Real-world patterns you'll use every day as a developer.</p>
+
+    <div class="tab-container">
+      <div class="tab-header">
+        <button class="tab-btn active" onclick="switchTab(this, 'pattern-1')">🏭 Factory</button>
+        <button class="tab-btn" onclick="switchTab(this, 'pattern-2')">🔧 Config</button>
+        <button class="tab-btn" onclick="switchTab(this, 'pattern-3')">📝 Memoize</button>
+        <button class="tab-btn" onclick="switchTab(this, 'pattern-4')">🎯 Event</button>
+        <button class="tab-btn" onclick="switchTab(this, 'pattern-5')">🔄 Iterator</button>
+      </div>
+
+      <!-- Pattern 1: Function Factory -->
+      <div class="tab-content active" id="pattern-1">
+        <h3>🏭 Function Factory Pattern</h3>
+        <p>Create specialized functions from a general template.</p>
+        <div class="code-block">
+          <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>factory.js</span></div>
+          <div class="code-content"><span class="comment">// A factory that creates tax calculators for different states</span>
+<span class="keyword">function</span> <span class="function">createTaxCalculator</span>(taxRate) {
+  <span class="keyword">return</span> <span class="keyword">function</span>(amount) {
+    <span class="keyword">const</span> tax = amount * taxRate;
+    <span class="keyword">return</span> {
+      tax: tax.<span class="function">toFixed</span>(<span class="number">2</span>),
+      total: (amount + tax).<span class="function">toFixed</span>(<span class="number">2</span>)
+    };
+  };
+}
+
+<span class="keyword">const</span> calcNY = <span class="function">createTaxCalculator</span>(<span class="number">0.08</span>);   <span class="comment">// 8% tax</span>
+<span class="keyword">const</span> calcCA = <span class="function">createTaxCalculator</span>(<span class="number">0.0725</span>); <span class="comment">// 7.25% tax</span>
+
+console.<span class="function">log</span>(<span class="function">calcNY</span>(<span class="number">100</span>));  <span class="comment">// { tax: "8.00", total: "108.00" }</span>
+console.<span class="function">log</span>(<span class="function">calcCA</span>(<span class="number">100</span>));  <span class="comment">// { tax: "7.25", total: "107.25" }</span></div>
+        </div>
+      </div>
+
+      <!-- Pattern 2: Configuration -->
+      <div class="tab-content" id="pattern-2">
+        <h3>🔧 Configuration Pattern</h3>
+        <p>Lock in configuration settings that persist across calls.</p>
+        <div class="code-block">
+          <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>config.js</span></div>
+          <div class="code-content"><span class="keyword">function</span> <span class="function">createLogger</span>(prefix, showTime) {
+  <span class="keyword">return</span> <span class="keyword">function</span>(message) {
+    <span class="keyword">const</span> time = showTime ? <span class="string">`[${new Date().toLocaleTimeString()}] `</span> : <span class="string">""</span>;
+    console.<span class="function">log</span>(<span class="string">`${time}${prefix}: ${message}`</span>);
+  };
+}
+
+<span class="keyword">const</span> errorLog = <span class="function">createLogger</span>(<span class="string">"❌ ERROR"</span>, <span class="number">true</span>);
+<span class="keyword">const</span> infoLog = <span class="function">createLogger</span>(<span class="string">"ℹ️ INFO"</span>, <span class="number">false</span>);
+
+<span class="function">errorLog</span>(<span class="string">"Server crashed"</span>);  <span class="comment">// [10:30:45] ❌ ERROR: Server crashed</span>
+<span class="function">infoLog</span>(<span class="string">"User logged in"</span>);   <span class="comment">// ℹ️ INFO: User logged in</span></div>
+        </div>
+      </div>
+
+      <!-- Pattern 3: Memoization -->
+      <div class="tab-content" id="pattern-3">
+        <h3>📝 Memoization Pattern</h3>
+        <p>Cache expensive computation results using closure.</p>
+        <div class="code-block">
+          <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>memoize.js</span></div>
+          <div class="code-content"><span class="keyword">function</span> <span class="function">memoize</span>(fn) {
+  <span class="keyword">const</span> cache = {};  <span class="comment">// ← Hidden in closure!</span>
+  
+  <span class="keyword">return</span> <span class="keyword">function</span>(n) {
+    <span class="keyword">if</span> (cache[n] !== <span class="number">undefined</span>) {
+      console.<span class="function">log</span>(<span class="string">"📦 From cache!"</span>);
+      <span class="keyword">return</span> cache[n];
+    }
+    console.<span class="function">log</span>(<span class="string">"🔨 Computing..."</span>);
+    cache[n] = <span class="function">fn</span>(n);
+    <span class="keyword">return</span> cache[n];
+  };
+}
+
+<span class="keyword">const</span> slowSquare = <span class="function">memoize</span>((n) => n * n);
+
+console.<span class="function">log</span>(<span class="function">slowSquare</span>(<span class="number">5</span>));  <span class="comment">// 🔨 Computing... → 25</span>
+console.<span class="function">log</span>(<span class="function">slowSquare</span>(<span class="number">5</span>));  <span class="comment">// 📦 From cache! → 25</span>
+console.<span class="function">log</span>(<span class="function">slowSquare</span>(<span class="number">7</span>));  <span class="comment">// 🔨 Computing... → 49</span></div>
+        </div>
+      </div>
+
+      <!-- Pattern 4: Event Handlers -->
+      <div class="tab-content" id="pattern-4">
+        <h3>🎯 Event Handler Pattern</h3>
+        <p>Maintain state across multiple event triggers.</p>
+        <div class="code-block">
+          <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>events.js</span></div>
+          <div class="code-content"><span class="keyword">function</span> <span class="function">createClickTracker</span>(buttonName) {
+  <span class="keyword">let</span> clicks = <span class="number">0</span>;  <span class="comment">// ← Each button gets its own count</span>
+  
+  <span class="keyword">return</span> <span class="keyword">function</span>() {
+    clicks++;
+    console.<span class="function">log</span>(<span class="string">`${buttonName} clicked ${clicks} time(s)`</span>);
+  };
+}
+
+<span class="comment">// In a real app:</span>
+<span class="comment">// btn1.addEventListener('click', createClickTracker('Save'));</span>
+<span class="comment">// btn2.addEventListener('click', createClickTracker('Delete'));</span>
+
+<span class="keyword">const</span> trackSave = <span class="function">createClickTracker</span>(<span class="string">"Save"</span>);
+<span class="function">trackSave</span>();  <span class="comment">// Save clicked 1 time(s)</span>
+<span class="function">trackSave</span>();  <span class="comment">// Save clicked 2 time(s)</span></div>
+        </div>
+      </div>
+
+      <!-- Pattern 5: Iterator -->
+      <div class="tab-content" id="pattern-5">
+        <h3>🔄 Iterator Pattern</h3>
+        <p>Create custom iterators using closures.</p>
+        <div class="code-block">
+          <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>iterator.js</span></div>
+          <div class="code-content"><span class="keyword">function</span> <span class="function">createRangeIterator</span>(start, end) {
+  <span class="keyword">let</span> current = start;  <span class="comment">// ← State in closure</span>
+  
+  <span class="keyword">return</span> {
+    <span class="function">next</span>() {
+      <span class="keyword">if</span> (current <= end) {
+        <span class="keyword">return</span> { value: current++, done: <span class="number">false</span> };
+      }
+      <span class="keyword">return</span> { value: <span class="number">undefined</span>, done: <span class="number">true</span> };
+    }
+  };
+}
+
+<span class="keyword">const</span> iter = <span class="function">createRangeIterator</span>(<span class="number">1</span>, <span class="number">3</span>);
+console.<span class="function">log</span>(iter.<span class="function">next</span>());  <span class="comment">// { value: 1, done: false }</span>
+console.<span class="function">log</span>(iter.<span class="function">next</span>());  <span class="comment">// { value: 2, done: false }</span>
+console.<span class="function">log</span>(iter.<span class="function">next</span>());  <span class="comment">// { value: 3, done: false }</span>
+console.<span class="function">log</span>(iter.<span class="function">next</span>());  <span class="comment">// { value: undefined, done: true }</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>🧪 Try All Patterns</h2>
+
+    <div class="playground" id="playground-patterns">
+      <div class="playground-header">
+        <div class="playground-title">🎮 Pattern Playground</div>
+        <div>
+          <button class="reset-btn" onclick="resetPlayground('patterns')">Reset</button>
+          <button class="run-btn" onclick="runPlayground('patterns')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <div class="playground-editor">
+          <textarea id="editor-patterns">// Try: Function Factory
+function createGreeting(greeting) {
+  return function(name) {
+    return `${greeting}, ${name}!`;
+  };
+}
+
+const sayHello = createGreeting("Hello");
+const sayHi = createGreeting("Hi there");
+
+console.log(sayHello("Alice"));
+console.log(sayHi("Bob"));
+console.log(sayHello("Charlie"));
+
+// Try: Memoize
+function memoize(fn) {
+  const cache = {};
+  return function(n) {
+    if (cache[n] !== undefined) {
+      console.log("📦 Cached!");
+      return cache[n];
+    }
+    console.log("🔨 Computing...");
+    cache[n] = fn(n);
+    return cache[n];
+  };
+}
+
+const factorial = memoize(function(n) {
+  if (n <= 1) return 1;
+  return n * n; // simplified
+});
+
+console.log(factorial(5));
+console.log(factorial(5)); // cached!</textarea>
+        </div>
+        <div class="playground-output" id="output-patterns"></div>
+      </div>
+    </div>
+
+    <button class="section-complete-btn" onclick="completeSection(4)">✅ Mark Section Complete</button>
+
+    <div class="nav-footer">
+      <button class="nav-btn prev" onclick="goToSection(3)">← Previous</button>
+      <button class="nav-btn next" onclick="goToSection(5)">Next: Data Privacy →</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 5: Data Privacy ==================== -->
+  <div class="section" id="section-5">
+    <div class="section-badge">📚 Chapter 6 of 8</div>
+    <h1>Data Privacy with Closures</h1>
+    <p class="section-subtitle">JavaScript's way of creating truly private data.</p>
+
+    <div class="info-box concept">
+      <div class="info-box-title">🔐 The Core Idea</div>
+      <p>JavaScript doesn't have true <code>private</code> keyword like Java or C#. Instead, we use <strong>closures</strong> to create variables that can only be accessed through specific functions — this is the <strong>Module Pattern</strong>!</p>
+    </div>
+
+    <h2>Without Privacy (The Problem)</h2>
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>no-privacy.js</span></div>
+      <div class="code-content"><span class="comment">// ❌ BAD: Anyone can mess with the balance!</span>
+<span class="keyword">const</span> account = {
+  balance: <span class="number">1000</span>,
+  withdraw(amount) { <span class="keyword">this</span>.balance -= amount; }
+};
+
+account.balance = <span class="number">999999</span>;  <span class="comment">// 😱 Anyone can do this!</span>
+console.<span class="function">log</span>(account.balance);  <span class="comment">// 999999 — no protection!</span></div>
+    </div>
+
+    <h2>With Closure Privacy (The Solution)</h2>
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>with-privacy.js</span></div>
+      <div class="code-content"><span class="comment">// ✅ GOOD: Balance is truly private!</span>
+<span class="keyword">function</span> <span class="function">createBankAccount</span>(initialBalance) {
+  <span class="keyword">let</span> balance = initialBalance;  <span class="comment">// 🔒 Private!</span>
+  <span class="keyword">let</span> transactions = [];          <span class="comment">// 🔒 Private!</span>
+  
+  <span class="keyword">return</span> {
+    <span class="function">deposit</span>(amount) {
+      <span class="keyword">if</span> (amount <= <span class="number">0</span>) <span class="keyword">return</span> <span class="string">"Invalid amount"</span>;
+      balance += amount;
+      transactions.<span class="function">push</span>({ type: <span class="string">"deposit"</span>, amount });
+      <span class="keyword">return</span> <span class="string">`Deposited $${amount}. Balance: $${balance}`</span>;
+    },
+    <span class="function">withdraw</span>(amount) {
+      <span class="keyword">if</span> (amount > balance) <span class="keyword">return</span> <span class="string">"Insufficient funds!"</span>;
+      balance -= amount;
+      transactions.<span class="function">push</span>({ type: <span class="string">"withdraw"</span>, amount });
+      <span class="keyword">return</span> <span class="string">`Withdrew $${amount}. Balance: $${balance}`</span>;
+    },
+    <span class="function">getBalance</span>() { <span class="keyword">return</span> <span class="string">`$${balance}`</span>; },
+    <span class="function">getHistory</span>() { <span class="keyword">return</span> [...transactions]; } <span class="comment">// Return copy!</span>
+  };
+}
+
+<span class="keyword">const</span> myAccount = <span class="function">createBankAccount</span>(<span class="number">1000</span>);
+console.<span class="function">log</span>(myAccount.<span class="function">deposit</span>(<span class="number">500</span>));
+console.<span class="function">log</span>(myAccount.<span class="function">withdraw</span>(<span class="number">200</span>));
+console.<span class="function">log</span>(myAccount.<span class="function">getBalance</span>());
+
+<span class="comment">// myAccount.balance = 999999;  // ❌ This does NOTHING!</span>
+<span class="comment">// console.log(myAccount.balance); // undefined — it's not a property!</span></div>
+    </div>
+
+    <h2>The Module Pattern (IIFE)</h2>
+    <p>Combine closures with Immediately Invoked Function Expressions for instant modules:</p>
+
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>module-pattern.js</span></div>
+      <div class="code-content"><span class="keyword">const</span> UserModule = (<span class="keyword">function</span>() {
+  <span class="comment">// Private data</span>
+  <span class="keyword">const</span> users = [];
+  <span class="keyword">let</span> nextId = <span class="number">1</span>;
+  
+  <span class="comment">// Private function</span>
+  <span class="keyword">function</span> <span class="function">findUser</span>(id) {
+    <span class="keyword">return</span> users.<span class="function">find</span>(u => u.id === id);
+  }
+  
+  <span class="comment">// Public API (returned object)</span>
+  <span class="keyword">return</span> {
+    <span class="function">addUser</span>(name) {
+      <span class="keyword">const</span> user = { id: nextId++, name };
+      users.<span class="function">push</span>(user);
+      <span class="keyword">return</span> user;
+    },
+    <span class="function">getUser</span>(id) { <span class="keyword">return</span> <span class="function">findUser</span>(id); },
+    <span class="function">getUserCount</span>() { <span class="keyword">return</span> users.length; }
+  };
+})(); <span class="comment">// ← Immediately invoked!</span>
+
+UserModule.<span class="function">addUser</span>(<span class="string">"Alice"</span>);
+UserModule.<span class="function">addUser</span>(<span class="string">"Bob"</span>);
+console.<span class="function">log</span>(UserModule.<span class="function">getUserCount</span>());  <span class="comment">// 2</span>
+console.<span class="function">log</span>(UserModule.<span class="function">getUser</span>(<span class="number">1</span>));       <span class="comment">// { id: 1, name: "Alice" }</span>
+<span class="comment">// UserModule.users → undefined (private!)</span></div>
+    </div>
+
+    <h2>🧪 Try It: Build a Password Vault</h2>
+
+    <div class="exercise-box">
+      <div class="exercise-title">🏋️ Exercise: Password Vault</div>
+      <div class="exercise-desc">Create a <code>createVault(masterPassword)</code> function that stores secrets privately. It should have methods: <code>store(key, value, password)</code>, <code>retrieve(key, password)</code>, and <code>list(password)</code>.</div>
+      <div class="playground" id="playground-privacy">
+        <div class="playground-header">
+          <div class="playground-title">✏️ Your Solution</div>
+          <div>
+            <button class="reset-btn" onclick="resetPlayground('privacy')">Reset</button>
+            <button class="run-btn" onclick="runPlayground('privacy')">▶ Run</button>
+          </div>
+        </div>
+        <div class="playground-body">
+          <div class="playground-editor">
+            <textarea id="editor-privacy">function createVault(masterPassword) {
+  // Private data - nobody can access this directly!
+  const secrets = {};
+  
+  return {
+    store(key, value, password) {
+      if (password !== masterPassword) return "❌ Wrong password!";
+      secrets[key] = value;
+      return `✅ Stored "${key}" securely`;
+    },
+    retrieve(key, password) {
+      if (password !== masterPassword) return "❌ Wrong password!";
+      return secrets[key] || "Key not found";
+    },
+    list(password) {
+      if (password !== masterPassword) return "❌ Wrong password!";
+      return Object.keys(secrets);
+    }
+  };
+}
+
+const vault = createVault("mySecret123");
+
+console.log(vault.store("email", "alice@mail.com", "mySecret123"));
+console.log(vault.store("pin", "1234", "mySecret123"));
+console.log(vault.retrieve("email", "mySecret123"));
+console.log(vault.retrieve("email", "wrongPass"));
+console.log(vault.list("mySecret123"));
+
+// Try accessing secrets directly:
+console.log("Direct access:", vault.secrets); // undefined!</textarea>
+          </div>
+          <div class="playground-output" id="output-privacy"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="section-complete-btn" onclick="completeSection(5)">✅ Mark Section Complete</button>
+
+    <div class="nav-footer">
+      <button class="nav-btn prev" onclick="goToSection(4)">← Previous</button>
+      <button class="nav-btn next" onclick="goToSection(6)">Next: Common Pitfalls ⚠️ →</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 6: Common Pitfalls ==================== -->
+  <div class="section" id="section-6">
+    <div class="section-badge">📚 Chapter 7 of 8</div>
+    <h1>Common Closure Pitfalls ⚠️</h1>
+    <p class="section-subtitle">Mistakes everyone makes — and how to avoid them!</p>
+
+    <!-- Pitfall 1: Loop + var -->
+    <h2>❌ Pitfall #1: The Classic Loop Problem</h2>
+
+    <div class="info-box danger">
+      <div class="info-box-title">🔥 The Most Famous Closure Bug</div>
+      <p>Using <code>var</code> in a loop with closures causes ALL closures to share the SAME variable!</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>❌ broken.js</span></div>
+      <div class="code-content"><span class="comment">// ❌ THE BUG: All functions print 3!</span>
+<span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i < <span class="number">3</span>; i++) {
+  <span class="function">setTimeout</span>(<span class="keyword">function</span>() {
+    console.<span class="function">log</span>(<span class="string">"var i ="</span>, i);
+  }, <span class="number">100</span>);
+}
+<span class="comment">// Output: 3, 3, 3  — NOT 0, 1, 2!</span>
+<span class="comment">// Why? All 3 callbacks share the SAME 'i' variable</span>
+<span class="comment">// By the time they run, the loop is done and i = 3</span></div>
+    </div>
+
+    <h3>✅ Fix 1: Use <code>let</code> (Easiest!)</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>✅ fix-let.js</span></div>
+      <div class="code-content"><span class="comment">// ✅ FIX: 'let' creates a new scope for each iteration!</span>
+<span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i < <span class="number">3</span>; i++) {
+  <span class="function">setTimeout</span>(<span class="keyword">function</span>() {
+    console.<span class="function">log</span>(<span class="string">"let i ="</span>, i);
+  }, <span class="number">100</span>);
+}
+<span class="comment">// Output: 0, 1, 2 ✅</span></div>
+    </div>
+
+    <h3>✅ Fix 2: Use an IIFE (Classic approach)</h3>
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>✅ fix-iife.js</span></div>
+      <div class="code-content"><span class="comment">// ✅ FIX: IIFE captures each value of i</span>
+<span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i < <span class="number">3</span>; i++) {
+  (<span class="keyword">function</span>(captured) {
+    <span class="function">setTimeout</span>(<span class="keyword">function</span>() {
+      console.<span class="function">log</span>(<span class="string">"iife i ="</span>, captured);
+    }, <span class="number">100</span>);
+  })(i);  <span class="comment">// ← Pass current i value</span>
+}
+<span class="comment">// Output: 0, 1, 2 ✅</span></div>
+    </div>
+
+    <h2>🧪 See the Bug in Action</h2>
+
+    <div class="playground" id="playground-pitfall1">
+      <div class="playground-header">
+        <div class="playground-title">🐛 Bug vs Fix Playground</div>
+        <div>
+          <button class="reset-btn" onclick="resetPlayground('pitfall1')">Reset</button>
+          <button class="run-btn" onclick="runPlayground('pitfall1')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <div class="playground-editor">
+          <textarea id="editor-pitfall1">// ❌ THE BUG (with var)
+console.log("=== BUG (var) ===");
+var funcsVar = [];
+for (var i = 0; i < 3; i++) {
+  funcsVar.push(function() { return i; });
+}
+// All return 3!
+console.log(funcsVar[0]()); // 3
+console.log(funcsVar[1]()); // 3
+console.log(funcsVar[2]()); // 3
+
+// ✅ THE FIX (with let)
+console.log("\n=== FIX (let) ===");
+var funcsLet = [];
+for (let j = 0; j < 3; j++) {
+  funcsLet.push(function() { return j; });
+}
+// Each returns correct value!
+console.log(funcsLet[0]()); // 0
+console.log(funcsLet[1]()); // 1
+console.log(funcsLet[2]()); // 2</textarea>
+        </div>
+        <div class="playground-output" id="output-pitfall1"></div>
+      </div>
+    </div>
+
+    <!-- Pitfall 2 -->
+    <h2>❌ Pitfall #2: Stale Closures</h2>
+
+    <div class="info-box warning">
+      <div class="info-box-title">⚠️ What is a Stale Closure?</div>
+      <p>A closure captures a reference to a variable, not a snapshot. But if you accidentally create a closure over an old value (like in React hooks or callbacks), you get a <strong>stale closure</strong> — the function uses outdated data!</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>stale-closure.js</span></div>
+      <div class="code-content"><span class="keyword">function</span> <span class="function">createStaleExample</span>() {
+  <span class="keyword">let</span> value = <span class="string">"original"</span>;
+  
+  <span class="comment">// This closure captures 'value' at creation time concept</span>
+  <span class="keyword">function</span> <span class="function">getValue</span>() {
+    <span class="keyword">return</span> value;  <span class="comment">// ← Reads CURRENT value (live reference!)</span>
+  }
+  
+  <span class="keyword">function</span> <span class="function">setValue</span>(newVal) {
+    value = newVal;
+  }
+  
+  <span class="keyword">return</span> { getValue, setValue };
+}
+
+<span class="keyword">const</span> obj = <span class="function">createStaleExample</span>();
+console.<span class="function">log</span>(obj.<span class="function">getValue</span>());  <span class="comment">// "original"</span>
+obj.<span class="function">setValue</span>(<span class="string">"updated"</span>);
+console.<span class="function">log</span>(obj.<span class="function">getValue</span>());  <span class="comment">// "updated" ← Live reference!</span></div>
+    </div>
+
+    <!-- Pitfall 3 -->
+    <h2>❌ Pitfall #3: Memory Leaks</h2>
+
+    <div class="info-box danger">
+      <div class="info-box-title">🧠 Closures Hold References!</div>
+      <p>Closures keep their outer variables alive in memory. If you store large data in a closure and forget about it, you create a <strong>memory leak</strong>.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>memory-leak.js</span></div>
+      <div class="code-content"><span class="comment">// ❌ BAD: Huge array stays in memory forever!</span>
+<span class="keyword">function</span> <span class="function">createLeaky</span>() {
+  <span class="keyword">const</span> hugeData = <span class="keyword">new</span> <span class="function">Array</span>(<span class="number">1000000</span>).<span class="function">fill</span>(<span class="string">"🔥"</span>);
+  <span class="keyword">return</span> <span class="keyword">function</span>() {
+    <span class="keyword">return</span> hugeData.length; <span class="comment">// Closure keeps hugeData alive!</span>
+  };
+}
+
+<span class="comment">// ✅ BETTER: Only close over what you need</span>
+<span class="keyword">function</span> <span class="function">createEfficient</span>() {
+  <span class="keyword">const</span> hugeData = <span class="keyword">new</span> <span class="function">Array</span>(<span class="number">1000000</span>).<span class="function">fill</span>(<span class="string">"🔥"</span>);
+  <span class="keyword">const</span> length = hugeData.length; <span class="comment">// Extract what you need</span>
+  <span class="comment">// hugeData can now be garbage collected!</span>
+  <span class="keyword">return</span> <span class="keyword">function</span>() {
+    <span class="keyword">return</span> length;
+  };
+}</div>
+    </div>
+
+    <!-- Pitfall 4 -->
+    <h2>❌ Pitfall #4: Accidental Shared State</h2>
+
+    <div class="playground" id="playground-pitfall2">
+      <div class="playground-header">
+        <div class="playground-title">🐛 Shared State Bug</div>
+        <div>
+          <button class="reset-btn" onclick="resetPlayground('pitfall2')">Reset</button>
+          <button class="run-btn" onclick="runPlayground('pitfall2')">▶ Run</button>
+        </div>
+      </div>
+      <div class="playground-body">
+        <div class="playground-editor">
+          <textarea id="editor-pitfall2">// ❌ MISTAKE: Forgetting that closures share variables
+function createFunctions() {
+  var result = [];
+  var data = "shared";
+  
+  for (var i = 0; i < 3; i++) {
+    result.push({
+      id: i,
+      getData: function() { return data + " " + i; }
+    });
+  }
+  return result;
+}
+
+var objs = createFunctions();
+console.log("Bug: all show i=3:");
+objs.forEach(obj => console.log("id:", obj.id, "data:", obj.getData()));
+
+// ✅ FIX: Use let or create separate closures
+function createFunctionsFixed() {
+  var result = [];
+  var data = "shared";
+  
+  for (let i = 0; i < 3; i++) {  // let fixes it!
+    result.push({
+      id: i,
+      getData: function() { return data + " " + i; }
+    });
+  }
+  return result;
+}
+
+var objsFixed = createFunctionsFixed();
+console.log("\nFixed:");
+objsFixed.forEach(obj => console.log("id:", obj.id, "data:", obj.getData()));</textarea>
+        </div>
+        <div class="playground-output" id="output-pitfall2"></div>
+      </div>
+    </div>
+
+    <h2>📋 Pitfall Cheat Sheet</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Pitfall</th>
+          <th>Cause</th>
+          <th>Fix</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Loop + var</td>
+          <td>All closures share one <code>var</code></td>
+          <td>Use <code>let</code> or IIFE</td>
+        </tr>
+        <tr>
+          <td>Stale closure</td>
+          <td>Closure reads outdated value</td>
+          <td>Ensure live reference or re-create closure</td>
+        </tr>
+        <tr>
+          <td>Memory leak</td>
+          <td>Closure holds large objects</td>
+          <td>Extract only needed values</td>
+        </tr>
+        <tr>
+          <td>Shared state</td>
+          <td>Multiple closures modify same var</td>
+          <td>Create separate scopes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button class="section-complete-btn" onclick="completeSection(6)">✅ Mark Section Complete</button>
+
+    <div class="nav-footer">
+      <button class="nav-btn prev" onclick="goToSection(5)">← Previous</button>
+      <button class="nav-btn next" onclick="goToSection(7)">Next: Final Quiz 🏆 →</button>
+    </div>
+  </div>
+
+  <!-- ==================== SECTION 7: Final Quiz ==================== -->
+  <div class="section" id="section-7">
+    <div class="section-badge">🏆 Final Challenge</div>
+    <h1>Final Quiz</h1>
+    <p class="section-subtitle">Test everything you've learned! 10 questions covering all topics.</p>
+
+    <div id="finalQuizContainer"></div>
+
+    <div id="quizResults" style="display:none;">
+      <div class="final-score">
+        <div class="score-number" id="finalScoreNum">0/10</div>
+        <div class="score-label" id="finalScoreLabel">Keep practicing!</div>
+      </div>
+      <button class="section-complete-btn" onclick="completeSection(7)" id="finalCompleteBtn">🏆 Complete Course!</button>
+    </div>
+
+    <div class="nav-footer">
+      <button class="nav-btn prev" onclick="goToSection(6)">← Previous</button>
+      <div></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // =========================================
+  // STATE MANAGEMENT
+  // =========================================
+  const state = {
+    currentSection: 0,
+    completed: new Set(),
+    totalSections: 8
+  };
+
+  // =========================================
+  // NAVIGATION
+  // =========================================
+  function goToSection(index) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    document.getElementById(`section-${index}`).classList.add('active');
+    document.querySelectorAll('.nav-item')[index].classList.add('active');
+    state.currentSection = index;
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      goToSection(parseInt(item.dataset.section));
+      if (window.innerWidth < 768) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+    });
+  });
+
+  function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const mn = document.getElementById('main');
+    const tb = document.getElementById('toggleBtn');
+
+    if (window.innerWidth < 768) {
+      sb.classList.toggle('open');
+    } else {
+      sb.classList.toggle('collapsed');
+      mn.classList.toggle('expanded');
+      tb.classList.toggle('shifted');
+    }
+  }
+
+  // =========================================
+  // PROGRESS TRACKING
+  // =========================================
+  function completeSection(index) {
+    state.completed.add(index);
+    const btn = document.querySelectorAll('.section')[index].querySelector('.section-complete-btn');
+    if (btn) {
+      btn.textContent = '✅ Completed!';
+      btn.classList.add('completed');
+    }
+
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems[index].classList.add('completed');
+    navItems[index].querySelector('.nav-icon').textContent = '✓';
+
+    updateProgress();
+
+    if (state.completed.size === state.totalSections) {
+      launchConfetti();
+    }
+  }
+
+  function updateProgress() {
+    const pct = (state.completed.size / state.totalSections) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${state.completed.size} / ${state.totalSections} completed`;
+  }
+
+  // =========================================
+  // CODE PLAYGROUNDS
+  // =========================================
+  const defaultCode = {};
+
+  function initPlaygrounds() {
+    document.querySelectorAll('textarea[id^="editor-"]').forEach(ta => {
+      const key = ta.id.replace('editor-', '');
+      defaultCode[key] = ta.value;
+
+      ta.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const s = ta.selectionStart;
+          const end = ta.selectionEnd;
+          ta.value = ta.value.substring(0, s) + '  ' + ta.value.substring(end);
+          ta.selectionStart = ta.selectionEnd = s + 2;
+        }
+      });
+    });
+  }
+
+  function resetPlayground(id) {
+    document.getElementById(`editor-${id}`).value = defaultCode[id];
+    document.getElementById(`output-${id}`).innerHTML = '';
+  }
+
+  function runPlayground(id) {
+    const code = document.getElementById(`editor-${id}`).value;
+    const output = document.getElementById(`output-${id}`);
+    output.innerHTML = '';
+
+    const originalLog = console.log;
+    const logs = [];
+
+    console.log = function(...args) {
+      const text = args.map(a => {
+        if (typeof a === 'object') {
+          try { return JSON.stringify(a); } catch(e) { return String(a); }
+        }
+        return String(a);
+      }).join(' ');
+      logs.push({ text, type: 'log' });
+    };
+
+    try {
+      const fn = new Function(code);
+      fn();
+    } catch(e) {
+      logs.push({ text: `Error: ${e.message}`, type: 'error' });
+    }
+
+    console.log = originalLog;
+
+    logs.forEach(log => {
+      const line = document.createElement('div');
+      line.className = `log-line ${log.type === 'error' ? 'error' : ''}`;
+      line.textContent = `${log.type === 'error' ? '❌ ' : '→ '}${log.text}`;
+      output.appendChild(line);
+    });
+
+    if (logs.length === 0) {
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.textContent = '(no output)';
+      line.style.color = 'var(--text3)';
+      output.appendChild(line);
+    }
+  }
+
+  // =========================================
+  // QUIZZES
+  // =========================================
+  function selectQuiz(el) {
+    const container = el.closest('.quiz-container');
+    if (container.dataset.answered) return;
+    container.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function checkQuiz(quizId, correctAnswer) {
+    const container = document.getElementById(quizId);
+    if (container.dataset.answered) return;
+
+    const selected = container.querySelector('.quiz-option.selected');
+    if (!selected) return;
+
+    container.dataset.answered = 'true';
+    const answer = selected.dataset.answer;
+    const feedback = document.getElementById(`feedback-${quizId}`);
+
+    container.querySelectorAll('.quiz-option').forEach(o => {
+      if (o.dataset.answer === correctAnswer) o.classList.add('correct');
+    });
+
+    if (answer === correctAnswer) {
+      feedback.className = 'quiz-feedback show correct';
+      feedback.textContent = '🎉 Correct! Great job!';
+    } else {
+      selected.classList.add('wrong');
+      feedback.className = 'quiz-feedback show wrong';
+      feedback.textContent = '❌ Not quite. Check the correct answer highlighted in green above.';
+    }
+  }
+
+  // =========================================
+  // SCOPE CHAIN VISUALIZATION
+  // =========================================
+  function showScopeStep(step) {
+    document.querySelectorAll('#scope-chain-viz .viz-step-btn').forEach((b, i) => {
+      b.classList.toggle('active', i === step);
+    });
+
+    const result = document.getElementById('lookup-result');
+    const svA = document.getElementById('sv-a');
+    const svB = document.getElementById('sv-b');
+    const svC = document.getElementById('sv-c');
+
+    [svA, svB, svC].forEach(el => el.style.background = '');
+    result.innerHTML = '';
+
+    const messages = [
+      '🔍 Code is written. Scopes are determined by where functions are defined (lexically).',
+      '📦 outer() is called — creates its scope with variable b.',
+      '🧱 inner() is called inside outer() — creates its scope with variable c.',
+      '✅ Looking up <strong>c</strong>: Found in current scope (inner)! No need to look further.',
+      '🔍 Looking up <strong>b</strong>: Not in inner → look in outer → Found! ✅',
+      '🔍 Looking up <strong>a</strong>: Not in inner → not in outer → look in global → Found! ✅'
+    ];
+
+    result.innerHTML = messages[step];
+
+    if (step === 3) { svC.style.background = 'rgba(16,185,129,0.4)'; }
+    if (step === 4) { svB.style.background = 'rgba(245,158,11,0.4)'; }
+    if (step === 5) { svA.style.background = 'rgba(239,68,68,0.4)'; }
+  }
+
+  // =========================================
+  // TABS
+  // =========================================
+  function switchTab(btn, contentId) {
+    const container = btn.closest('.tab-container');
+    container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(contentId).classList.add('active');
+  }
+
+  // =========================================
+  // HINTS
+  // =========================================
+  function toggleHint(id) {
+    document.getElementById(id).classList.toggle('show');
+  }
+
+  // =========================================
+  // CONFETTI
+  // =========================================
+  function launchConfetti() {
+    const container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+
+    const colors = ['#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
+    for (let i = 0; i < 100; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDelay = Math.random() * 2 + 's';
+      piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+      container.appendChild(piece);
+    }
+    setTimeout(() => container.remove(), 5000);
+  }
+
+  // =========================================
+  // FINAL QUIZ
+  // =========================================
+  const finalQuizData = [
+    {
+      q: 'What is a closure?',
+      code: null,
+      options: [
+        'A function that is immediately invoked',
+        'A function that remembers variables from its outer scope even after the outer function returns',
+        'A function declared with the const keyword',
+        'A function that takes another function as an argument'
+      ],
+      correct: 1,
+      explanation: 'A closure is created when a function retains access to its lexical scope\'s variables even after the outer function has finished executing.'
+    },
+    {
+      q: 'What does this code output?',
+      code: 'function outer() {\n  let x = 10;\n  function inner() {\n    console.log(x);\n  }\n  x = 20;\n  return inner;\n}\nouter()();',
+      options: ['10', '20', 'undefined', 'ReferenceError'],
+      correct: 1,
+      explanation: 'Closures keep a live reference, not a snapshot. By the time inner() runs, x has been changed to 20.'
+    },
+    {
+      q: 'What is lexical scope?',
+      code: null,
+      options: [
+        'Scope determined at runtime by where a function is called',
+        'Scope determined at write-time by where a function is defined in the source code',
+        'Scope that only applies to let and const',
+        'Scope inside a class definition'
+      ],
+      correct: 1,
+      explanation: 'Lexical (static) scope means scope is determined by where code is physically written, not where it\'s called from.'
+    },
+    {
+      q: 'What will this output?',
+      code: 'for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}',
+      options: ['0, 1, 2', '3, 3, 3', 'undefined, undefined, undefined', '0, 0, 0'],
+      correct: 1,
+      explanation: 'Classic var-in-loop pitfall! var is function-scoped, so all callbacks share the same i, which is 3 after the loop.'
+    },
+    {
+      q: 'How do you fix the var-in-loop closure problem?',
+      code: null,
+      options: [
+        'Use const instead of var',
+        'Use let instead of var (creates new binding per iteration)',
+        'Use a while loop instead',
+        'Add "use strict"'
+      ],
+      correct: 1,
+      explanation: 'let creates a new binding for each loop iteration, so each closure captures its own copy of i.'
+    },
+    {
+      q: 'What will this output?',
+      code: 'function make() {\n  let count = 0;\n  return {\n    inc: () => ++count,\n    get: () => count\n  };\n}\nconst c = make();\nc.inc();\nc.inc();\nconsole.log(c.get());',
+      options: ['0', '1', '2', 'undefined'],
+      correct: 2,
+      explanation: 'inc() is called twice, incrementing count from 0→1→2. get() returns the current count: 2.'
+    },
+    {
+      q: 'What is the Module Pattern used for?',
+      code: null,
+      options: [
+        'Making code run faster',
+        'Creating private variables and exposing a public API using closures',
+        'Importing files from other modules',
+        'Creating global variables'
+      ],
+      correct: 1,
+      explanation: 'The Module Pattern uses closures (often with IIFE) to create private state and return a public interface.'
+    },
+    {
+      q: 'Can an outer function access variables inside its inner function?',
+      code: null,
+      options: [
+        'Yes, scope chain works in both directions',
+        'No, the scope chain only looks outward (upward), never inward',
+        'Only if you use var',
+        'Only if the inner function is an arrow function'
+      ],
+      correct: 1,
+      explanation: 'The scope chain is one-directional — inner can access outer, but outer cannot access inner.'
+    },
+    {
+      q: 'What will this output?',
+      code: 'function createFns() {\n  let fns = [];\n  for (let i = 0; i < 3; i++) {\n    fns.push(() => i);\n  }\n  return fns;\n}\nconst arr = createFns();\nconsole.log(arr[0](), arr[1](), arr[2]());',
+      options: ['3 3 3', '0 1 2', 'undefined undefined undefined', '0 0 0'],
+      correct: 1,
+      explanation: 'Using let in the for-loop creates a new i for each iteration. Each closure captures its own i value.'
+    },
+    {
+      q: 'What is a potential downside of closures?',
+      code: null,
+      options: [
+        'They make code run slower by 50%',
+        'They can cause memory leaks by keeping references to outer variables alive',
+        'They cannot be used with arrow functions',
+        'They only work in strict mode'
+      ],
+      correct: 1,
+      explanation: 'Closures keep references to their outer scope alive. If large data is referenced, it cannot be garbage collected.'
+    }
+  ];
+
+  function buildFinalQuiz() {
+    const container = document.getElementById('finalQuizContainer');
+    let html = '';
+
+    finalQuizData.forEach((q, index) => {
+      html += `<div class="quiz-container" id="fq-${index}">
+        <div class="quiz-question">
+          <span class="quiz-number">${index + 1}</span>
+          ${q.q}
+        </div>`;
+
+      if (q.code) {
+        html += `<div class="code-block">
+          <div class="code-header"><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div><span>question ${index + 1}</span></div>
+          <div class="code-content" style="white-space:pre">${escapeHtml(q.code)}</div>
+        </div>`;
+      }
+
+      html += '<div class="quiz-options">';
+      q.options.forEach((opt, oi) => {
+        html += `<div class="quiz-option" data-answer="${oi}" onclick="selectFinalQuiz(this)">
+          <div class="radio"></div>
+          <span>${escapeHtml(opt)}</span>
+        </div>`;
+      });
+      html += '</div>';
+      html += `<button class="quiz-check-btn" onclick="checkFinalQuiz(${index})">Check Answer</button>`;
+      html += `<div class="quiz-feedback" id="feedback-fq-${index}"></div>`;
+      html += '</div>';
+    });
+
+    html += '<button class="quiz-check-btn" style="width:100%;margin-top:24px;padding:14px;font-size:16px;" onclick="showFinalResults()">📊 Show My Results</button>';
+
+    container.innerHTML = html;
+  }
+
+  function selectFinalQuiz(el) {
+    const container = el.closest('.quiz-container');
+    if (container.dataset.answered) return;
+    container.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function checkFinalQuiz(index) {
+    const container = document.getElementById(`fq-${index}`);
+    if (container.dataset.answered) return;
+
+    const selected = container.querySelector('.quiz-option.selected');
+    if (!selected) return;
+
+    container.dataset.answered = 'true';
+    const answer = parseInt(selected.dataset.answer);
+    const correct = finalQuizData[index].correct;
+    const feedback = document.getElementById(`feedback-fq-${index}`);
+
+    container.querySelectorAll('.quiz-option').forEach(o => {
+      if (parseInt(o.dataset.answer) === correct) o.classList.add('correct');
+    });
+
+    if (answer === correct) {
+      feedback.className = 'quiz-feedback show correct';
+      feedback.innerHTML = `🎉 Correct! ${finalQuizData[index].explanation}`;
+    } else {
+      selected.classList.add('wrong');
+      feedback.className = 'quiz-feedback show wrong';
+      feedback.innerHTML = `❌ Incorrect. ${finalQuizData[index].explanation}`;
+    }
+  }
+
+  function showFinalResults() {
+    let score = 0;
+    finalQuizData.forEach((q, i) => {
+      const container = document.getElementById(`fq-${i}`);
+      if (!container.dataset.answered) {
+        // Auto-skip unanswered
+        container.dataset.answered = 'true';
+        const correct = q.correct;
+        container.querySelectorAll('.quiz-option').forEach(o => {
+          if (parseInt(o.dataset.answer) === correct) o.classList.add('correct');
+        });
+        const feedback = document.getElementById(`feedback-fq-${i}`);
+        feedback.className = 'quiz-feedback show wrong';
+        feedback.innerHTML = `⏭️ Skipped. ${q.explanation}`;
+      }
+      const selected = container.querySelector('.quiz-option.selected');
+      if (selected && parseInt(selected.dataset.answer) === q.correct) {
+        score++;
+      }
+    });
+
+    document.getElementById('quizResults').style.display = 'block';
+    document.getElementById('finalScoreNum').textContent = `${score}/10`;
+
+    let label = '';
+    if (score === 10) label = '🏆 Perfect Score! You\'re a Closure Master!';
+    else if (score >= 8) label = '🌟 Excellent! You really understand closures!';
+    else if (score >= 6) label = '👍 Good job! Review the topics you missed.';
+    else if (score >= 4) label = '📚 Keep learning! Re-read the sections and try again.';
+    else label = '💪 Don\'t give up! Go through each section again carefully.';
+
+    document.getElementById('finalScoreLabel').textContent = label;
+
+    if (score >= 8) launchConfetti();
+
+    document.getElementById('quizResults').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // =========================================
+  // INIT
+  // =========================================
+  document.addEventListener('DOMContentLoaded', () => {
+    initPlaygrounds();
+    buildFinalQuiz();
+  });
+</script>
+</body>
+</html>

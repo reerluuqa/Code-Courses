@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Master Callbacks | Async JavaScript</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--pri:#6366f1;--pri-l:#818cf8;--sec:#10b981;--warn:#f59e0b;--danger:#ef4444;--bg:#0f172a;--card:#1e293b;--code:#0d1117;--text:#e2e8f0;--dim:#94a3b8;--border:#334155}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+.nav{position:fixed;left:0;top:0;width:260px;height:100vh;background:var(--card);border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;z-index:100;transition:transform .3s}
+.nav-title{padding:0 20px 15px;font-size:1.2rem;font-weight:700;color:var(--pri-l);border-bottom:1px solid var(--border);margin-bottom:8px}
+.nav-title span{font-size:1.5rem}
+.nav a{display:flex;align-items:center;gap:8px;padding:9px 20px;color:var(--dim);text-decoration:none;transition:all .3s;border-left:3px solid transparent;font-size:.85rem}
+.nav a:hover,.nav a.active{color:var(--pri-l);background:rgba(99,102,241,.1);border-left-color:var(--pri)}
+.nav a.completed{color:var(--sec)}
+.nav a.completed::after{content:'✓';margin-left:auto;font-weight:700}
+.nav-progress{padding:15px 20px;border-top:1px solid var(--border);margin-top:10px}
+.nav-progress-text{font-size:.72rem;color:var(--dim);margin-bottom:5px}
+.mini-bar{width:100%;height:6px;background:var(--code);border-radius:3px;overflow:hidden}
+.mini-fill{height:100%;background:linear-gradient(90deg,var(--pri),var(--sec));border-radius:3px;transition:width .5s;width:0%}
+.hamburger{display:none;position:fixed;top:15px;left:15px;z-index:200;background:var(--pri);border:none;color:#fff;width:40px;height:40px;border-radius:8px;font-size:1.2rem;cursor:pointer}
+.main{margin-left:260px;padding:40px 50px;max-width:950px}
+.section{display:none;animation:fadeIn .4s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:2rem;margin-bottom:8px;background:linear-gradient(135deg,var(--pri-l),var(--sec));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+h2{font-size:1.4rem;margin:30px 0 12px;color:var(--pri-l);padding-bottom:8px;border-bottom:1px solid var(--border)}
+h3{font-size:1.1rem;margin:20px 0 8px;color:var(--sec)}
+p,.desc{margin-bottom:14px;color:var(--dim)}
+strong{color:var(--text)}
+.subtitle{font-size:1.05rem;color:var(--dim);margin-bottom:25px}
+.code-block{background:var(--code);border-radius:10px;padding:18px;margin:14px 0;overflow-x:auto;border:1px solid var(--border);position:relative}
+.code-block pre{font-family:'Fira Code','Cascadia Code',Consolas,monospace;font-size:.82rem;line-height:1.65;white-space:pre;color:#abb2bf}
+.code-block .tag-label{position:absolute;top:8px;right:10px;font-size:.65rem;color:var(--dim);background:var(--card);padding:2px 8px;border-radius:4px}
+.kw{color:#c678dd}.fn{color:#61afef}.str{color:#98c379}.num{color:#d19a66}.cmt{color:#5c6370;font-style:italic}.op{color:#56b6c2}.err{color:#e06c75}.prm{color:#e5c07b}.prop{color:#e06c75}.br{color:#abb2bf}
+.code-runner{background:var(--code);border-radius:10px;margin:14px 0;border:1px solid var(--border);overflow:hidden}
+.code-runner-head{background:var(--card);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.code-runner-head span{color:var(--dim);font-size:.78rem}
+.code-runner textarea{width:100%;min-height:120px;background:var(--code);color:#abb2bf;border:none;padding:14px;font-family:'Fira Code','Cascadia Code',Consolas,monospace;font-size:.82rem;line-height:1.6;resize:vertical;outline:none;tab-size:2}
+.btn-run{background:var(--sec);color:#fff;border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .3s}
+.btn-run:hover{background:#059669;transform:scale(1.05)}
+.btn-reset{background:var(--border);color:var(--dim);border:none;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:.78rem;margin-right:6px;transition:all .3s}
+.btn-reset:hover{background:#475569}
+.code-output{background:#080b10;padding:12px 14px;border-top:1px solid var(--border);font-family:Consolas,monospace;font-size:.8rem;color:var(--sec);min-height:36px;max-height:220px;overflow-y:auto}
+.code-output:empty::after{content:'// Output will appear here...';color:#334155}
+.log-line{margin:2px 0;white-space:pre-wrap;word-break:break-all}.log-error{color:var(--danger)}.log-warn{color:var(--warn)}.log-info{color:#61afef}.log-time{color:var(--dim);font-size:.7rem;margin-left:8px}
+.info-box,.warn-box,.danger-box,.success-box{padding:14px 18px;border-radius:0 8px 8px 0;margin:14px 0;border-left:4px solid}
+.info-box{background:rgba(99,102,241,.08);border-color:var(--pri)}
+.warn-box{background:rgba(245,158,11,.08);border-color:var(--warn)}
+.danger-box{background:rgba(239,68,68,.08);border-color:var(--danger)}
+.success-box{background:rgba(16,185,129,.08);border-color:var(--sec)}
+.info-box b,.warn-box b,.danger-box b,.success-box b{display:block;margin-bottom:4px;color:var(--text)}
+.visual{background:var(--card);border-radius:12px;padding:25px;margin:18px 0;border:1px solid var(--border)}
+.visual h3{margin-top:0}
+.el-viz{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin:15px 0}
+.viz-col{background:var(--code);border-radius:8px;padding:12px;border:1px solid var(--border);min-height:180px}
+.viz-col h4{text-align:center;margin-bottom:10px;color:var(--pri-l);font-size:.8rem;text-transform:uppercase;letter-spacing:1px}
+.viz-item{padding:7px 10px;border-radius:5px;margin:4px 0;font-size:.75rem;font-family:monospace;text-align:center;animation:vSlide .3s ease}
+.viz-stack{background:var(--pri);color:#fff}
+.viz-api{background:var(--warn);color:#000}
+.viz-queue{background:var(--sec);color:#fff}
+.viz-done{background:#374151;color:var(--dim);text-decoration:line-through}
+@keyframes vSlide{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.demo-btn{background:var(--pri);color:#fff;border:none;padding:9px 22px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .3s;margin:5px}
+.demo-btn:hover{background:var(--pri-l);transform:translateY(-2px)}
+.demo-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.hell-tower{margin:15px 0}
+.hell-line{font-family:monospace;font-size:.78rem;padding:3px 0;transition:all .5s}
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+.cmp-bad{border:2px solid var(--danger);border-radius:10px;overflow:hidden}
+.cmp-good{border:2px solid var(--sec);border-radius:10px;overflow:hidden}
+.cmp-label{padding:5px 12px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.cmp-bad .cmp-label{background:var(--danger);color:#fff}
+.cmp-good .cmp-label{background:var(--sec);color:#fff}
+.cmp-bad pre,.cmp-good pre{padding:14px;font-size:.75rem;line-height:1.5;font-family:monospace;overflow-x:auto;color:#abb2bf;margin:0}
+.quiz-card{background:var(--card);border-radius:12px;padding:22px;margin:18px 0;border:1px solid var(--border)}
+.quiz-num{color:var(--pri-l);font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.quiz-q{font-size:.95rem;margin-bottom:14px;color:var(--text)}
+.quiz-q pre{background:var(--code);padding:12px;border-radius:6px;margin-top:8px;font-size:.8rem;font-family:monospace;overflow-x:auto;color:#abb2bf}
+.quiz-opts{display:flex;flex-direction:column;gap:7px}
+.quiz-opt{background:var(--code);border:2px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;transition:all .3s;font-size:.85rem;color:var(--dim)}
+.quiz-opt:hover:not(.locked){border-color:var(--pri);background:rgba(99,102,241,.08);color:var(--text)}
+.quiz-opt.correct{border-color:var(--sec)!important;background:rgba(16,185,129,.12)!important;color:var(--sec)!important}
+.quiz-opt.wrong{border-color:var(--danger)!important;background:rgba(239,68,68,.12)!important;color:var(--danger)!important}
+.quiz-opt.locked{cursor:default}
+.quiz-fb{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:.85rem;display:none}
+.quiz-fb.show{display:block}
+.quiz-fb.pass{background:rgba(16,185,129,.1);color:var(--sec);border:1px solid rgba(16,185,129,.3)}
+.quiz-fb.fail{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+.quiz-score-box{background:linear-gradient(135deg,var(--pri),#7c3aed);padding:25px;border-radius:14px;text-align:center;margin:25px 0}
+.score-big{font-size:3rem;font-weight:800}
+.score-label{font-size:.9rem;color:rgba(255,255,255,.8);margin-top:5px}
+.exercise{background:var(--card);border-radius:12px;padding:22px;margin:18px 0;border:1px solid var(--border)}
+.exercise h3{color:var(--warn);margin-top:0}
+.exercise .edesc{color:var(--dim);margin-bottom:12px;font-size:.9rem}
+.test-results{margin-top:8px;font-family:monospace;font-size:.8rem}
+.test-pass{color:var(--sec);margin:3px 0}.test-pass::before{content:'✅ '}
+.test-fail{color:var(--danger);margin:3px 0}.test-fail::before{content:'❌ '}
+.flow-row{display:flex;align-items:center;gap:8px;margin:10px 0;flex-wrap:wrap}
+.flow-box{background:var(--code);border:2px solid var(--pri);padding:8px 14px;border-radius:8px;font-size:.8rem;font-family:monospace;color:var(--pri-l)}
+.flow-arrow{color:var(--pri-l);font-size:1.1rem}
+.tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.7rem;font-weight:600;margin:2px}
+.tag-c{background:rgba(99,102,241,.2);color:var(--pri-l)}
+.tag-i{background:rgba(245,158,11,.2);color:var(--warn)}
+.tag-p{background:rgba(16,185,129,.2);color:var(--sec)}
+.nav-section-label{padding:12px 20px 4px;font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
+.checklist{list-style:none;padding:0}
+.checklist li{padding:6px 0 6px 28px;position:relative;color:var(--dim)}
+.checklist li::before{content:'✓';position:absolute;left:0;color:var(--sec);font-weight:700}
+.step-indicator{display:flex;align-items:center;gap:5px;margin:12px 0}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;background:var(--border);color:var(--dim);transition:all .3s}
+.step-dot.active{background:var(--pri);color:#fff}
+.step-dot.done{background:var(--sec);color:#fff}
+.step-line{flex:1;height:2px;background:var(--border)}
+.step-line.done{background:var(--sec)}
+.console-sim{background:#000;border-radius:8px;padding:14px;margin:14px 0;font-family:monospace;font-size:.82rem}
+.cs-line{margin:3px 0}.cs-prompt{color:var(--sec)}.cs-out{color:#ccc}.cs-time{color:var(--dim);font-size:.7rem}
+.scroll-btn{position:fixed;bottom:25px;right:25px;width:42px;height:42px;background:var(--pri);color:#fff;border:none;border-radius:50%;cursor:pointer;font-size:1.1rem;display:none;z-index:50;transition:all .3s;box-shadow:0 4px 15px rgba(99,102,241,.4)}
+.scroll-btn:hover{transform:translateY(-3px);background:var(--pri-l)}
+.next-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--pri),#7c3aed);color:#fff;border:none;padding:12px 28px;border-radius:10px;cursor:pointer;font-size:.9rem;font-weight:600;margin-top:30px;transition:all .3s}
+.next-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
+.anim-container{position:relative;min-height:60px;margin:10px 0}
+.anim-block{position:absolute;padding:6px 14px;border-radius:6px;font-family:monospace;font-size:.78rem;transition:all .6s ease;white-space:nowrap}
+.highlight-line{background:rgba(245,158,11,.08);border-left:3px solid var(--warn);padding:4px 12px;margin:4px 0;font-family:monospace;font-size:.82rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+@media(max-width:900px){
+.nav{transform:translateX(-100%);width:280px}
+.nav.open{transform:translateX(0)}
+.hamburger{display:flex;align-items:center;justify-content:center}
+.main{margin-left:0;padding:20px 15px;padding-top:60px}
+.el-viz,.comparison,.grid-2{grid-template-columns:1fr}
+h1{font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<button class="hamburger" onclick="document.querySelector('.nav').classList.toggle('open')">☰</button>
+
+<nav class="nav" id="nav">
+  <div class="nav-title"><span>🎯</span> Master Callbacks</div>
+  <div class="nav-section-label">Foundations</div>
+  <a href="#" data-section="0" class="active">⚡ Sync vs Async</a>
+  <a href="#" data-section="1">🔄 Callback Fundamentals</a>
+  <div class="nav-section-label">Core Patterns</div>
+  <a href="#" data-section="2">📐 Callback Patterns</a>
+  <a href="#" data-section="3">🛡️ Error-First Callbacks</a>
+  <a href="#" data-section="4">🔥 Callback Hell</a>
+  <div class="nav-section-label">Advanced</div>
+  <a href="#" data-section="5">🎛️ Async Flow Control</a>
+  <a href="#" data-section="6">⚠️ Pitfalls &amp; Mistakes</a>
+  <div class="nav-section-label">Practice</div>
+  <a href="#" data-section="7">📝 Quiz (10 Questions)</a>
+  <a href="#" data-section="8">💪 Coding Exercises</a>
+  <div class="nav-progress">
+    <div class="nav-progress-text">Progress: <span id="progressText">0/9</span></div>
+    <div class="mini-bar"><div class="mini-fill" id="progressBar"></div></div>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ==================== SECTION 0: SYNC VS ASYNC ==================== -->
+<div class="section active" id="sec-0">
+  <h1>⚡ Synchronous vs Asynchronous</h1>
+  <p class="subtitle">Understanding why async exists and how JavaScript handles it</p>
+
+  <h2>JavaScript is Single-Threaded</h2>
+  <p>JavaScript has <strong>one call stack</strong> and can only do <strong>one thing at a time</strong>. This is called being "single-threaded." But we need to handle things like network requests, timers, and file reads that take time. This is where <strong>asynchronous programming</strong> comes in.</p>
+
+  <div class="info-box">
+    <b>💡 Key Insight</b>
+    Async doesn't mean "multi-threaded." JavaScript still runs on one thread. The browser/Node.js provides Web APIs that handle waiting in the background, then put callbacks in a queue for JavaScript to execute.
+  </div>
+
+  <h2>Synchronous = Blocking</h2>
+  <p>Each line waits for the previous one to finish. If something takes 5 seconds, <strong>everything freezes</strong>.</p>
+
+  <div class="code-block">
+    <span class="tag-label">Synchronous</span>
+    <pre><span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"1. Start cooking"</span>);
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"2. Boil water (3 min)"</span>);  <span class="cmt">// Blocks everything!</span>
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"3. Chop vegetables"</span>);    <span class="cmt">// Can't start until water boils</span>
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"4. Serve food"</span>);
+
+<span class="cmt">// Output: 1, 2, 3, 4 (in order, each waits)</span></pre>
+  </div>
+
+  <h2>Asynchronous = Non-Blocking</h2>
+  <p>Start a task, <strong>move on immediately</strong>, get notified when it's done.</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Try it — Watch the order!</span>
+      <div><button class="btn-reset" onclick="resetCode(0)">Reset</button><button class="btn-run" onclick="runCode(0)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-0">console.log("1. Start cooking");
+
+setTimeout(() => {
+  console.log("2. Water boiled! (after 2 sec)");
+}, 2000);
+
+console.log("3. Chop vegetables (immediately)");
+console.log("4. Set table (immediately)");
+
+// What order do you expect? Run it!</textarea>
+    <div class="code-output" id="output-0"></div>
+  </div>
+
+  <div class="warn-box">
+    <b>🤯 Surprised?</b>
+    The output is: 1, 3, 4, then 2 (after 2 seconds). JavaScript doesn't wait for setTimeout. It moves to the next line immediately!
+  </div>
+
+  <h2>The Event Loop — Visual Explanation</h2>
+  <p>This is <em>the most important concept</em> for understanding async JavaScript. Click the button below to see it in action.</p>
+
+  <div class="visual">
+    <h3>🎬 Event Loop Simulator</h3>
+    <p style="margin-bottom:15px;font-size:.85rem">Watch how <code>setTimeout</code> works behind the scenes:</p>
+    <div class="el-viz">
+      <div class="viz-col">
+        <h4>📚 Call Stack</h4>
+        <div id="el-stack"></div>
+      </div>
+      <div class="viz-col">
+        <h4>⏰ Web APIs</h4>
+        <div id="el-apis"></div>
+      </div>
+      <div class="viz-col">
+        <h4>📬 Callback Queue</h4>
+        <div id="el-queue"></div>
+      </div>
+    </div>
+    <div id="el-console" class="console-sim" style="min-height:60px">
+      <div class="cs-line"><span class="cs-prompt">&gt;</span> <span style="color:var(--dim)">Console output appears here...</span></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="demo-btn" id="el-start" onclick="startEventLoop()">▶ Start Animation</button>
+      <button class="demo-btn" id="el-reset" onclick="resetEventLoop()" style="background:var(--border)">↺ Reset</button>
+    </div>
+    <div class="step-indicator" id="el-steps" style="margin-top:15px"></div>
+  </div>
+
+  <h2>Real-World Analogy</h2>
+  <div class="grid-2">
+    <div style="background:var(--code);padding:18px;border-radius:10px;border:1px solid var(--border)">
+      <h3 style="color:var(--danger);margin-top:0">🚫 Synchronous Restaurant</h3>
+      <p style="font-size:.85rem">One waiter who takes order, goes to kitchen, waits for food, comes back, then takes next order. Everyone waits!</p>
+    </div>
+    <div style="background:var(--code);padding:18px;border-radius:10px;border:1px solid var(--border)">
+      <h3 style="color:var(--sec);margin-top:0">✅ Async Restaurant</h3>
+      <p style="font-size:.85rem">Waiter takes order, sends to kitchen, immediately takes next order. Kitchen calls when food is ready. Efficient!</p>
+    </div>
+  </div>
+
+  <button class="next-btn" onclick="goToSection(1)">Next: Callback Fundamentals →</button>
+</div>
+
+<!-- ==================== SECTION 1: CALLBACK FUNDAMENTALS ==================== -->
+<div class="section" id="sec-1">
+  <h1>🔄 Callback Fundamentals</h1>
+  <p class="subtitle">Understanding what callbacks are and how they work</p>
+
+  <h2>What IS a Callback?</h2>
+  <p>A callback is simply a <strong>function passed as an argument to another function</strong>, to be called ("called back") at a later time.</p>
+
+  <div class="info-box">
+    <b>📌 Definition</b>
+    A <strong>callback function</strong> is a function that is passed to another function as an argument and is executed after some operation has been completed.
+  </div>
+
+  <div class="code-block">
+    <span class="tag-label">Basic Callback</span>
+    <pre><span class="cmt">// 'greet' is a callback function</span>
+<span class="kw">function</span> <span class="fn">greet</span>(<span class="prm">name</span>) {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Hello, </span><span class="op">${</span><span class="prm">name</span><span class="op">}</span><span class="str">!`</span>);
+}
+
+<span class="cmt">// 'processUser' takes a callback as its second argument</span>
+<span class="kw">function</span> <span class="fn">processUser</span>(<span class="prm">name</span>, <span class="prm">callback</span>) {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Processing user..."</span>);
+  <span class="fn">callback</span>(<span class="prm">name</span>);  <span class="cmt">// ← "calling back" the function</span>
+}
+
+<span class="fn">processUser</span>(<span class="str">"Alice"</span>, greet);
+<span class="cmt">// "Processing user..."</span>
+<span class="cmt">// "Hello, Alice!"</span></pre>
+  </div>
+
+  <h2>Functions Are First-Class Citizens</h2>
+  <p>In JavaScript, functions are <strong>values</strong>. You can store them in variables, pass them as arguments, and return them from other functions. This is what makes callbacks possible.</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Functions as Values</span>
+      <div><button class="btn-reset" onclick="resetCode(1)">Reset</button><button class="btn-run" onclick="runCode(1)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-1">// Store a function in a variable
+const sayHello = function(name) {
+  return `Hello, ${name}!`;
+};
+
+// Pass a function to another function
+function execute(fn, value) {
+  console.log("Executing callback...");
+  const result = fn(value);
+  console.log("Result:", result);
+}
+
+// Arrow function as callback
+execute(sayHello, "World");
+execute((x) => x.toUpperCase(), "whisper");
+execute((n) => n * 2, 21);</textarea>
+    <div class="code-output" id="output-1"></div>
+  </div>
+
+  <h2>Synchronous Callbacks</h2>
+  <p>Not all callbacks are async! Many are <strong>synchronous</strong> — they execute immediately:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Sync Callbacks (Array Methods)</span>
+      <div><button class="btn-reset" onclick="resetCode(2)">Reset</button><button class="btn-run" onclick="runCode(2)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-2">const numbers = [1, 2, 3, 4, 5];
+
+// forEach — callback runs for EACH element (sync)
+numbers.forEach(function(num) {
+  console.log("forEach:", num);
+});
+
+// map — callback TRANSFORMS each element (sync)
+const doubled = numbers.map(num => num * 2);
+console.log("Doubled:", doubled);
+
+// filter — callback TESTS each element (sync)
+const evens = numbers.filter(num => num % 2 === 0);
+console.log("Evens:", evens);
+
+// sort — callback COMPARES elements (sync)
+const sorted = [3, 1, 4, 1, 5].sort((a, b) => a - b);
+console.log("Sorted:", sorted);
+
+console.log("All done — everything was synchronous!");</textarea>
+    <div class="code-output" id="output-2"></div>
+  </div>
+
+  <h2>Asynchronous Callbacks</h2>
+  <p>These are scheduled to run <strong>later</strong>, after some operation completes:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Async Callbacks</span>
+      <div><button class="btn-reset" onclick="resetCode(3)">Reset</button><button class="btn-run" onclick="runCode(3)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-3">console.log("START");
+
+// setTimeout — runs callback after delay
+setTimeout(function() {
+  console.log("⏰ Timer done (1 second)");
+}, 1000);
+
+// setInterval — runs callback repeatedly
+let count = 0;
+const interval = setInterval(function() {
+  count++;
+  console.log("🔄 Interval tick:", count);
+  if (count >= 3) {
+    clearInterval(interval);
+    console.log("Interval cleared!");
+  }
+}, 500);
+
+// Even setTimeout(fn, 0) is async!
+setTimeout(function() {
+  console.log("⚡ setTimeout 0ms — still async!");
+}, 0);
+
+console.log("END — this runs BEFORE any callbacks!");</textarea>
+    <div class="code-output" id="output-3"></div>
+  </div>
+
+  <div class="danger-box">
+    <b>⚠️ Common Confusion</b>
+    <code>setTimeout(fn, 0)</code> does NOT run immediately. It runs after the current code finishes executing. The <code>0ms</code> is the <em>minimum</em> delay, not guaranteed exact timing.
+  </div>
+
+  <h2>Creating Your Own Callback Functions</h2>
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Custom Callback Function</span>
+      <div><button class="btn-reset" onclick="resetCode(4)">Reset</button><button class="btn-run" onclick="runCode(4)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-4">// A function that simulates fetching a user
+function fetchUser(userId, callback) {
+  console.log(`Fetching user ${userId}...`);
+  
+  // Simulate network delay
+  setTimeout(function() {
+    // Simulate retrieved data
+    const user = {
+      id: userId,
+      name: "Alice",
+      email: "alice@example.com"
+    };
+    
+    // Call the callback with the result
+    callback(user);
+  }, 1500);
+}
+
+// USING the function with a callback
+fetchUser(42, function(user) {
+  console.log("Got user:", JSON.stringify(user));
+  console.log("Name:", user.name);
+});
+
+console.log("This runs while we wait for the user...");</textarea>
+    <div class="code-output" id="output-4"></div>
+  </div>
+
+  <h2>Key Takeaways</h2>
+  <ul class="checklist">
+    <li>A callback is just a function passed to another function</li>
+    <li>JavaScript treats functions as values (first-class citizens)</li>
+    <li>Callbacks can be synchronous (array methods) or asynchronous (setTimeout)</li>
+    <li>Async callbacks execute later, when the operation completes</li>
+    <li>The code after an async call runs immediately, not after the callback</li>
+  </ul>
+
+  <button class="next-btn" onclick="goToSection(2)">Next: Callback Patterns →</button>
+</div>
+
+<!-- ==================== SECTION 2: CALLBACK PATTERNS ==================== -->
+<div class="section" id="sec-2">
+  <h1>📐 Callback Patterns</h1>
+  <p class="subtitle">Common patterns you'll encounter in real codebases</p>
+
+  <h2>Pattern 1: Completion Callback</h2>
+  <p>Run a function when an operation finishes. This is the most basic pattern.</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Completion Callback</span>
+      <div><button class="btn-reset" onclick="resetCode(5)">Reset</button><button class="btn-run" onclick="runCode(5)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-5">function loadData(url, onComplete) {
+  console.log(`Loading from ${url}...`);
+  
+  setTimeout(() => {
+    const data = { items: ["apple", "banana", "cherry"] };
+    onComplete(data);  // Notify: "I'm done, here's the data"
+  }, 1000);
+}
+
+loadData("/api/fruits", function(data) {
+  console.log("✅ Data loaded:", JSON.stringify(data));
+  console.log("Items:", data.items.join(", "));
+});</textarea>
+    <div class="code-output" id="output-5"></div>
+  </div>
+
+  <h2>Pattern 2: Event Callback</h2>
+  <p>Callbacks that fire <strong>multiple times</strong> in response to events:</p>
+
+  <div class="code-block">
+    <span class="tag-label">Event Pattern</span>
+    <pre><span class="cmt">// DOM Event Listeners — callback fires on EVERY click</span>
+<span class="kw">const</span> button = <span class="fn">document</span>.<span class="fn">querySelector</span>(<span class="str">'#myBtn'</span>);
+
+button.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, <span class="kw">function</span>(<span class="prm">event</span>) {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Button clicked!'</span>, <span class="prm">event</span>.target);
+});
+
+<span class="cmt">// This callback runs EVERY time the button is clicked</span>
+<span class="cmt">// (not just once like a completion callback)</span></pre>
+  </div>
+
+  <h2>Pattern 3: Transformation Callback</h2>
+  <p>Pass a function that <strong>transforms</strong> data. Very common with array methods:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Transformation Pattern</span>
+      <div><button class="btn-reset" onclick="resetCode(6)">Reset</button><button class="btn-run" onclick="runCode(6)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-6">// The callback defines HOW to transform each item
+const users = [
+  { name: "Alice", age: 30 },
+  { name: "Bob", age: 25 },
+  { name: "Charlie", age: 35 }
+];
+
+// Extract names (transformation)
+const names = users.map(user => user.name);
+console.log("Names:", names);
+
+// Custom sort (comparison callback)
+const byAge = [...users].sort((a, b) => a.age - b.age);
+console.log("By age:", byAge.map(u => `${u.name}(${u.age})`));
+
+// Your own transformation function
+function transform(array, transformFn) {
+  const result = [];
+  for (const item of array) {
+    result.push(transformFn(item));
+  }
+  return result;
+}
+
+const shouts = transform(names, name => name.toUpperCase() + "!");
+console.log("Shouts:", shouts);</textarea>
+    <div class="code-output" id="output-6"></div>
+  </div>
+
+  <h2>Pattern 4: Conditional Callback</h2>
+  <p>Different callbacks for different outcomes (success/failure):</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Success/Failure Callbacks</span>
+      <div><button class="btn-reset" onclick="resetCode(7)">Reset</button><button class="btn-run" onclick="runCode(7)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-7">function loginUser(username, password, onSuccess, onFailure) {
+  console.log(`Attempting login for ${username}...`);
+  
+  setTimeout(() => {
+    if (username === "admin" && password === "1234") {
+      onSuccess({ username, role: "admin", token: "abc123" });
+    } else {
+      onFailure("Invalid username or password");
+    }
+  }, 800);
+}
+
+// Test with correct credentials
+loginUser("admin", "1234",
+  function(user) {
+    console.log("✅ Login success!", JSON.stringify(user));
+  },
+  function(error) {
+    console.log("❌ Login failed:", error);
+  }
+);
+
+// Test with wrong credentials
+loginUser("admin", "wrong",
+  function(user) {
+    console.log("✅ Login success!", JSON.stringify(user));
+  },
+  function(error) {
+    console.log("❌ Login failed:", error);
+  }
+);</textarea>
+    <div class="code-output" id="output-7"></div>
+  </div>
+
+  <h2>Pattern 5: Iterator/Visitor Callback</h2>
+  <p>Callbacks that visit each element and can control iteration:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Iterator Pattern</span>
+      <div><button class="btn-reset" onclick="resetCode(8)">Reset</button><button class="btn-run" onclick="runCode(8)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-8">// Custom find function with callback
+function findWhere(array, testFn) {
+  for (let i = 0; i < array.length; i++) {
+    if (testFn(array[i], i)) {
+      return array[i]; // Return first match
+    }
+  }
+  return undefined;
+}
+
+const products = [
+  { name: "Laptop", price: 999 },
+  { name: "Phone", price: 699 },
+  { name: "Tablet", price: 449 },
+  { name: "Watch", price: 299 }
+];
+
+// The callback defines the search criteria
+const affordable = findWhere(products, item => item.price < 500);
+console.log("First affordable:", affordable);
+
+const expensive = findWhere(products, item => item.price > 800);
+console.log("First expensive:", expensive);
+
+// Custom forEach with index and break capability
+function each(array, callback) {
+  for (let i = 0; i < array.length; i++) {
+    const shouldContinue = callback(array[i], i);
+    if (shouldContinue === false) break;
+  }
+}
+
+each(products, (item, i) => {
+  console.log(`${i}: ${item.name} - $${item.price}`);
+  if (item.price < 500) {
+    console.log("  ^ Found affordable item, stopping!");
+    return false;  // Break
+  }
+});</textarea>
+    <div class="code-output" id="output-8"></div>
+  </div>
+
+  <h2>Pattern Summary</h2>
+  <div class="flow-row">
+    <div class="flow-box">Completion</div><span class="flow-arrow">•</span>
+    <div class="flow-box">Event</div><span class="flow-arrow">•</span>
+    <div class="flow-box">Transform</div><span class="flow-arrow">•</span>
+    <div class="flow-box">Conditional</div><span class="flow-arrow">•</span>
+    <div class="flow-box">Iterator</div>
+  </div>
+
+  <button class="next-btn" onclick="goToSection(3)">Next: Error-First Callbacks →</button>
+</div>
+
+<!-- ==================== SECTION 3: ERROR-FIRST CALLBACKS ==================== -->
+<div class="section" id="sec-3">
+  <h1>🛡️ Error-First Callbacks</h1>
+  <p class="subtitle">The Node.js convention for handling errors in async callbacks</p>
+
+  <h2>The Convention</h2>
+  <p>In Node.js, there's a universal convention: the callback's <strong>first parameter is always the error</strong>. If there's no error, it's <code>null</code>.</p>
+
+  <div class="code-block">
+    <span class="tag-label">The Pattern</span>
+    <pre><span class="fn">someAsyncOperation</span>(<span class="kw">function</span>(<span class="err">error</span>, <span class="prm">result</span>) {
+  <span class="kw">if</span> (<span class="err">error</span>) {
+    <span class="cmt">// Handle the error</span>
+    <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">"Something went wrong:"</span>, <span class="err">error</span>);
+    <span class="kw">return</span>;  <span class="cmt">// ← Important! Stop execution</span>
+  }
+  
+  <span class="cmt">// Use the result (error is null here)</span>
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Success:"</span>, <span class="prm">result</span>);
+});</pre>
+  </div>
+
+  <div class="info-box">
+    <b>📌 Why Error-First?</b>
+    <p style="margin:0">1. It's <strong>consistent</strong> — every callback has the same signature<br>
+    2. You <strong>can't forget</strong> to handle errors (the parameter is always there)<br>
+    3. It enables <strong>one callback</strong> for both success and failure (simpler API)</p>
+  </div>
+
+  <h2>Building Error-First Callback Functions</h2>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Creating Error-First Functions</span>
+      <div><button class="btn-reset" onclick="resetCode(9)">Reset</button><button class="btn-run" onclick="runCode(9)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-9">// Simulates reading a file
+function readFile(filename, callback) {
+  setTimeout(() => {
+    // Simulate: some files exist, some don't
+    if (filename === "secret.txt") {
+      // ERROR case: first arg is the error
+      callback(new Error("Permission denied: " + filename), null);
+    } else if (filename === "missing.txt") {
+      callback(new Error("File not found: " + filename), null);
+    } else {
+      // SUCCESS case: first arg is null (no error)
+      callback(null, `Contents of ${filename}: Hello World!`);
+    }
+  }, 500);
+}
+
+// Using the function — ALWAYS check error first!
+readFile("readme.txt", function(err, data) {
+  if (err) {
+    console.log("❌ Error:", err.message);
+    return;
+  }
+  console.log("✅ Success:", data);
+});
+
+readFile("secret.txt", function(err, data) {
+  if (err) {
+    console.log("❌ Error:", err.message);
+    return;
+  }
+  console.log("✅ Success:", data);
+});
+
+readFile("missing.txt", function(err, data) {
+  if (err) {
+    console.log("❌ Error:", err.message);
+    return;
+  }
+  console.log("✅ Success:", data);
+});</textarea>
+    <div class="code-output" id="output-9"></div>
+  </div>
+
+  <h2>Real Node.js Examples</h2>
+  <p>This is how actual Node.js APIs work:</p>
+
+  <div class="code-block">
+    <span class="tag-label">Node.js FS module</span>
+    <pre><span class="kw">const</span> fs = <span class="fn">require</span>(<span class="str">'fs'</span>);
+
+<span class="cmt">// Reading a file</span>
+fs.<span class="fn">readFile</span>(<span class="str">'data.json'</span>, <span class="str">'utf8'</span>, <span class="kw">function</span>(<span class="err">err</span>, <span class="prm">data</span>) {
+  <span class="kw">if</span> (<span class="err">err</span>) {
+    <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Failed to read file:'</span>, <span class="err">err</span>.message);
+    <span class="kw">return</span>;
+  }
+  <span class="kw">const</span> parsed = <span class="fn">JSON</span>.<span class="fn">parse</span>(<span class="prm">data</span>);
+  <span class="fn">console</span>.<span class="fn">log</span>(parsed);
+});
+
+<span class="cmt">// Writing a file</span>
+fs.<span class="fn">writeFile</span>(<span class="str">'output.txt'</span>, <span class="str">'Hello!'</span>, <span class="kw">function</span>(<span class="err">err</span>) {
+  <span class="kw">if</span> (<span class="err">err</span>) {
+    <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Failed to write:'</span>, <span class="err">err</span>.message);
+    <span class="kw">return</span>;
+  }
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'File written successfully!'</span>);
+});</pre>
+  </div>
+
+  <h2>Multiple Results</h2>
+  <p>The error-first pattern can pass multiple result values:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Multiple Results</span>
+      <div><button class="btn-reset" onclick="resetCode(10)">Reset</button><button class="btn-run" onclick="runCode(10)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-10">function divide(a, b, callback) {
+  setTimeout(() => {
+    if (typeof a !== 'number' || typeof b !== 'number') {
+      callback(new Error('Both arguments must be numbers'));
+      return;
+    }
+    if (b === 0) {
+      callback(new Error('Cannot divide by zero'));
+      return;
+    }
+    
+    const quotient = Math.floor(a / b);
+    const remainder = a % b;
+    
+    // Success: null error, multiple results
+    callback(null, quotient, remainder);
+  }, 300);
+}
+
+divide(17, 5, function(err, quotient, remainder) {
+  if (err) {
+    console.log("❌", err.message);
+    return;
+  }
+  console.log(`17 ÷ 5 = ${quotient} remainder ${remainder}`);
+});
+
+divide(10, 0, function(err, quotient, remainder) {
+  if (err) {
+    console.log("❌", err.message);
+    return;
+  }
+  console.log(`Result: ${quotient} r ${remainder}`);
+});
+
+divide("hello", 5, function(err, quotient, remainder) {
+  if (err) {
+    console.log("❌", err.message);
+    return;
+  }
+  console.log(`Result: ${quotient} r ${remainder}`);
+});</textarea>
+    <div class="code-output" id="output-10"></div>
+  </div>
+
+  <h2>Common Mistakes with Error-First Callbacks</h2>
+
+  <div class="comparison">
+    <div class="cmp-bad">
+      <div class="cmp-label">❌ Forgetting to return</div>
+      <pre>function process(cb) {
+  doAsync((err, data) => {
+    if (err) {
+      cb(err);
+      // BUG: code continues!
+    }
+    // This runs even on error!
+    cb(null, transform(data));
+  });
+}</pre>
+    </div>
+    <div class="cmp-good">
+      <div class="cmp-label">✅ Always return after error</div>
+      <pre>function process(cb) {
+  doAsync((err, data) => {
+    if (err) {
+      cb(err);
+      return; // Stop execution!
+    }
+    // Only runs on success
+    cb(null, transform(data));
+  });
+}</pre>
+    </div>
+  </div>
+
+  <div class="comparison">
+    <div class="cmp-bad">
+      <div class="cmp-label">❌ Not passing Error objects</div>
+      <pre>// Bad: passing strings
+callback("Something failed");
+callback("File not found");</pre>
+    </div>
+    <div class="cmp-good">
+      <div class="cmp-label">✅ Always use Error objects</div>
+      <pre>// Good: Error objects have stack traces
+callback(new Error("Something failed"));
+callback(new Error("File not found"));</pre>
+    </div>
+  </div>
+
+  <button class="next-btn" onclick="goToSection(4)">Next: Callback Hell →</button>
+</div>
+
+<!-- ==================== SECTION 4: CALLBACK HELL ==================== -->
+<div class="section" id="sec-4">
+  <h1>🔥 Callback Hell</h1>
+  <p class="subtitle">The infamous "Pyramid of Doom" — and how to escape it</p>
+
+  <h2>What is Callback Hell?</h2>
+  <p>When you have async operations that depend on each other, you end up <strong>nesting callbacks inside callbacks</strong>. This creates deeply indented code that's hard to read, debug, and maintain.</p>
+
+  <div class="visual">
+    <h3>🏗️ The Pyramid of Doom — Watch it Build</h3>
+    <p style="font-size:.85rem;margin-bottom:15px">Click to see how nested callbacks create the infamous pyramid shape:</p>
+    <div id="hell-demo" class="hell-tower" style="background:var(--code);padding:20px;border-radius:8px;font-family:monospace;font-size:.78rem;line-height:1.7;overflow-x:auto"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="demo-btn" id="hell-build-btn" onclick="buildHell()">🔥 Build the Pyramid</button>
+      <button class="demo-btn" onclick="resetHell()" style="background:var(--border)">↺ Reset</button>
+    </div>
+  </div>
+
+  <h2>A Real-World Example</h2>
+  <p>Imagine building a user dashboard: get user → get their posts → get comments on first post → get author of top comment:</p>
+
+  <div class="code-block">
+    <span class="tag-label">⚠️ Callback Hell</span>
+    <pre><span class="fn">getUser</span>(<span class="num">1</span>, <span class="kw">function</span>(<span class="err">err</span>, <span class="prm">user</span>) {
+  <span class="kw">if</span> (<span class="err">err</span>) { <span class="fn">handleError</span>(<span class="err">err</span>); <span class="kw">return</span>; }
+  
+  <span class="fn">getPosts</span>(<span class="prm">user</span>.id, <span class="kw">function</span>(<span class="err">err</span>, <span class="prm">posts</span>) {
+    <span class="kw">if</span> (<span class="err">err</span>) { <span class="fn">handleError</span>(<span class="err">err</span>); <span class="kw">return</span>; }
+    
+    <span class="fn">getComments</span>(<span class="prm">posts</span>[<span class="num">0</span>].id, <span class="kw">function</span>(<span class="err">err</span>, <span class="prm">comments</span>) {
+      <span class="kw">if</span> (<span class="err">err</span>) { <span class="fn">handleError</span>(<span class="err">err</span>); <span class="kw">return</span>; }
+      
+      <span class="fn">getUser</span>(<span class="prm">comments</span>[<span class="num">0</span>].authorId, <span class="kw">function</span>(<span class="err">err</span>, <span class="prm">author</span>) {
+        <span class="kw">if</span> (<span class="err">err</span>) { <span class="fn">handleError</span>(<span class="err">err</span>); <span class="kw">return</span>; }
+        
+        <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">"Top commenter:"</span>, <span class="prm">author</span>.name);
+        <span class="cmt">// 😱 4 levels deep!</span>
+      });
+    });
+  });
+});</pre>
+  </div>
+
+  <h2>Why is it Bad?</h2>
+  <div class="grid-2">
+    <div class="danger-box" style="margin:0">
+      <b>❌ Hard to Read</b>
+      <p style="margin:0;font-size:.85rem">Logic flows diagonally, making it hard to follow the sequence of operations.</p>
+    </div>
+    <div class="danger-box" style="margin:0">
+      <b>❌ Hard to Debug</b>
+      <p style="margin:0;font-size:.85rem">Stack traces become confusing. Setting breakpoints in nested callbacks is painful.</p>
+    </div>
+    <div class="danger-box" style="margin:0">
+      <b>❌ Hard to Maintain</b>
+      <p style="margin:0;font-size:.85rem">Adding new steps means more nesting. Error handling is duplicated everywhere.</p>
+    </div>
+    <div class="danger-box" style="margin:0">
+      <b>❌ Error Handling</b>
+      <p style="margin:0;font-size:.85rem">Each level needs its own error check. Missing one causes silent failures.</p>
+    </div>
+  </div>
+
+  <h2>Escape Strategy 1: Named Functions</h2>
+  <p>Extract each callback into a <strong>named function</strong>:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Flattened with Named Functions</span>
+      <div><button class="btn-reset" onclick="resetCode(11)">Reset</button><button class="btn-run" onclick="runCode(11)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-11">// Simulated async functions
+function getUser(id, cb) {
+  setTimeout(() => cb(null, { id, name: "Alice" }), 200);
+}
+function getPosts(userId, cb) {
+  setTimeout(() => cb(null, [{ id: 1, title: "Hello World" }]), 200);
+}
+function getComments(postId, cb) {
+  setTimeout(() => cb(null, [{ text: "Great post!", authorId: 2 }]), 200);
+}
+
+// ✅ NAMED FUNCTIONS — Flat and readable!
+function handleUser(err, user) {
+  if (err) { console.log("❌", err.message); return; }
+  console.log("1. Got user:", user.name);
+  getPosts(user.id, handlePosts);
+}
+
+function handlePosts(err, posts) {
+  if (err) { console.log("❌", err.message); return; }
+  console.log("2. Got posts:", posts.length, "posts");
+  getComments(posts[0].id, handleComments);
+}
+
+function handleComments(err, comments) {
+  if (err) { console.log("❌", err.message); return; }
+  console.log("3. Got comments:", comments[0].text);
+  console.log("✅ All done! No nesting!");
+}
+
+// Start the chain — clean and flat!
+getUser(1, handleUser);</textarea>
+    <div class="code-output" id="output-11"></div>
+  </div>
+
+  <h2>Escape Strategy 2: Early Returns</h2>
+  <p>Use guard clauses to reduce nesting:</p>
+
+  <div class="comparison">
+    <div class="cmp-bad">
+      <div class="cmp-label">❌ Deeply Nested</div>
+      <pre>function process(input, cb) {
+  validate(input, (err, valid) => {
+    if (err) {
+      cb(err);
+    } else {
+      if (valid) {
+        transform(input, (err, data) => {
+          if (err) {
+            cb(err);
+          } else {
+            save(data, (err, id) => {
+              if (err) {
+                cb(err);
+              } else {
+                cb(null, id);
+              }
+            });
+          }
+        });
+      } else {
+        cb(new Error('Invalid'));
+      }
+    }
+  });
+}</pre>
+    </div>
+    <div class="cmp-good">
+      <div class="cmp-label">✅ Early Returns</div>
+      <pre>function process(input, cb) {
+  validate(input, (err, valid) => {
+    if (err) return cb(err);
+    if (!valid) return cb(new Error('Invalid'));
+
+    transform(input, (err, data) => {
+      if (err) return cb(err);
+
+      save(data, (err, id) => {
+        if (err) return cb(err);
+        cb(null, id);
+      });
+    });
+  });
+}
+// Still nested, but much cleaner!</pre>
+    </div>
+  </div>
+
+  <div class="success-box">
+    <b>💡 Pro Tip</b>
+    While named functions and early returns help, the best solution for callback hell is <strong>Promises</strong> and <strong>async/await</strong> — which you'll learn next in your JavaScript journey!
+  </div>
+
+  <button class="next-btn" onclick="goToSection(5)">Next: Async Flow Control →</button>
+</div>
+
+<!-- ==================== SECTION 5: ASYNC FLOW CONTROL ==================== -->
+<div class="section" id="sec-5">
+  <h1>🎛️ Async Flow Control</h1>
+  <p class="subtitle">Managing multiple async operations with callbacks</p>
+
+  <h2>The Problem</h2>
+  <p>Often you need to run multiple async operations and coordinate them. There are three main patterns:</p>
+
+  <div class="flow-row" style="justify-content:center;margin:20px 0">
+    <div class="flow-box" style="border-color:var(--sec)"><strong>Series</strong><br><small>One after another</small></div>
+    <div class="flow-box" style="border-color:var(--warn)"><strong>Parallel</strong><br><small>All at once</small></div>
+    <div class="flow-box" style="border-color:var(--danger)"><strong>Waterfall</strong><br><small>Chain results</small></div>
+  </div>
+
+  <h2>Pattern 1: Series (Sequential)</h2>
+  <p>Run async tasks <strong>one after another</strong>. Each waits for the previous one to complete.</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Series Execution</span>
+      <div><button class="btn-reset" onclick="resetCode(12)">Reset</button><button class="btn-run" onclick="runCode(12)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-12">// Utility: run async tasks in series
+function series(tasks, finalCallback) {
+  let index = 0;
+  const results = [];
+
+  function next() {
+    if (index >= tasks.length) {
+      finalCallback(null, results);
+      return;
+    }
+
+    const task = tasks[index];
+    task(function(err, result) {
+      if (err) {
+        finalCallback(err);
+        return;
+      }
+      results.push(result);
+      index++;
+      next(); // Run next task
+    });
+  }
+
+  next(); // Start first task
+}
+
+// Usage:
+series([
+  function(cb) {
+    setTimeout(() => {
+      console.log("Task 1: Fetching user...");
+      cb(null, "user_data");
+    }, 500);
+  },
+  function(cb) {
+    setTimeout(() => {
+      console.log("Task 2: Loading settings...");
+      cb(null, "settings_data");
+    }, 300);
+  },
+  function(cb) {
+    setTimeout(() => {
+      console.log("Task 3: Getting notifications...");
+      cb(null, "notifications");
+    }, 400);
+  }
+], function(err, results) {
+  if (err) {
+    console.log("❌ Error:", err.message);
+    return;
+  }
+  console.log("✅ All done! Results:", results);
+});</textarea>
+    <div class="code-output" id="output-12"></div>
+  </div>
+
+  <h2>Pattern 2: Parallel</h2>
+  <p>Run all tasks <strong>at the same time</strong>. Callback fires when ALL are done.</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Parallel Execution — Watch the timing!</span>
+      <div><button class="btn-reset" onclick="resetCode(13)">Reset</button><button class="btn-run" onclick="runCode(13)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-13">// Utility: run async tasks in parallel
+function parallel(tasks, finalCallback) {
+  const results = new Array(tasks.length);
+  let completed = 0;
+  let hasErrored = false;
+
+  tasks.forEach(function(task, index) {
+    task(function(err, result) {
+      if (hasErrored) return;
+
+      if (err) {
+        hasErrored = true;
+        finalCallback(err);
+        return;
+      }
+
+      results[index] = result; // Preserve order!
+      completed++;
+
+      if (completed === tasks.length) {
+        finalCallback(null, results);
+      }
+    });
+  });
+}
+
+const start = Date.now();
+
+parallel([
+  function(cb) {
+    setTimeout(() => {
+      console.log(`Task A done (${Date.now() - start}ms)`);
+      cb(null, "A");
+    }, 800);
+  },
+  function(cb) {
+    setTimeout(() => {
+      console.log(`Task B done (${Date.now() - start}ms)`);
+      cb(null, "B");
+    }, 300);
+  },
+  function(cb) {
+    setTimeout(() => {
+      console.log(`Task C done (${Date.now() - start}ms)`);
+      cb(null, "C");
+    }, 600);
+  }
+], function(err, results) {
+  console.log(`\n✅ ALL done in ${Date.now() - start}ms`);
+  console.log("Results (in order!):", results);
+  console.log("Notice: total time ≈ longest task, not sum!");
+});</textarea>
+    <div class="code-output" id="output-13"></div>
+  </div>
+
+  <h2>Pattern 3: Waterfall</h2>
+  <p>Each task <strong>passes its result to the next task</strong>. Like a relay race:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Waterfall — Chaining Results</span>
+      <div><button class="btn-reset" onclick="resetCode(14)">Reset</button><button class="btn-run" onclick="runCode(14)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-14">// Utility: waterfall — each task gets previous result
+function waterfall(tasks, finalCallback) {
+  let index = 0;
+
+  function next(prevResult) {
+    if (index >= tasks.length) {
+      finalCallback(null, prevResult);
+      return;
+    }
+
+    const task = tasks[index];
+    index++;
+
+    task(prevResult, function(err, result) {
+      if (err) {
+        finalCallback(err);
+        return;
+      }
+      next(result); // Pass result to next task
+    });
+  }
+
+  // Start with null (no previous result)
+  next(null);
+}
+
+// Building a user profile step by step:
+waterfall([
+  function(_, cb) {
+    console.log("Step 1: Get user ID from token...");
+    setTimeout(() => cb(null, 42), 300);
+  },
+  function(userId, cb) {
+    console.log(`Step 2: Fetch user ${userId} from database...`);
+    setTimeout(() => cb(null, { id: userId, name: "Alice" }), 300);
+  },
+  function(user, cb) {
+    console.log(`Step 3: Get ${user.name}'s permissions...`);
+    setTimeout(() => cb(null, { ...user, role: "admin", perms: ["read", "write"] }), 300);
+  },
+  function(profile, cb) {
+    console.log("Step 4: Format response...");
+    setTimeout(() => cb(null, `Welcome ${profile.name} (${profile.role})!`), 200);
+  }
+], function(err, finalResult) {
+  if (err) {
+    console.log("❌ Error:", err.message);
+    return;
+  }
+  console.log("\n🎉", finalResult);
+});</textarea>
+    <div class="code-output" id="output-14"></div>
+  </div>
+
+  <h2>Comparison: Series vs Parallel</h2>
+  <div class="visual">
+    <h3>⏱️ Timing Difference</h3>
+    <div class="grid-2">
+      <div style="text-align:center">
+        <p style="color:var(--pri-l);font-weight:700;margin-bottom:8px">Series (Sequential)</p>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+          <div style="background:var(--pri);padding:6px;border-radius:4px;width:100px;text-align:center;font-size:.75rem;color:#fff">Task A (1s)</div>
+          <div style="color:var(--dim)">↓</div>
+          <div style="background:#7c3aed;padding:6px;border-radius:4px;width:70px;text-align:center;font-size:.75rem;color:#fff">Task B (0.5s)</div>
+          <div style="color:var(--dim)">↓</div>
+          <div style="background:#a855f7;padding:6px;border-radius:4px;width:85px;text-align:center;font-size:.75rem;color:#fff">Task C (0.8s)</div>
+          <div style="color:var(--dim)">↓</div>
+          <div style="background:var(--sec);padding:6px;border-radius:4px;text-align:center;font-size:.75rem;color:#fff;width:120px">Done: ~2.3s total</div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <p style="color:var(--warn);font-weight:700;margin-bottom:8px">Parallel (Concurrent)</p>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+          <div style="display:flex;gap:4px">
+            <div style="background:var(--pri);padding:6px;border-radius:4px;font-size:.75rem;color:#fff">A (1s)</div>
+            <div style="background:#7c3aed;padding:6px;border-radius:4px;font-size:.75rem;color:#fff">B (0.5s)</div>
+            <div style="background:#a855f7;padding:6px;border-radius:4px;font-size:.75rem;color:#fff">C (0.8s)</div>
+          </div>
+          <div style="color:var(--dim)">↓ (all run at the same time)</div>
+          <div style="background:var(--sec);padding:6px;border-radius:4px;text-align:center;font-size:.75rem;color:#fff;width:120px">Done: ~1s total</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <b>🎯 When to Use Each?</b>
+    <p style="margin:0">
+    <strong>Series:</strong> When tasks depend on each other's results<br>
+    <strong>Parallel:</strong> When tasks are independent (faster!)<br>
+    <strong>Waterfall:</strong> When each task transforms/builds on the previous result
+    </p>
+  </div>
+
+  <button class="next-btn" onclick="goToSection(6)">Next: Pitfalls & Mistakes →</button>
+</div>
+
+<!-- ==================== SECTION 6: PITFALLS & MISTAKES ==================== -->
+<div class="section" id="sec-6">
+  <h1>⚠️ Pitfalls & Mistakes</h1>
+  <p class="subtitle">Common traps that catch even experienced developers</p>
+
+  <h2>Pitfall 1: Calling the Callback Twice</h2>
+  <p>Accidentally calling the callback more than once causes <strong>unpredictable bugs</strong>:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Double-calling Bug</span>
+      <div><button class="btn-reset" onclick="resetCode(15)">Reset</button><button class="btn-run" onclick="runCode(15)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-15">// ❌ BUG: callback called TWICE!
+function fetchData(callback) {
+  setTimeout(() => {
+    const data = { name: "Alice" };
+
+    callback(null, data);     // First call ✓
+    
+    // Oops! Forgot to return above
+    // More code runs and calls again...
+    callback(null, data);     // Second call ✗ BUG!
+  }, 300);
+}
+
+let callCount = 0;
+fetchData(function(err, data) {
+  callCount++;
+  console.log(`Callback called ${callCount} time(s):`, data.name);
+  
+  if (callCount > 1) {
+    console.warn("⚠️ BUG! Callback was called multiple times!");
+    console.warn("This could duplicate database entries, send double emails, etc.");
+  }
+});</textarea>
+    <div class="code-output" id="output-15"></div>
+  </div>
+
+  <div class="comparison">
+    <div class="cmp-bad">
+      <div class="cmp-label">❌ Can call twice</div>
+      <pre>function process(input, cb) {
+  if (!input) {
+    cb(new Error("No input"));
+    // Forgot return! ↓ continues
+  }
+  // This runs even after error!
+  doWork(input, cb);
+}</pre>
+    </div>
+    <div class="cmp-good">
+      <div class="cmp-label">✅ Safe with return</div>
+      <pre>function process(input, cb) {
+  if (!input) {
+    return cb(new Error("No input"));
+    // return stops execution
+  }
+  // Only runs if input exists
+  doWork(input, cb);
+}</pre>
+    </div>
+  </div>
+
+  <h2>Pitfall 2: Swallowing Errors</h2>
+  <p>Forgetting to check for errors means failures happen <strong>silently</strong>:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Silent Failure</span>
+      <div><button class="btn-reset" onclick="resetCode(16)">Reset</button><button class="btn-run" onclick="runCode(16)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-16">function getUser(id, cb) {
+  setTimeout(() => {
+    if (id > 100) return cb(new Error("User not found"));
+    cb(null, { id, name: "Alice" });
+  }, 200);
+}
+
+// ❌ BAD: Ignoring the error parameter
+getUser(999, function(err, user) {
+  // Not checking err at all!
+  console.log("User name:", user.name); // 💥 TypeError!
+});
+
+// Wait for the error to show, then show the fix
+setTimeout(() => {
+  console.log("\n--- Now with proper error handling ---\n");
+  
+  // ✅ GOOD: Always check errors first
+  getUser(999, function(err, user) {
+    if (err) {
+      console.log("❌ Handled error:", err.message);
+      return;
+    }
+    console.log("User name:", user.name);
+  });
+}, 500);</textarea>
+    <div class="code-output" id="output-16"></div>
+  </div>
+
+  <h2>Pitfall 3: Releasing Zalgo</h2>
+  <p>"Releasing Zalgo" means a function that <strong>sometimes calls its callback synchronously and sometimes asynchronously</strong>. This creates unpredictable behavior:</p>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Zalgo — Inconsistent Timing</span>
+      <div><button class="btn-reset" onclick="resetCode(17)">Reset</button><button class="btn-run" onclick="runCode(17)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-17">const cache = {};
+
+// ❌ BAD: Sometimes sync, sometimes async!
+function getDataZalgo(key, callback) {
+  if (cache[key]) {
+    callback(cache[key]);  // SYNC! (from cache)
+  } else {
+    setTimeout(() => {
+      cache[key] = `data_for_${key}`;
+      callback(cache[key]); // ASYNC! (fetched)
+    }, 100);
+  }
+}
+
+// ✅ GOOD: Always async, even from cache
+function getDataSafe(key, callback) {
+  if (cache[key]) {
+    setTimeout(() => callback(cache[key]), 0); // Force async!
+  } else {
+    setTimeout(() => {
+      cache[key] = `data_for_${key}`;
+      callback(cache[key]);
+    }, 100);
+  }
+}
+
+// Demo the problem:
+console.log("--- Zalgo (inconsistent) ---");
+console.log("Before call");
+getDataZalgo("test1", (data) => console.log("Callback:", data));
+console.log("After call (should be before callback)");
+
+setTimeout(() => {
+  console.log("\n--- Second call hits cache (sync!) ---");
+  console.log("Before call");
+  getDataZalgo("test1", (data) => console.log("Callback:", data));
+  console.log("After call (but callback already fired!)");
+}, 300);</textarea>
+    <div class="code-output" id="output-17"></div>
+  </div>
+
+  <div class="danger-box">
+    <b>🧟 Why "Zalgo"?</b>
+    <p style="margin:0">The name comes from a creepypasta meme. Isaac Z. Schlueter (npm creator) coined "don't release Zalgo" to mean: <strong>if your function is async, it must ALWAYS be async</strong>. Never mix sync and async callback invocation.</p>
+  </div>
+
+  <h2>Pitfall 4: Lost <code>this</code> Context</h2>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ Lost 'this'</span>
+      <div><button class="btn-reset" onclick="resetCode(18)">Reset</button><button class="btn-run" onclick="runCode(18)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-18">const user = {
+  name: "Alice",
+  greetLater: function() {
+    // ❌ 'this' is lost in regular function callback
+    setTimeout(function() {
+      try {
+        console.log("Regular fn:", this.name); // undefined!
+      } catch(e) {
+        console.log("❌ Regular fn: 'this' is wrong!", this === undefined ? "undefined" : typeof this);
+      }
+    }, 100);
+    
+    // ✅ Arrow function preserves 'this'
+    setTimeout(() => {
+      console.log("✅ Arrow fn:", this.name); // "Alice"
+    }, 200);
+    
+    // ✅ Alternative: bind
+    setTimeout(function() {
+      console.log("✅ bind():", this.name); // "Alice"
+    }.bind(this), 300);
+  }
+};
+
+user.greetLater();</textarea>
+    <div class="code-output" id="output-18"></div>
+  </div>
+
+  <h2>Pitfall 5: Callback in a Loop</h2>
+
+  <div class="code-runner">
+    <div class="code-runner-head">
+      <span>▶ The Classic Loop Bug</span>
+      <div><button class="btn-reset" onclick="resetCode(19)">Reset</button><button class="btn-run" onclick="runCode(19)">Run ▶</button></div>
+    </div>
+    <textarea id="editor-19">// ❌ BUG with var — all callbacks see the SAME i
+console.log("--- BUG with var ---");
+for (var i = 0; i < 3; i++) {
+  setTimeout(function() {
+    console.log("var i =", i); // Always 3!
+  }, 100);
+}
+
+// ✅ FIX with let — each iteration gets its own i
+setTimeout(() => {
+  console.log("\n--- FIX with let ---");
+  for (let j = 0; j < 3; j++) {
+    setTimeout(function() {
+      console.log("let j =", j); // 0, 1, 2 ✓
+    }, 100);
+  }
+}, 500);</textarea>
+    <div class="code-output" id="output-19"></div>
+  </div>
+
+  <h2>📋 Quick Reference: Pitfall Checklist</h2>
+  <ul class="checklist">
+    <li>Always use <code>return</code> after calling callback on error</li>
+    <li>Always check the error parameter in error-first callbacks</li>
+    <li>Never call a callback both synchronously and asynchronously</li>
+    <li>Use arrow functions or <code>.bind()</code> to preserve <code>this</code></li>
+    <li>Use <code>let</code> instead of <code>var</code> in loops with async callbacks</li>
+    <li>Pass <code>Error</code> objects, not strings</li>
+    <li>Consider using a "called" flag to prevent double-calling</li>
+  </ul>
+
+  <button class="next-btn" onclick="goToSection(7)">Next: Take the Quiz! →</button>
+</div>
+
+<!-- ==================== SECTION 7: QUIZ ==================== -->
+<div class="section" id="sec-7">
+  <h1>📝 Quiz: Test Your Knowledge</h1>
+  <p class="subtitle">10 questions to test your understanding of callbacks</p>
+
+  <div class="quiz-score-box" id="quizScoreBox" style="display:none">
+    <div class="score-big" id="quizScoreNum">0/10</div>
+    <div class="score-label" id="quizScoreLabel">Keep practicing!</div>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div style="text-align:center;margin-top:25px">
+    <button class="demo-btn" id="quizResetBtn" onclick="resetQuiz()" style="display:none">↺ Retake Quiz</button>
+  </div>
+
+  <button class="next-btn" onclick="goToSection(8)">Next: Coding Exercises →</button>
+</div>
+
+<!-- ==================== SECTION 8: EXERCISES ==================== -->
+<div class="section" id="sec-8">
+  <h1>💪 Coding Exercises</h1>
+  <p class="subtitle">Practice makes perfect! Solve these challenges.</p>
+
+  <!-- Exercise 1 -->
+  <div class="exercise">
+    <h3>Exercise 1: Implement fetchWithCallback</h3>
+    <p class="edesc">Create a function that simulates an API call. It should accept a <code>url</code> and an error-first <code>callback</code>. If the url contains "error", call back with an error. Otherwise, return some data after 500ms.</p>
+
+    <div class="code-runner">
+      <div class="code-runner-head">
+        <span>💻 Your Solution</span>
+        <div><button class="btn-reset" onclick="resetExercise(0)">Reset</button><button class="btn-run" onclick="runExercise(0)">Test ▶</button></div>
+      </div>
+      <textarea id="ex-editor-0">function fetchWithCallback(url, callback) {
+  // Your code here!
+  // 1. Use setTimeout with 500ms delay
+  // 2. If url includes "error", call: callback(new Error("Network error"))
+  // 3. Otherwise call: callback(null, { url: url, data: "success" })
+  
+}
+
+// Don't modify below — these are the tests
+fetchWithCallback("/api/users", function(err, result) {
+  if (err) console.log("FAIL: Should not error");
+  else console.log(result.data === "success" ? "✅ Test 1 passed" : "❌ Test 1 failed");
+});
+
+fetchWithCallback("/api/error/test", function(err, result) {
+  if (err) console.log("✅ Test 2 passed: Got error as expected");
+  else console.log("❌ Test 2 failed: Should have errored");
+});</textarea>
+      <div class="code-output" id="ex-output-0"></div>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="exercise">
+    <h3>Exercise 2: Fix the Callback Hell</h3>
+    <p class="edesc">Refactor this callback hell into clean, flat code using named functions. The behavior should remain the same.</p>
+
+    <div class="code-runner">
+      <div class="code-runner-head">
+        <span>💻 Your Solution</span>
+        <div><button class="btn-reset" onclick="resetExercise(1)">Reset</button><button class="btn-run" onclick="runExercise(1)">Test ▶</button></div>
+      </div>
+      <textarea id="ex-editor-1">// Helper functions (don't modify)
+function step1(cb) { setTimeout(() => cb(null, "Step 1 done"), 200); }
+function step2(prev, cb) { setTimeout(() => cb(null, prev + " → Step 2 done"), 200); }
+function step3(prev, cb) { setTimeout(() => cb(null, prev + " → Step 3 done"), 200); }
+
+// ❌ CURRENT: Callback hell — REFACTOR THIS using named functions!
+step1(function(err, r1) {
+  if (err) { console.log("Error:", err); return; }
+  step2(r1, function(err, r2) {
+    if (err) { console.log("Error:", err); return; }
+    step3(r2, function(err, r3) {
+      if (err) { console.log("Error:", err); return; }
+      console.log("Result:", r3);
+    });
+  });
+});
+
+// ✅ YOUR REFACTORED VERSION:
+// Use named functions to flatten the code
+// The output should be the same: "Result: Step 1 done → Step 2 done → Step 3 done"</textarea>
+      <div class="code-output" id="ex-output-1"></div>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="exercise">
+    <h3>Exercise 3: Implement parallelAll</h3>
+    <p class="edesc">Create a <code>parallelAll</code> function that takes an array of async task functions and a final callback. It should run all tasks in parallel and call the final callback with all results (preserving order) when ALL tasks complete. If any task errors, call the final callback with that error immediately.</p>
+
+    <div class="code-runner">
+      <div class="code-runner-head">
+        <span>💻 Your Solution</span>
+        <div><button class="btn-reset" onclick="resetExercise(2)">Reset</button><button class="btn-run" onclick="runExercise(2)">Test ▶</button></div>
+      </div>
+      <textarea id="ex-editor-2">function parallelAll(tasks, finalCallback) {
+  // Your code here!
+  // 1. Create results array
+  // 2. Track completed count
+  // 3. Run ALL tasks immediately
+  // 4. Each task calls: task(function(err, result) { ... })
+  // 5. When all done: finalCallback(null, results)
+  // 6. If error: finalCallback(err)
+  
+}
+
+// Tests (don't modify)
+parallelAll([
+  (cb) => setTimeout(() => cb(null, "A"), 300),
+  (cb) => setTimeout(() => cb(null, "B"), 100),
+  (cb) => setTimeout(() => cb(null, "C"), 200)
+], function(err, results) {
+  if (err) console.log("❌ Should not error");
+  else if (JSON.stringify(results) === '["A","B","C"]') {
+    console.log("✅ Test 1 passed: Results in correct order!");
+  } else {
+    console.log("❌ Test 1 failed. Got:", JSON.stringify(results));
+  }
+});
+
+parallelAll([
+  (cb) => setTimeout(() => cb(null, "OK"), 100),
+  (cb) => setTimeout(() => cb(new Error("fail!")), 50)
+], function(err, results) {
+  if (err) console.log("✅ Test 2 passed: Error caught -", err.message);
+  else console.log("❌ Test 2 failed: Should have errored");
+});</textarea>
+      <div class="code-output" id="ex-output-2"></div>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="exercise">
+    <h3>Exercise 4: Retry with Callbacks</h3>
+    <p class="edesc">Implement a <code>retry</code> function that attempts an async operation up to <code>maxRetries</code> times. If it succeeds, return the result. If all attempts fail, return the last error.</p>
+
+    <div class="code-runner">
+      <div class="code-runner-head">
+        <span>💻 Your Solution</span>
+        <div><button class="btn-reset" onclick="resetExercise(3)">Reset</button><button class="btn-run" onclick="runExercise(3)">Test ▶</button></div>
+      </div>
+      <textarea id="ex-editor-3">function retry(operation, maxRetries, callback) {
+  // Your code here!
+  // 1. Call operation(cb) where cb is error-first
+  // 2. If success, call callback(null, result)
+  // 3. If error and retries left, try again
+  // 4. If error and no retries left, call callback(lastError)
+  // Hint: use a helper function with an 'attempt' counter
+  
+}
+
+// Test — flaky function that fails first 2 times
+let attempts = 0;
+function flakyOperation(cb) {
+  attempts++;
+  console.log(`  Attempt ${attempts}...`);
+  setTimeout(() => {
+    if (attempts < 3) {
+      cb(new Error(`Attempt ${attempts} failed`));
+    } else {
+      cb(null, "Success on attempt " + attempts);
+    }
+  }, 200);
+}
+
+retry(flakyOperation, 5, function(err, result) {
+  if (err) {
+    console.log("❌ All retries failed:", err.message);
+  } else {
+    console.log("✅ " + result);
+    console.log(attempts === 3 ? "✅ Correct attempt count!" : "❌ Wrong attempt count");
+  }
+});</textarea>
+      <div class="code-output" id="ex-output-3"></div>
+    </div>
+  </div>
+
+  <div class="success-box" style="margin-top:30px">
+    <b>🎉 Congratulations!</b>
+    <p style="margin:0">You've completed the Callbacks masterclass! You now understand:<br>
+    ✅ How async works in JavaScript (Event Loop)<br>
+    ✅ Callback fundamentals and patterns<br>
+    ✅ Error-first callbacks (Node.js convention)<br>
+    ✅ Callback hell and how to avoid it<br>
+    ✅ Async flow control (series, parallel, waterfall)<br>
+    ✅ Common pitfalls and how to avoid them<br><br>
+    <strong>Next steps:</strong> Learn <strong>Promises</strong> and <strong>async/await</strong> — the modern way to handle async JavaScript!</p>
+  </div>
+</div>
+
+</main>
+
+<button class="scroll-btn" id="scrollBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ========================
+// NAVIGATION
+// ========================
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('.nav a[data-section]');
+const visited = new Set([0]);
+let currentSection = 0;
+
+function goToSection(idx) {
+  currentSection = idx;
+  visited.add(idx);
+  sections.forEach((s, i) => s.classList.toggle('active', i === idx));
+  navLinks.forEach((a, i) => {
+    a.classList.toggle('active', i === idx);
+    if (visited.has(i)) a.classList.add('completed');
+  });
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelector('.nav').classList.remove('open');
+}
+
+navLinks.forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    goToSection(parseInt(a.dataset.section));
+  });
+});
+
+function updateProgress() {
+  const pct = Math.round((visited.size / sections.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = visited.size + '/' + sections.length;
+}
+
+// Scroll button
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollBtn').style.display = window.scrollY > 400 ? 'flex' : 'none';
+});
+
+// ========================
+// CODE RUNNER
+// ========================
+const defaultCode = {};
+document.querySelectorAll('textarea[id^="editor-"]').forEach(ta => {
+  defaultCode[ta.id] = ta.value;
+});
+document.querySelectorAll('textarea[id^="ex-editor-"]').forEach(ta => {
+  defaultCode[ta.id] = ta.value;
+});
+
+function resetCode(n) {
+  const id = 'editor-' + n;
+  document.getElementById(id).value = defaultCode[id];
+  document.getElementById('output-' + n).innerHTML = '';
+}
+
+function resetExercise(n) {
+  const id = 'ex-editor-' + n;
+  document.getElementById(id).value = defaultCode[id];
+  document.getElementById('ex-output-' + n).innerHTML = '';
+}
+
+let activeTimers = [];
+
+function runCode(n) {
+  executeCode(document.getElementById('editor-' + n).value, document.getElementById('output-' + n));
+}
+
+function runExercise(n) {
+  executeCode(document.getElementById('ex-editor-' + n).value, document.getElementById('ex-output-' + n));
+}
+
+function executeCode(code, outputEl) {
+  outputEl.innerHTML = '';
+  
+  // Clear previous timers
+  activeTimers.forEach(t => { clearTimeout(t); clearInterval(t); });
+  activeTimers = [];
+
+  const addLine = (text, cls = '') => {
+    const d = document.createElement('div');
+    d.className = 'log-line ' + cls;
+    d.textContent = (typeof text === 'object' && text !== null) ? JSON.stringify(text, null, 2) : String(text);
+    outputEl.appendChild(d);
+    outputEl.scrollTop = outputEl.scrollHeight;
+  };
+
+  // Override timers to track them
+  const origSetTimeout = window.setTimeout;
+  const origSetInterval = window.setInterval;
+  const origClearInterval = window.clearInterval;
+
+  const _setTimeout = function(fn, ms, ...args) {
+    const id = origSetTimeout(fn, ms, ...args);
+    activeTimers.push(id);
+    return id;
+  };
+  
+  const _setInterval = function(fn, ms, ...args) {
+    const id = origSetInterval(fn, ms, ...args);
+    activeTimers.push(id);
+    return id;
+  };
+
+  const _log = (...args) => addLine(args.map(a => (typeof a === 'object' && a !== null) ? JSON.stringify(a) : String(a)).join(' '));
+  const _error = (...args) => addLine(args.map(a => (a instanceof Error) ? a.message : (typeof a === 'object' && a !== null) ? JSON.stringify(a) : String(a)).join(' '), 'log-error');
+  const _warn = (...args) => addLine(args.map(a => (typeof a === 'object' && a !== null) ? JSON.stringify(a) : String(a)).join(' '), 'log-warn');
+
+  try {
+    const fn = new Function('console', 'setTimeout', 'setInterval', 'clearInterval', code);
+    fn(
+      { log: _log, error: _error, warn: _warn, info: _log },
+      _setTimeout,
+      _setInterval,
+      origClearInterval
+    );
+  } catch(e) {
+    addLine('Error: ' + e.message, 'log-error');
+  }
+}
+
+// ========================
+// EVENT LOOP VISUALIZATION
+// ========================
+let elRunning = false;
+
+function resetEventLoop() {
+  document.getElementById('el-stack').innerHTML = '';
+  document.getElementById('el-apis').innerHTML = '';
+  document.getElementById('el-queue').innerHTML = '';
+  document.getElementById('el-console').innerHTML = '<div class="cs-line"><span class="cs-prompt">&gt;</span> <span style="color:var(--dim)">Console output appears here...</span></div>';
+  document.getElementById('el-steps').innerHTML = '';
+  document.getElementById('el-start').disabled = false;
+  elRunning = false;
+}
+
+function startEventLoop() {
+  if (elRunning) return;
+  elRunning = true;
+  document.getElementById('el-start').disabled = true;
+  resetEventLoop();
+  document.getElementById('el-start').disabled = true;
+
+  const stack = document.getElementById('el-stack');
+  const apis = document.getElementById('el-apis');
+  const queue = document.getElementById('el-queue');
+  const cons = document.getElementById('el-console');
+  cons.innerHTML = '';
+
+  const addViz = (parent, text, cls) => {
+    const d = document.createElement('div');
+    d.className = 'viz-item ' + cls;
+    d.textContent = text;
+    parent.appendChild(d);
+    return d;
+  };
+
+  const addConsole = (text) => {
+    const d = document.createElement('div');
+    d.className = 'cs-line';
+    d.innerHTML = '<span class="cs-prompt">&gt;</span> <span class="cs-out">' + text + '</span>';
+    cons.appendChild(d);
+    cons.scrollTop = cons.scrollHeight;
+  };
+
+  const removeEl = (el) => { if (el && el.parentNode) el.parentNode.removeChild(el); };
+
+  // Animation steps
+  const steps = [
+    // Step 0: Push console.log("Start")
+    () => { addViz(stack, 'console.log("Start")', 'viz-stack'); },
+    // Step 1: Execute it
+    () => { addConsole('Start'); stack.innerHTML = ''; },
+    // Step 2: Push setTimeout
+    () => { addViz(stack, 'setTimeout(cb, 1000)', 'viz-stack'); },
+    // Step 3: Move to Web API
+    () => { stack.innerHTML = ''; addViz(apis, 'Timer (1000ms) ⏳', 'viz-api'); },
+    // Step 4: Push console.log("End")
+    () => { addViz(stack, 'console.log("End")', 'viz-stack'); },
+    // Step 5: Execute it
+    () => { addConsole('End'); stack.innerHTML = ''; },
+    // Step 6: Stack empty, timer running
+    () => { apis.innerHTML = ''; addViz(apis, 'Timer done! ✓', 'viz-api'); },
+    // Step 7: Move callback to queue
+    () => { apis.innerHTML = ''; addViz(queue, 'callback()', 'viz-queue'); },
+    // Step 8: Event loop moves to stack
+    () => { queue.innerHTML = ''; addViz(stack, 'callback()', 'viz-stack'); },
+    // Step 9: Execute callback
+    () => { 
+      addConsole('Timer callback fired!'); 
+      stack.innerHTML = ''; 
+      addConsole('✅ All done!');
+    }
+  ];
+
+  const labels = [
+    '1. Push log("Start") to stack',
+    '2. Execute → prints "Start"',
+    '3. Push setTimeout to stack',
+    '4. setTimeout → Web API handles timer',
+    '5. Push log("End") to stack',
+    '6. Execute → prints "End"',
+    '7. Timer completes in Web API',
+    '8. Callback moves to Queue',
+    '9. Event Loop: stack empty → move to stack',
+    '10. Execute callback → prints message'
+  ];
+
+  // Build step indicators
+  const stepsEl = document.getElementById('el-steps');
+  stepsEl.innerHTML = '';
+  labels.forEach((_, i) => {
+    if (i > 0) {
+      const line = document.createElement('div');
+      line.className = 'step-line';
+      line.id = 'step-line-' + i;
+      stepsEl.appendChild(line);
+    }
+    const dot = document.createElement('div');
+    dot.className = 'step-dot';
+    dot.id = 'step-dot-' + i;
+    dot.textContent = i + 1;
+    dot.title = labels[i];
+    stepsEl.appendChild(dot);
+  });
+
+  let si = 0;
+  function runStep() {
+    if (si >= steps.length) {
+      elRunning = false;
+      return;
+    }
+    
+    document.getElementById('step-dot-' + si).classList.add('active');
+    if (si > 0) {
+      document.getElementById('step-dot-' + (si-1)).classList.remove('active');
+      document.getElementById('step-dot-' + (si-1)).classList.add('done');
+      document.getElementById('step-line-' + si).classList.add('done');
+    }
+    
+    steps[si]();
+    si++;
+    setTimeout(runStep, si <= 2 ? 800 : si <= 6 ? 900 : 1100);
+  }
+  
+  runStep();
+}
+
+// ========================
+// CALLBACK HELL BUILDER
+// ========================
+let hellBuilt = false;
+
+function buildHell() {
+  if (hellBuilt) return;
+  hellBuilt = true;
+  const container = document.getElementById('hell-demo');
+  container.innerHTML = '';
+  
+  const lines = [
+    { indent: 0, text: '<span style="color:#c678dd">getUser</span>(id, <span style="color:#c678dd">function</span>(<span style="color:#e06c75">err</span>, <span style="color:#e5c07b">user</span>) {', color: '#10b981' },
+    { indent: 1, text: '<span style="color:#c678dd">if</span> (<span style="color:#e06c75">err</span>) <span style="color:#c678dd">return</span> <span style="color:#61afef">handleError</span>(<span style="color:#e06c75">err</span>);', color: '#10b981' },
+    { indent: 1, text: '<span style="color:#61afef">getOrders</span>(<span style="color:#e5c07b">user</span>.id, <span style="color:#c678dd">function</span>(<span style="color:#e06c75">err</span>, <span style="color:#e5c07b">orders</span>) {', color: '#22d3ee' },
+    { indent: 2, text: '<span style="color:#c678dd">if</span> (<span style="color:#e06c75">err</span>) <span style="color:#c678dd">return</span> <span style="color:#61afef">handleError</span>(<span style="color:#e06c75">err</span>);', color: '#22d3ee' },
+    { indent: 2, text: '<span style="color:#61afef">getOrderDetails</span>(<span style="color:#e5c07b">orders</span>[<span style="color:#d19a66">0</span>], <span style="color:#c678dd">function</span>(<span style="color:#e06c75">err</span>, <span style="color:#e5c07b">details</span>) {', color: '#6366f1' },
+    { indent: 3, text: '<span style="color:#c678dd">if</span> (<span style="color:#e06c75">err</span>) <span style="color:#c678dd">return</span> <span style="color:#61afef">handleError</span>(<span style="color:#e06c75">err</span>);', color: '#6366f1' },
+    { indent: 3, text: '<span style="color:#61afef">getShipping</span>(<span style="color:#e5c07b">details</span>.id, <span style="color:#c678dd">function</span>(<span style="color:#e06c75">err</span>, <span style="color:#e5c07b">shipping</span>) {', color: '#f59e0b' },
+    { indent: 4, text: '<span style="color:#c678dd">if</span> (<span style="color:#e06c75">err</span>) <span style="color:#c678dd">return</span> <span style="color:#61afef">handleError</span>(<span style="color:#e06c75">err</span>);', color: '#f59e0b' },
+    { indent: 4, text: '<span style="color:#61afef">getTracking</span>(<span style="color:#e5c07b">shipping</span>.id, <span style="color:#c678dd">function</span>(<span style="color:#e06c75">err</span>, <span style="color:#e5c07b">tracking</span>) {', color: '#f97316' },
+    { indent: 5, text: '<span style="color:#c678dd">if</span> (<span style="color:#e06c75">err</span>) <span style="color:#c678dd">return</span> <span style="color:#61afef">handleError</span>(<span style="color:#e06c75">err</span>);', color: '#f97316' },
+    { indent: 5, text: '<span style="color:#61afef">console</span>.<span style="color:#61afef">log</span>(<span style="color:#e5c07b">tracking</span>); <span style="color:#5c6370">// 😱 Finally!</span>', color: '#ef4444' },
+    { indent: 4, text: '});', color: '#f97316' },
+    { indent: 3, text: '});', color: '#f59e0b' },
+    { indent: 2, text: '});', color: '#6366f1' },
+    { indent: 1, text: '});', color: '#22d3ee' },
+    { indent: 0, text: '});', color: '#10b981' }
+  ];
+
+  let i = 0;
+  function addLine() {
+    if (i >= lines.length) return;
+    const line = lines[i];
+    const div = document.createElement('div');
+    div.className = 'hell-line';
+    div.style.paddingLeft = (line.indent * 28 + 10) + 'px';
+    div.style.borderLeft = '3px solid ' + line.color;
+    div.style.opacity = '0';
+    div.style.transform = 'translateX(-20px)';
+    div.innerHTML = line.text;
+    container.appendChild(div);
+    
+    requestAnimationFrame(() => {
+      div.style.transition = 'all 0.4s ease';
+      div.style.opacity = '1';
+      div.style.transform = 'translateX(0)';
+    });
+    
+    i++;
+    setTimeout(addLine, 200);
+  }
+  
+  addLine();
+}
+
+function resetHell() {
+  hellBuilt = false;
+  document.getElementById('hell-demo').innerHTML = '<span style="color:var(--dim);font-size:.82rem">Click "Build the Pyramid" to see callback hell grow...</span>';
+}
+resetHell();
+
+// ========================
+// QUIZ ENGINE
+// ========================
+const quizData = [
+  {
+    q: "What is a callback function?",
+    opts: [
+      "A function that returns another function",
+      "A function passed as an argument to another function, to be invoked later",
+      "A function that calls itself recursively",
+      "A built-in JavaScript function for handling errors"
+    ],
+    correct: 1,
+    explain: "A callback is a function passed as an argument to another function. The receiving function 'calls back' that function at an appropriate time."
+  },
+  {
+    q: "What will this code output?<pre>console.log('A');\nsetTimeout(() => console.log('B'), 0);\nconsole.log('C');</pre>",
+    opts: ["A, B, C", "A, C, B", "B, A, C", "C, A, B"],
+    correct: 1,
+    explain: "Even with 0ms delay, setTimeout is async. 'A' prints first, then 'C' (sync code), then 'B' (from the callback queue after the stack is empty)."
+  },
+  {
+    q: "In the error-first callback pattern, what does the first parameter represent?",
+    opts: [
+      "The result data",
+      "The callback function itself",
+      "An error object (or null if no error)",
+      "The operation status code"
+    ],
+    correct: 2,
+    explain: "The Node.js error-first convention puts the error as the first parameter. It's null when there's no error, or an Error object when something went wrong."
+  },
+  {
+    q: "What is 'callback hell'?",
+    opts: [
+      "When a callback throws an uncaught error",
+      "When callbacks are nested too deeply, creating hard-to-read code",
+      "When a callback is never called",
+      "When too many event listeners are attached"
+    ],
+    correct: 1,
+    explain: "Callback hell (pyramid of doom) is when you have deeply nested callbacks that make code hard to read, maintain, and debug."
+  },
+  {
+    q: "What's the bug in this code?<pre>function save(data, cb) {\n  if (!data) {\n    cb(new Error('No data'));\n  }\n  database.save(data, cb);\n}</pre>",
+    opts: [
+      "The Error object is created wrong",
+      "Missing return after cb(error) — callback could be called twice",
+      "database.save is not defined",
+      "cb should be the first parameter"
+    ],
+    correct: 1,
+    explain: "Without 'return' after cb(error), the code continues to database.save(data, cb), potentially calling cb a second time. Always return after calling the callback on error."
+  },
+  {
+    q: "What is 'releasing Zalgo'?",
+    opts: [
+      "Throwing an error inside a callback",
+      "A function that sometimes calls its callback synchronously and sometimes asynchronously",
+      "Using var instead of let in a loop",
+      "Forgetting to clear an interval"
+    ],
+    correct: 1,
+    explain: "Releasing Zalgo means having inconsistent sync/async behavior. A function should ALWAYS be async or ALWAYS be sync, never mixed. Use setTimeout(cb, 0) to ensure async behavior."
+  },
+  {
+    q: "What does this code print?<pre>for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 100);\n}</pre>",
+    opts: ["0, 1, 2", "3, 3, 3", "undefined, undefined, undefined", "0, 0, 0"],
+    correct: 1,
+    explain: "With 'var', there's only one 'i' variable shared across all iterations. By the time the callbacks run, the loop has finished and i === 3. Use 'let' to fix this."
+  },
+  {
+    q: "In parallel execution of async tasks, the total time is approximately:",
+    opts: [
+      "The sum of all task durations",
+      "The average of all task durations",
+      "The duration of the longest task",
+      "The duration of the shortest task"
+    ],
+    correct: 2,
+    explain: "In parallel execution, all tasks start at the same time. The total time equals the longest task because everything else finishes while the longest is still running."
+  },
+  {
+    q: "What's wrong with passing a string instead of an Error object to a callback?",
+    opts: [
+      "Strings can't be used as errors in JavaScript",
+      "It will throw a TypeError",
+      "You lose the stack trace, making debugging much harder",
+      "Nothing — strings work just fine"
+    ],
+    correct: 2,
+    explain: "Error objects include a stack trace showing where the error originated. Passing a string loses this crucial debugging information. Always use new Error('message')."
+  },
+  {
+    q: "Which approach correctly preserves 'this' in a callback?",
+    opts: [
+      "Using a regular function expression",
+      "Using an arrow function (=>)",
+      "Using the arguments object",
+      "Using eval()"
+    ],
+    correct: 1,
+    explain: "Arrow functions don't have their own 'this' — they inherit it from the enclosing scope. This makes them perfect for callbacks where you need to access the outer 'this'."
+  }
+];
+
+let quizScore = 0;
+let quizAnswered = 0;
+
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  quizScore = 0;
+  quizAnswered = 0;
+  document.getElementById('quizScoreBox').style.display = 'none';
+  document.getElementById('quizResetBtn').style.display = 'none';
+
+  quizData.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.id = 'quiz-card-' + qi;
+
+    let optsHtml = q.opts.map((o, oi) => 
+      `<div class="quiz-opt" data-q="${qi}" data-o="${oi}" onclick="answerQuiz(${qi},${oi})">${o}</div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="quiz-num">Question ${qi + 1} of ${quizData.length}</div>
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-opts">${optsHtml}</div>
+      <div class="quiz-fb" id="quiz-fb-${qi}"></div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function answerQuiz(qi, oi) {
+  const card = document.getElementById('quiz-card-' + qi);
+  if (card.classList.contains('answered')) return;
+  card.classList.add('answered');
+  quizAnswered++;
+
+  const opts = card.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.classList.add('locked'));
+
+  const q = quizData[qi];
+  const correct = oi === q.correct;
+  
+  opts[oi].classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) opts[q.correct].classList.add('correct');
+  
+  if (correct) quizScore++;
+
+  const fb = document.getElementById('quiz-fb-' + qi);
+  fb.className = 'quiz-fb show ' + (correct ? 'pass' : 'fail');
+  fb.textContent = (correct ? '✅ Correct! ' : '❌ Incorrect. ') + q.explain;
+
+  if (quizAnswered === quizData.length) {
+    showQuizScore();
+  }
+}
+
+function showQuizScore() {
+  const box = document.getElementById('quizScoreBox');
+  box.style.display = 'block';
+  document.getElementById('quizScoreNum').textContent = quizScore + '/' + quizData.length;
+  
+  const pct = (quizScore / quizData.length) * 100;
+  let label = '';
+  if (pct === 100) label = '🏆 Perfect score! You\'re a callback master!';
+  else if (pct >= 80) label = '🌟 Excellent! You have strong callback knowledge!';
+  else if (pct >= 60) label = '👍 Good job! Review the sections you missed.';
+  else if (pct >= 40) label = '📚 Keep studying! Re-read the earlier sections.';
+  else label = '💪 Don\'t give up! Go through each section carefully.';
+  
+  document.getElementById('quizScoreLabel').textContent = label;
+  document.getElementById('quizResetBtn').style.display = 'inline-block';
+  
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  if (pct >= 80) celebrate();
+}
+
+function resetQuiz() {
+  buildQuiz();
+  document.getElementById('quizContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ========================
+// CONFETTI
+// ========================
+function celebrate() {
+  const container = document.createElement('div');
+  container.className = 'celebration';
+  document.body.appendChild(container);
+  
+  const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4'];
+  
+  for (let i = 0; i < 80; i++) {
+    const conf = document.createElement('div');
+    conf.className = 'confetti';
+    conf.style.left = Math.random() * 100 + '%';
+    conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    conf.style.animationDelay = Math.random() * 2 + 's';
+    conf.style.animationDuration = (2 + Math.random() * 2) + 's';
+    conf.style.width = (5 + Math.random() * 10) + 'px';
+    conf.style.height = (5 + Math.random() * 10) + 'px';
+    container.appendChild(conf);
+  }
+  
+  setTimeout(() => container.remove(), 5000);
+}
+
+// ========================
+// TAB KEY IN TEXTAREAS
+// ========================
+document.querySelectorAll('textarea').forEach(ta => {
+  ta.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+      this.selectionStart = this.selectionEnd = start + 2;
+    }
+  });
+});
+
+// ========================
+// INIT
+// ========================
+buildQuiz();
+updateProgress();
+</script>
+</body>
+</html>

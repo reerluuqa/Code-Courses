@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Prototypes & Inheritance Mastery</title>
+<style>
+  :root {
+    --bg-primary: #0a0e17;
+    --bg-secondary: #111827;
+    --bg-card: #1a2235;
+    --bg-code: #0d1117;
+    --accent: #38bdf8;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --accent5: #f472b6;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --warning: #eab308;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #1e293b;
+    --glow: 0 0 20px rgba(56,189,248,0.15);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* NAV */
+  .top-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: rgba(10,14,23,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; height: 60px;
+  }
+  .top-nav .logo {
+    font-size: 1.25rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-right: 2rem; white-space: nowrap;
+  }
+  .nav-links {
+    display: flex; gap: 0.25rem; overflow-x: auto; flex: 1;
+    scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-link {
+    padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.8rem;
+    color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+    transition: all 0.2s; border: 1px solid transparent;
+    background: none;
+  }
+  .nav-link:hover { color: var(--accent); background: rgba(56,189,248,0.05); }
+  .nav-link.active {
+    color: var(--accent); background: rgba(56,189,248,0.1);
+    border-color: rgba(56,189,248,0.2);
+  }
+  .progress-bar-container {
+    margin-left: auto; display: flex; align-items: center; gap: 0.75rem;
+    white-space: nowrap;
+  }
+  .progress-track {
+    width: 120px; height: 6px; background: var(--border); border-radius: 3px; overflow:hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 3px; transition: width 0.5s ease; width: 0%;
+  }
+  .progress-text { font-size: 0.75rem; color: var(--text-muted); }
+
+  /* MAIN */
+  main { margin-top: 60px; padding: 2rem; max-width: 1100px; margin-left: auto; margin-right: auto; }
+
+  /* SECTIONS */
+  .section {
+    display: none; animation: fadeSlide 0.4s ease;
+  }
+  .section.active { display: block; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  h2 {
+    font-size: 1.75rem; font-weight: 700; margin: 2rem 0 1rem;
+    color: var(--text-primary);
+  }
+  h3 {
+    font-size: 1.25rem; font-weight: 600; margin: 1.5rem 0 0.75rem;
+    color: var(--accent);
+  }
+  .subtitle { color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem; }
+
+  p { margin-bottom: 1rem; color: var(--text-secondary); }
+  strong { color: var(--text-primary); }
+
+  /* CARDS */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--glow);
+  }
+  .card.highlight-blue { border-left: 4px solid var(--accent); }
+  .card.highlight-purple { border-left: 4px solid var(--accent2); }
+  .card.highlight-green { border-left: 4px solid var(--accent3); }
+  .card.highlight-orange { border-left: 4px solid var(--accent4); }
+  .card.highlight-pink { border-left: 4px solid var(--accent5); }
+  .card.highlight-red { border-left: 4px solid var(--danger); }
+
+  /* KEY CONCEPT */
+  .key-concept {
+    display: flex; gap: 1rem; align-items: flex-start;
+    background: rgba(56,189,248,0.05);
+    border: 1px solid rgba(56,189,248,0.15);
+    border-radius: 12px; padding: 1.25rem; margin: 1rem 0;
+  }
+  .key-concept .icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+  .key-concept p { margin: 0; }
+
+  /* PITFALL */
+  .pitfall {
+    display: flex; gap: 1rem; align-items: flex-start;
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 12px; padding: 1.25rem; margin: 1rem 0;
+  }
+  .pitfall .icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+  .pitfall .title { color: var(--danger); font-weight: 700; margin-bottom: 0.25rem; }
+
+  .tip {
+    display: flex; gap: 1rem; align-items: flex-start;
+    background: rgba(34,197,94,0.05);
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 12px; padding: 1.25rem; margin: 1rem 0;
+  }
+  .tip .icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+  .code-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-header span { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .code-header .dots { display: flex; gap: 6px; }
+  .code-header .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-header .dot:nth-child(1) { background: #ef4444; }
+  .code-header .dot:nth-child(2) { background: #eab308; }
+  .code-header .dot:nth-child(3) { background: #22c55e; }
+  pre {
+    padding: 1.25rem; overflow-x: auto; font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.88rem; line-height: 1.75; color: var(--text-primary);
+    tab-size: 2;
+  }
+  .kw { color: #c084fc; }
+  .fn { color: #38bdf8; }
+  .str { color: #34d399; }
+  .num { color: #fb923c; }
+  .cm { color: #64748b; font-style: italic; }
+  .op { color: #94a3b8; }
+  .prop { color: #f472b6; }
+  .bool { color: #fb923c; }
+  .null { color: #94a3b8; }
+  .obj { color: #fbbf24; }
+  .param { color: #f0abfc; }
+
+  /* INTERACTIVE CODE EDITOR */
+  .editor-container {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1rem 0;
+  }
+  .editor-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+  }
+  .editor-header span { font-size: 0.75rem; color: var(--accent); font-weight: 600; }
+  .run-btn {
+    padding: 0.35rem 1rem; border-radius: 6px; border: none;
+    background: var(--accent); color: var(--bg-primary); font-weight: 700;
+    font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+  }
+  .run-btn:hover { background: #7dd3fc; transform: scale(1.05); }
+  .code-textarea {
+    width: 100%; min-height: 150px; padding: 1.25rem;
+    background: transparent; color: var(--text-primary); border: none;
+    font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.88rem; line-height: 1.75; resize: vertical; outline: none;
+    tab-size: 2;
+  }
+  .output-panel {
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.25rem; min-height: 50px;
+    background: rgba(0,0,0,0.2);
+    font-family: 'Fira Code', monospace; font-size: 0.85rem;
+    color: var(--accent3); white-space: pre-wrap;
+  }
+  .output-panel .label {
+    font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 0.5rem;
+  }
+  .output-panel .error { color: var(--danger); }
+
+  /* CHAIN VISUALIZATION */
+  .chain-viz {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 0; margin: 2rem 0; position: relative;
+  }
+  .chain-node {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 14px; padding: 1.25rem 1.75rem;
+    min-width: 280px; text-align: center;
+    position: relative; transition: all 0.3s;
+    z-index: 2;
+  }
+  .chain-node:hover { transform: scale(1.03); }
+  .chain-node.active-lookup {
+    border-color: var(--accent);
+    box-shadow: 0 0 25px rgba(56,189,248,0.3);
+  }
+  .chain-node.found {
+    border-color: var(--success);
+    box-shadow: 0 0 25px rgba(34,197,94,0.3);
+  }
+  .chain-node.not-found {
+    border-color: var(--danger);
+    box-shadow: 0 0 25px rgba(239,68,68,0.3);
+  }
+  .chain-node .node-title {
+    font-weight: 700; font-size: 0.85rem; margin-bottom: 0.5rem;
+    color: var(--accent);
+  }
+  .chain-node .node-props {
+    font-size: 0.8rem; color: var(--text-secondary);
+    text-align: left; font-family: monospace;
+  }
+  .chain-node .node-props .found-prop { color: var(--success); font-weight: 700; }
+  .chain-arrow {
+    display: flex; flex-direction: column; align-items: center;
+    color: var(--text-muted); font-size: 0.7rem; padding: 0.3rem 0;
+    z-index: 1;
+  }
+  .chain-arrow svg { width: 24px; height: 30px; }
+  .chain-arrow .arrow-label { font-size: 0.7rem; color: var(--text-muted); }
+
+  .lookup-controls {
+    display: flex; gap: 0.75rem; align-items: center; margin: 1rem 0;
+    flex-wrap: wrap;
+  }
+  .lookup-input {
+    padding: 0.6rem 1rem; background: var(--bg-code); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-primary); font-family: monospace;
+    font-size: 0.9rem; outline: none; width: 200px;
+  }
+  .lookup-input:focus { border-color: var(--accent); }
+  .lookup-btn {
+    padding: 0.6rem 1.25rem; border-radius: 8px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; font-weight: 700; cursor: pointer; font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+  .lookup-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(56,189,248,0.3); }
+  .lookup-result {
+    font-size: 0.9rem; padding: 0.6rem 1rem; border-radius: 8px;
+    background: var(--bg-code); min-width: 200px; font-family: monospace;
+  }
+
+  /* QUIZ */
+  .quiz-question {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .quiz-question .q-num {
+    font-size: 0.75rem; color: var(--accent); font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;
+  }
+  .quiz-question .q-text {
+    font-size: 1.05rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 500;
+  }
+  .quiz-question pre { margin-bottom: 1rem; }
+  .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .quiz-option {
+    padding: 0.75rem 1rem; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.02);
+    color: var(--text-secondary); transition: all 0.2s; font-size: 0.9rem;
+  }
+  .quiz-option:hover { border-color: var(--accent); color: var(--text-primary); background: rgba(56,189,248,0.05); }
+  .quiz-option.selected { border-color: var(--accent); background: rgba(56,189,248,0.1); color: var(--accent); }
+  .quiz-option.correct { border-color: var(--success); background: rgba(34,197,94,0.1); color: var(--success); }
+  .quiz-option.wrong { border-color: var(--danger); background: rgba(239,68,68,0.1); color: var(--danger); }
+  .quiz-option.disabled { pointer-events: none; }
+  .quiz-explanation {
+    margin-top: 1rem; padding: 1rem; border-radius: 10px;
+    background: rgba(56,189,248,0.05); border: 1px solid rgba(56,189,248,0.1);
+    font-size: 0.9rem; color: var(--text-secondary); display: none;
+  }
+  .quiz-explanation.show { display: block; animation: fadeSlide 0.3s ease; }
+
+  .quiz-score {
+    text-align: center; padding: 2rem;
+    background: var(--bg-card); border-radius: 16px;
+    border: 1px solid var(--border); margin-top: 2rem;
+  }
+  .quiz-score .score-num {
+    font-size: 3rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .submit-quiz-btn {
+    padding: 0.75rem 2rem; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; font-weight: 700; font-size: 1rem;
+    cursor: pointer; margin-top: 1.5rem; transition: all 0.2s;
+  }
+  .submit-quiz-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(56,189,248,0.3); }
+
+  /* EXERCISE */
+  .exercise-container {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .exercise-title {
+    font-size: 1.1rem; font-weight: 700; color: var(--accent3); margin-bottom: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .exercise-desc { color: var(--text-secondary); margin-bottom: 1rem; }
+  .exercise-hint {
+    display: none; padding: 0.75rem 1rem; background: rgba(234,179,8,0.05);
+    border: 1px solid rgba(234,179,8,0.2); border-radius: 8px;
+    color: var(--warning); font-size: 0.85rem; margin-bottom: 1rem;
+  }
+  .exercise-hint.show { display: block; animation: fadeSlide 0.3s; }
+  .hint-btn {
+    padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid rgba(234,179,8,0.3);
+    background: transparent; color: var(--warning); cursor: pointer;
+    font-size: 0.8rem; margin-bottom: 1rem; transition: all 0.2s;
+  }
+  .hint-btn:hover { background: rgba(234,179,8,0.05); }
+  .check-btn {
+    padding: 0.5rem 1.25rem; border-radius: 8px; border: none;
+    background: var(--accent3); color: var(--bg-primary); font-weight: 700;
+    cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+  }
+  .check-btn:hover { transform: scale(1.05); }
+  .exercise-result {
+    margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 8px;
+    font-size: 0.9rem; display: none;
+  }
+  .exercise-result.show { display: block; animation: fadeSlide 0.3s; }
+  .exercise-result.pass { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: var(--success); }
+  .exercise-result.fail { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
+
+  /* NAV BUTTONS */
+  .section-nav {
+    display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .nav-btn {
+    padding: 0.75rem 1.5rem; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text-primary); cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .nav-btn:disabled:hover { border-color: var(--border); color: var(--text-primary); }
+
+  /* DIAGRAM ANIMATION */
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .pulsing { animation: pulse 1s infinite; }
+
+  @keyframes scanDown {
+    0% { box-shadow: 0 0 0 rgba(56,189,248,0); border-color: var(--border); }
+    50% { box-shadow: 0 0 25px rgba(56,189,248,0.4); border-color: var(--accent); }
+    100% { box-shadow: 0 0 0 rgba(56,189,248,0); border-color: var(--border); }
+  }
+
+  /* TAGS */
+  .tag {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 600; margin: 0.1rem;
+  }
+  .tag-blue { background: rgba(56,189,248,0.1); color: var(--accent); }
+  .tag-purple { background: rgba(167,139,250,0.1); color: var(--accent2); }
+  .tag-green { background: rgba(52,211,153,0.1); color: var(--accent3); }
+
+  /* COMPARISON TABLE */
+  .comparison-table {
+    width: 100%; border-collapse: collapse; margin: 1rem 0;
+    background: var(--bg-card); border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .comparison-table th {
+    padding: 0.75rem 1rem; text-align: left;
+    background: rgba(56,189,248,0.05); color: var(--accent);
+    font-size: 0.85rem; font-weight: 700; border-bottom: 1px solid var(--border);
+  }
+  .comparison-table td {
+    padding: 0.75rem 1rem; font-size: 0.85rem;
+    color: var(--text-secondary); border-bottom: 1px solid var(--border);
+  }
+  .comparison-table tr:last-child td { border-bottom: none; }
+  .comparison-table code {
+    background: rgba(56,189,248,0.1); padding: 0.15rem 0.4rem;
+    border-radius: 4px; font-size: 0.8rem; color: var(--accent);
+  }
+
+  /* HERO */
+  .hero-section {
+    text-align: center; padding: 3rem 0 2rem;
+  }
+  .hero-section h1 { font-size: 3rem; margin-bottom: 1rem; }
+  .hero-badges { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .hero-badge {
+    padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+    border: 1px solid;
+  }
+  .hero-badge:nth-child(1) { border-color: rgba(56,189,248,0.3); color: var(--accent); background: rgba(56,189,248,0.05); }
+  .hero-badge:nth-child(2) { border-color: rgba(167,139,250,0.3); color: var(--accent2); background: rgba(167,139,250,0.05); }
+  .hero-badge:nth-child(3) { border-color: rgba(52,211,153,0.3); color: var(--accent3); background: rgba(52,211,153,0.05); }
+  .hero-badge:nth-child(4) { border-color: rgba(251,146,60,0.3); color: var(--accent4); background: rgba(251,146,60,0.05); }
+  .hero-badge:nth-child(5) { border-color: rgba(244,114,182,0.3); color: var(--accent5); background: rgba(244,114,182,0.05); }
+
+  .chapters-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem; margin-top: 2rem;
+  }
+  .chapter-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem; cursor: pointer;
+    transition: all 0.3s; text-align: left;
+  }
+  .chapter-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: var(--glow); }
+  .chapter-card .ch-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .chapter-card .ch-title { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.25rem; }
+  .chapter-card .ch-desc { font-size: 0.8rem; color: var(--text-muted); }
+  .chapter-card .ch-num { font-size: 0.7rem; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem; }
+
+  /* STEP INDICATOR */
+  .steps { display: flex; gap: 0.25rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .step-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--border); transition: all 0.3s;
+  }
+  .step-dot.completed { background: var(--accent3); }
+  .step-dot.current { background: var(--accent); box-shadow: 0 0 10px rgba(56,189,248,0.5); }
+
+  /* INLINE CODE */
+  code {
+    background: rgba(56,189,248,0.08); padding: 0.15rem 0.4rem;
+    border-radius: 4px; font-family: 'Fira Code', monospace;
+    font-size: 0.85em; color: var(--accent);
+  }
+
+  ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+  li { color: var(--text-secondary); margin-bottom: 0.4rem; }
+
+  .animated-box {
+    transition: all 0.5s ease;
+  }
+
+  .mental-model {
+    background: linear-gradient(135deg, rgba(56,189,248,0.05), rgba(167,139,250,0.05));
+    border: 1px solid rgba(56,189,248,0.15);
+    border-radius: 14px; padding: 1.5rem; margin: 1.5rem 0;
+    text-align: center;
+  }
+  .mental-model h3 { text-align: center; margin-top: 0; }
+  .mental-model p { text-align: center; }
+
+  @media (max-width: 768px) {
+    main { padding: 1rem; }
+    h1 { font-size: 1.75rem; }
+    .hero-section h1 { font-size: 2rem; }
+    .top-nav { padding: 0 0.75rem; }
+    .top-nav .logo { font-size: 1rem; margin-right: 0.75rem; }
+    .progress-bar-container { display: none; }
+    .chain-node { min-width: 220px; padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <div class="logo">⚡ JS Prototypes</div>
+  <div class="nav-links" id="navLinks"></div>
+  <div class="progress-bar-container">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText">0%</span>
+  </div>
+</nav>
+
+<main id="app"></main>
+
+<script>
+// ===== APP STATE =====
+const state = {
+  currentSection: 0,
+  completedSections: new Set(),
+  quizAnswers: {},
+  quizSubmitted: false,
+  exerciseResults: {}
+};
+
+// ===== SECTIONS =====
+const sections = [
+  { id: 'intro', title: '🏠 Overview', short: 'Overview' },
+  { id: 'what-is', title: '🧬 What is a Prototype?', short: 'Prototypes' },
+  { id: 'chain', title: '⛓️ Prototype Chain', short: 'Chain' },
+  { id: 'constructor', title: '🏗️ Constructor Functions', short: 'Constructors' },
+  { id: 'object-create', title: '🎨 Object.create', short: 'Object.create' },
+  { id: 'proto-methods', title: '🔧 Prototype Methods', short: 'Methods' },
+  { id: 'pitfalls', title: '⚠️ Pitfalls & Mistakes', short: 'Pitfalls' },
+  { id: 'quiz', title: '🧠 Quiz', short: 'Quiz' },
+  { id: 'exercises', title: '💪 Exercises', short: 'Exercises' }
+];
+
+// ===== RENDER NAV =====
+function renderNav() {
+  const nav = document.getElementById('navLinks');
+  nav.innerHTML = sections.map((s, i) => 
+    `<button class="nav-link ${i === state.currentSection ? 'active' : ''}" onclick="goToSection(${i})">${s.short}</button>`
+  ).join('');
+}
+
+// ===== NAVIGATION =====
+function goToSection(idx) {
+  state.completedSections.add(state.currentSection);
+  state.currentSection = idx;
+  renderApp();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextSection() { if (state.currentSection < sections.length - 1) goToSection(state.currentSection + 1); }
+function prevSection() { if (state.currentSection > 0) goToSection(state.currentSection - 1); }
+
+function updateProgress() {
+  const pct = Math.round((state.completedSections.size / sections.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '%';
+}
+
+// ===== SECTION NAV BUTTONS =====
+function sectionNav() {
+  const isFirst = state.currentSection === 0;
+  const isLast = state.currentSection === sections.length - 1;
+  return `<div class="section-nav">
+    <button class="nav-btn" onclick="prevSection()" ${isFirst ? 'disabled' : ''}>← Previous</button>
+    <button class="nav-btn" onclick="nextSection()" ${isLast ? 'disabled' : ''}>Next →</button>
+  </div>`;
+}
+
+// ===== CODE BLOCK HELPER =====
+function codeBlock(code, label = 'JavaScript') {
+  return `<div class="code-block">
+    <div class="code-header">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <span>${label}</span>
+    </div>
+    <pre>${code}</pre>
+  </div>`;
+}
+
+// ===== EDITOR HELPER =====
+let editorCount = 0;
+function editor(defaultCode, id) {
+  const eid = id || 'editor_' + (editorCount++);
+  return `<div class="editor-container">
+    <div class="editor-header">
+      <span>▶ Interactive Editor — Try it!</span>
+      <button class="run-btn" onclick="runCode('${eid}')">▶ Run</button>
+    </div>
+    <textarea class="code-textarea" id="${eid}">${defaultCode.trim()}</textarea>
+    <div class="output-panel" id="${eid}_output"><div class="label">Output</div></div>
+  </div>`;
+}
+
+function runCode(id) {
+  const code = document.getElementById(id).value;
+  const outputEl = document.getElementById(id + '_output');
+  let output = '<div class="label">Output</div>';
+  const logs = [];
+  const origLog = console.log;
+  const origWarn = console.warn;
+  const origError = console.error;
+  console.log = (...args) => logs.push(args.map(a => {
+    if (a === null) return 'null';
+    if (a === undefined) return 'undefined';
+    if (typeof a === 'object') {
+      try { return JSON.stringify(a, null, 2); } catch(e) { return String(a); }
+    }
+    return String(a);
+  }).join(' '));
+  console.warn = console.log;
+  console.error = (...args) => logs.push('<span class="error">' + args.map(String).join(' ') + '</span>');
+  try {
+    const result = new Function(code)();
+    if (result !== undefined && logs.length === 0) {
+      logs.push(typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result));
+    }
+    output += logs.join('\n') || '<span style="color:var(--text-muted)">No output. Use console.log() to see results.</span>';
+  } catch (e) {
+    output += '<span class="error">❌ ' + e.message + '</span>';
+  }
+  console.log = origLog;
+  console.warn = origWarn;
+  console.error = origError;
+  outputEl.innerHTML = output;
+}
+
+// ===== SECTIONS CONTENT =====
+function renderIntro() {
+  return `<section class="section active">
+    <div class="hero-section">
+      <h1>Prototypes & Inheritance</h1>
+      <p class="subtitle">Master JavaScript's core object system — the foundation that makes JS unique</p>
+      <div class="hero-badges">
+        <span class="hero-badge">Prototype Chain</span>
+        <span class="hero-badge">Constructor Functions</span>
+        <span class="hero-badge">Object.create</span>
+        <span class="hero-badge">Prototype Methods</span>
+        <span class="hero-badge">Common Pitfalls</span>
+      </div>
+    </div>
+
+    <div class="mental-model">
+      <h3>🧠 The Big Idea</h3>
+      <p>Unlike Java or C++, JavaScript doesn't have traditional classes.<br>
+      <strong>Objects inherit directly from other objects</strong> through an internal link called the <strong>prototype</strong>.<br>
+      This is called <em>prototypal inheritance</em> — and it's one of JS's most powerful features.</p>
+    </div>
+
+    <h2>What You'll Learn</h2>
+    <div class="chapters-grid">
+      ${sections.slice(1).map((s, i) => `
+        <div class="chapter-card" onclick="goToSection(${i+1})">
+          <div class="ch-num">CHAPTER ${i+1}</div>
+          <div class="ch-icon">${s.title.split(' ')[0]}</div>
+          <div class="ch-title">${s.title.substring(s.title.indexOf(' ')+1)}</div>
+          <div class="ch-desc">${[
+            'Understand what prototypes are and why they exist',
+            'Visualize how property lookup travels the chain',
+            'Build objects with constructor functions + new',
+            'Create objects with explicit prototype links',
+            'Add shared methods efficiently via prototypes',
+            'Common mistakes that trip up developers',
+            'Test your knowledge with 10 questions',
+            'Hands-on coding challenges to solidify skills'
+          ][i]}</div>
+        </div>
+      `).join('')}
+    </div>
+    ${sectionNav()}
+  </section>`;
+}
+
+function renderWhatIs() {
+  return `<section class="section active">
+    <h1>🧬 What is a Prototype?</h1>
+    <p class="subtitle">Every JavaScript object has a hidden link to another object — its prototype</p>
+
+    <div class="card highlight-blue">
+      <h3>The Core Concept</h3>
+      <p>In JavaScript, <strong>every object has an internal property called <code>[[Prototype]]</code></strong> (sometimes written as <code>__proto__</code>). This property points to another object — its <strong>prototype</strong>.</p>
+      <p>When you try to access a property on an object and it doesn't exist, JavaScript <strong>automatically looks up the prototype chain</strong> to find it.</p>
+    </div>
+
+    <div class="key-concept">
+      <div class="icon">💡</div>
+      <div>
+        <p><strong>Think of it like a family tree:</strong> If you don't know the answer to a question, you ask your parent. If they don't know, they ask their parent. This continues until someone knows — or you reach the top (null).</p>
+      </div>
+    </div>
+
+    <h2>Seeing It In Action</h2>
+
+    ${codeBlock(`<span class="kw">const</span> animal = {
+  <span class="prop">isAlive</span>: <span class="bool">true</span>,
+  <span class="fn">breathe</span>() {
+    <span class="kw">return</span> <span class="str">"Breathing..."</span>;
+  }
+};
+
+<span class="kw">const</span> dog = {
+  <span class="prop">breed</span>: <span class="str">"Labrador"</span>,
+  <span class="fn">bark</span>() {
+    <span class="kw">return</span> <span class="str">"Woof!"</span>;
+  }
+};
+
+<span class="cm">// Set animal as the prototype of dog</span>
+Object.<span class="fn">setPrototypeOf</span>(dog, animal);
+
+console.<span class="fn">log</span>(dog.<span class="prop">breed</span>);    <span class="cm">// "Labrador"  — own property ✅</span>
+console.<span class="fn">log</span>(dog.<span class="fn">bark</span>());    <span class="cm">// "Woof!"     — own method ✅</span>
+console.<span class="fn">log</span>(dog.<span class="prop">isAlive</span>);  <span class="cm">// true        — found on prototype! 🔗</span>
+console.<span class="fn">log</span>(dog.<span class="fn">breathe</span>()); <span class="cm">// "Breathing..."  — found on prototype! 🔗</span>`, 'Prototype Basics')}
+
+    ${editor(`const animal = {
+  isAlive: true,
+  breathe() { return "Breathing..."; }
+};
+
+const dog = {
+  breed: "Labrador",
+  bark() { return "Woof!"; }
+};
+
+// Link dog -> animal
+Object.setPrototypeOf(dog, animal);
+
+console.log(dog.breed);       // Own property
+console.log(dog.bark());      // Own method
+console.log(dog.isAlive);     // From prototype!
+console.log(dog.breathe());   // From prototype!
+
+// Check the prototype
+console.log(Object.getPrototypeOf(dog) === animal);  // true`, 'ed_whatis1')}
+
+    <h2>__proto__ vs .prototype vs [[Prototype]]</h2>
+
+    <div class="card highlight-purple">
+      <p>These three terms confuse everyone. Let's clear it up:</p>
+      <table class="comparison-table">
+        <tr>
+          <th>Term</th>
+          <th>What It Is</th>
+          <th>Where It Lives</th>
+        </tr>
+        <tr>
+          <td><code>[[Prototype]]</code></td>
+          <td>The actual internal link. You can't access it directly.</td>
+          <td>Internal to every object</td>
+        </tr>
+        <tr>
+          <td><code>__proto__</code></td>
+          <td>A getter/setter that exposes <code>[[Prototype]]</code>. <strong>Deprecated</strong> but still works.</td>
+          <td>Accessor on Object.prototype</td>
+        </tr>
+        <tr>
+          <td><code>.prototype</code></td>
+          <td>A regular property on <strong>functions</strong>. Used by <code>new</code> to set the <code>[[Prototype]]</code> of new objects.</td>
+          <td>Only on functions</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="pitfall">
+      <div class="icon">🚫</div>
+      <div>
+        <div class="title">Don't confuse .prototype with __proto__!</div>
+        <p><code>Dog.prototype</code> is NOT the prototype of Dog. It's the object that will become the prototype of instances created with <code>new Dog()</code>.</p>
+      </div>
+    </div>
+
+    ${editor(`function Dog(name) {
+  this.name = name;
+}
+
+const rex = new Dog("Rex");
+
+// .prototype is on the FUNCTION
+console.log(typeof Dog.prototype);  // "object"
+
+// __proto__ is on the INSTANCE (the actual prototype link)
+console.log(rex.__proto__ === Dog.prototype);  // true!
+
+// The modern way to check:
+console.log(Object.getPrototypeOf(rex) === Dog.prototype);  // true!`, 'ed_whatis2')}
+
+    <h2>Everything Inherits from Object.prototype</h2>
+
+    <div class="card highlight-green">
+      <p>At the top of every prototype chain sits <code>Object.prototype</code>. That's where methods like <code>.toString()</code>, <code>.hasOwnProperty()</code>, and <code>.valueOf()</code> come from.</p>
+      <p>The prototype of <code>Object.prototype</code> is <code>null</code> — that's the end of the chain.</p>
+    </div>
+
+    ${editor(`const obj = { x: 1 };
+
+// These all come from Object.prototype:
+console.log(obj.toString());       // "[object Object]"
+console.log(obj.hasOwnProperty("x")); // true
+
+// The chain:
+console.log(Object.getPrototypeOf(obj) === Object.prototype); // true
+console.log(Object.getPrototypeOf(Object.prototype));          // null (end!)`, 'ed_whatis3')}
+
+    ${sectionNav()}
+  </section>`;
+}
+
+function renderChain() {
+  return `<section class="section active">
+    <h1>⛓️ The Prototype Chain</h1>
+    <p class="subtitle">Visualize how JavaScript looks up properties by walking the chain</p>
+
+    <div class="card highlight-blue">
+      <h3>How Property Lookup Works</h3>
+      <p>When you access <code>obj.property</code>, JavaScript follows these steps:</p>
+      <ol>
+        <li>Check if <code>obj</code> has its <strong>own property</strong> called "property"</li>
+        <li>If not, check <code>obj.[[Prototype]]</code> (the prototype object)</li>
+        <li>If not there either, check <code>obj.[[Prototype]].[[Prototype]]</code></li>
+        <li>Continue until <code>null</code> is reached → return <code>undefined</code></li>
+      </ol>
+    </div>
+
+    <h2>🔍 Interactive Chain Visualizer</h2>
+    <p>Type a property name and watch JavaScript search through the prototype chain:</p>
+
+    <div class="lookup-controls">
+      <input class="lookup-input" id="chainLookupInput" placeholder="Try: name, speak, isAlive, toString, xyz" value="speak">
+      <button class="lookup-btn" onclick="animateChainLookup()">🔍 Look Up Property</button>
+      <div class="lookup-result" id="chainLookupResult"></div>
+    </div>
+
+    <div class="chain-viz" id="chainViz">
+      <div class="chain-node" id="cn-dog">
+        <div class="node-title">🐕 dog (instance)</div>
+        <div class="node-props">
+          <div>name: <span class="str">"Rex"</span></div>
+          <div>age: <span class="num">3</span></div>
+        </div>
+      </div>
+      <div class="chain-arrow">
+        <span class="arrow-label">[[Prototype]]</span>
+        <svg viewBox="0 0 24 30"><path d="M12 0 L12 22 M6 16 L12 24 L18 16" stroke="#64748b" fill="none" stroke-width="2"/></svg>
+      </div>
+      <div class="chain-node" id="cn-dogproto">
+        <div class="node-title">🏗️ Dog.prototype</div>
+        <div class="node-props">
+          <div>speak: <span class="fn">function()</span></div>
+          <div>fetch: <span class="fn">function()</span></div>
+        </div>
+      </div>
+      <div class="chain-arrow">
+        <span class="arrow-label">[[Prototype]]</span>
+        <svg viewBox="0 0 24 30"><path d="M12 0 L12 22 M6 16 L12 24 L18 16" stroke="#64748b" fill="none" stroke-width="2"/></svg>
+      </div>
+      <div class="chain-node" id="cn-animalproto">
+        <div class="node-title">🧬 Animal.prototype</div>
+        <div class="node-props">
+          <div>isAlive: <span class="bool">true</span></div>
+          <div>breathe: <span class="fn">function()</span></div>
+        </div>
+      </div>
+      <div class="chain-arrow">
+        <span class="arrow-label">[[Prototype]]</span>
+        <svg viewBox="0 0 24 30"><path d="M12 0 L12 22 M6 16 L12 24 L18 16" stroke="#64748b" fill="none" stroke-width="2"/></svg>
+      </div>
+      <div class="chain-node" id="cn-objectproto">
+        <div class="node-title">📦 Object.prototype</div>
+        <div class="node-props">
+          <div>toString: <span class="fn">function()</span></div>
+          <div>hasOwnProperty: <span class="fn">function()</span></div>
+          <div>valueOf: <span class="fn">function()</span></div>
+        </div>
+      </div>
+      <div class="chain-arrow">
+        <span class="arrow-label">[[Prototype]]</span>
+        <svg viewBox="0 0 24 30"><path d="M12 0 L12 22 M6 16 L12 24 L18 16" stroke="#64748b" fill="none" stroke-width="2"/></svg>
+      </div>
+      <div class="chain-node" id="cn-null">
+        <div class="node-title">🚫 null</div>
+        <div class="node-props" style="color:var(--text-muted)">End of chain</div>
+      </div>
+    </div>
+
+    <h2>Building This Chain in Code</h2>
+
+    ${editor(`// 1. Animal constructor
+function Animal(type) {
+  this.type = type;
+}
+Animal.prototype.isAlive = true;
+Animal.prototype.breathe = function() {
+  return this.type + " is breathing";
+};
+
+// 2. Dog constructor inheriting from Animal
+function Dog(name, age) {
+  Animal.call(this, "Dog");  // Call parent constructor
+  this.name = name;
+  this.age = age;
+}
+
+// 3. Set up the prototype chain: Dog.prototype -> Animal.prototype
+Dog.prototype = Object.create(Animal.prototype);
+Dog.prototype.constructor = Dog;  // Fix constructor reference
+
+// 4. Add Dog-specific methods
+Dog.prototype.speak = function() { return this.name + " says Woof!"; };
+Dog.prototype.fetch = function() { return this.name + " fetches the ball!"; };
+
+// 5. Create instance
+const rex = new Dog("Rex", 3);
+
+// Walk the chain:
+console.log(rex.name);        // "Rex" — own property
+console.log(rex.speak());     // "Rex says Woof!" — Dog.prototype
+console.log(rex.isAlive);     // true — Animal.prototype
+console.log(rex.toString());  // "[object Object]" — Object.prototype
+
+// Verify the chain:
+console.log(rex instanceof Dog);    // true
+console.log(rex instanceof Animal); // true
+console.log(rex instanceof Object); // true`, 'ed_chain1')}
+
+    <h2>hasOwnProperty vs in</h2>
+
+    <div class="card highlight-orange">
+      <p>Understanding the difference is crucial:</p>
+      <ul>
+        <li><code>obj.hasOwnProperty("prop")</code> — Only checks the object itself (NOT the chain)</li>
+        <li><code>"prop" in obj</code> — Checks the object AND the entire prototype chain</li>
+      </ul>
+    </div>
+
+    ${editor(`function Dog(name) { this.name = name; }
+Dog.prototype.speak = function() { return "Woof!"; };
+
+const rex = new Dog("Rex");
+
+// hasOwnProperty — own properties only
+console.log(rex.hasOwnProperty("name"));   // true ✅
+console.log(rex.hasOwnProperty("speak"));  // false ❌ (it's on prototype)
+
+// 'in' operator — checks entire chain
+console.log("name" in rex);   // true ✅
+console.log("speak" in rex);  // true ✅ (found on prototype)
+
+// Iterating — for...in walks the chain!
+for (let key in rex) {
+  console.log(key, "| own?", rex.hasOwnProperty(key));
+}
+// name | own? true
+// speak | own? false`, 'ed_chain2')}
+
+    <div class="key-concept">
+      <div class="icon">⚡</div>
+      <div>
+        <p><strong>Performance tip:</strong> Property lookups through long chains are slower. Keep your chains shallow (2-3 levels deep). Deep inheritance hierarchies are usually a code smell in JS.</p>
+      </div>
+    </div>
+
+    ${sectionNav()}
+  </section>`;
+}
+
+function renderConstructor() {
+  return `<section class="section active">
+    <h1>🏗️ Constructor Functions</h1>
+    <p class="subtitle">The original way to create "classes" in JavaScript (before ES6 class syntax)</p>
+
+    <div class="card highlight-blue">
+      <h3>What is a Constructor Function?</h3>
+      <p>A constructor function is just a <strong>regular function</strong> that's called with <code>new</code>. By convention, they start with a <strong>capital letter</strong>.</p>
+      <p>When you call <code>new Foo()</code>, four things happen behind the scenes:</p>
+    </div>
+
+    <h2>The <code>new</code> Keyword — Step by Step</h2>
+
+    <div class="card highlight-purple">
+      <h3>What <code>new Dog("Rex")</code> actually does:</h3>
+      ${codeBlock(`<span class="cm">// Step 1: Create a new empty object</span>
+<span class="kw">const</span> obj = {};
+
+<span class="cm">// Step 2: Link its [[Prototype]] to Dog.prototype</span>
+Object.<span class="fn">setPrototypeOf</span>(obj, Dog.<span class="prop">prototype</span>);
+
+<span class="cm">// Step 3: Call Dog() with 'this' = the new object</span>
+Dog.<span class="fn">call</span>(obj, <span class="str">"Rex"</span>);  <span class="cm">// this.name = "Rex" sets obj.name</span>
+
+<span class="cm">// Step 4: Return the object (unless constructor returns an object)</span>
+<span class="kw">return</span> obj;`, 'Behind the scenes')}
+    </div>
+
+    ${editor(`function Dog(name, breed) {
+  // 'this' refers to the newly created object
+  this.name = name;
+  this.breed = breed;
+  this.tricks = [];
+}
+
+// Methods go on the prototype (shared by ALL instances)
+Dog.prototype.bark = function() {
+  return this.name + " says Woof!";
+};
+
+Dog.prototype.learnTrick = function(trick) {
+  this.tricks.push(trick);
+  return this.name + " learned " + trick + "!";
+};
+
+Dog.prototype.showTricks = function() {
+  if (this.tricks.length === 0) return this.name + " knows no tricks yet.";
+  return this.name + " knows: " + this.tricks.join(", ");
+};
+
+// Create instances
+const rex = new Dog("Rex", "Labrador");
+const bella = new Dog("Bella", "Poodle");
+
+console.log(rex.bark());          // "Rex says Woof!"
+console.log(bella.bark());        // "Bella says Woof!"
+
+rex.learnTrick("sit");
+rex.learnTrick("roll over");
+console.log(rex.showTricks());    // "Rex knows: sit, roll over"
+console.log(bella.showTricks());  // "Bella knows no tricks yet."
+
+// Both share the SAME method reference
+console.log(rex.bark === bella.bark);  // true! (shared via prototype)`, 'ed_constr1')}
+
+    <div class="pitfall">
+      <div class="icon">🚫</div>
+      <div>
+        <div class="title">MISTAKE: Defining methods inside the constructor</div>
+        <p>Each instance gets its own copy of the function — wasting memory!</p>
+      </div>
+    </div>
+
+    ${codeBlock(`<span class="cm">// ❌ BAD — Every instance gets a new function copy</span>
+<span class="kw">function</span> <span class="fn">Dog</span>(name) {
+  <span class="kw">this</span>.<span class="prop">name</span> = name;
+  <span class="kw">this</span>.<span class="fn">bark</span> = <span class="kw">function</span>() {  <span class="cm">// NEW function for EACH dog!</span>
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="prop">name</span> + <span class="str">" says Woof!"</span>;
+  };
+}
+
+<span class="cm">// ✅ GOOD — All instances share one function</span>
+<span class="kw">function</span> <span class="fn">Dog</span>(name) {
+  <span class="kw">this</span>.<span class="prop">name</span> = name;
+}
+Dog.<span class="prop">prototype</span>.<span class="fn">bark</span> = <span class="kw">function</span>() {
+  <span class="kw">return</span> <span class="kw">this</span>.<span class="prop">name</span> + <span class="str">" says Woof!"</span>;
+};`, 'Memory Waste vs Efficient')}
+
+    <h2>Inheritance with Constructor Functions</h2>
+
+    ${editor(`// Parent: Animal
+function Animal(name, sound) {
+  this.name = name;
+  this.sound = sound;
+}
+Animal.prototype.speak = function() {
+  return this.name + " says " + this.sound;
+};
+Animal.prototype.isAlive = true;
+
+// Child: Dog extends Animal
+function Dog(name, breed) {
+  // Call parent constructor (super)
+  Animal.call(this, name, "Woof!");
+  this.breed = breed;
+}
+
+// Set up prototype chain
+Dog.prototype = Object.create(Animal.prototype);
+Dog.prototype.constructor = Dog;  // Fix constructor ref
+
+// Add Dog-specific methods
+Dog.prototype.fetch = function() {
+  return this.name + " fetches the ball!";
+};
+
+// Child: Cat extends Animal
+function Cat(name, isIndoor) {
+  Animal.call(this, name, "Meow!");
+  this.isIndoor = isIndoor;
+}
+Cat.prototype = Object.create(Animal.prototype);
+Cat.prototype.constructor = Cat;
+
+Cat.prototype.purr = function() {
+  return this.name + " purrs...";
+};
+
+// Test it!
+const rex = new Dog("Rex", "Lab");
+const whiskers = new Cat("Whiskers", true);
+
+console.log(rex.speak());      // "Rex says Woof!"
+console.log(rex.fetch());      // "Rex fetches the ball!"
+console.log(rex.isAlive);      // true (from Animal.prototype)
+
+console.log(whiskers.speak()); // "Whiskers says Meow!"
+console.log(whiskers.purr());  // "Whiskers purrs..."
+
+console.log(rex instanceof Dog);    // true
+console.log(rex instanceof Animal); // true
+console.log(whiskers instanceof Cat);    // true
+console.log(whiskers instanceof Animal); // true
+console.log(whiskers instanceof Dog);    // false`, 'ed_constr2')}
+
+    <div class="pitfall">
+      <div class="icon">🚫</div>
+      <div>
+        <div class="title">MISTAKE: Forgetting <code>new</code></div>
+        <p>Without <code>new</code>, <code>this</code> becomes the global object (or <code>undefined</code> in strict mode). Properties leak globally!</p>
+      </div>
+    </div>
+
+    ${editor(`function Dog(name) {
+  this.name = name;
+}
+
+// Forgetting 'new'
+const rex = Dog("Rex");  // No 'new'!
+console.log(rex);        // undefined (function returns nothing)
+// In non-strict mode, name leaked to global:
+// console.log(name);    // "Rex" — leaked! 💀
+
+// Safe constructor pattern:
+function SafeDog(name) {
+  if (!(this instanceof SafeDog)) {
+    return new SafeDog(name);  // Fix it automatically
+  }
+  this.name = name;
+}
+
+const bella = SafeDog("Bella");  // Works even without 'new'
+console.log(bella.name);  // "Bella"
+console.log(bella instanceof SafeDog);  // true`, 'ed_constr3')}
+
+    <div class="pitfall">
+      <div class="icon">🚫</div>
+      <div>
+        <div class="title">MISTAKE: Overwriting .prototype incorrectly</div>
+        <p>When you do <code>Dog.prototype = Object.create(Animal.prototype)</code>, the <code>constructor</code> property gets lost. Always reset it!</p>
+      </div>
+    </div>
+
+    ${editor(`function Animal(name) { this.name = name; }
+function Dog(name) { Animal.call(this, name); }
+
+// Before fixing
+Dog.prototype = Object.create(Animal.prototype);
+console.log(Dog.prototype.constructor); // Animal (WRONG!)
+
+// Fix it:
+Dog.prototype.constructor = Dog;
+console.log(Dog.prototype.constructor); // Dog (correct)
+
+const rex = new Dog("Rex");
+console.log(rex.constructor === Dog); // true ✅`, 'ed_constr4')}
+
+    ${sectionNav()}
+  </section>`;
+}
+
+function renderObjectCreate() {
+  return `<section class="section active">
+    <h1>🎨 Object.create()</h1>
+    <p class="subtitle">The cleanest way to set up prototypal inheritance — directly and explicitly</p>
+
+    <div class="card highlight-blue">
+      <h3>What is Object.create()?</h3>
+      <p><code>Object.create(proto)</code> creates a <strong>new object</strong> with its <code>[[Prototype]]</code> set to <code>proto</code>. It's the most explicit and pure way to do prototypal inheritance in JavaScript.</p>
+    </div>
+
+    <h2>Basic Usage</h2>
+
+    ${editor(`// Define a prototype object
+const animal = {
+  isAlive: true,
+  breathe() { return "Breathing..."; },
+  describe() { return "I am a " + this.type; }
+};
+
+// Create an object that inherits from animal
+const dog = Object.create(animal);
+dog.type = "Dog";
+dog.bark = function() { return "Woof!"; };
+
+const cat = Object.create(animal);
+cat.type = "Cat";
+cat.purr = function() { return "Purrr..."; };
+
+console.log(dog.describe());  // "I am a Dog"
+console.log(dog.isAlive);     // true (inherited)
+console.log(dog.bark());      // "Woof!"
+
+console.log(cat.describe());  // "I am a Cat"
+console.log(cat.purr());      // "Purrr..."
+
+// Verify
+console.log(Object.getPrototypeOf(dog) === animal);  // true
+console.log(Object.getPrototypeOf(cat) === animal);  // true`, 'ed_oc1')}
+
+    <h2>Object.create with Property Descriptors</h2>
+
+    <div class="card highlight-purple">
+      <p><code>Object.create</code> accepts a second argument — property descriptors for the new object:</p>
+    </div>
+
+    ${editor(`const vehicle = {
+  start() { return this.brand + " is starting..."; },
+  stop() { return this.brand + " stopped."; }
+};
+
+const car = Object.create(vehicle, {
+  brand: {
+    value: "Toyota",
+    writable: true,
+    enumerable: true,
+    configurable: true
+  },
+  year: {
+    value: 2024,
+    writable: false,     // Can't change!
+    enumerable: true,
+    configurable: false
+  }
+});
+
+console.log(car.brand);    // "Toyota"
+console.log(car.start());  // "Toyota is starting..."
+console.log(car.year);     // 2024
+
+car.year = 2025;  // Silently fails (non-writable)
+console.log(car.year);  // Still 2024!`, 'ed_oc2')}
+
+    <h2>Multi-Level Inheritance with Object.create</h2>
+
+    ${editor(`// Level 1: Base
+const being = {
+  exists: true,
+  describe() {
+    return "A " + (this.species || "being") + " named " + (this.name || "unknown");
+  }
+};
+
+// Level 2: Animal inherits from Being
+const animal = Object.create(being);
+animal.species = "animal";
+animal.breathe = function() { return this.name + " breathes"; };
+
+// Level 3: Dog inherits from Animal
+const dog = Object.create(animal);
+dog.species = "dog";
+dog.bark = function() { return this.name + " says Woof!"; };
+
+// Level 4: Instance (a specific dog)
+const rex = Object.create(dog);
+rex.name = "Rex";
+
+// Walk up the chain!
+console.log(rex.name);       // "Rex"      — own property
+console.log(rex.bark());     // "Rex says Woof!" — from dog
+console.log(rex.breathe());  // "Rex breathes"   — from animal
+console.log(rex.exists);     // true              — from being
+console.log(rex.describe()); // "A dog named Rex" — from being (uses rex's props via 'this')
+
+// Trace the full chain
+let obj = rex;
+const chain = [];
+while (obj) {
+  chain.push(Object.getOwnPropertyNames(obj));
+  obj = Object.getPrototypeOf(obj);
+}
+console.log("Chain:", JSON.stringify(chain));`, 'ed_oc3')}
+
+    <h2>Object.create(null) — No Prototype!</h2>
+
+    <div class="card highlight-green">
+      <h3>Creating a Pure Dictionary</h3>
+      <p><code>Object.create(null)</code> creates an object with <strong>no prototype at all</strong> — not even Object.prototype. Useful for creating clean lookup tables.</p>
+    </div>
+
+    ${editor(`// Normal object has Object.prototype methods
+const normal = {};
+console.log(normal.toString);       // function
+console.log(normal.hasOwnProperty); // function
+
+// Pure dictionary — no prototype chain!
+const dict = Object.create(null);
+dict.hello = "world";
+dict.count = 42;
+
+console.log(dict.hello);           // "world"
+console.log(dict.toString);        // undefined! No inherited methods
+console.log(dict.hasOwnProperty);  // undefined!
+
+// This is useful when you want a clean map
+// No risk of key collisions with prototype methods
+dict.constructor = "safe";  // No shadowing issues!
+console.log(dict.constructor);  // "safe"
+
+// Compare with normal object:
+const obj = {};
+console.log("constructor" in obj);  // true (inherited!)`, 'ed_oc4')}
+
+    <h2>Object.create vs new vs Object Literal</h2>
+
+    <table class="comparison-table">
+      <tr>
+        <th>Method</th>
+        <th>Creates</th>
+        <th>Prototype Set To</th>
+        <th>Best For</th>
+      </tr>
+      <tr>
+        <td><code>{}</code></td>
+        <td>New object</td>
+        <td><code>Object.prototype</code></td>
+        <td>Simple one-off objects</td>
+      </tr>
+      <tr>
+        <td><code>new Foo()</code></td>
+        <td>New object + calls constructor</td>
+        <td><code>Foo.prototype</code></td>
+        <td>Creating many similar objects</td>
+      </tr>
+      <tr>
+        <td><code>Object.create(proto)</code></td>
+        <td>New empty object</td>
+        <td><code>proto</code> (any object)</td>
+        <td>Direct prototypal inheritance</td>
+      </tr>
+      <tr>
+        <td><code>Object.create(null)</code></td>
+        <td>New empty object</td>
+        <td><code>null</code> (none!)</td>
+        <td>Clean dictionaries/maps</td>
+      </tr>
+    </table>
+
+    ${sectionNav()}
+  </section>`;
+}
+
+function renderProtoMethods() {
+  return `<section class="section active">
+    <h1>🔧 Prototype Methods</h1>
+    <p class="subtitle">Essential methods for working with prototypes and inheritance</p>
+
+    <h2>Key Prototype Methods</h2>
+
+    <div class="card highlight-blue">
+      <h3>1. Object.getPrototypeOf(obj)</h3>
+      <p>Returns the prototype of an object. <strong>This is the recommended way</strong> (not <code>__proto__</code>).</p>
+    </div>
+
+    ${editor(`const arr = [1, 2, 3];
+console.log(Object.getPrototypeOf(arr) === Array.prototype);  // true
+
+const obj = {};
+console.log(Object.getPrototypeOf(obj) === Object.prototype); // true
+
+// Chain: arr -> Array.prototype -> Object.prototype -> null
+console.log(Object.getPrototypeOf(Array.prototype) === Object.prototype); // true
+console.log(Object.getPrototypeOf(Object.prototype)); // null`, 'ed_pm1')}
+
+    <div class="card highlight-purple">
+      <h3>2. Object.setPrototypeOf(obj, proto)</h3>
+      <p>Changes the prototype of an existing object. <strong>Use sparingly</strong> — it's slow and can cause performance issues.</p>
+    </div>
+
+    ${editor(`const runner = {
+  run() { return this.name + " is running!"; }
+};
+
+const swimmer = {
+  swim() { return this.name + " is swimming!"; }
+};
+
+const athlete = { name: "Bolt" };
+
+Object.setPrototypeOf(athlete, runner);
+console.log(athlete.run());  // "Bolt is running!"
+
+// Change prototype (generally avoid this!)
+Object.setPrototypeOf(athlete, swimmer);
+console.log(athlete.swim());  // "Bolt is swimming!"
+// console.log(athlete.run()); // Error! No longer inherits from runner`, 'ed_pm2')}
+
+    <div class="pitfall">
+      <div class="icon">⚠️</div>
+      <div>
+        <div class="title">Performance Warning</div>
+        <p><code>Object.setPrototypeOf()</code> is very slow because it invalidates internal optimizations. Prefer <code>Object.create()</code> to set the prototype at creation time.</p>
+      </div>
+    </div>
+
+    <div class="card highlight-green">
+      <h3>3. obj.hasOwnProperty(prop)</h3>
+      <p>Checks if a property exists <strong>directly on the object</strong> (not inherited).</p>
+    </div>
+
+    ${editor(`function Person(name) {
+  this.name = name;
+}
+Person.prototype.species = "Human";
+
+const alice = new Person("Alice");
+
+console.log(alice.hasOwnProperty("name"));     // true (own)
+console.log(alice.hasOwnProperty("species"));  // false (inherited)
+
+// Modern alternative: Object.hasOwn() (ES2022)
+console.log(Object.hasOwn(alice, "name"));     // true
+console.log(Object.hasOwn(alice, "species"));  // false
+
+// Safe iteration of own properties only
+for (const key in alice) {
+  if (Object.hasOwn(alice, key)) {
+    console.log("Own:", key, "=", alice[key]);
+  }
+}`, 'ed_pm3')}
+
+    <div class="card highlight-orange">
+      <h3>4. obj instanceof Constructor</h3>
+      <p>Checks if <code>Constructor.prototype</code> exists anywhere in the prototype chain of <code>obj</code>.</p>
+    </div>
+
+    ${editor(`function Animal() {}
+function Dog() {}
+Dog.prototype = Object.create(Animal.prototype);
+Dog.prototype.constructor = Dog;
+
+const rex = new Dog();
+
+console.log(rex instanceof Dog);     // true
+console.log(rex instanceof Animal);  // true
+console.log(rex instanceof Object);  // true
+
+// instanceof checks the CHAIN, not the constructor
+// It's equivalent to:
+function myInstanceOf(obj, Constructor) {
+  let proto = Object.getPrototypeOf(obj);
+  while (proto !== null) {
+    if (proto === Constructor.prototype) return true;
+    proto = Object.getPrototypeOf(proto);
+  }
+  return false;
+}
+
+console.log(myInstanceOf(rex, Dog));    // true
+console.log(myInstanceOf(rex, Animal)); // true
+console.log(myInstanceOf(rex, Array));  // false`, 'ed_pm4')}
+
+    <div class="card highlight-pink">
+      <h3>5. Object.keys / Object.getOwnPropertyNames</h3>
+      <p>Get properties from the object itself (not the chain).</p>
+    </div>
+
+    ${editor(`function Car(brand) {
+  this.brand = brand;
+  this.speed = 0;
+}
+Car.prototype.drive = function() { this.speed += 10; };
+Car.prototype.type = "vehicle";
+
+const tesla = new Car("Tesla");
+
+// Object.keys — own ENUMERABLE properties
+console.log("keys:", Object.keys(tesla));
+// ["brand", "speed"]
+
+// Object.getOwnPropertyNames — ALL own properties (even non-enumerable)
+console.log("ownNames:", Object.getOwnPropertyNames(tesla));
+
+// for...in — own + inherited enumerable
+const allKeys = [];
+for (let key in tesla) allKeys.push(key);
+console.log("for...in:", allKeys);
+// ["brand", "speed", "drive", "type"] — includes prototype!`, 'ed_pm5')}
+
+    <div class="card highlight-blue">
+      <h3>6. isPrototypeOf()</h3>
+      <p>Checks if an object exists in another object's prototype chain.</p>
+    </div>
+
+    ${editor(`const animal = { breathe() { return "..."; } };
+const dog = Object.create(animal);
+dog.bark = function() { return "Woof!"; };
+const rex = Object.create(dog);
+rex.name = "Rex";
+
+console.log(animal.isPrototypeOf(dog));  // true
+console.log(animal.isPrototypeOf(rex));  // true (grandparent!)
+console.log(dog.isPrototypeOf(rex));     // true
+console.log(rex.isPrototypeOf(dog));     // false (wrong direction)`, 'ed_pm6')}
+
+    <h2>Quick Reference Cheat Sheet</h2>
+
+    <table class="comparison-table">
+      <tr><th>Method</th><th>Purpose</th><th>Returns</th></tr>
+      <tr><td><code>Object.create(proto)</code></td><td>Create new object with given prototype</td><td>New object</td></tr>
+      <tr><td><code>Object.getPrototypeOf(obj)</code></td><td>Get an object's prototype</td><td>Prototype object or null</td></tr>
+      <tr><td><code>Object.setPrototypeOf(obj, proto)</code></td><td>Change prototype (slow!)</td><td>The object</td></tr>
+      <tr><td><code>obj.hasOwnProperty(key)</code></td><td>Check own property</td><td>Boolean</td></tr>
+      <tr><td><code>Object.hasOwn(obj, key)</code></td><td>Modern own property check</td><td>Boolean</td></tr>
+      <tr><td><code>obj instanceof Ctor</code></td><td>Check prototype chain</td><td>Boolean</td></tr>
+      <tr><td><code>proto.isPrototypeOf(obj)</code></td><td>Is proto in obj's chain?</td><td>Boolean</td></tr>
+      <tr><td><code>Object.keys(obj)</code></td><td>Own enumerable keys</td><td>Array</td></tr>
+      <tr><td><code>Object.getOwnPropertyNames(obj)</code></td><td>All own keys</td><td>Array</td></tr>
+    </table>
+
+    ${sectionNav()}
+  </section>`;
+}
+
+function renderPitfalls() {
+  return `<section class="section active">
+    <h1>⚠️ Common Pitfalls & Mistakes</h1>
+    <p class="subtitle">Real-world bugs that trip up even experienced developers</p>
+
+    <div class="pitfall">
+      <div class="icon">💀</div>
+      <div>
+        <div class="title">Pitfall #1: Shared Reference Types on Prototypes</div>
+        <p>If you put an array or object on the prototype, <strong>ALL instances share the same reference!</strong> Mutations affect everyone.</p>
+      </div>
+    </div>
+
+    ${editor(`function Team(name) {
+  this.name = name;
+  // ❌ DON'T put this on the prototype!
+}
+Team.prototype.members = [];  // 💀 SHARED between all instances!
+
+const alpha = new Team("Alpha");
+const bravo = new Team("Bravo");
+
+alpha.members.push("Alice");
+alpha.members.push("Bob");
+
+// Bravo's members are polluted!
+console.log(bravo.members); // ["Alice", "Bob"] — 💀 BUG!
+console.log(alpha.members === bravo.members); // true (same array!)
+
+// ✅ FIX: Initialize arrays/objects in the constructor
+function TeamFixed(name) {
+  this.name = name;
+  this.members = [];  // Each instance gets its OWN array
+}
+
+const x = new TeamFixed("X");
+const y = new TeamFixed("Y");
+x.members.push("Alice");
+console.log(y.members); // [] — ✅ Independent!`, 'ed_pit1')}
+
+    <div class="pitfall">
+      <div class="icon">💀</div>
+      <div>
+        <div class="title">Pitfall #2: Shadowing vs. Modifying Prototype Properties</div>
+        <p>Setting a property on an instance <strong>creates a new own property</strong> (shadowing), it does NOT modify the prototype.</p>
+      </div>
+    </div>
+
+    ${editor(`const proto = { count: 0 };
+const a = Object.create(proto);
+const b = Object.create(proto);
+
+// This SHADOWS, doesn't modify proto
+a.count = 5;
+console.log(a.count);     // 5 (own property)
+console.log(b.count);     // 0 (still from proto)
+console.log(proto.count); // 0 (unchanged!)
+
+// But this is different — mutating a reference!
+const proto2 = { scores: [10, 20] };
+const c = Object.create(proto2);
+const d = Object.create(proto2);
+
+c.scores.push(30);  // MUTATES the shared array!
+console.log(d.scores); // [10, 20, 30] — 💀
+
+// vs.
+c.scores = [99]; // This SHADOWS (creates own property)
+console.log(d.scores); // [10, 20, 30] — d still sees proto`, 'ed_pit2')}
+
+    <div class="pitfall">
+      <div class="icon">💀</div>
+      <div>
+        <div class="title">Pitfall #3: Forgetting to call the parent constructor</div>
+        <p>If you set up inheritance but forget <code>Parent.call(this, ...)</code>, the parent's properties won't be initialized.</p>
+      </div>
+    </div>
+
+    ${editor(`function Animal(name) {
+  this.name = name;
+  this.alive = true;
+}
+
+// ❌ BAD: Forgot to call Animal constructor
+function DogBad(name, breed) {
+  // Missing: Animal.call(this, name);
+  this.breed = breed;
+}
+DogBad.prototype = Object.create(Animal.prototype);
+
+const bad = new DogBad("Rex", "Lab");
+console.log(bad.name);  // undefined 💀
+console.log(bad.alive); // undefined 💀
+console.log(bad.breed); // "Lab"
+
+// ✅ GOOD: Call parent constructor
+function DogGood(name, breed) {
+  Animal.call(this, name);  // Initialize parent properties!
+  this.breed = breed;
+}
+DogGood.prototype = Object.create(Animal.prototype);
+DogGood.prototype.constructor = DogGood;
+
+const good = new DogGood("Rex", "Lab");
+console.log(good.name);  // "Rex" ✅
+console.log(good.alive); // true ✅
+console.log(good.breed); // "Lab" ✅`, 'ed_pit3')}
+
+    <div class="pitfall">
+      <div class="icon">💀</div>
+      <div>
+        <div class="title">Pitfall #4: Arrow functions and prototypes</div>
+        <p>Arrow functions don't have their own <code>this</code> — they inherit from the enclosing scope. <strong>Never use arrow functions as prototype methods.</strong></p>
+      </div>
+    </div>
+
+    ${editor(`function Person(name) {
+  this.name = name;
+}
+
+// ❌ Arrow function — 'this' is NOT the instance!
+Person.prototype.greetBad = () => {
+  return "Hi, I'm " + this.name;  // 'this' is window/undefined!
+};
+
+// ✅ Regular function — 'this' is the instance
+Person.prototype.greetGood = function() {
+  return "Hi, I'm " + this.name;
+};
+
+const alice = new Person("Alice");
+console.log(alice.greetBad());  // "Hi, I'm undefined" 💀
+console.log(alice.greetGood()); // "Hi, I'm Alice" ✅`, 'ed_pit4')}
+
+    <div class="pitfall">
+      <div class="icon">💀</div>
+      <div>
+        <div class="title">Pitfall #5: Assigning prototype AFTER creating instances</div>
+        <p>If you replace <code>.prototype</code> after instances exist, old instances still link to the OLD prototype.</p>
+      </div>
+    </div>
+
+    ${editor(`function Dog(name) { this.name = name; }
+Dog.prototype.bark = function() { return "Woof!"; };
+
+const rex = new Dog("Rex");
+console.log(rex.bark()); // "Woof!" ✅
+
+// Replace the entire prototype
+Dog.prototype = {
+  constructor: Dog,
+  bark() { return "BARK BARK!"; },
+  fetch() { return "Fetching!"; }
+};
+
+const bella = new Dog("Bella");
+
+// Old instance still uses OLD prototype!
+console.log(rex.bark());    // "Woof!" (old prototype)
+// console.log(rex.fetch()); // Error! Not on old prototype
+
+// New instance uses NEW prototype
+console.log(bella.bark());  // "BARK BARK!"
+console.log(bella.fetch()); // "Fetching!"
+
+console.log(rex instanceof Dog); // false! 💀 (prototype changed)`, 'ed_pit5')}
+
+    <div class="pitfall">
+      <div class="icon">💀</div>
+      <div>
+        <div class="title">Pitfall #6: Using prototype assignment instead of Object.create for inheritance</div>
+        <p><code>Dog.prototype = new Animal()</code> calls the Animal constructor prematurely!</p>
+      </div>
+    </div>
+
+    ${editor(`function Animal(name) {
+  this.name = name;
+  console.log("Animal constructor called with: " + name);
+}
+Animal.prototype.breathe = function() { return "..."; };
+
+// ❌ BAD: Calls Animal constructor unnecessarily
+// Dog.prototype = new Animal();
+// This logs: "Animal constructor called with: undefined"
+
+// ✅ GOOD: Just links prototypes without calling constructor
+function Dog(name) {
+  Animal.call(this, name);
+}
+Dog.prototype = Object.create(Animal.prototype);
+Dog.prototype.constructor = Dog;
+
+const rex = new Dog("Rex");
+console.log(rex.name); // "Rex"`, 'ed_pit6')}
+
+    <div class="tip">
+      <div class="icon">✅</div>
+      <div>
+        <p><strong>Summary of Rules:</strong></p>
+        <ul>
+          <li>Put <strong>data properties</strong> (especially arrays/objects) in the <strong>constructor</strong></li>
+          <li>Put <strong>methods</strong> on the <strong>prototype</strong></li>
+          <li>Always call <strong>Parent.call(this, ...)</strong> in child constructors</li>
+          <li>Use <strong>Object.create()</strong> for prototype chain setup, not <code>new Parent()</code></li>
+          <li>Fix the <strong>constructor</strong> property after reassigning prototype</li>
+          <li>Use <strong>regular functions</strong>, not arrow functions, for prototype methods</li>
+        </ul>
+      </div>
+    </div>
+
+    ${sectionNav()}
+  </section>`;
+}
+
+function renderQuiz() {
+  const questions = [
+    {
+      q: "What does `Object.create(proto)` return?",
+      code: null,
+      options: [
+        "A copy/clone of proto",
+        "A new empty object with [[Prototype]] set to proto",
+        "The proto object itself with added properties",
+        "A frozen version of proto"
+      ],
+      correct: 1,
+      explanation: "Object.create(proto) creates a brand new empty object whose internal [[Prototype]] link points to proto. It does NOT clone or copy proto."
+    },
+    {
+      q: "What is the output?",
+      code: `function Foo() {}
+Foo.prototype.x = 10;
+const a = new Foo();
+const b = new Foo();
+a.x = 20;
+console.log(b.x);`,
+      options: ["20", "10", "undefined", "Error"],
+      correct: 1,
+      explanation: "Setting a.x = 20 creates an OWN property on 'a' (shadowing). It doesn't change the prototype. So b.x still reads from Foo.prototype.x which is 10."
+    },
+    {
+      q: "What does the `new` keyword do? (Select the WRONG statement)",
+      code: null,
+      options: [
+        "Creates a new empty object",
+        "Sets the new object's [[Prototype]] to the constructor's .prototype",
+        "Calls the constructor with 'this' bound to the new object",
+        "Always returns the value from the constructor's return statement"
+      ],
+      correct: 3,
+      explanation: "'new' only uses the constructor's return value if it returns an object. If the constructor returns a primitive (or nothing), the newly created object is returned instead."
+    },
+    {
+      q: "What is the output?",
+      code: `const parent = { items: [1, 2] };
+const child = Object.create(parent);
+child.items.push(3);
+console.log(parent.items);`,
+      options: ["[1, 2]", "[1, 2, 3]", "[3]", "Error"],
+      correct: 1,
+      explanation: "child.items finds the array on the prototype (parent). .push() MUTATES the existing array — it doesn't create a new one. So parent.items is affected. This is a classic prototype pitfall!"
+    },
+    {
+      q: "What is `Object.getPrototypeOf(Object.prototype)`?",
+      code: null,
+      options: ["Object", "Object.prototype", "{}", "null"],
+      correct: 3,
+      explanation: "Object.prototype is the TOP of the prototype chain. Its [[Prototype]] is null, which signals the end of the chain."
+    },
+    {
+      q: "What is the output?",
+      code: `function A() {}
+function B() {}
+B.prototype = Object.create(A.prototype);
+
+const b = new B();
+console.log(b.constructor === B);`,
+      options: ["true", "false", "undefined", "Error"],
+      correct: 1,
+      explanation: "When you replace B.prototype with Object.create(A.prototype), the new prototype object doesn't have a 'constructor' property. It inherits constructor from A.prototype, which points to A, not B. Always fix: B.prototype.constructor = B;"
+    },
+    {
+      q: "Which is the correct way to set up inheritance?",
+      code: null,
+      options: [
+        "Dog.prototype = Animal.prototype",
+        "Dog.prototype = new Animal()",
+        "Dog.prototype = Object.create(Animal.prototype)",
+        "Dog.prototype = Object.assign({}, Animal.prototype)"
+      ],
+      correct: 2,
+      explanation: "Object.create(Animal.prototype) creates a new object that inherits from Animal.prototype without calling the Animal constructor. Option A makes them share the same prototype (changes affect both). Option B calls constructor unnecessarily. Option D creates a shallow copy (breaks the chain)."
+    },
+    {
+      q: "What is the output?",
+      code: `function Dog(name) { this.name = name; }
+Dog.prototype.bark = () => "I'm " + this.name;
+
+const rex = new Dog("Rex");
+console.log(rex.bark());`,
+      options: ['"I\'m Rex"', '"I\'m undefined"', "Error", '"I\'m"'],
+      correct: 1,
+      explanation: "Arrow functions don't have their own 'this'. In this case, 'this' refers to the outer scope (window/module), not the Dog instance. this.name is undefined. Never use arrow functions for prototype methods!"
+    },
+    {
+      q: "What does `hasOwnProperty` check?",
+      code: null,
+      options: [
+        "If the property exists anywhere in the prototype chain",
+        "If the property exists directly on the object (not inherited)",
+        "If the property is enumerable",
+        "If the property is writable"
+      ],
+      correct: 1,
+      explanation: "hasOwnProperty returns true ONLY if the property exists directly on the object itself, not if it's inherited through the prototype chain."
+    },
+    {
+      q: "What is the output?",
+      code: `const obj = Object.create(null);
+console.log(obj.toString);`,
+      options: ["function toString()", "undefined", "[object Object]", "Error"],
+      correct: 1,
+      explanation: "Object.create(null) creates an object with NO prototype at all — not even Object.prototype. So toString (which normally comes from Object.prototype) is undefined."
+    }
+  ];
+
+  let html = `<section class="section active">
+    <h1>🧠 Knowledge Quiz</h1>
+    <p class="subtitle">Test your understanding — ${questions.length} questions on prototypes & inheritance</p>`;
+
+  questions.forEach((q, i) => {
+    html += `<div class="quiz-question" id="qq_${i}">
+      <div class="q-num">Question ${i + 1} of ${questions.length}</div>
+      <div class="q-text">${q.q}</div>
+      ${q.code ? codeBlock(q.code.split('\n').map(line => {
+        return line.replace(/\/\/.*/g, m => `<span class="cm">${m}</span>`)
+                   .replace(/\b(function|const|let|var|new|return|console|typeof|instanceof)\b/g, '<span class="kw">$1</span>')
+                   .replace(/(["'])(?:(?!\1).)*\1/g, m => `<span class="str">${m}</span>`)
+                   .replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+      }).join('\n')) : ''}
+      <div class="quiz-options">
+        ${q.options.map((opt, j) => 
+          `<div class="quiz-option" id="qo_${i}_${j}" onclick="selectQuizAnswer(${i}, ${j}, ${q.correct})">${String.fromCharCode(65 + j)}. ${opt}</div>`
+        ).join('')}
+      </div>
+      <div class="quiz-explanation" id="qe_${i}">💡 ${q.explanation}</div>
+    </div>`;
+  });
+
+  html += `
+    <div class="quiz-score" id="quizScore" style="display:none;">
+      <div class="score-num" id="scoreNum">0/${questions.length}</div>
+      <p style="margin-top:0.5rem" id="scoreMsg"></p>
+    </div>
+    <div style="text-align:center">
+      <button class="submit-quiz-btn" onclick="submitQuiz(${questions.length})">Submit Quiz</button>
+    </div>
+    ${sectionNav()}
+  </section>`;
+
+  return html;
+}
+
+function selectQuizAnswer(qi, oi, correct) {
+  if (state.quizSubmitted) return;
+  // Deselect others
+  for (let j = 0; j < 4; j++) {
+    const el = document.getElementById(`qo_${qi}_${j}`);
+    if (el) el.classList.remove('selected');
+  }
+  document.getElementById(`qo_${qi}_${oi}`).classList.add('selected');
+  state.quizAnswers[qi] = oi;
+}
+
+function submitQuiz(total) {
+  state.quizSubmitted = true;
+  let score = 0;
+
+  for (let i = 0; i < total; i++) {
+    const selected = state.quizAnswers[i];
+    const qq = document.getElementById(`qq_${i}`);
+    const correctAnswers = [1,1,3,1,3,1,2,1,1,1]; // correct indices
+    const correct = correctAnswers[i];
+
+    // Show explanation
+    document.getElementById(`qe_${i}`).classList.add('show');
+
+    for (let j = 0; j < 4; j++) {
+      const el = document.getElementById(`qo_${i}_${j}`);
+      el.classList.add('disabled');
+      if (j === correct) el.classList.add('correct');
+      if (j === selected && j !== correct) el.classList.add('wrong');
+    }
+
+    if (selected === correct) score++;
+  }
+
+  const scoreEl = document.getElementById('quizScore');
+  scoreEl.style.display = 'block';
+  document.getElementById('scoreNum').textContent = `${score}/${total}`;
+  const pct = Math.round((score / total) * 100);
+  const msg = pct >= 90 ? "🏆 Outstanding! You've mastered prototypes!" :
+              pct >= 70 ? "👏 Great job! Review the ones you missed." :
+              pct >= 50 ? "📚 Good start! Revisit the earlier sections." :
+              "💪 Keep learning! Go through the chapters again.";
+  document.getElementById('scoreMsg').textContent = msg;
+  scoreEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderExercises() {
+  return `<section class="section active">
+    <h1>💪 Coding Exercises</h1>
+    <p class="subtitle">Practice makes permanent — solve these challenges to lock in your skills</p>
+
+    <!-- Exercise 1 -->
+    <div class="exercise-container">
+      <div class="exercise-title">🏋️ Exercise 1: Create a Constructor Function</div>
+      <div class="exercise-desc">
+        <p>Create a <code>Vehicle</code> constructor function that takes <code>make</code> and <code>year</code>. Add a <code>describe()</code> method on the prototype that returns <code>"2024 Toyota"</code> format.</p>
+      </div>
+      <button class="hint-btn" onclick="toggleHint('ex1')">💡 Show Hint</button>
+      <div class="exercise-hint" id="hint_ex1">Define the constructor with <code>this.make</code> and <code>this.year</code>, then add <code>Vehicle.prototype.describe = function() { ... }</code></div>
+      ${editor(`// Create your Vehicle constructor and describe() method here:
+
+
+// Tests (don't modify):
+const car = new Vehicle("Toyota", 2024);
+console.log(car.make);         // Should print: Toyota
+console.log(car.year);         // Should print: 2024
+console.log(car.describe());   // Should print: 2024 Toyota
+console.log(car.hasOwnProperty("describe")); // Should be: false`, 'ex1')}
+      <button class="check-btn" onclick="checkExercise(1)">✔ Check Solution</button>
+      <div class="exercise-result" id="exr_1"></div>
+    </div>
+
+    <!-- Exercise 2 -->
+    <div class="exercise-container">
+      <div class="exercise-title">🏋️ Exercise 2: Set Up Inheritance</div>
+      <div class="exercise-desc">
+        <p>Create <code>Animal</code> constructor (takes <code>name</code>) with a <code>speak()</code> method returning <code>"[name] makes a sound"</code>.<br>
+        Create <code>Dog</code> constructor (takes <code>name</code>, <code>breed</code>) that inherits from <code>Animal</code>.<br>
+        Override <code>speak()</code> on Dog to return <code>"[name] barks"</code>.</p>
+      </div>
+      <button class="hint-btn" onclick="toggleHint('ex2')">💡 Show Hint</button>
+      <div class="exercise-hint" id="hint_ex2">Use <code>Animal.call(this, name)</code> in Dog, then <code>Dog.prototype = Object.create(Animal.prototype)</code>. Don't forget <code>Dog.prototype.constructor = Dog</code>.</div>
+      ${editor(`// Build Animal and Dog constructors with inheritance:
+
+
+// Tests (don't modify):
+const generic = new Animal("Cat");
+console.log(generic.speak());    // "Cat makes a sound"
+
+const rex = new Dog("Rex", "Lab");
+console.log(rex.speak());        // "Rex barks"
+console.log(rex.name);           // "Rex"
+console.log(rex.breed);          // "Lab"
+console.log(rex instanceof Dog);    // true
+console.log(rex instanceof Animal); // true`, 'ex2')}
+      <button class="check-btn" onclick="checkExercise(2)">✔ Check Solution</button>
+      <div class="exercise-result" id="exr_2"></div>
+    </div>
+
+    <!-- Exercise 3 -->
+    <div class="exercise-container">
+      <div class="exercise-title">🏋️ Exercise 3: Object.create Hierarchy</div>
+      <div class="exercise-desc">
+        <p>Using <strong>only Object.create()</strong> (no constructor functions), create this chain:<br>
+        <code>shape → circle → myCircle</code><br>
+        <code>shape</code> has <code>type: "shape"</code> and <code>describe()</code> returning <code>"A [color] [type]"</code>.<br>
+        <code>circle</code> has <code>type: "circle"</code> and <code>area()</code> returning <code>π × r²</code>.<br>
+        <code>myCircle</code> has <code>color: "red"</code> and <code>radius: 5</code>.</p>
+      </div>
+      <button class="hint-btn" onclick="toggleHint('ex3')">💡 Show Hint</button>
+      <div class="exercise-hint" id="hint_ex3">Start with <code>const shape = { type: "shape", describe() { ... } }</code>, then <code>const circle = Object.create(shape)</code> and add properties.</div>
+      ${editor(`// Build the chain using Object.create:
+
+
+// Tests (don't modify):
+console.log(myCircle.color);      // "red"
+console.log(myCircle.type);       // "circle" (from circle)
+console.log(myCircle.area());     // ~78.54 (π * 25)
+console.log(myCircle.describe()); // "A red circle"
+console.log(Object.getPrototypeOf(myCircle) === circle);  // true
+console.log(Object.getPrototypeOf(circle) === shape);     // true`, 'ex3')}
+      <button class="check-btn" onclick="checkExercise(3)">✔ Check Solution</button>
+      <div class="exercise-result" id="exr_3"></div>
+    </div>
+
+    <!-- Exercise 4 -->
+    <div class="exercise-container">
+      <div class="exercise-title">🏋️ Exercise 4: Fix the Buggy Code</div>
+      <div class="exercise-desc">
+        <p>The code below has <strong>3 bugs</strong> related to prototypes. Find and fix them all!</p>
+      </div>
+      <button class="hint-btn" onclick="toggleHint('ex4')">💡 Show Hint</button>
+      <div class="exercise-hint" id="hint_ex4">Look for: (1) arrow function on prototype, (2) missing parent constructor call, (3) missing constructor fix after prototype reassignment.</div>
+      ${editor(`function Shape(color) {
+  this.color = color;
+}
+Shape.prototype.describe = () => {
+  return "A " + this.color + " shape";
+};
+
+function Circle(color, radius) {
+  // Bug: parent constructor not called
+  this.radius = radius;
+}
+Circle.prototype = Object.create(Shape.prototype);
+// Bug: constructor not fixed
+
+Circle.prototype.area = function() {
+  return Math.PI * this.radius * this.radius;
+};
+
+// Tests:
+const c = new Circle("blue", 5);
+console.log(c.color);        // Should be: "blue"
+console.log(c.describe());   // Should be: "A blue shape"
+console.log(c.area());       // Should be: ~78.54
+console.log(c.constructor === Circle); // Should be: true`, 'ex4')}
+      <button class="check-btn" onclick="checkExercise(4)">✔ Check Solution</button>
+      <div class="exercise-result" id="exr_4"></div>
+    </div>
+
+    <!-- Exercise 5 -->
+    <div class="exercise-container">
+      <div class="exercise-title">🏋️ Exercise 5: Prototype Chain Walker</div>
+      <div class="exercise-desc">
+        <p>Write a function <code>getPrototypeChain(obj)</code> that returns an array of all objects in the prototype chain, from the object itself up to (but NOT including) null.</p>
+        <p>Example: for a plain object <code>{}</code>, it should return <code>[{}, Object.prototype]</code></p>
+      </div>
+      <button class="hint-btn" onclick="toggleHint('ex5')">💡 Show Hint</button>
+      <div class="exercise-hint" id="hint_ex5">Use a while loop with <code>Object.getPrototypeOf()</code>. Push each object to an array. Stop when you hit null.</div>
+      ${editor(`// Write getPrototypeChain function:
+
+
+// Tests:
+function A() {}
+function B() {}
+B.prototype = Object.create(A.prototype);
+B.prototype.constructor = B;
+
+const b = new B();
+const chain = getPrototypeChain(b);
+
+console.log(chain.length);        // Should be 4
+console.log(chain[0] === b);      // true (the object itself)
+console.log(chain[1] === B.prototype);    // true
+console.log(chain[2] === A.prototype);    // true
+console.log(chain[3] === Object.prototype); // true
+
+// Null-prototype object
+const dict = Object.create(null);
+console.log(getPrototypeChain(dict).length); // 1 (just dict itself)`, 'ex5')}
+      <button class="check-btn" onclick="checkExercise(5)">✔ Check Solution</button>
+      <div class="exercise-result" id="exr_5"></div>
+    </div>
+
+    ${sectionNav()}
+  </section>`;
+}
+
+function toggleHint(id) {
+  const el = document.getElementById('hint_' + id);
+  el.classList.toggle('show');
+}
+
+function checkExercise(num) {
+  const code = document.getElementById('ex' + num).value;
+  const resultEl = document.getElementById('exr_' + num);
+  const logs = [];
+  const origLog = console.log;
+  console.log = (...args) => logs.push(args.map(a => {
+    if (a === null) return 'null';
+    if (a === undefined) return 'undefined';
+    if (typeof a === 'object') try { return JSON.stringify(a); } catch(e) { return String(a); }
+    return String(a);
+  }).join(' '));
+  
+  try {
+    new Function(code)();
+    let pass = false;
+    const l = logs;
+
+    if (num === 1) {
+      pass = l.includes('Toyota') && l.includes('2024') && l.includes('2024 Toyota') && l.includes('false');
+    } else if (num === 2) {
+      pass = l.includes('Cat makes a sound') && l.includes('Rex barks') && l.includes('Rex') && l.includes('Lab') && l.filter(x => x === 'true').length >= 2;
+    } else if (num === 3) {
+      pass = l.includes('red') && l.includes('circle') && l.some(x => x.includes('78.5')) && l.includes('A red circle') && l.filter(x => x === 'true').length >= 2;
+    } else if (num === 4) {
+      pass = l.includes('blue') && l.includes('A blue shape') && l.some(x => x.includes('78.5')) && l.includes('true');
+    } else if (num === 5) {
+      pass = l.includes('4') && l.filter(x => x === 'true').length >= 4 && l.includes('1');
+    }
+
+    resultEl.className = 'exercise-result show ' + (pass ? 'pass' : 'fail');
+    resultEl.textContent = pass ? '✅ All tests passed! Great work!' : '❌ Some tests failed. Check the output and try again.';
+  } catch (e) {
+    resultEl.className = 'exercise-result show fail';
+    resultEl.textContent = '❌ Error: ' + e.message;
+  }
+  console.log = origLog;
+}
+
+// ===== CHAIN VISUALIZER =====
+function animateChainLookup() {
+  const prop = document.getElementById('chainLookupInput').value.trim();
+  if (!prop) return;
+
+  const nodes = ['cn-dog', 'cn-dogproto', 'cn-animalproto', 'cn-objectproto', 'cn-null'];
+  const propsMap = {
+    'cn-dog': ['name', 'age'],
+    'cn-dogproto': ['speak', 'fetch'],
+    'cn-animalproto': ['isAlive', 'breathe'],
+    'cn-objectproto': ['toString', 'hasOwnProperty', 'valueOf'],
+    'cn-null': []
+  };
+
+  // Reset all
+  nodes.forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active-lookup', 'found', 'not-found');
+    const propEls = el.querySelectorAll('.node-props div');
+    propEls.forEach(p => p.classList.remove('found-prop'));
+  });
+
+  const resultEl = document.getElementById('chainLookupResult');
+  resultEl.textContent = '';
+
+  let step = 0;
+  let found = false;
+
+  function next() {
+    if (step >= nodes.length || found) return;
+    const nodeId = nodes[step];
+    const nodeEl = document.getElementById(nodeId);
+
+    // Remove previous active
+    if (step > 0) {
+      document.getElementById(nodes[step - 1]).classList.remove('active-lookup');
+    }
+
+    if (nodeId === 'cn-null') {
+      nodeEl.classList.add('not-found');
+      resultEl.innerHTML = `<span style="color:var(--danger)">❌ undefined</span> — Not found in chain`;
+      return;
+    }
+
+    nodeEl.classList.add('active-lookup');
+
+    if (propsMap[nodeId].includes(prop)) {
+      setTimeout(() => {
+        nodeEl.classList.remove('active-lookup');
+        nodeEl.classList.add('found');
+        const propEls = nodeEl.querySelectorAll('.node-props div');
+        propEls.forEach(p => {
+          if (p.textContent.startsWith(prop)) p.classList.add('found-prop');
+        });
+        const label = nodeId.replace('cn-', '').replace('proto', '.prototype');
+        resultEl.innerHTML = `<span style="color:var(--success)">✅ Found "${prop}"</span> on ${label}`;
+        found = true;
+      }, 500);
+    } else {
+      step++;
+      setTimeout(next, 600);
+    }
+  }
+
+  next();
+}
+
+// ===== RENDER APP =====
+function renderApp() {
+  const app = document.getElementById('app');
+  const renderers = [
+    renderIntro, renderWhatIs, renderChain, renderConstructor,
+    renderObjectCreate, renderProtoMethods, renderPitfalls,
+    renderQuiz, renderExercises
+  ];
+  
+  editorCount = 0;
+  app.innerHTML = renderers[state.currentSection]();
+  renderNav();
+  updateProgress();
+}
+
+// Initial render
+renderApp();
+</script>
+</body>
+</html>

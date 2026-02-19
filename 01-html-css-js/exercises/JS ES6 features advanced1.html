@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ES6+ Mastery — Interactive Learning Hub</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2333;--border:#30363d;
+  --text:#e6edf3;--text2:#8b949e;--blue:#58a6ff;--green:#3fb950;
+  --red:#f85149;--orange:#f0883e;--purple:#bc8cff;--cyan:#39d4e0;
+  --yellow:#e3b341;--gradient:linear-gradient(135deg,#58a6ff,#bc8cff);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+a{color:var(--blue);text-decoration:none}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:260px 1fr;grid-template-rows:auto 1fr;min-height:100vh}
+header{grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100}
+header h1{font-size:1.3rem;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.progress-wrap{flex:1;max-width:400px;display:flex;align-items:center;gap:10px}
+.progress-bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gradient);border-radius:4px;transition:width .5s ease;width:0%}
+.progress-text{font-size:.8rem;color:var(--text2);white-space:nowrap}
+.score-badge{margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px}
+.score-badge span{color:var(--yellow)}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;position:sticky;top:52px;height:calc(100vh - 52px)}
+.sidebar-section{padding:8px 16px;font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);margin-top:12px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;border-left:3px solid transparent;transition:all .2s;font-size:.9rem;color:var(--text2)}
+.nav-item:hover{background:rgba(88,166,255,.06);color:var(--text)}
+.nav-item.active{border-left-color:var(--blue);background:rgba(88,166,255,.1);color:var(--text)}
+.nav-item .icon{font-size:1.1rem;width:24px;text-align:center}
+.nav-item .check{margin-left:auto;color:var(--green);font-size:.8rem;opacity:0;transition:opacity .3s}
+.nav-item.completed .check{opacity:1}
+.nav-sub{font-size:.8rem;padding:6px 20px 6px 54px;color:var(--text2);cursor:pointer;transition:all .2s}
+.nav-sub:hover{color:var(--text)}
+.nav-sub.active{color:var(--blue)}
+
+/* MAIN */
+main{padding:30px 40px 60px;overflow-y:auto;max-width:960px}
+.section{display:none}
+.section.active{display:block;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+h2{font-size:1.8rem;margin-bottom:6px;display:flex;align-items:center;gap:12px}
+h2 .emoji{font-size:1.6rem}
+.subtitle{color:var(--text2);margin-bottom:30px;font-size:1rem}
+h3{font-size:1.2rem;margin:28px 0 12px;color:var(--cyan);display:flex;align-items:center;gap:8px}
+h3::before{content:'';width:4px;height:20px;background:var(--cyan);border-radius:2px}
+h4{font-size:1rem;margin:18px 0 8px;color:var(--orange)}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin:16px 0}
+.card.concept{border-left:4px solid var(--blue)}
+.card.pitfall{border-left:4px solid var(--red);background:rgba(248,81,73,.04)}
+.card.tip{border-left:4px solid var(--green);background:rgba(63,185,80,.04)}
+.card-title{font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:.95rem}
+.card.pitfall .card-title{color:var(--red)}
+.card.tip .card-title{color:var(--green)}
+.card p,.card li{color:var(--text2);font-size:.9rem}
+.card ul{padding-left:20px;margin-top:6px}
+.card li{margin:4px 0}
+
+/* CODE BLOCKS */
+.code-block{position:relative;background:#0d1117;border:1px solid var(--border);border-radius:8px;margin:12px 0;overflow:hidden}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:.75rem;color:var(--text2)}
+.code-header .lang{display:flex;align-items:center;gap:6px}
+.code-header .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.code-header .dot.js{background:var(--yellow)}
+.code-content{position:relative}
+pre{padding:16px;font-family:'Cascadia Code','Fira Code',monospace;font-size:.85rem;line-height:1.7;overflow-x:auto;white-space:pre;tab-size:2;color:#e6edf3}
+pre .kw{color:#ff7b72}
+pre .str{color:#a5d6ff}
+pre .num{color:#79c0ff}
+pre .fn{color:#d2a8ff}
+pre .cm{color:#8b949e;font-style:italic}
+pre .op{color:#ff7b72}
+pre .var{color:#ffa657}
+pre .param{color:#ffa657}
+pre .prop{color:#79c0ff}
+pre .bracket{color:#e6edf3}
+pre .tl{color:#a5d6ff}
+pre .obj{color:#ffa657}
+.btn-run{background:var(--green);color:#000;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.75rem;font-weight:600;transition:all .2s}
+.btn-run:hover{filter:brightness(1.2)}
+.output{border-top:1px solid var(--border);padding:12px 16px;font-family:'Cascadia Code',monospace;font-size:.82rem;background:rgba(63,185,80,.04);color:var(--green);max-height:200px;overflow-y:auto;display:none}
+.output.show{display:block;animation:slideDown .3s ease}
+.output.error{color:var(--red);background:rgba(248,81,73,.04)}
+@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:200px;opacity:1}}
+.output-label{font-size:.7rem;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+
+/* EDITABLE CODE */
+.code-editor{width:100%;min-height:80px;background:#0d1117;color:#e6edf3;border:none;padding:16px;font-family:'Cascadia Code','Fira Code',monospace;font-size:.85rem;line-height:1.7;resize:vertical;outline:none;tab-size:2}
+.code-editor:focus{box-shadow:inset 0 0 0 1px var(--blue)}
+
+/* VISUAL DEMOS */
+.visual-demo{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:24px;margin:20px 0;overflow:hidden}
+.visual-title{font-size:.8rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;text-align:center}
+.visual-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:12px 0}
+.v-box{background:var(--surface);border:2px solid var(--border);border-radius:8px;padding:10px 16px;font-family:monospace;font-size:.85rem;transition:all .5s ease;position:relative;min-width:50px;text-align:center}
+.v-box.array{border-color:var(--blue);background:rgba(88,166,255,.08)}
+.v-box.object{border-color:var(--purple);background:rgba(188,140,255,.08)}
+.v-box.var{border-color:var(--green);background:rgba(63,185,80,.08)}
+.v-box.spread{border-color:var(--orange);background:rgba(240,136,62,.08)}
+.v-box.rest{border-color:var(--cyan);background:rgba(57,212,224,.08)}
+.v-box .label{font-size:.65rem;color:var(--text2);position:absolute;top:-8px;left:8px;background:var(--surface2);padding:0 4px}
+.v-arrow{font-size:1.4rem;color:var(--text2);transition:all .5s}
+.v-bracket{font-size:1.6rem;color:var(--text2);font-weight:300}
+.v-equals{color:var(--blue);font-weight:bold;font-size:1.1rem}
+.visual-btn{display:block;margin:16px auto 0;background:var(--gradient);color:#fff;border:none;padding:8px 24px;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .3s}
+.visual-btn:hover{transform:scale(1.05);filter:brightness(1.1)}
+.visual-code{text-align:center;font-family:monospace;color:var(--text2);font-size:.85rem;margin-top:12px;padding:8px;background:rgba(0,0,0,.3);border-radius:6px}
+
+/* ANIMATION CLASSES */
+.v-box.animate-out{transform:translateY(-20px) scale(1.1);opacity:0}
+.v-box.animate-in{animation:popIn .5s ease forwards}
+@keyframes popIn{0%{transform:scale(0) translateY(20px);opacity:0}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1);opacity:1}}
+.v-box.highlight{box-shadow:0 0 20px rgba(88,166,255,.3);transform:scale(1.05)}
+.v-box.glow-green{box-shadow:0 0 15px rgba(63,185,80,.4);border-color:var(--green)}
+.v-box.glow-orange{box-shadow:0 0 15px rgba(240,136,62,.4);border-color:var(--orange)}
+
+/* QUIZ */
+.quiz-section{margin:30px 0}
+.quiz-q{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin:14px 0}
+.quiz-q .q-num{font-size:.75rem;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.quiz-q .q-text{font-weight:500;margin-bottom:14px;font-size:.95rem}
+.quiz-q pre{margin:8px 0 14px;padding:12px;border-radius:6px;background:#0d1117;border:1px solid var(--border)}
+.option{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;margin:4px 0;border-radius:6px;cursor:pointer;transition:all .2s;border:1px solid transparent;font-size:.9rem}
+.option:hover{background:rgba(88,166,255,.06);border-color:var(--border)}
+.option input{margin-top:4px;accent-color:var(--blue)}
+.option.correct{background:rgba(63,185,80,.1);border-color:var(--green)}
+.option.wrong{background:rgba(248,81,73,.1);border-color:var(--red)}
+.option.disabled{pointer-events:none}
+.q-feedback{margin-top:10px;padding:10px 14px;border-radius:6px;font-size:.85rem;display:none}
+.q-feedback.show{display:block;animation:fadeIn .3s}
+.q-feedback.correct{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);color:var(--green)}
+.q-feedback.wrong{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:var(--red)}
+.btn-check{background:var(--blue);color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:500;margin-top:10px;transition:all .2s}
+.btn-check:hover{filter:brightness(1.2)}
+.btn-check:disabled{opacity:.4;cursor:not-allowed}
+.quiz-score{text-align:center;padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-top:20px}
+.quiz-score .big{font-size:2rem;font-weight:700;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* EXERCISE */
+.exercise{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;margin:20px 0}
+.exercise-title{font-weight:600;font-size:1.05rem;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.exercise-desc{color:var(--text2);font-size:.9rem;margin-bottom:16px}
+.exercise-desc code{background:rgba(88,166,255,.1);padding:2px 6px;border-radius:3px;font-family:monospace;color:var(--blue);font-size:.85rem}
+.btn-hint{background:none;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;transition:all .2s;margin-right:8px}
+.btn-hint:hover{border-color:var(--yellow);color:var(--yellow)}
+.hint-text{background:rgba(227,179,65,.06);border:1px solid rgba(227,179,65,.2);color:var(--yellow);padding:10px 14px;border-radius:6px;font-size:.85rem;margin-top:10px;display:none}
+.hint-text.show{display:block;animation:fadeIn .3s}
+.exercise-result{margin-top:12px;padding:10px 14px;border-radius:6px;font-size:.85rem;display:none}
+.exercise-result.show{display:block}
+.exercise-result.pass{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);color:var(--green)}
+.exercise-result.fail{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:var(--red)}
+.btn-solution{background:none;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;margin-top:8px;transition:all .2s}
+.btn-solution:hover{border-color:var(--purple);color:var(--purple)}
+.solution-code{display:none;margin-top:10px}
+.solution-code.show{display:block;animation:fadeIn .3s}
+
+/* COMPARISON TABLE */
+.compare-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.85rem}
+.compare-table th{background:var(--surface2);padding:10px 14px;text-align:left;border:1px solid var(--border);color:var(--cyan);font-weight:600}
+.compare-table td{padding:10px 14px;border:1px solid var(--border);color:var(--text2)}
+.compare-table tr:hover td{background:rgba(88,166,255,.03)}
+.compare-table code{background:rgba(88,166,255,.1);padding:1px 5px;border-radius:3px;color:var(--blue);font-family:monospace}
+
+/* TABS */
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:8px 16px;cursor:pointer;color:var(--text2);font-size:.85rem;border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .3s}
+
+/* MISC */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.tag.es6{background:rgba(88,166,255,.15);color:var(--blue)}
+.tag.important{background:rgba(248,81,73,.15);color:var(--red)}
+.tag.tip{background:rgba(63,185,80,.15);color:var(--green)}
+.divider{border:none;border-top:1px solid var(--border);margin:30px 0}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.mt-1{margin-top:8px}.mt-2{margin-top:16px}.mt-3{margin-top:24px}
+.mb-1{margin-bottom:8px}.mb-2{margin-bottom:16px}
+mark{background:rgba(227,179,65,.2);color:var(--yellow);padding:1px 4px;border-radius:2px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  main{padding:20px 16px 40px}
+  .visual-row{flex-direction:column}
+  header{flex-wrap:wrap}
+  header h1{font-size:1.1rem}
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text2)}
+
+/* CONFETTI */
+.confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden}
+.confetti{position:absolute;width:10px;height:10px;top:-10px;animation:confettiFall 3s ease-in forwards}
+@keyframes confettiFall{
+  0%{transform:translateY(0) rotate(0) scale(1);opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg) scale(0);opacity:0}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+<header>
+  <h1>🚀 ES6+ Mastery</h1>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText">0 / 7 complete</span>
+  </div>
+  <div class="score-badge">⭐ <span id="totalScore">0</span> pts</div>
+</header>
+
+<nav class="sidebar" id="sidebar"></nav>
+<main id="mainContent"></main>
+</div>
+
+<script>
+// ===========================
+// DATA: All Lessons
+// ===========================
+const LESSONS = [
+{
+  id:'template-literals',
+  title:'Template Literals',
+  icon:'📝',
+  concepts:[
+    {
+      title:'What are Template Literals?',
+      type:'concept',
+      html:`<p>Template literals use <mark>backticks (\`)</mark> instead of quotes. They allow <strong>embedded expressions</strong>, <strong>multi-line strings</strong>, and <strong>tagged templates</strong>.</p>
+      <p class="mt-1">Think of them as <em>smart strings</em> — strings that can contain dynamic values and span multiple lines without hacks.</p>`
+    },
+    {
+      title:'Why They Matter',
+      type:'tip',
+      html:`<ul>
+        <li>No more ugly string concatenation with <code>+</code></li>
+        <li>Multi-line strings without <code>\\n</code></li>
+        <li>Embed any JavaScript expression inside <code>\${...}</code></li>
+        <li>Create powerful tagged template functions</li>
+      </ul>`
+    }
+  ],
+  examples:[
+    {
+      title:'Basic String Interpolation',
+      code:`const name = "Sarah";
+const age = 28;
+
+// ❌ Old way (concatenation)
+const old = "Hello, " + name + "! You are " + age + " years old.";
+
+// ✅ Template literal
+const modern = \`Hello, \${name}! You are \${age} years old.\`;
+
+console.log(modern);
+console.log(\`Next year you'll be \${age + 1}\`);`,
+      run:true
+    },
+    {
+      title:'Multi-line Strings',
+      code:`// ❌ Old way
+const oldHtml = "<div>\\n" +
+  "  <h1>Title</h1>\\n" +
+  "  <p>Content</p>\\n" +
+  "</div>";
+
+// ✅ Template literal - preserves formatting!
+const html = \`<div>
+  <h1>Title</h1>
+  <p>Content</p>
+</div>\`;
+
+console.log(html);`,
+      run:true
+    },
+    {
+      title:'Expressions Inside \${}',
+      code:`const price = 29.99;
+const qty = 3;
+const items = ['apple', 'banana', 'cherry'];
+
+console.log(\`Total: $\${(price * qty).toFixed(2)}\`);
+console.log(\`Items: \${items.join(', ')}\`);
+console.log(\`Is expensive? \${price > 20 ? 'Yes 💰' : 'No'}\`);
+console.log(\`Uppercase: \${items[0].toUpperCase()}\`);`,
+      run:true
+    },
+    {
+      title:'Tagged Templates (Advanced)',
+      code:`function highlight(strings, ...values) {
+  return strings.reduce((result, str, i) => {
+    const val = values[i] !== undefined ? \`【\${values[i]}】\` : '';
+    return result + str + val;
+  }, '');
+}
+
+const name = "Alice";
+const role = "developer";
+
+const result = highlight\`Welcome \${name}, you are a \${role}!\`;
+console.log(result);
+// The tagged function receives the string parts and values separately!`,
+      run:true
+    }
+  ],
+  pitfalls:[
+    {
+      title:"Using quotes instead of backticks",
+      wrong:`const name = "World";\nconst msg = "Hello \${name}"; // Just a literal string!\nconsole.log(msg); // "Hello \${name}" - NOT interpolated`,
+      right:`const name = "World";\nconst msg = \`Hello \${name}\`; // Backticks!\nconsole.log(msg); // "Hello World"`,
+      explain:"Interpolation ONLY works with backticks (` `), not single or double quotes."
+    },
+    {
+      title:"Forgetting the $ before the curly braces",
+      wrong:`const x = 5;\nconsole.log(\`Value: {x}\`); // "Value: {x}" - missing $`,
+      right:`const x = 5;\nconsole.log(\`Value: \${x}\`); // "Value: 5"`,
+      explain:"You need ${} — the dollar sign is required for interpolation."
+    },
+    {
+      title:"Accidental whitespace in multi-line",
+      wrong:`function getHtml() {\n  return \`\n    <div>\n      <p>Text</p>\n    </div>\n  \`;\n}\n// This includes leading whitespace/newlines!`,
+      right:`function getHtml() {\n  return \`<div>\n  <p>Text</p>\n</div>\`;\n}\n// Or use .trim() on the result`,
+      explain:"Template literals preserve ALL whitespace, including indentation. Use .trim() if needed."
+    }
+  ],
+  quiz:[
+    {
+      q:"What characters are used for template literals?",
+      options:["Single quotes ''","Double quotes \"\"","Backticks ``","Parentheses ()"],
+      answer:2,
+      explain:"Template literals use backticks (` `) — the key usually below Escape."
+    },
+    {
+      q:"What does this output?\n`const x = 5;\nconsole.log(`Result: ${x * 2}`);`",
+      options:["Result: ${x * 2}","Result: 10","Result: x * 2","Error"],
+      answer:1,
+      explain:"${x * 2} evaluates the expression: 5 * 2 = 10"
+    },
+    {
+      q:"Which is valid inside ${}?",
+      options:["Only variables","Only simple expressions","Any valid JS expression","Only strings"],
+      answer:2,
+      explain:"You can put ANY valid JavaScript expression inside ${}, including function calls, ternaries, and more."
+    },
+    {
+      q:"What does this output?\n`const a = \"hello\";\nconsole.log(\"Value: ${a}\");`",
+      options:["Value: hello","Value: ${a}","Error","undefined"],
+      answer:1,
+      explain:"Regular quotes (\" \") don't support interpolation! It prints the literal text ${a}."
+    },
+    {
+      q:"What is a tagged template?",
+      options:["A template with HTML tags","A function called with a template literal","A CSS-in-JS feature","A template with labels"],
+      answer:1,
+      explain:"Tagged templates let you call a function with a template literal: myFunc`hello ${name}`"
+    }
+  ],
+  exercise:{
+    title:"Build a Receipt Generator",
+    desc:`Create a function <code>generateReceipt</code> that takes <code>item</code> (string), <code>price</code> (number), and <code>quantity</code> (number). Return a multi-line string using template literals that shows the item, price per unit, quantity, and total.`,
+    starter:`function generateReceipt(item, price, quantity) {\n  // Use template literals to return a receipt string\n  // Should output something like:\n  // "Receipt\n  // -------\n  // Item: Widget\n  // Price: $9.99\n  // Qty: 3\n  // Total: $29.97"\n  \n}`,
+    tests:[
+      {call:'generateReceipt("Widget", 9.99, 3)',check:s=>s.includes('Widget')&&s.includes('9.99')&&s.includes('3')&&s.includes('29.97')},
+      {call:'generateReceipt("Book", 15, 2)',check:s=>s.includes('Book')&&s.includes('15')&&s.includes('2')&&s.includes('30')}
+    ],
+    hint:"Use backticks with ${} to embed the parameters. Calculate total as (price * quantity).toFixed(2).",
+    solution:`function generateReceipt(item, price, quantity) {\n  const total = (price * quantity).toFixed(2);\n  return \`Receipt\n-------\nItem: \${item}\nPrice: $\${price}\nQty: \${quantity}\nTotal: $\${total}\`;\n}`
+  }
+},
+
+{
+  id:'destructuring-arrays',
+  title:'Array Destructuring',
+  icon:'📦',
+  concepts:[
+    {
+      title:'What is Array Destructuring?',
+      type:'concept',
+      html:`<p>Array destructuring lets you <mark>unpack values from arrays</mark> into individual variables in a single, clean statement.</p>
+      <p class="mt-1">Think of it like opening a box and placing each item on its own shelf — each position in the array maps to a variable.</p>`
+    },
+    {
+      title:'Key Rules',
+      type:'tip',
+      html:`<ul>
+        <li>Destructuring is based on <strong>position</strong> (index)</li>
+        <li>Use <code>,</code> to skip elements</li>
+        <li>Use <code>= defaultValue</code> for defaults</li>
+        <li>Works with any iterable (arrays, strings, sets, etc.)</li>
+      </ul>`
+    }
+  ],
+  visual:{
+    type:'array-destructure',
+    data:['🍎','🍌','🍒'],
+    vars:['first','second','third'],
+    code:'const [first, second, third] = ["🍎", "🍌", "🍒"];'
+  },
+  examples:[
+    {
+      title:'Basic Array Destructuring',
+      code:`const colors = ['red', 'green', 'blue'];
+
+// ❌ Old way
+const r = colors[0];
+const g = colors[1];
+const b = colors[2];
+
+// ✅ Destructuring
+const [red, green, blue] = colors;
+
+console.log(red);   // "red"
+console.log(green); // "green"
+console.log(blue);  // "blue"`,
+      run:true
+    },
+    {
+      title:'Skipping Elements',
+      code:`const scores = [95, 87, 72, 64, 88];
+
+// Skip the 2nd and 4th elements
+const [first, , third, , fifth] = scores;
+
+console.log(first);  // 95
+console.log(third);  // 72
+console.log(fifth);  // 88
+
+// Get only the first element
+const [winner] = scores;
+console.log(winner); // 95`,
+      run:true
+    },
+    {
+      title:'Default Values',
+      code:`const partial = [1, 2];
+
+// c gets default value since partial[2] is undefined
+const [a, b, c = 'default'] = partial;
+
+console.log(a); // 1
+console.log(b); // 2
+console.log(c); // "default"
+
+// Default only used when value is undefined
+const [x = 10, y = 20] = [100];
+console.log(x); // 100 (has value, default ignored)
+console.log(y); // 20  (undefined, default used)`,
+      run:true
+    },
+    {
+      title:'Swapping Variables (No Temp!)',
+      code:`let a = "hello";
+let b = "world";
+
+console.log("Before:", a, b);
+
+// ✅ Swap without temporary variable!
+[a, b] = [b, a];
+
+console.log("After:", a, b);
+
+// Works with multiple values too!
+let x = 1, y = 2, z = 3;
+[x, y, z] = [z, x, y];
+console.log(x, y, z); // 3, 1, 2`,
+      run:true
+    },
+    {
+      title:'Nested Array Destructuring',
+      code:`const matrix = [[1, 2], [3, 4], [5, 6]];
+
+const [[a, b], [c, d], [e, f]] = matrix;
+console.log(a, b); // 1 2
+console.log(c, d); // 3 4
+
+// Mix nesting levels
+const data = [1, [2, 3], 4];
+const [first, [second, third], fourth] = data;
+console.log(first, second, third, fourth); // 1 2 3 4`,
+      run:true
+    },
+    {
+      title:'With Functions',
+      code:`// Functions can return arrays for destructuring
+function getMinMax(arr) {
+  return [Math.min(...arr), Math.max(...arr)];
+}
+
+const [min, max] = getMinMax([5, 2, 8, 1, 9]);
+console.log(\`Min: \${min}, Max: \${max}\`);
+
+// Destructure in function parameters
+function processCoords([x, y, z = 0]) {
+  console.log(\`x:\${x} y:\${y} z:\${z}\`);
+}
+processCoords([10, 20]);
+processCoords([10, 20, 30]);`,
+      run:true
+    }
+  ],
+  pitfalls:[
+    {
+      title:"Destructuring undefined/null crashes",
+      wrong:`const [a, b] = undefined; // TypeError!\nconst [x, y] = null;      // TypeError!`,
+      right:`const [a, b] = undefined || [];\n// Or use default parameter in functions\nfunction process([a, b] = []) { }`,
+      explain:"You can't destructure null or undefined. Always provide a fallback."
+    },
+    {
+      title:"Confusing destructuring with creating arrays",
+      wrong:`// This DECLARES variables, doesn't create an array\nconst [a, b, c] = [1, 2, 3];\nconsole.log([a, b, c]); // This creates a NEW array`,
+      right:`// Destructuring extracts FROM the right side\nconst [a, b, c] = [1, 2, 3];\nconsole.log(a); // 1 — it's a regular variable`,
+      explain:"The [...] on the left side is destructuring syntax, not array creation."
+    },
+    {
+      title:"Forgetting that position matters",
+      wrong:`const arr = ['first', 'second', 'third'];\nconst [second] = arr;\nconsole.log(second); // "first" — NOT "second"!`,
+      right:`const arr = ['first', 'second', 'third'];\nconst [, second] = arr;\nconsole.log(second); // "second" — skipped first`,
+      explain:"Array destructuring is positional. Variable names don't matter — position does!"
+    }
+  ],
+  quiz:[
+    {
+      q:"What does this output?\n`const [a, , b] = [1, 2, 3, 4];`\n`console.log(a, b);`",
+      options:["1 2","1 3","1 4","Error"],
+      answer:1,
+      explain:"The comma (,) skips index 1, so a=1 (index 0), b=3 (index 2)."
+    },
+    {
+      q:"What does `const [x = 5] = [undefined];` assign to x?",
+      options:["undefined","5","null","Error"],
+      answer:1,
+      explain:"Default values are used when the value is undefined. Since the element is explicitly undefined, x gets 5."
+    },
+    {
+      q:"What does `const [x = 5] = [null];` assign to x?",
+      options:["null","5","undefined","0"],
+      answer:0,
+      explain:"Defaults only kick in for undefined, NOT null. null is a valid value, so x = null."
+    },
+    {
+      q:"Which correctly swaps a and b?\n`let a = 1, b = 2;`",
+      options:["[a, b] = [b, a]","(a, b) = (b, a)","{a, b} = {b, a}","a = b; b = a;"],
+      answer:0,
+      explain:"[a, b] = [b, a] uses array destructuring to swap without a temp variable."
+    },
+    {
+      q:"What does this return?\n`const [head, ...tail] = [1, 2, 3, 4];`\n`console.log(tail);`",
+      options:["[2, 3, 4]","2","[1, 2, 3, 4]","[3, 4]"],
+      answer:0,
+      explain:"...tail collects all remaining elements into a new array: [2, 3, 4]."
+    }
+  ],
+  exercise:{
+    title:"Array Destructuring Challenge",
+    desc:`Given the nested array <code>const data = [[\"Alice\", 95], [\"Bob\", 87], [\"Charlie\", 92]];</code>, use array destructuring to:<br>1. Extract Alice's name and score into separate variables<br>2. Skip Bob and extract Charlie's name<br>3. Log all three values`,
+    starter:`const data = [["Alice", 95], ["Bob", 87], ["Charlie", 92]];\n\n// 1. Extract Alice's name and score\n// const [...] = data[0];\n\n// 2. Get Charlie's name (skip Bob)\n// const [...] = data;\n\n// 3. Log: "Alice scored 95, Charlie also competed"`,
+    tests:[
+      {call:'(() => { const data = [["Alice", 95], ["Bob", 87], ["Charlie", 92]]; const [name1, score1] = data[0]; const [, , [name3]] = data; return `${name1} scored ${score1}, ${name3} also competed`; })()',check:s=>s.includes('Alice')&&s.includes('95')&&s.includes('Charlie')}
+    ],
+    hint:"Use nested destructuring: const [name, score] = data[0] for Alice. Use const [, , [charlieName]] = data to skip to Charlie.",
+    solution:`const data = [["Alice", 95], ["Bob", 87], ["Charlie", 92]];\n\nconst [name1, score1] = data[0];\nconst [, , [name3]] = data;\n\nconsole.log(\`\${name1} scored \${score1}, \${name3} also competed\`);`
+  }
+},
+
+{
+  id:'destructuring-objects',
+  title:'Object Destructuring',
+  icon:'🎯',
+  concepts:[
+    {
+      title:'What is Object Destructuring?',
+      type:'concept',
+      html:`<p>Object destructuring lets you <mark>extract properties from objects</mark> into variables. Unlike arrays, it matches by <strong>property name</strong>, not position.</p>
+      <p class="mt-1">Think of it like picking specific items from a catalog by name — you say what you want, and it finds it for you.</p>`
+    },
+    {
+      title:'Key Differences from Array Destructuring',
+      type:'tip',
+      html:`<ul>
+        <li>Uses <code>{ }</code> instead of <code>[ ]</code></li>
+        <li>Matches by <strong>property name</strong>, not position</li>
+        <li>Can <strong>rename</strong> variables with <code>: newName</code></li>
+        <li>Order doesn't matter!</li>
+      </ul>`
+    }
+  ],
+  visual:{
+    type:'object-destructure',
+    data:{name:'🧑',age:'25',city:'🏙️'},
+    vars:['name','age','city'],
+    code:'const { name, age, city } = person;'
+  },
+  examples:[
+    {
+      title:'Basic Object Destructuring',
+      code:`const user = {
+  name: 'Sarah',
+  age: 28,
+  email: 'sarah@example.com'
+};
+
+// ❌ Old way
+const name1 = user.name;
+const age1 = user.age;
+
+// ✅ Destructuring (order doesn't matter!)
+const { age, name, email } = user;
+
+console.log(name);  // "Sarah"
+console.log(age);   // 28
+console.log(email); // "sarah@example.com"`,
+      run:true
+    },
+    {
+      title:'Renaming Variables (Aliasing)',
+      code:`const response = {
+  status: 200,
+  data: { users: ['Alice', 'Bob'] },
+  error: null
+};
+
+// Rename with : newName
+const { status: statusCode, data: payload, error: err } = response;
+
+console.log(statusCode); // 200
+console.log(payload);    // { users: ['Alice', 'Bob'] }
+console.log(err);        // null
+// console.log(status);  // ❌ ReferenceError — renamed!`,
+      run:true
+    },
+    {
+      title:'Default Values',
+      code:`const config = {
+  theme: 'dark',
+  fontSize: 16
+};
+
+const {
+  theme,
+  fontSize,
+  language = 'en',        // default: 'en'
+  showSidebar = true       // default: true
+} = config;
+
+console.log(theme);       // "dark"
+console.log(language);    // "en" (default used)
+console.log(showSidebar); // true (default used)
+
+// Combine rename + default:
+const { color: themeColor = 'blue' } = {};
+console.log(themeColor);  // "blue"`,
+      run:true
+    },
+    {
+      title:'Nested Object Destructuring',
+      code:`const company = {
+  name: 'TechCorp',
+  address: {
+    street: '123 Main St',
+    city: 'San Francisco',
+    state: 'CA'
+  },
+  employees: 500
+};
+
+// Destructure nested objects
+const {
+  name,
+  address: { city, state },
+  employees
+} = company;
+
+console.log(name);      // "TechCorp"
+console.log(city);      // "San Francisco"
+console.log(state);     // "CA"
+console.log(employees); // 500
+// console.log(address);// ❌ address is NOT defined!`,
+      run:true
+    },
+    {
+      title:'In Function Parameters (Very Common!)',
+      code:`// ❌ Old way — hard to read
+function createUser1(options) {
+  const name = options.name;
+  const role = options.role || 'user';
+  console.log(name, role);
+}
+
+// ✅ Destructure in parameter!
+function createUser({ name, role = 'user', active = true }) {
+  console.log(\`\${name} | \${role} | active: \${active}\`);
+}
+
+createUser({ name: 'Alice', role: 'admin' });
+createUser({ name: 'Bob' });
+
+// Great for React-style props!
+function Button({ label, onClick, disabled = false }) {
+  console.log(\`Button: \${label}, disabled: \${disabled}\`);
+}
+Button({ label: 'Submit', onClick: () => {} });`,
+      run:true
+    },
+    {
+      title:'Computed Property Names & Dynamic Keys',
+      code:`const key = 'name';
+const { [key]: value } = { name: 'Alice', age: 25 };
+console.log(value); // "Alice"
+
+// Practical example: extract dynamic property
+function getProp(obj, propName) {
+  const { [propName]: val } = obj;
+  return val;
+}
+
+const user = { name: 'Bob', role: 'admin', level: 5 };
+console.log(getProp(user, 'role'));  // "admin"
+console.log(getProp(user, 'level')); // 5`,
+      run:true
+    }
+  ],
+  pitfalls:[
+    {
+      title:"Destructuring to already-declared variables needs parentheses",
+      wrong:`let name, age;\n{name, age} = {name: 'Alice', age: 25};\n// SyntaxError! JS thinks { } is a block`,
+      right:`let name, age;\n({name, age} = {name: 'Alice', age: 25});\n// Wrap in ( ) to tell JS it's an expression`,
+      explain:"Without let/const, you must wrap the destructuring in parentheses because JS interprets { as a block statement."
+    },
+    {
+      title:"Nested destructuring doesn't create intermediate variables",
+      wrong:`const { address: { city } } = company;\nconsole.log(address); // ❌ ReferenceError!`,
+      right:`const { address: { city }, address } = company;\n// Or destructure separately:\nconst { address } = company;\nconst { city } = address;`,
+      explain:"When you do address: { city }, 'address' is used as a path, not declared as a variable."
+    },
+    {
+      title:"Confusing rename syntax direction",
+      wrong:`// WRONG mental model:\n// { newName: oldName } ← NO!\n// Think: "take oldName, put in newName"`,
+      right:`// CORRECT:\n// { sourceProperty: targetVariable }\nconst { name: userName } = { name: 'Alice' };\nconsole.log(userName); // "Alice"\n// name is the source, userName is the target`,
+      explain:"The syntax is { source: target }. The property name comes first, the new variable name after the colon."
+    },
+    {
+      title:"Destructuring null/undefined in parameters",
+      wrong:`function greet({ name }) {\n  console.log(name);\n}\ngreet(); // TypeError! Can't destructure undefined`,
+      right:`function greet({ name } = {}) {\n  console.log(name);\n}\ngreet(); // undefined — safe!`,
+      explain:"Always provide a default empty object = {} for optional destructured parameters."
+    }
+  ],
+  quiz:[
+    {
+      q:"What does this output?\n`const { b, a } = { a: 1, b: 2 };`\n`console.log(a, b);`",
+      options:["2 1","1 2","undefined undefined","Error"],
+      answer:1,
+      explain:"Object destructuring matches by name, not position. a=1, b=2 regardless of order."
+    },
+    {
+      q:"What does `{ name: n }` mean in destructuring?",
+      options:["Create property 'name' with value n","Extract 'name' and assign to variable 'n'","Rename 'n' to 'name'","Error syntax"],
+      answer:1,
+      explain:"{ name: n } means 'take the name property and store it in variable n'."
+    },
+    {
+      q:"What happens here?\n`const { x } = { };`",
+      options:["Error","x is undefined","x is null","x is 0"],
+      answer:1,
+      explain:"Destructuring a non-existent property gives undefined, just like accessing obj.x when x doesn't exist."
+    },
+    {
+      q:"What does this output?\n`const { a: { b } } = { a: { b: 42 } };`\n`console.log(b); console.log(typeof a);`",
+      options:["42, 'object'","42, 'undefined'","undefined, 'object'","Error"],
+      answer:1,
+      explain:"a is used as a path for nested destructuring, not declared as a variable. b = 42, a is not defined."
+    },
+    {
+      q:"Which correctly destructures with a default and rename?",
+      options:["{ color = 'red': c }","{ color: c = 'red' }","{ c = color: 'red' }","{ color as c = 'red' }"],
+      answer:1,
+      explain:"Syntax: { property: newName = default }. So { color: c = 'red' } renames to c with default 'red'."
+    }
+  ],
+  exercise:{
+    title:"Object Destructuring Challenge",
+    desc:`Given the API response object below, destructure it to extract:<br>1. The status code (rename to <code>code</code>)<br>2. The first user's name<br>3. The pagination total (with default of 0)<br>Then log them.`,
+    starter:`const apiResponse = {\n  status: 200,\n  data: {\n    users: [\n      { name: "Alice", role: "admin" },\n      { name: "Bob", role: "user" }\n    ],\n    pagination: { page: 1, total: 42 }\n  }\n};\n\n// Your destructuring here:\n\n\n// Should log: "Code: 200, First user: Alice, Total: 42"`,
+    tests:[
+      {call:'(() => { const apiResponse = { status: 200, data: { users: [{ name: "Alice", role: "admin" }, { name: "Bob", role: "user" }], pagination: { page: 1, total: 42 } } }; const { status: code, data: { users: [{ name: firstName }], pagination: { total = 0 } } } = apiResponse; return `Code: ${code}, First user: ${firstName}, Total: ${total}`; })()',check:s=>s.includes('200')&&s.includes('Alice')&&s.includes('42')}
+    ],
+    hint:"Use nested destructuring: const { status: code, data: { users: [{ name }], pagination: { total = 0 } } } = apiResponse;",
+    solution:`const {\n  status: code,\n  data: {\n    users: [{ name: firstName }],\n    pagination: { total = 0 }\n  }\n} = apiResponse;\n\nconsole.log(\`Code: \${code}, First user: \${firstName}, Total: \${total}\`);`
+  }
+},
+
+{
+  id:'spread-operator',
+  title:'Spread Operator',
+  icon:'✨',
+  concepts:[
+    {
+      title:'What is the Spread Operator?',
+      type:'concept',
+      html:`<p>The spread operator <mark>...</mark> expands an iterable (array, object, string) into individual elements. Think of it as <em>"unpacking"</em> or <em>"spreading out"</em> all items.</p>
+      <p class="mt-1">It's like dumping a bag of marbles onto a table — the container disappears and the items spread out.</p>`
+    },
+    {
+      title:'Where You Can Use Spread',
+      type:'tip',
+      html:`<ul>
+        <li><strong>Arrays:</strong> <code>[...arr1, ...arr2]</code> — combine/copy arrays</li>
+        <li><strong>Objects:</strong> <code>{...obj1, ...obj2}</code> — merge/copy objects</li>
+        <li><strong>Function calls:</strong> <code>fn(...args)</code> — spread as arguments</li>
+        <li><strong>Strings:</strong> <code>[..."hello"]</code> → <code>["h","e","l","l","o"]</code></li>
+      </ul>`
+    }
+  ],
+  visual:{
+    type:'spread',
+    source:['🍎','🍌','🍒'],
+    target:['🥝','🍎','🍌','🍒','🍇'],
+    code:'const merged = ["🥝", ...fruits, "🍇"];'
+  },
+  examples:[
+    {
+      title:'Copying Arrays (Shallow Copy)',
+      code:`const original = [1, 2, 3];
+
+// ✅ Spread creates a SHALLOW copy
+const copy = [...original];
+
+copy.push(4);
+console.log(original); // [1, 2, 3] — unchanged!
+console.log(copy);     // [1, 2, 3, 4]
+
+// ⚠️ Nested objects are still referenced!
+const nested = [{ a: 1 }, { b: 2 }];
+const shallowCopy = [...nested];
+shallowCopy[0].a = 999;
+console.log(nested[0].a); // 999 — shared reference!`,
+      run:true
+    },
+    {
+      title:'Merging Arrays',
+      code:`const frontend = ['React', 'Vue', 'Angular'];
+const backend = ['Node', 'Express', 'Django'];
+
+// Merge arrays
+const fullStack = [...frontend, ...backend];
+console.log(fullStack);
+
+// Add items while merging
+const withMore = ['HTML', ...frontend, 'Svelte', ...backend, 'Go'];
+console.log(withMore);
+
+// Flatten one level
+const nested = [[1, 2], [3, 4], [5, 6]];
+const flat = [].concat(...nested);
+console.log(flat); // [1, 2, 3, 4, 5, 6]`,
+      run:true
+    },
+    {
+      title:'Copying & Merging Objects',
+      code:`const defaults = {
+  theme: 'light',
+  fontSize: 14,
+  language: 'en'
+};
+
+const userPrefs = {
+  theme: 'dark',
+  fontSize: 18
+};
+
+// Merge: later properties override earlier ones
+const config = { ...defaults, ...userPrefs };
+console.log(config);
+// { theme: 'dark', fontSize: 18, language: 'en' }
+
+// Add/override while spreading
+const updated = { ...config, showSidebar: true, language: 'fr' };
+console.log(updated);`,
+      run:true
+    },
+    {
+      title:'Function Arguments',
+      code:`const numbers = [5, 2, 8, 1, 9];
+
+// ❌ Old way
+console.log(Math.max.apply(null, numbers));
+
+// ✅ Spread!
+console.log(Math.max(...numbers)); // 9
+console.log(Math.min(...numbers)); // 1
+
+// Multiple spreads in one call
+const moreNums = [3, 7];
+console.log(Math.max(...numbers, ...moreNums, 100)); // 100`,
+      run:true
+    },
+    {
+      title:'Converting Iterables',
+      code:`// String to array of characters
+const chars = [..."Hello!"];
+console.log(chars); // ['H','e','l','l','o','!']
+
+// Set to array (remove duplicates!)
+const nums = [1, 2, 2, 3, 3, 3, 4];
+const unique = [...new Set(nums)];
+console.log(unique); // [1, 2, 3, 4]
+
+// NodeList to array (in browser)
+// const divs = [...document.querySelectorAll('div')];
+
+// Map to array of entries
+const map = new Map([['a', 1], ['b', 2]]);
+console.log([...map]); // [['a', 1], ['b', 2]]`,
+      run:true
+    }
+  ],
+  pitfalls:[
+    {
+      title:"Spread makes SHALLOW copies only",
+      wrong:`const obj = { a: 1, nested: { b: 2 } };\nconst copy = { ...obj };\ncopy.nested.b = 999;\nconsole.log(obj.nested.b); // 999 — OOPS!`,
+      right:`const obj = { a: 1, nested: { b: 2 } };\n// Deep copy option 1:\nconst copy = JSON.parse(JSON.stringify(obj));\n// Deep copy option 2 (modern):\nconst copy2 = structuredClone(obj);`,
+      explain:"Spread only copies the first level. Nested objects/arrays are shared by reference."
+    },
+    {
+      title:"Spread order matters for objects",
+      wrong:`const base = { color: 'red' };\nconst override = { color: 'blue' };\nconst result = { ...override, ...base };\n// result.color is 'red' — base overwrote override!`,
+      right:`const result = { ...base, ...override };\n// result.color is 'blue' — last one wins!`,
+      explain:"With object spread, the last property with the same name wins. Order matters!"
+    },
+    {
+      title:"Spreading non-iterables",
+      wrong:`const num = 42;\nconst arr = [...num]; // TypeError!\n// Numbers are not iterable`,
+      right:`const str = "42";\nconst arr = [...str]; // ['4', '2'] ✅\n// Strings are iterable`,
+      explain:"Spread in arrays works with iterables (arrays, strings, sets, maps). Numbers and plain objects are NOT iterable."
+    }
+  ],
+  quiz:[
+    {
+      q:"What does `[...\"hi\"]` produce?",
+      options:["['hi']","['h', 'i']","'hi'","Error"],
+      answer:1,
+      explain:"Spreading a string splits it into individual characters: ['h', 'i']."
+    },
+    {
+      q:"What does `{...{a:1}, ...{a:2}}` produce?",
+      options:["{a: 1}","{a: 2}","{a: 1, a: 2}","Error"],
+      answer:1,
+      explain:"Last property wins when spreading objects. {a: 2} overrides {a: 1}."
+    },
+    {
+      q:"`const a = [1,2]; const b = [...a]; b.push(3);`\nWhat is a?",
+      options:["[1,2,3]","[1,2]","[3]","Error"],
+      answer:1,
+      explain:"Spread creates a new copy. Modifying b doesn't affect a."
+    },
+    {
+      q:"What does `Math.max(...[3, 1, 4])` return?",
+      options:["[3, 1, 4]","4","NaN","Error"],
+      answer:1,
+      explain:"The array is spread into individual arguments: Math.max(3, 1, 4) → 4."
+    },
+    {
+      q:"How do you remove duplicates from an array using spread?",
+      options:["[...arr.unique()]","[...new Set(arr)]","[...arr.filter()]","arr.spread()"],
+      answer:1,
+      explain:"new Set(arr) removes duplicates, then [...set] converts back to array."
+    }
+  ],
+  exercise:{
+    title:"Spread Operator Challenge",
+    desc:`Write a function <code>mergeAndSort</code> that takes two arrays, merges them using spread, removes duplicates, and returns them sorted in ascending order.`,
+    starter:`function mergeAndSort(arr1, arr2) {\n  // 1. Merge both arrays using spread\n  // 2. Remove duplicates (hint: Set)\n  // 3. Sort ascending\n  // 4. Return the result\n  \n}`,
+    tests:[
+      {call:'JSON.stringify(mergeAndSort([3,1,4],[1,5,9,2]))',check:s=>s==='[1,2,3,4,5,9]'},
+      {call:'JSON.stringify(mergeAndSort([5,5,5],[5,3,1]))',check:s=>s==='[1,3,5]'}
+    ],
+    hint:"Use [...new Set([...arr1, ...arr2])].sort((a,b) => a - b)",
+    solution:`function mergeAndSort(arr1, arr2) {\n  return [...new Set([...arr1, ...arr2])].sort((a, b) => a - b);\n}`
+  }
+},
+
+{
+  id:'rest-operator',
+  title:'Rest Operator',
+  icon:'🧲',
+  concepts:[
+    {
+      title:'What is the Rest Operator?',
+      type:'concept',
+      html:`<p>The rest operator <mark>...</mark> looks identical to spread but does the <strong>opposite</strong> — it <em>collects</em> multiple elements into a single array or object.</p>
+      <p class="mt-1">Think of it like a vacuum cleaner: it gathers up all remaining items into one container.</p>`
+    },
+    {
+      title:'Spread vs Rest — How to Tell',
+      type:'tip',
+      html:`<table class="compare-table">
+        <tr><th>Context</th><th>Name</th><th>What it does</th></tr>
+        <tr><td>Right side / in call</td><td>Spread</td><td>Expands items OUT</td></tr>
+        <tr><td>Left side / in params</td><td>Rest</td><td>Collects items IN</td></tr>
+      </table>
+      <p class="mt-1" style="font-size:.85rem;color:var(--text2)"><code>[...arr]</code> = spread (expands) · <code>function(...args)</code> = rest (collects)</p>`
+    }
+  ],
+  examples:[
+    {
+      title:'Rest in Function Parameters',
+      code:`// Collect ALL arguments
+function sum(...numbers) {
+  return numbers.reduce((total, n) => total + n, 0);
+}
+console.log(sum(1, 2, 3));       // 6
+console.log(sum(10, 20, 30, 40)); // 100
+
+// Separate first arg from rest
+function logTeam(captain, ...players) {
+  console.log(\`Captain: \${captain}\`);
+  console.log(\`Team: \${players.join(', ')}\`);
+  console.log(\`Team size: \${players.length}\`);
+}
+logTeam('Alice', 'Bob', 'Charlie', 'Diana');`,
+      run:true
+    },
+    {
+      title:'Rest in Array Destructuring',
+      code:`const scores = [95, 87, 72, 64, 88];
+
+// Get first and rest
+const [gold, ...others] = scores;
+console.log(gold);   // 95
+console.log(others); // [87, 72, 64, 88]
+
+// Get first two and rest
+const [first, second, ...remaining] = scores;
+console.log(first);     // 95
+console.log(second);    // 87
+console.log(remaining); // [72, 64, 88]
+
+// Head and tail pattern (functional programming)
+const [head, ...tail] = [1, 2, 3, 4, 5];
+console.log(head); // 1
+console.log(tail); // [2, 3, 4, 5]`,
+      run:true
+    },
+    {
+      title:'Rest in Object Destructuring',
+      code:`const user = {
+  name: 'Alice',
+  age: 28,
+  email: 'alice@example.com',
+  role: 'admin',
+  theme: 'dark'
+};
+
+// Extract some properties, collect the rest
+const { name, age, ...otherProps } = user;
+console.log(name);       // "Alice"
+console.log(age);        // 28
+console.log(otherProps);
+// { email: 'alice@example.com', role: 'admin', theme: 'dark' }
+
+// Great for removing properties! (immutable)
+const { email, ...userWithoutEmail } = user;
+console.log(userWithoutEmail);
+// { name: 'Alice', age: 28, role: 'admin', theme: 'dark' }`,
+      run:true
+    },
+    {
+      title:'Real-World: Props Forwarding Pattern',
+      code:`// Common in React-like patterns
+function createButton({ label, variant = 'primary', ...htmlAttrs }) {
+  console.log(\`Button: \${label}\`);
+  console.log(\`Variant: \${variant}\`);
+  console.log('HTML attrs:', htmlAttrs);
+}
+
+createButton({
+  label: 'Submit',
+  variant: 'danger',
+  id: 'submit-btn',
+  disabled: true,
+  'data-testid': 'submit'
+});
+// label and variant extracted, rest forwarded as HTML attributes`,
+      run:true
+    },
+    {
+      title:'Rest Replaces "arguments" Object',
+      code:`// ❌ Old way: 'arguments' (not a real array!)
+function oldWay() {
+  // arguments is array-like, not a real array
+  console.log(typeof arguments.map); // undefined!
+  console.log(Array.from(arguments)); // convert first
+}
+
+// ✅ Rest parameters: real array!
+function newWay(...args) {
+  console.log(Array.isArray(args)); // true
+  console.log(args.map(x => x * 2)); // works directly!
+}
+
+newWay(1, 2, 3);`,
+      run:true
+    }
+  ],
+  pitfalls:[
+    {
+      title:"Rest must be LAST in destructuring/parameters",
+      wrong:`const [...first, last] = [1, 2, 3];\n// SyntaxError: Rest element must be last\n\nfunction bad(...rest, callback) { }\n// SyntaxError!`,
+      right:`const [first, ...rest] = [1, 2, 3];\n// first = 1, rest = [2, 3]\n\nfunction good(callback, ...rest) { }`,
+      explain:"The rest element must always be the LAST item. It collects 'everything remaining'."
+    },
+    {
+      title:"Confusing rest and spread",
+      wrong:`// These look identical but do opposite things!\nconst a = [...items];     // SPREAD: expands items\nconst [...b] = items;     // REST: collects into b\n// Both use ... but context determines behavior`,
+      right:`// SPREAD = right side or in function CALLS\nconst merged = [...arr1, ...arr2]; // expand\nMath.max(...numbers);              // expand\n\n// REST = left side or in PARAMETERS\nconst [first, ...rest] = arr;  // collect\nfunction fn(...args) { }       // collect`,
+      explain:"Same syntax (...) but the context determines whether it spreads or collects."
+    }
+  ],
+  quiz:[
+    {
+      q:"What does `...` do in `function f(...args)` ?",
+      options:["Spreads args out","Collects args into array","Creates arguments object","Nothing"],
+      answer:1,
+      explain:"In function parameters, ... is rest: it collects all arguments into a real array."
+    },
+    {
+      q:"`const { a, ...rest } = { a: 1, b: 2, c: 3 };`\nWhat is rest?",
+      options:["{ a:1, b:2, c:3 }","{ b:2, c:3 }","[2, 3]","undefined"],
+      answer:1,
+      explain:"Rest collects remaining properties: { b: 2, c: 3 }. Property 'a' was already extracted."
+    },
+    {
+      q:"Is `const [a, ...b, c] = [1,2,3,4]` valid?",
+      options:["Yes, b = [2,3]","Yes, c = 4","No, SyntaxError","Yes, b = [2,3,4]"],
+      answer:2,
+      explain:"Rest element must be last. You can't have elements after ...rest."
+    },
+    {
+      q:"What's the difference between `arguments` and rest parameters?",
+      options:["No difference","Rest gives real array, arguments is array-like","Arguments is newer","Rest only works in arrow functions"],
+      answer:1,
+      explain:"Rest parameters (...args) give you a real Array. 'arguments' is array-like (no .map, .filter, etc.)."
+    },
+    {
+      q:"`const [,...tail] = [1,2,3]` — What is tail?",
+      options:["[1,2,3]","[2,3]","[1]","Error"],
+      answer:1,
+      explain:"The comma skips index 0, then ...tail collects the remaining: [2, 3]."
+    }
+  ],
+  exercise:{
+    title:"Rest Operator Challenge",
+    desc:`Write a function <code>removeProps</code> that takes an object and any number of property names to remove. Return a new object without those properties (don't modify the original!).`,
+    starter:`function removeProps(obj, ...propsToRemove) {\n  // Return new object without the specified properties\n  // Example: removeProps({a:1, b:2, c:3}, 'a', 'c')\n  //  → {b: 2}\n  \n}`,
+    tests:[
+      {call:'JSON.stringify(removeProps({a:1,b:2,c:3},"a","c"))',check:s=>s==='{"b":2}'},
+      {call:'JSON.stringify(removeProps({x:1,y:2,z:3},"y"))',check:s=>s==='{"x":1,"z":3}'}
+    ],
+    hint:"Use Object.entries() with filter, or use a loop with rest/spread. One approach: Object.fromEntries(Object.entries(obj).filter(([key]) => !propsToRemove.includes(key)))",
+    solution:`function removeProps(obj, ...propsToRemove) {\n  return Object.fromEntries(\n    Object.entries(obj)\n      .filter(([key]) => !propsToRemove.includes(key))\n  );\n}`
+  }
+},
+
+{
+  id:'default-params',
+  title:'Default Parameters',
+  icon:'⚙️',
+  concepts:[
+    {
+      title:'What are Default Parameters?',
+      type:'concept',
+      html:`<p>Default parameters let you set <mark>fallback values</mark> for function arguments. If no value (or <code>undefined</code>) is passed, the default kicks in.</p>
+      <p class="mt-1">Think of it like a restaurant: "How would you like your steak?" — if you don't answer, they cook it medium.</p>`
+    },
+    {
+      title:'Key Behaviors',
+      type:'tip',
+      html:`<ul>
+        <li>Defaults activate for <code>undefined</code> only, NOT <code>null</code></li>
+        <li>Defaults can be <strong>expressions</strong>, even function calls</li>
+        <li>Later defaults can reference <strong>earlier parameters</strong></li>
+        <li>Defaults are evaluated at <strong>call time</strong>, not definition time</li>
+      </ul>`
+    }
+  ],
+  examples:[
+    {
+      title:'Basic Default Parameters',
+      code:`// ❌ Old way
+function greetOld(name) {
+  name = name || 'World'; // Bug: fails for ""!
+  console.log('Hello, ' + name);
+}
+
+// ✅ ES6 Default Parameters
+function greet(name = 'World') {
+  console.log(\`Hello, \${name}!\`);
+}
+
+greet('Alice');    // "Hello, Alice!"
+greet();           // "Hello, World!"
+greet(undefined);  // "Hello, World!" (same as no arg)
+
+// Multiple defaults
+function createUser(name = 'Anonymous', role = 'user', active = true) {
+  console.log(\`\${name} | \${role} | active: \${active}\`);
+}
+createUser();
+createUser('Alice', 'admin');`,
+      run:true
+    },
+    {
+      title:'Expressions as Defaults',
+      code:`// Defaults can be any expression!
+function getTimestamp() {
+  return Date.now();
+}
+
+function createLog(
+  message,
+  level = 'INFO',
+  timestamp = getTimestamp(),  // function call!
+  id = Math.random().toString(36).slice(2, 8) // complex expression!
+) {
+  console.log(\`[\${level}] \${id} @ \${timestamp}: \${message}\`);
+}
+
+createLog('Server started');
+createLog('Disk full', 'ERROR');`,
+      run:true
+    },
+    {
+      title:'Defaults Referencing Earlier Params',
+      code:`// Later defaults can use earlier parameters!
+function createElement(
+  tag = 'div',
+  className = tag + '-default',  // references 'tag'
+  content = \`Empty \${tag}\`       // references 'tag'
+) {
+  console.log(\`<\${tag} class="\${className}">\${content}</\${tag}>\`);
+}
+
+createElement();
+createElement('span');
+createElement('p', 'intro', 'Hello World');
+
+// Practical: calculate derived values
+function createRange(start, end, step = (end > start ? 1 : -1)) {
+  console.log(\`Range from \${start} to \${end}, step \${step}\`);
+}
+createRange(0, 10);   // step = 1
+createRange(10, 0);   // step = -1`,
+      run:true
+    },
+    {
+      title:'undefined vs null',
+      code:`function test(value = 'DEFAULT') {
+  console.log(value);
+}
+
+test();          // "DEFAULT" — no argument
+test(undefined); // "DEFAULT" — undefined triggers default
+test(null);      // null — null does NOT trigger default!
+test('');        // "" — empty string is a valid value
+test(0);         // 0 — zero is a valid value
+test(false);     // false — false is a valid value
+
+// This is why defaults are better than || operator:
+function oldWay(val) {
+  val = val || 'DEFAULT';
+  console.log(val);
+}
+oldWay(0);     // "DEFAULT" ← BUG! 0 is falsy
+oldWay('');    // "DEFAULT" ← BUG! "" is falsy
+oldWay(false); // "DEFAULT" ← BUG! false is falsy`,
+      run:true
+    },
+    {
+      title:'With Destructuring (Powerful Combo)',
+      code:`// Destructured params with defaults
+function createWidget({
+  title = 'Untitled',
+  width = 200,
+  height = 100,
+  color = '#333',
+  visible = true
+} = {}) {  // ← default empty object prevents crash when called with no args
+  console.log(\`Widget: "\${title}" \${width}x\${height} \${color} visible:\${visible}\`);
+}
+
+createWidget({ title: 'Clock', width: 300 });
+createWidget({});
+createWidget(); // Works because of = {} default!`,
+      run:true
+    }
+  ],
+  pitfalls:[
+    {
+      title:"null does NOT trigger defaults",
+      wrong:`function f(x = 10) { return x; }\nconsole.log(f(null)); // null, NOT 10!\n// null is intentional "no value", undefined means "missing"`,
+      right:`function f(x = 10) {\n  // Handle null explicitly if needed\n  return x ?? 10; // Nullish coalescing handles both\n}`,
+      explain:"Default parameters only activate for undefined. null is treated as a deliberate value."
+    },
+    {
+      title:"Defaults are evaluated every call (not once!)",
+      wrong:`function addItem(item, list = []) {\n  list.push(item);\n  return list;\n}\n// Each call gets a FRESH empty array\nconsole.log(addItem('a')); // ['a']\nconsole.log(addItem('b')); // ['b'] ← not ['a','b']!`,
+      right:`// This is actually GOOD behavior!\n// Unlike Python, JS creates a new default each call\n// In Python, mutable defaults are shared (a common bug)`,
+      explain:"JS evaluates default expressions each time the function is called. This prevents the mutable default bug found in Python."
+    },
+    {
+      title:"Earlier params can't reference later ones",
+      wrong:`function bad(a = b, b = 1) {\n  return a + b;\n}\nbad(); // ReferenceError! Can't access b before init`,
+      right:`function good(b = 1, a = b) {\n  return a + b; // a defaults to b's value\n}\nconsole.log(good()); // 2`,
+      explain:"Default parameters are evaluated left-to-right. You can only reference parameters that come before."
+    }
+  ],
+  quiz:[
+    {
+      q:"`function f(x = 5) { return x; }`\nWhat does `f(0)` return?",
+      options:["5","0","undefined","NaN"],
+      answer:1,
+      explain:"0 is a valid value. Defaults only trigger for undefined, not falsy values like 0."
+    },
+    {
+      q:"`function f(x = 5) { return x; }`\nWhat does `f(null)` return?",
+      options:["5","null","0","undefined"],
+      answer:1,
+      explain:"null does NOT trigger defaults! Only undefined does."
+    },
+    {
+      q:"Can default parameters be function calls?",
+      options:["No, only literals","Yes, and they're called each time","Yes, but only once","Only arrow functions"],
+      answer:1,
+      explain:"Defaults can be any expression, including function calls. They're evaluated fresh each call."
+    },
+    {
+      q:"`function f(a, b = a * 2) { return b; }`\nWhat does `f(3)` return?",
+      options:["undefined","NaN","6","Error"],
+      answer:2,
+      explain:"b defaults to a * 2. Since a = 3, b = 6."
+    },
+    {
+      q:"Which approach correctly handles all falsy values?",
+      options:["param || default","param = default (in signature)","param && default","param ? param : default"],
+      answer:1,
+      explain:"Default parameters in the signature only trigger for undefined, correctly preserving 0, '', false, and null."
+    }
+  ],
+  exercise:{
+    title:"Default Parameters Challenge",
+    desc:`Create a function <code>formatPrice</code> that takes <code>amount</code>, <code>currency</code> (default: \"USD\"), <code>locale</code> (default: \"en-US\"), and <code>showSymbol</code> (default: true). Return a formatted string like \"$19.99\" or \"19.99 EUR\".`,
+    starter:`function formatPrice(amount, currency = 'USD', locale = 'en-US', showSymbol = true) {\n  // Map of currency symbols\n  const symbols = { USD: '$', EUR: '€', GBP: '£' };\n  \n  // Format the price\n  // If showSymbol, use the symbol prefix\n  // Otherwise, suffix with currency code\n  \n}`,
+    tests:[
+      {call:'formatPrice(19.99)',check:s=>s.includes('$')&&s.includes('19.99')},
+      {call:'formatPrice(25, "EUR", "de-DE", false)',check:s=>s.includes('25')&&s.includes('EUR')}
+    ],
+    hint:"Use the symbols object to look up the symbol. Use toFixed(2) for formatting. Check showSymbol to decide format.",
+    solution:`function formatPrice(amount, currency = 'USD', locale = 'en-US', showSymbol = true) {\n  const symbols = { USD: '$', EUR: '€', GBP: '£' };\n  const formatted = amount.toFixed(2);\n  \n  if (showSymbol && symbols[currency]) {\n    return \`\${symbols[currency]}\${formatted}\`;\n  }\n  return \`\${formatted} \${currency}\`;\n}`
+  }
+},
+
+{
+  id:'enhanced-objects',
+  title:'Enhanced Object Literals',
+  icon:'🏗️',
+  concepts:[
+    {
+      title:'What are Enhanced Object Literals?',
+      type:'concept',
+      html:`<p>ES6 introduced several shortcuts for creating objects: <mark>shorthand properties</mark>, <mark>shorthand methods</mark>, and <mark>computed property names</mark>.</p>
+      <p class="mt-1">These reduce boilerplate and make object creation more concise and expressive.</p>`
+    },
+    {
+      title:'Three Enhancements',
+      type:'tip',
+      html:`<ul>
+        <li><strong>Shorthand properties:</strong> <code>{ name }</code> instead of <code>{ name: name }</code></li>
+        <li><strong>Shorthand methods:</strong> <code>{ greet() {} }</code> instead of <code>{ greet: function() {} }</code></li>
+        <li><strong>Computed properties:</strong> <code>{ [expr]: value }</code> — dynamic keys!</li>
+      </ul>`
+    }
+  ],
+  examples:[
+    {
+      title:'Shorthand Properties',
+      code:`const name = 'Alice';
+const age = 28;
+const role = 'developer';
+
+// ❌ Old way (repetitive!)
+const userOld = {
+  name: name,
+  age: age,
+  role: role
+};
+
+// ✅ Shorthand (when variable name = property name)
+const user = { name, age, role };
+
+console.log(user);
+// { name: 'Alice', age: 28, role: 'developer' }
+
+// Mix shorthand and regular
+const config = {
+  name,          // shorthand
+  age,           // shorthand
+  isAdmin: true  // regular (different name)
+};
+console.log(config);`,
+      run:true
+    },
+    {
+      title:'Shorthand Methods',
+      code:`// ❌ Old way
+const calculatorOld = {
+  add: function(a, b) {
+    return a + b;
+  }
+};
+
+// ✅ Shorthand methods
+const calculator = {
+  add(a, b) {
+    return a + b;
+  },
+  subtract(a, b) {
+    return a - b;
+  },
+  multiply(a, b) {
+    return a * b;
+  }
+};
+
+console.log(calculator.add(5, 3));       // 8
+console.log(calculator.subtract(10, 4)); // 6
+console.log(calculator.multiply(3, 7));  // 21
+
+// Works with generators and async too:
+const obj = {
+  *generator() { yield 1; yield 2; },
+  async fetchData() { return 'data'; }
+};`,
+      run:true
+    },
+    {
+      title:'Computed Property Names',
+      code:`// Dynamic property names using [expression]
+const field = 'email';
+const user = {
+  name: 'Alice',
+  [field]: 'alice@example.com'  // computed!
+};
+console.log(user);
+
+// With expressions
+const prefix = 'user';
+const dynamic = {
+  [\`\${prefix}Name\`]: 'Bob',
+  [\`\${prefix}Age\`]: 25,
+  [\`\${prefix}Id\`]: 42
+};
+console.log(dynamic);
+
+// With Symbol
+const ID = Symbol('id');
+const entity = {
+  [ID]: 12345,
+  name: 'Widget'
+};
+console.log(entity[ID]); // 12345`,
+      run:true
+    },
+    {
+      title:'Practical: Factory Functions',
+      code:`// Combining all enhanced features
+function createUser(name, email, role = 'user') {
+  const createdAt = new Date().toISOString();
+  const id = Math.random().toString(36).slice(2);
+
+  return {
+    // Shorthand properties
+    id,
+    name,
+    email,
+    role,
+    createdAt,
+
+    // Shorthand methods
+    greet() {
+      return \`Hi, I'm \${this.name} (\${this.role})\`;
+    },
+
+    // Computed property for role-based flag
+    [\`is\${role.charAt(0).toUpperCase() + role.slice(1)}\`]: true
+  };
+}
+
+const admin = createUser('Alice', 'alice@test.com', 'admin');
+console.log(admin);
+console.log(admin.greet());
+console.log(admin.isAdmin); // true`,
+      run:true
+    },
+    {
+      title:'Building Objects Dynamically',
+      code:`// Create object from array of key-value pairs
+const fields = ['name', 'age', 'city'];
+const values = ['Alice', 28, 'NYC'];
+
+const obj = fields.reduce((acc, field, i) => ({
+  ...acc,
+  [field]: values[i]
+}), {});
+
+console.log(obj);
+// { name: 'Alice', age: 28, city: 'NYC' }
+
+// Conditional properties
+const includeDebug = true;
+const config = {
+  mode: 'production',
+  ...(includeDebug && { debug: true, verbose: true }),
+  version: '1.0'
+};
+console.log(config);`,
+      run:true
+    }
+  ],
+  pitfalls:[
+    {
+      title:"Shorthand methods and 'this' in arrow functions",
+      wrong:`const obj = {\n  name: 'Alice',\n  greet: () => {\n    return \`Hi, \${this.name}\`; // 'this' is NOT obj!\n  }\n};\nconsole.log(obj.greet()); // "Hi, undefined"`,
+      right:`const obj = {\n  name: 'Alice',\n  greet() { // shorthand method — correct 'this'\n    return \`Hi, \${this.name}\`;\n  }\n};\nconsole.log(obj.greet()); // "Hi, Alice"`,
+      explain:"Arrow functions don't have their own 'this'. Use shorthand methods for object methods that need 'this'."
+    },
+    {
+      title:"Shorthand only works when names match",
+      wrong:`const userName = 'Alice';\nconst obj = { userName }; // { userName: 'Alice' }\n// NOT { name: 'Alice' }!`,
+      right:`const userName = 'Alice';\n// If you want a different key, use regular syntax:\nconst obj = { name: userName }; // { name: 'Alice' }`,
+      explain:"Shorthand { x } creates { x: x }. If you want a different property name, use the full key: value syntax."
+    },
+    {
+      title:"Computed keys must be in square brackets",
+      wrong:`const key = 'name';\nconst obj = { key: 'Alice' };\n// Creates { key: 'Alice' }, NOT { name: 'Alice' }`,
+      right:`const key = 'name';\nconst obj = { [key]: 'Alice' };\n// Creates { name: 'Alice' } ✅`,
+      explain:"Without [brackets], the key is treated as a literal string 'key', not the variable's value."
+    }
+  ],
+  quiz:[
+    {
+      q:"`const x = 1; const y = 2; const obj = { x, y };`\nWhat is obj?",
+      options:["{ x: 'x', y: 'y' }","{ x: 1, y: 2 }","{ 1: x, 2: y }","Error"],
+      answer:1,
+      explain:"Shorthand { x, y } is equivalent to { x: x, y: y }, so { x: 1, y: 2 }."
+    },
+    {
+      q:"Which is the shorthand method syntax?",
+      options:["{ fn: () => {} }","{ fn: function() {} }","{ fn() {} }","{ function fn() {} }"],
+      answer:2,
+      explain:"{ fn() {} } is the ES6 shorthand method syntax."
+    },
+    {
+      q:"`const key = 'age'; const obj = { [key]: 25 };`\nWhat is obj?",
+      options:["{ key: 25 }","{ age: 25 }","{ 'key': 25 }","Error"],
+      answer:1,
+      explain:"[key] uses the VALUE of key ('age') as the property name."
+    },
+    {
+      q:"Why avoid arrow functions for object methods?",
+      options:["They're slower","They can't return values","They don't have their own 'this'","They can't access other properties"],
+      answer:2,
+      explain:"Arrow functions inherit 'this' from the enclosing scope, not the object. Use shorthand methods instead."
+    },
+    {
+      q:"What does `{ ...cond && { key: val } }` do?",
+      options:["Always adds key","Adds key only if cond is truthy","Syntax error","Removes key"],
+      answer:1,
+      explain:"If cond is truthy, it spreads { key: val }. If falsy, it spreads false (nothing)."
+    }
+  ],
+  exercise:{
+    title:"Enhanced Objects Challenge",
+    desc:`Create a function <code>createStore</code> that takes an initial <code>state</code> object. Return an object with: shorthand <code>state</code> property, a <code>getState()</code> method, a <code>setState(newState)</code> method that merges, and a computed <code>[Symbol.toStringTag]</code> property set to \"Store\".`,
+    starter:`function createStore(state = {}) {\n  // Return an object with:\n  // - state (shorthand property)\n  // - getState() method (returns current state)\n  // - setState(newState) method (merges with spread)\n  // - [Symbol.toStringTag]: 'Store'\n  \n}`,
+    tests:[
+      {call:'(() => { const s = createStore({count: 0}); s.setState({count: 1, name: "test"}); return JSON.stringify(s.getState()); })()',check:s=>{const o=JSON.parse(s);return o.count===1&&o.name==='test'}},
+      {call:'(() => { const s = createStore(); return Object.prototype.toString.call(s); })()',check:s=>s.includes('Store')}
+    ],
+    hint:"Use shorthand property for state, shorthand methods for getState/setState, spread operator in setState to merge, and [Symbol.toStringTag] computed property.",
+    solution:`function createStore(state = {}) {\n  return {\n    state,\n    getState() {\n      return this.state;\n    },\n    setState(newState) {\n      this.state = { ...this.state, ...newState };\n    },\n    [Symbol.toStringTag]: 'Store'\n  };\n}`
+  }
+}
+]; // end LESSONS
+
+
+// ===========================
+// APP STATE
+// ===========================
+let currentLesson = 0;
+let totalScore = 0;
+let completedLessons = new Set();
+let quizScores = {};
+
+// ===========================
+// CODE RUNNER
+// ===========================
+function runCode(code) {
+  const logs = [];
+  const origLog = console.log;
+  console.log = (...args) => {
+    logs.push(args.map(a => {
+      if (a === undefined) return 'undefined';
+      if (a === null) return 'null';
+      if (typeof a === 'object') {
+        try { return JSON.stringify(a, null, 2); } catch(e) { return String(a); }
+      }
+      return String(a);
+    }).join(' '));
+  };
+
+  let error = null;
+  try {
+    const fn = new Function(code);
+    fn();
+  } catch(e) {
+    error = e.message;
+  }
+  console.log = origLog;
+  return { logs, error };
+}
+
+// ===========================
+// SYNTAX HIGHLIGHTING (Simple)
+// ===========================
+function highlight(code) {
+  let html = code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Comments
+  html = html.replace(/(\/\/.*$)/gm, '<span class="cm">$1</span>');
+  // Template literals (simplified - handle backtick strings)
+  html = html.replace(/(`[^`]*`)/g, '<span class="tl">$1</span>');
+  // Strings
+  html = html.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, '<span class="str">$1</span>');
+  // Keywords
+  html = html.replace(/\b(const|let|var|function|return|if|else|for|while|class|new|typeof|instanceof|yield|async|await|import|export|default|from|of|in|switch|case|break|continue|try|catch|throw|finally)\b/g, '<span class="kw">$1</span>');
+  // Booleans & special
+  html = html.replace(/\b(true|false|null|undefined|NaN|Infinity|this)\b/g, '<span class="num">$1</span>');
+  // Numbers
+  html = html.replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+  // Functions (word followed by ()
+  html = html.replace(/\b([a-zA-Z_$]\w*)\s*(?=\()/g, '<span class="fn">$1</span>');
+
+  return html;
+}
+
+// ===========================
+// RENDER FUNCTIONS
+// ===========================
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  let html = '<div class="sidebar-section">ES6+ Topics</div>';
+
+  LESSONS.forEach((lesson, i) => {
+    const active = i === currentLesson ? 'active' : '';
+    const completed = completedLessons.has(i) ? 'completed' : '';
+    html += `<div class="nav-item ${active} ${completed}" data-lesson="${i}">
+      <span class="icon">${lesson.icon}</span>
+      <span>${lesson.title}</span>
+      <span class="check">✓</span>
+    </div>`;
+  });
+
+  sidebar.innerHTML = html;
+
+  sidebar.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      currentLesson = parseInt(item.dataset.lesson);
+      renderApp();
+      document.getElementById('mainContent').scrollTo(0, 0);
+    });
+  });
+}
+
+function renderLesson(lesson, index) {
+  let html = '';
+
+  // Title
+  html += `<h2><span class="emoji">${lesson.icon}</span> ${lesson.title} <span class="tag es6">ES6</span></h2>`;
+  html += `<p class="subtitle">Master ${lesson.title.toLowerCase()} with visual explanations, examples, and hands-on practice.</p>`;
+
+  // Concepts
+  html += '<h3>📖 Concept</h3>';
+  lesson.concepts.forEach(c => {
+    html += `<div class="card ${c.type}">
+      <div class="card-title">${c.type === 'pitfall' ? '⚠️' : c.type === 'tip' ? '💡' : '📌'} ${c.title}</div>
+      ${c.html}
+    </div>`;
+  });
+
+  // Visual Demo
+  if (lesson.visual) {
+    html += renderVisual(lesson.visual);
+  }
+
+  // Examples
+  html += '<hr class="divider"><h3>💻 Interactive Examples</h3>';
+  html += '<p style="color:var(--text2);font-size:.85rem;margin-bottom:12px">Click "Run" to execute each example and see the output live.</p>';
+  lesson.examples.forEach((ex, i) => {
+    const exId = `ex-${index}-${i}`;
+    html += `<div class="code-block" id="${exId}">
+      <div class="code-header">
+        <span class="lang"><span class="dot js"></span> ${ex.title}</span>
+        ${ex.run ? `<button class="btn-run" onclick="executeExample('${exId}')">▶ Run</button>` : ''}
+      </div>
+      <div class="code-content">
+        <pre>${highlight(ex.code)}</pre>
+      </div>
+      <div class="output" id="${exId}-output"></div>
+    </div>`;
+  });
+
+  // Pitfalls
+  if (lesson.pitfalls && lesson.pitfalls.length > 0) {
+    html += '<hr class="divider"><h3>⚠️ Common Mistakes & Pitfalls</h3>';
+    html += '<p style="color:var(--text2);font-size:.85rem;margin-bottom:12px">Avoid these traps that catch even experienced developers!</p>';
+    lesson.pitfalls.forEach((p, i) => {
+      html += `<div class="card pitfall">
+        <div class="card-title">❌ Pitfall #${i+1}: ${p.title}</div>
+        <h4 style="color:var(--red)">❌ Wrong:</h4>
+        <div class="code-block"><div class="code-content"><pre>${highlight(p.wrong)}</pre></div></div>
+        <h4 style="color:var(--green)">✅ Right:</h4>
+        <div class="code-block"><div class="code-content"><pre>${highlight(p.right)}</pre></div></div>
+        <div class="card tip" style="margin-top:10px"><div class="card-title">💡 Explanation</div><p>${p.explain}</p></div>
+      </div>`;
+    });
+  }
+
+  // Quiz
+  if (lesson.quiz && lesson.quiz.length > 0) {
+    html += '<hr class="divider"><h3>🧠 Knowledge Check Quiz</h3>';
+    html += `<p style="color:var(--text2);font-size:.85rem;margin-bottom:12px">Test your understanding! Score is tracked.</p>`;
+    html += `<div class="quiz-section" id="quiz-${index}">`;
+    lesson.quiz.forEach((q, qi) => {
+      const qId = `q-${index}-${qi}`;
+      html += `<div class="quiz-q" id="${qId}">
+        <div class="q-num">Question ${qi+1} of ${lesson.quiz.length}</div>
+        <div class="q-text">${q.q.replace(/`([^`]+)`/g, '<code>$1</code>')}</div>
+        <div class="q-options">`;
+      q.options.forEach((opt, oi) => {
+        html += `<label class="option" id="${qId}-opt-${oi}">
+          <input type="radio" name="${qId}" value="${oi}">
+          <span>${opt}</span>
+        </label>`;
+      });
+      html += `</div>
+        <button class="btn-check" onclick="checkQuizAnswer('${qId}', ${qi}, ${index})">Check Answer</button>
+        <div class="q-feedback" id="${qId}-feedback"></div>
+      </div>`;
+    });
+    html += `<div class="quiz-score" id="quiz-score-${index}" style="display:none">
+      <div class="big" id="quiz-score-val-${index}">0/0</div>
+      <p style="color:var(--text2);margin-top:4px">Quiz Score</p>
+    </div>`;
+    html += '</div>';
+  }
+
+  // Exercise
+  if (lesson.exercise) {
+    const ex = lesson.exercise;
+    const exId = `exercise-${index}`;
+    html += '<hr class="divider"><h3>🏋️ Coding Exercise</h3>';
+    html += `<div class="exercise" id="${exId}">
+      <div class="exercise-title">🎯 ${ex.title}</div>
+      <div class="exercise-desc">${ex.desc}</div>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="lang"><span class="dot js"></span> Your Solution</span>
+          <button class="btn-run" onclick="runExercise('${exId}', ${index})">▶ Run & Check</button>
+        </div>
+        <textarea class="code-editor" id="${exId}-editor" spellcheck="false">${ex.starter}</textarea>
+      </div>
+      <div class="flex-between mt-1">
+        <div>
+          <button class="btn-hint" onclick="showHint('${exId}')">💡 Hint</button>
+          <button class="btn-solution" onclick="showSolution('${exId}', ${index})">👀 Show Solution</button>
+        </div>
+      </div>
+      <div class="hint-text" id="${exId}-hint">${ex.hint}</div>
+      <div class="exercise-result" id="${exId}-result"></div>
+      <div class="solution-code" id="${exId}-solution">
+        <div class="code-block">
+          <div class="code-header"><span class="lang"><span class="dot js"></span> Solution</span></div>
+          <div class="code-content"><pre>${highlight(ex.solution)}</pre></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Complete Button
+  html += `<hr class="divider">
+    <div style="text-align:center;padding:20px">
+      <button class="visual-btn" onclick="completeLesson(${index})" id="complete-btn-${index}" style="font-size:1rem;padding:12px 32px;">
+        ${completedLessons.has(index) ? '✅ Completed!' : '✅ Mark as Complete'}
+      </button>
+      ${index < LESSONS.length - 1 ? `<br><button class="btn-solution mt-2" onclick="nextLesson()" style="margin-top:12px;font-size:.9rem;padding:8px 20px;">Next Topic →</button>` : ''}
+    </div>`;
+
+  return html;
+}
+
+function renderVisual(vis) {
+  let html = '<div class="visual-demo">';
+  html += '<div class="visual-title">🎬 Visual Explanation — Click to Animate</div>';
+
+  if (vis.type === 'array-destructure') {
+    html += `<div class="visual-row" id="vis-source">
+      <span class="v-bracket">[</span>`;
+    vis.data.forEach((item, i) => {
+      html += `<div class="v-box array" id="vis-item-${i}"><span class="label">index ${i}</span>${item}</div>`;
+      if (i < vis.data.length - 1) html += '<span style="color:var(--text2)">,</span>';
+    });
+    html += `<span class="v-bracket">]</span></div>`;
+
+    html += '<div class="visual-row" id="vis-arrow" style="opacity:0;transition:opacity .5s"><span class="v-arrow">⬇️ destructure ⬇️</span></div>';
+
+    html += '<div class="visual-row" id="vis-target" style="opacity:0;transition:opacity .5s">';
+    vis.vars.forEach((v, i) => {
+      html += `<div class="v-box var" style="opacity:0;transform:scale(0)" id="vis-var-${i}"><span class="label">${v}</span>${vis.data[i]}</div>`;
+      if (i < vis.vars.length - 1) html += '<span style="color:var(--text2);opacity:0" class="vis-comma">,</span>';
+    });
+    html += '</div>';
+
+    html += `<div class="visual-code" id="vis-code" style="opacity:0;transition:opacity .5s"><code>${vis.code}</code></div>`;
+    html += `<button class="visual-btn" onclick="animateDestructure(${vis.data.length})">▶ Animate Destructuring</button>`;
+  }
+
+  else if (vis.type === 'object-destructure') {
+    const keys = Object.keys(vis.data);
+    html += `<div class="visual-row" id="vis-source">
+      <span class="v-bracket">{</span>`;
+    keys.forEach((key, i) => {
+      html += `<div class="v-box object" id="vis-item-${i}"><span class="label">${key}</span>${vis.data[key]}</div>`;
+      if (i < keys.length - 1) html += '<span style="color:var(--text2)">,</span>';
+    });
+    html += `<span class="v-bracket">}</span></div>`;
+
+    html += '<div class="visual-row" id="vis-arrow" style="opacity:0;transition:opacity .5s"><span class="v-arrow">⬇️ destructure by name ⬇️</span></div>';
+
+    html += '<div class="visual-row" id="vis-target" style="opacity:0;transition:opacity .5s">';
+    keys.forEach((key, i) => {
+      html += `<div class="v-box var" style="opacity:0;transform:scale(0)" id="vis-var-${i}"><span class="label">${key}</span>${vis.data[key]}</div>`;
+      if (i < keys.length - 1) html += '<span style="color:var(--text2);opacity:0" class="vis-comma">,</span>';
+    });
+    html += '</div>';
+
+    html += `<div class="visual-code" id="vis-code" style="opacity:0;transition:opacity .5s"><code>${vis.code}</code></div>`;
+    html += `<button class="visual-btn" onclick="animateDestructure(${keys.length})">▶ Animate Destructuring</button>`;
+  }
+
+  else if (vis.type === 'spread') {
+    html += `<div class="visual-row" id="vis-source">
+      <span class="v-bracket">[</span>`;
+    vis.source.forEach((item, i) => {
+      html += `<div class="v-box array" id="vis-item-${i}">${item}</div>`;
+    });
+    html += `<span class="v-bracket">]</span>
+      <span style="margin:0 8px;color:var(--text2)">→</span>
+      <span style="font-size:1.2rem;color:var(--orange)">...</span>
+    </div>`;
+
+    html += '<div class="visual-row" id="vis-arrow" style="opacity:0;transition:opacity .5s"><span class="v-arrow">✨ spread into new array ✨</span></div>';
+
+    html += '<div class="visual-row" id="vis-target" style="opacity:0;transition:opacity .5s">';
+    html += '<span class="v-bracket">[</span>';
+    vis.target.forEach((item, i) => {
+      const isSpread = vis.source.includes(item);
+      html += `<div class="v-box ${isSpread ? 'spread' : 'var'}" style="opacity:0;transform:scale(0)" id="vis-var-${i}">${item}</div>`;
+    });
+    html += '<span class="v-bracket">]</span>';
+    html += '</div>';
+
+    html += `<div class="visual-code" id="vis-code" style="opacity:0;transition:opacity .5s"><code>${vis.code}</code></div>`;
+    html += `<button class="visual-btn" onclick="animateDestructure(${vis.target.length})">▶ Animate Spread</button>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ===========================
+// ANIMATIONS
+// ===========================
+function animateDestructure(count) {
+  const arrow = document.getElementById('vis-arrow');
+  const target = document.getElementById('vis-target');
+  const code = document.getElementById('vis-code');
+
+  // Source items pulse
+  for (let i = 0; i < count; i++) {
+    const item = document.getElementById(`vis-item-${i}`);
+    if (item) {
+      setTimeout(() => item.classList.add('highlight'), i * 200);
+      setTimeout(() => item.classList.remove('highlight'), i * 200 + 400);
+    }
+  }
+
+  // Show arrow
+  setTimeout(() => { if (arrow) arrow.style.opacity = '1'; }, count * 200 + 200);
+
+  // Show target
+  setTimeout(() => { if (target) target.style.opacity = '1'; }, count * 200 + 500);
+
+  // Animate each variable
+  for (let i = 0; i < 10; i++) {
+    const v = document.getElementById(`vis-var-${i}`);
+    if (v) {
+      setTimeout(() => {
+        v.style.opacity = '1';
+        v.style.transform = 'scale(1)';
+        v.classList.add('animate-in');
+      }, count * 200 + 700 + i * 300);
+    }
+  }
+
+  // Show commas
+  setTimeout(() => {
+    document.querySelectorAll('.vis-comma').forEach(c => c.style.opacity = '1');
+  }, count * 200 + 800);
+
+  // Show code
+  setTimeout(() => { if (code) code.style.opacity = '1'; }, count * 200 + 1500);
+}
+
+// ===========================
+// INTERACTIVE FUNCTIONS
+// ===========================
+function executeExample(exId) {
+  const block = document.getElementById(exId);
+  const pre = block.querySelector('pre');
+  const output = document.getElementById(`${exId}-output`);
+
+  // Extract text content from pre
+  let code = pre.textContent;
+
+  const result = runCode(code);
+
+  output.classList.add('show');
+  if (result.error) {
+    output.className = 'output show error';
+    output.innerHTML = `<div class="output-label">Error</div>${result.error}`;
+  } else {
+    output.className = 'output show';
+    output.innerHTML = `<div class="output-label">Output</div>${result.logs.join('\n') || '(no output)'}`;
+  }
+}
+
+let answeredQuestions = {};
+
+function checkQuizAnswer(qId, qIndex, lessonIndex) {
+  if (answeredQuestions[qId]) return;
+
+  const selected = document.querySelector(`input[name="${qId}"]:checked`);
+  if (!selected) return;
+
+  const answer = parseInt(selected.value);
+  const correct = LESSONS[lessonIndex].quiz[qIndex].answer;
+  const explain = LESSONS[lessonIndex].quiz[qIndex].explain;
+  const feedback = document.getElementById(`${qId}-feedback`);
+
+  answeredQuestions[qId] = true;
+
+  // Disable all options
+  document.querySelectorAll(`#${qId} .option`).forEach(opt => opt.classList.add('disabled'));
+
+  // Highlight correct/wrong
+  const selectedOpt = document.getElementById(`${qId}-opt-${answer}`);
+  const correctOpt = document.getElementById(`${qId}-opt-${correct}`);
+
+  if (answer === correct) {
+    selectedOpt.classList.add('correct');
+    feedback.className = 'q-feedback show correct';
+    feedback.innerHTML = `✅ Correct! ${explain}`;
+    totalScore += 10;
+  } else {
+    selectedOpt.classList.add('wrong');
+    correctOpt.classList.add('correct');
+    feedback.className = 'q-feedback show wrong';
+    feedback.innerHTML = `❌ Wrong. ${explain}`;
+  }
+
+  // Update score display
+  document.getElementById('totalScore').textContent = totalScore;
+
+  // Disable button
+  document.querySelector(`#${qId} .btn-check`).disabled = true;
+
+  // Check if all quiz questions answered
+  const totalQs = LESSONS[lessonIndex].quiz.length;
+  let answered = 0;
+  let correctCount = 0;
+  for (let i = 0; i < totalQs; i++) {
+    const key = `q-${lessonIndex}-${i}`;
+    if (answeredQuestions[key]) {
+      answered++;
+      const selVal = document.querySelector(`input[name="${key}"]:checked`);
+      if (selVal && parseInt(selVal.value) === LESSONS[lessonIndex].quiz[i].answer) correctCount++;
+    }
+  }
+
+  if (answered === totalQs) {
+    const scoreEl = document.getElementById(`quiz-score-${lessonIndex}`);
+    const valEl = document.getElementById(`quiz-score-val-${lessonIndex}`);
+    scoreEl.style.display = 'block';
+    valEl.textContent = `${correctCount}/${totalQs}`;
+    quizScores[lessonIndex] = correctCount;
+    if (correctCount === totalQs) {
+      launchConfetti();
+    }
+  }
+}
+
+function showHint(exId) {
+  const hint = document.getElementById(`${exId}-hint`);
+  hint.classList.toggle('show');
+}
+
+function showSolution(exId, lessonIndex) {
+  const sol = document.getElementById(`${exId}-solution`);
+  sol.classList.toggle('show');
+}
+
+function runExercise(exId, lessonIndex) {
+  const editor = document.getElementById(`${exId}-editor`);
+  const resultDiv = document.getElementById(`${exId}-result`);
+  const code = editor.value;
+  const exercise = LESSONS[lessonIndex].exercise;
+
+  let allPassed = true;
+  let messages = [];
+
+  exercise.tests.forEach((test, i) => {
+    try {
+      const fullCode = code + '\n;(' + test.call + ')';
+      const result = new Function(fullCode)();
+      const resultStr = String(result);
+      if (test.check(resultStr)) {
+        messages.push(`✅ Test ${i+1} passed`);
+      } else {
+        messages.push(`❌ Test ${i+1} failed — got: ${resultStr}`);
+        allPassed = false;
+      }
+    } catch(e) {
+      messages.push(`❌ Test ${i+1} error: ${e.message}`);
+      allPassed = false;
+    }
+  });
+
+  resultDiv.className = `exercise-result show ${allPassed ? 'pass' : 'fail'}`;
+  resultDiv.innerHTML = messages.join('<br>');
+
+  if (allPassed) {
+    totalScore += 25;
+    document.getElementById('totalScore').textContent = totalScore;
+    launchConfetti();
+  }
+}
+
+function completeLesson(index) {
+  completedLessons.add(index);
+  totalScore += 5;
+  document.getElementById('totalScore').textContent = totalScore;
+  updateProgress();
+  renderSidebar();
+  const btn = document.getElementById(`complete-btn-${index}`);
+  if (btn) {
+    btn.textContent = '✅ Completed!';
+    btn.style.opacity = '0.7';
+  }
+}
+
+function nextLesson() {
+  if (currentLesson < LESSONS.length - 1) {
+    currentLesson++;
+    renderApp();
+    document.getElementById('mainContent').scrollTo(0, 0);
+  }
+}
+
+function updateProgress() {
+  const pct = (completedLessons.size / LESSONS.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${completedLessons.size} / ${LESSONS.length} complete`;
+}
+
+function launchConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+
+  const colors = ['#58a6ff','#bc8cff','#3fb950','#f0883e','#f85149','#e3b341','#39d4e0'];
+
+  for (let i = 0; i < 50; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = (6 + Math.random() * 8) + 'px';
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => container.remove(), 4000);
+}
+
+// ===========================
+// MAIN RENDER
+// ===========================
+function renderApp() {
+  renderSidebar();
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `<div class="section active">${renderLesson(LESSONS[currentLesson], currentLesson)}</div>`;
+  updateProgress();
+}
+
+// Handle tab key in textareas
+document.addEventListener('keydown', function(e) {
+  if (e.target.classList.contains('code-editor') && e.key === 'Tab') {
+    e.preventDefault();
+    const start = e.target.selectionStart;
+    const end = e.target.selectionEnd;
+    e.target.value = e.target.value.substring(0, start) + '  ' + e.target.value.substring(end);
+    e.target.selectionStart = e.target.selectionEnd = start + 2;
+  }
+});
+
+// Init
+renderApp();
+</script>
+</body>
+</html>

@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promise Mastery Academy - Interactive JavaScript Learning</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;600;800&display=swap');
+        
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #06b6d4;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1.5rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .xp-bar {
+            background: rgba(255,255,255,0.1);
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--border);
+        }
+
+        .nav-item.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .module-header {
+            margin-bottom: 2rem;
+        }
+
+        .module-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff, var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .module-subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* Visualizer */
+        .visualizer-container {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            min-height: 300px;
+            position: relative;
+        }
+
+        .promise-box {
+            width: 140px;
+            height: 80px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.5s ease;
+            border: 2px solid;
+        }
+
+        .promise-pending {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: var(--warning);
+            color: var(--warning);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .promise-fulfilled {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .promise-rejected {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error);
+            color: var(--error);
+            animation: shake 0.5s;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .chain-line {
+            position: absolute;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transition: all 0.5s;
+            opacity: 0.5;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .code-keyword { color: #ff7b72; }
+        .code-function { color: #d2a8ff; }
+        .code-string { color: #a5d6ff; }
+        .code-comment { color: #8b949e; font-style: italic; }
+        .code-number { color: #79c0ff; }
+
+        .code-editor {
+            width: 100%;
+            min-height: 150px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #e6edf3;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin: 1rem 0;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            box-shadow: none;
+        }
+
+        .btn-danger {
+            background: var(--error);
+        }
+
+        /* Quiz */
+        .quiz-option {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: var(--accent-primary);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error);
+        }
+
+        .quiz-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .quiz-option.correct .quiz-indicator {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .quiz-option.wrong .quiz-indicator {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        /* Pitfalls */
+        .pitfall-box {
+            border-left: 4px solid var(--error);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .pitfall-title {
+            color: var(--error);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .solution-box {
+            border-left: 4px solid var(--success);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Race Track Visualizer */
+        .race-track {
+            position: relative;
+            height: 200px;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 50px,
+                rgba(255,255,255,0.03) 50px,
+                rgba(255,255,255,0.03) 100px
+            );
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .runner {
+            position: absolute;
+            left: 10px;
+            height: 40px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: left 0.1s linear;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        .runner:nth-child(1) { top: 20px; background: linear-gradient(90deg, #ec4899, #8b5cf6); }
+        .runner:nth-child(2) { top: 80px; background: linear-gradient(90deg, #06b6d4, #3b82f6); }
+        .runner:nth-child(3) { top: 140px; background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+        /* Assembly Line for Chaining */
+        .assembly-line {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+            padding: 1rem;
+        }
+
+        .stage {
+            min-width: 120px;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .stage.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .stage-arrow {
+            color: var(--text-muted);
+            font-size: 1.5rem;
+        }
+
+        .data-packet {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: var(--accent-secondary);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.5s;
+        }
+
+        .data-packet.visible {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        /* Console Output */
+        .console-output {
+            background: #000;
+            color: #0f0;
+            font-family: 'Fira Code', monospace;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+        }
+
+        .console-line { margin-bottom: 0.5rem; }
+        .console-error { color: #ff4444; }
+        .console-info { color: #66d9ef; }
+        .console-success { color: #a6e22e; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container { grid-template-columns: 1fr; }
+            .sidebar { height: auto; position: relative; }
+            .module-title { font-size: 1.75rem; }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .loading { animation: pulse 1.5s infinite; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--accent-primary);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .hidden { display: none !important; }
+
+        /* Success Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            padding: 3rem;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+            max-width: 500px;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        .trophy {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">⚡ Promise Mastery</div>
+            <div class="xp-bar">
+                <div class="xp-fill" id="xpFill"></div>
+            </div>
+            <div id="navItems"></div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Content injected by JS -->
+        </main>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal-content">
+            <div class="trophy">🏆</div>
+            <h2>Module Complete!</h2>
+            <p>You've mastered this concept and earned <span id="xpEarned">50</span> XP!</p>
+            <button class="btn" onclick="app.nextModule()">Continue →</button>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        const app = {
+            currentModule: 0,
+            xp: 0,
+            completedModules: [],
+            
+            modules: [
+                {
+                    id: 'intro',
+                    title: 'The Promise Restaurant',
+                    icon: '🍽️',
+                    description: 'Understanding Promises through real-world analogies',
+                    render: () => renderIntroModule()
+                },
+                {
+                    id: 'creation',
+                    title: 'Creating Promises',
+                    icon: '🏗️',
+                    description: 'new Promise(), resolve, and reject',
+                    render: () => renderCreationModule()
+                },
+                {
+                    id: 'handling',
+                    title: '.then() & .catch()',
+                    icon: '🎣',
+                    description: 'Consuming promises and error handling',
+                    render: () => renderHandlingModule()
+                },
+                {
+                    id: 'chaining',
+                    title: 'Promise Chaining',
+                    icon: '⛓️',
+                    description: 'Sequential async operations',
+                    render: () => renderChainingModule()
+                },
+                {
+                    id: 'static',
+                    title: 'Promise.all/race/allSettled',
+                    icon: '🏁',
+                    description: 'Managing multiple promises',
+                    render: () => renderStaticModule()
+                },
+                {
+                    id: 'errors',
+                    title: 'Error Handling Deep Dive',
+                    icon: '🛡️',
+                    description: 'Robust error management strategies',
+                    render: () => renderErrorsModule()
+                },
+                {
+                    id: 'pitfalls',
+                    title: 'Common Mistakes',
+                    icon: '⚠️',
+                    description: 'Anti-patterns and how to avoid them',
+                    render: () => renderPitfallsModule()
+                }
+            ],
+
+            init() {
+                this.renderNav();
+                this.loadModule(0);
+            },
+
+            renderNav() {
+                const nav = document.getElementById('navItems');
+                nav.innerHTML = this.modules.map((mod, idx) => `
+                    <div class="nav-item ${idx === this.currentModule ? 'active' : ''} ${idx > this.completedModules.length ? 'locked' : ''}" 
+                         onclick="app.loadModule(${idx})">
+                        <div class="nav-icon">${mod.icon}</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">${mod.title}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${idx > this.completedModules.length ? '🔒 Locked' : mod.description}</div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            loadModule(index) {
+                if (index > this.completedModules.length) return;
+                this.currentModule = index;
+                this.renderNav();
+                this.modules[index].render();
+                window.scrollTo(0, 0);
+            },
+
+            nextModule() {
+                document.getElementById('successModal').classList.remove('active');
+                if (this.currentModule < this.modules.length - 1) {
+                    this.completedModules.push(this.currentModule);
+                    this.addXP(50);
+                    this.loadModule(this.currentModule + 1);
+                }
+            },
+
+            addXP(amount) {
+                this.xp += amount;
+                const percentage = Math.min((this.xp / 350) * 100, 100);
+                document.getElementById('xpFill').style.width = percentage + '%';
+            },
+
+            showSuccess() {
+                document.getElementById('successModal').classList.add('active');
+            },
+
+            log(elementId, message, type = 'info') {
+                const console = document.getElementById(elementId);
+                const line = document.createElement('div');
+                line.className = `console-line console-${type}`;
+                line.textContent = `> ${message}`;
+                console.appendChild(line);
+                console.scrollTop = console.scrollHeight;
+            },
+
+            clearConsole(elementId) {
+                document.getElementById(elementId).innerHTML = '';
+            }
+        };
+
+        // Module 1: Introduction
+        function renderIntroModule() {
+            const main = document.getElementById('mainContent');
+            main.innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">The Promise Restaurant 🍽️</h1>
+                    <p class="module-subtitle">Understanding asynchronous JavaScript through a culinary analogy</p>
+                </div>
+
+                <div class="card">
+                    <h3>What is a Promise?</h3>
+                    <p>A Promise is like placing an order at a restaurant. You don't get the food immediately - you get a <strong>receipt (Promise)</strong> that represents your future meal.</p>
+                    
+                    <div class="visualizer-container" style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 2rem;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">👤</div>
+                            <div>You (Code)</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Order placed</div>
+                        </div>
+                        <div style="font-size: 2rem; color: var(--accent-primary);">→</div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🧾</div>
+                            <div>Promise</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Pending...</div>
+                        </div>
+                        <div style="font-size: 2rem; color: var(--accent-primary);">→</div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🍔</div>
+                            <div>Resolved Value</div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Fulfilled!</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h4>Three States of a Promise:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div style="padding: 1rem; background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); border-radius: 8px;">
+                                <div style="color: var(--warning); font-weight: bold; margin-bottom: 0.5rem;">⏳ Pending</div>
+                                <div style="font-size: 0.9rem;">Initial state. Neither fulfilled nor rejected. Like waiting for your food.</div>
+                            </div>
+                            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); border-radius: 8px;">
+                                <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">✅ Fulfilled</div>
+                                <div style="font-size: 0.9rem;">Operation completed successfully. Your food is ready!</div>
+                            </div>
+                            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px;">
+                                <div style="color: var(--error); font-weight: bold; margin-bottom: 0.5rem;">❌ Rejected</div>
+                                <div style="font-size: 0.9rem;">Operation failed. The kitchen ran out of ingredients.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Interactive Demo: The Order Simulator</h3>
+                    <p>Click "Place Order" to see how a Promise transitions from Pending → Fulfilled/Rejected</p>
+                    
+                    <div class="visualizer-container" style="display: flex; flex-direction: column; align-items: center; gap: 2rem;">
+                        <div id="orderPromise" class="promise-box promise-pending">
+                            <span id="orderStatus">Pending</span>
+                            <span style="font-size: 0.75rem; margin-top: 0.25rem;" id="orderSubtext">Waiting for kitchen...</span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn" onclick="simulateOrder(true)">✅ Serve Order</button>
+                            <button class="btn btn-danger" onclick="simulateOrder(false)">❌ Burn Food</button>
+                            <button class="btn btn-secondary" onclick="resetOrder()">Reset</button>
+                        </div>
+
+                        <div id="orderConsole" class="console-output" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Quick Quiz</h3>
+                    <div id="quiz-intro">
+                        <div class="quiz-option" onclick="checkAnswer(this, false)">
+                            <div class="quiz-indicator">A</div>
+                            <div>A Promise can change from Fulfilled to Rejected later</div>
+                        </div>
+                        <div class="quiz-option" onclick="checkAnswer(this, true)">
+                            <div class="quiz-indicator">B</div>
+                            <div>Once a Promise is settled (fulfilled or rejected), it cannot change state</div>
+                        </div>
+                        <div class="quiz-option" onclick="checkAnswer(this, false)">
+                            <div class="quiz-indicator">C</div>
+                            <div>Promises always resolve immediately</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button class="btn" onclick="app.showSuccess()">Complete Module →</button>
+                </div>
+            `;
+        }
+
+        function simulateOrder(success) {
+            const box = document.getElementById('orderPromise');
+            const status = document.getElementById('orderStatus');
+            const subtext = document.getElementById('orderSubtext');
+            
+            app.clearConsole('orderConsole');
+            
+            if (success) {
+                box.className = 'promise-box promise-fulfilled';
+                status.textContent = 'Fulfilled';
+                subtext.textContent = 'Order ready! 🍔';
+                app.log('orderConsole', 'Promise resolved with: { food: "Burger", status: "delicious" }', 'success');
+            } else {
+                box.className = 'promise-box promise-rejected';
+                status.textContent = 'Rejected';
+                subtext.textContent = 'Kitchen error! 🔥';
+                app.log('orderConsole', 'Promise rejected with: Error("Grill malfunction")', 'error');
+            }
+        }
+
+        function resetOrder() {
+            const box = document.getElementById('orderPromise');
+            box.className = 'promise-box promise-pending';
+            document.getElementById('orderStatus').textContent = 'Pending';
+            document.getElementById('orderSubtext').textContent = 'Waiting for kitchen...';
+            app.clearConsole('orderConsole');
+            app.log('orderConsole', 'New Promise((resolve, reject) => { ... })', 'info');
+        }
+
+        // Module 2: Creating Promises
+        function renderCreationModule() {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">Creating Promises 🏗️</h1>
+                    <p class="module-subtitle">Master the Promise constructor and executor function</p>
+                </div>
+
+                <div class="card">
+                    <h3>The Promise Constructor</h3>
+                    <div class="code-block">
+<span class="code-keyword">const</span> <span class="code-function">promise</span> = <span class="code-keyword">new</span> <span class="code-function">Promise</span>((resolve, reject) => {
+    <span class="code-comment">// Executor function runs immediately!</span>
+    
+    <span class="code-keyword">if</span> (success) {
+        <span class="code-function">resolve</span>(value);      <span class="code-comment">// Transition to Fulfilled</span>
+    } <span class="code-keyword">else</span> {
+        <span class="code-function">reject</span>(error);       <span class="code-comment">// Transition to Rejected</span>
+    }
+});
+                    </div>
+                    
+                    <div class="pitfall-box">
+                        <div class="pitfall-title">⚠️ Common Mistake: Immediate Execution</div>
+                        <p>The Promise executor runs <strong>synchronously</strong> immediately when you call <code>new Promise()</code>. It doesn't wait!</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Interactive Builder</h3>
+                    <p>Create your own Promise and see the execution order:</p>
+                    
+                    <div style="margin: 1rem 0;">
+                        <textarea class="code-editor" id="creationCode" spellcheck="false">console.log('1. Before Promise');
+
+new Promise((resolve, reject) => {
+    console.log('2. Inside executor');
+    setTimeout(() => {
+        resolve('3. Resolved!');
+    }, 1000);
+});
+
+console.log('4. After Promise');</textarea>
+                    </div>
+                    
+                    <button class="btn" onclick="runCreationCode()">▶️ Run Code</button>
+                    <div id="creationConsole" class="console-output"></div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(139, 92, 246, 0.1); border-radius: 8px;">
+                        <strong>💡 Key Insight:</strong> Notice how "4. After Promise" logs before "3. Resolved!" because the Promise is asynchronous, but "2. Inside executor" logs immediately.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Exercise: Fix the Delay</h3>
+                    <p>The code below resolves immediately. Modify it to resolve after 2 seconds (2000ms):</p>
+                    
+                    <textarea class="code-editor" id="delayExercise">new Promise((resolve) => {
+    resolve('Done!');
+}).then(msg => console.log(msg));</textarea>
+                    
+                    <button class="btn" onclick="checkDelayExercise()">Check Solution</button>
+                    <div id="delayFeedback" style="margin-top: 1rem;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button class="btn" onclick="app.showSuccess()">Complete Module →</button>
+                </div>
+            `;
+        }
+
+        function runCreationCode() {
+            app.clearConsole('creationConsole');
+            const code = document.getElementById('creationCode').value;
+            
+            // Safe-ish eval for learning purposes
+            const originalLog = console.log;
+            console.log = (...args) => app.log('creationConsole', args.join(' '));
+            
+            try {
+                eval(code);
+            } catch (e) {
+                app.log('creationConsole', e.message, 'error');
+            }
+            
+            setTimeout(() => {
+                console.log = originalLog;
+            }, 1500);
+        }
+
+        function checkDelayExercise() {
+            const code = document.getElementById('delayExercise').value;
+            const feedback = document.getElementById('delayFeedback');
+            
+            if (code.includes('setTimeout') && (code.includes('2000') || code.includes('2 * 1000'))) {
+                feedback.innerHTML = '<span style="color: var(--success);">✅ Correct! You wrapped the resolve in a setTimeout.</span>';
+                app.addXP(25);
+            } else {
+                feedback.innerHTML = '<span style="color: var(--error);">❌ Not quite. Hint: Use setTimeout(() => resolve(...), 2000)</span>';
+            }
+        }
+
+        // Module 3: Then/Catch/Finally
+        function renderHandlingModule() {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">Handling Promises 🎣</h1>
+                    <p class="module-subtitle">Then, Catch, and Finally - your toolkit for Promise consumption</p>
+                </div>
+
+                <div class="card">
+                    <h3>The .then() Method</h3>
+                    <div class="code-block">
+<span class="code-function">fetch</span>(<span class="code-string">'/api/user'</span>)
+    .<span class="code-function">then</span>(response => {
+        <span class="code-comment">// Handles successful resolution</span>
+        <span class="code-keyword">return</span> response.json();
+    })
+    .<span class="code-function">then</span>(data => {
+        <span class="code-comment">// Chained .then receives previous return value</span>
+        console.log(data);
+    });
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Error Handling Strategies</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <h4>Method 1: .catch()</h4>
+                            <div class="code-block" style="font-size: 0.8rem;">
+promise
+    .<span class="code-function">then</span>(value => {...})
+    .<span class="code-function">catch</span>(error => {
+        <span class="code-comment">// Handles ANY error in chain</span>
+        console.error(error);
+    });
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Method 2: Second .then() argument</h4>
+                            <div class="code-block" style="font-size: 0.8rem;">
+promise
+    .<span class="code-function">then</span>(
+        value => {...},
+        error => {
+            <span class="code-comment">// Only handles rejection of 
+            // THIS specific promise</span>
+        }
+    );
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pitfall-box" style="margin-top: 1rem;">
+                        <div class="pitfall-title">⚠️ The Silent Fail</div>
+                        <p>If you use the second argument of .then() instead of .catch(), errors in the <strong>success handler</strong> won't be caught!</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Interactive: Error Propagation</h3>
+                    <p>Watch how errors bubble through the chain until caught:</p>
+                    
+                    <div class="assembly-line" id="errorChain">
+                        <div class="stage" id="stage1">Promise</div>
+                        <div class="stage-arrow">→</div>
+                        <div class="stage" id="stage2">.then()</div>
+                        <div class="stage-arrow">→</div>
+                        <div class="stage" id="stage3">.then()</div>
+                        <div class="stage-arrow">→</div>
+                        <div class="stage" id="stage4">.catch()</div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="btn" onclick="simulateError('none')">✅ Success Path</button>
+                        <button class="btn btn-danger" onclick="simulateError('stage2')">❌ Error in Stage 2</button>
+                        <button class="btn btn-danger" onclick="simulateError('stage3')">❌ Error in Stage 3</button>
+                    </div>
+                    
+                    <div id="errorConsole" class="console-output" style="margin-top: 1rem;"></div>
+                </div>
+
+                <div class="card">
+                    <h3>.finally() - The Cleanup Crew</h3>
+                    <p>Runs regardless of success or failure. Perfect for hiding loading spinners!</p>
+                    
+                    <div class="code-block">
+<span class="code-keyword">showLoadingSpinner</span>();
+
+fetchUserData()
+    .then(user => renderProfile(user))
+    .catch(err => showError(err))
+    .<span class="code-function">finally</span>(() => {
+        <span class="code-comment">// Always runs!</span>
+        <span class="code-keyword">hideLoadingSpinner</span>();
+    });
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button class="btn" onclick="app.showSuccess()">Complete Module →</button>
+                </div>
+            `;
+        }
+
+        function simulateError(location) {
+            app.clearConsole('errorConsole');
+            const stages = ['stage1', 'stage2', 'stage3', 'stage4'];
+            stages.forEach(id => {
+                document.getElementById(id).classList.remove('active');
+                document.getElementById(id).style.borderColor = 'var(--border)';
+            });
+
+            let step = 0;
+            const interval = setInterval(() => {
+                if (step >= stages.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                const stage = document.getElementById(stages[step]);
+                stage.classList.add('active');
+                
+                if (location === 'none') {
+                    app.log('errorConsole', `Stage ${step + 1}: Processing...`, 'success');
+                    stage.style.borderColor = 'var(--success)';
+                } else if (location === stages[step]) {
+                    app.log('errorConsole', `Stage ${step + 1}: ERROR! Throwing exception...`, 'error');
+                    stage.style.borderColor = 'var(--error)';
+                    app.log('errorConsole', 'Error caught by .catch() block', 'info');
+                    // Skip to catch
+                    setTimeout(() => {
+                        document.getElementById('stage4').classList.add('active');
+                        document.getElementById('stage4').style.borderColor = 'var(--success)';
+                        app.log('errorConsole', '.catch() handled the error gracefully', 'success');
+                    }, 500);
+                    clearInterval(interval);
+                    return;
+                } else {
+                    app.log('errorConsole', `Stage ${step + 1}: Passing through...`, 'info');
+                }
+                
+                step++;
+            }, 800);
+        }
+
+        // Module 4: Chaining
+        function renderChainingModule() {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">Promise Chaining ⛓️</h1>
+                    <p class="module-subtitle">Sequential operations without callback hell</p>
+                </div>
+
+                <div class="card">
+                    <h3>The Power of Returning</h3>
+                    <p>Each .then() returns a new Promise, allowing you to chain operations:</p>
+                    
+                    <div class="assembly-line" style="flex-direction: column; align-items: stretch;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div class="stage" style="flex: 1;">getUser(id)</div>
+                            <div class="stage-arrow">→</div>
+                            <div class="stage" style="flex: 1;">getOrders(user)</div>
+                            <div class="stage-arrow">→</div>
+                            <div class="stage" style="flex: 1;">getProducts(orders)</div>
+                        </div>
+                        <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted); text-align: center;">
+                            Each step receives the transformed data from the previous step
+                        </div>
+                    </div>
+
+                    <div class="code-block">
+<span class="code-function">getUser</span>(1)
+    .<span class="code-function">then</span>(user => {
+        console.log(<span class="code-string">'Got user:'</span>, user.name);
+        <span class="code-keyword">return</span> <span class="code-function">getOrders</span>(user.id);  <span class="code-comment">// Return new Promise</span>
+    })
+    .<span class="code-function">then</span>(orders => {
+        console.log(<span class="code-string">'Got orders:'</span>, orders.length);
+        <span class="code-keyword">return</span> <span class="code-function">getProducts</span>(orders); <span class="code-comment">// Return another Promise</span>
+    })
+    .<span class="code-function">then</span>(products => {
+        console.log(<span class="code-string">'Got products:'</span>, products);
+    })
+    .<span class="code-function">catch</span>(err => {
+        <span class="code-comment">// Catches errors from ANY step!</span>
+        console.error(<span class="code-string">'Chain failed:'</span>, err);
+    });
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Pitfall: The Nested Pyramid</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <div>
+                            <div class="pitfall-box" style="margin: 0;">
+                                <div class="pitfall-title">❌ Callback Hell (Don't)</div>
+                                <div class="code-block" style="font-size: 0.75rem;">
+getUser().then(user => {
+    getOrders(user).then(orders => {
+        getProducts(orders).then(products => {
+            console.log(products);
+        });
+    });
+});
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="solution-box" style="margin: 0;">
+                                <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">✅ Flat Chain (Do)</div>
+                                <div class="code-block" style="font-size: 0.75rem;">
+getUser()
+    .then(user => getOrders(user))
+    .then(orders => getProducts(orders))
+    .then(products => console.log(products));
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Exercise: Flatten the Pyramid</h3>
+                    <p>Refactor this nested code into a flat Promise chain:</p>
+                    <textarea class="code-editor" id="chainExercise" spellcheck="false">fetchUser()
+    .then(user => {
+        fetchPosts(user.id).then(posts => {
+            fetchComments(posts[0]).then(comments => {
+                console.log(comments);
+            });
+        });
+    });</textarea>
+                    <button class="btn" onclick="checkChainExercise()">Check Solution</button>
+                    <div id="chainFeedback"></div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button class="btn" onclick="app.showSuccess()">Complete Module →</button>
+                </div>
+            `;
+        }
+
+        function checkChainExercise() {
+            const code = document.getElementById('chainExercise').value;
+            const feedback = document.getElementById('chainFeedback');
+            
+            // Check for flat structure (no nested .then inside .then)
+            const hasNesting = code.match(/\.then\([^)]*\{[^}]*\.then/s);
+            const hasChaining = code.match(/\.then\([^)]*\)\s*\.then/s);
+            
+            if (!hasNesting && hasChaining) {
+                feedback.innerHTML = '<div style="color: var(--success); margin-top: 1rem;">✅ Excellent! You flattened the pyramid of doom!</div>';
+                app.addXP(30);
+            } else {
+                feedback.innerHTML = '<div style="color: var(--error); margin-top: 1rem;">❌ Still nested. Hint: Return the inner Promise and chain .then() outside.</div>';
+            }
+        }
+
+        // Module 5: Static Methods
+        function renderStaticModule() {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">Promise Combinators 🏁</h1>
+                    <p class="module-subtitle">Managing multiple promises efficiently</p>
+                </div>
+
+                <div class="card">
+                    <h3>Promise.all - The Dinner Table</h3>
+                    <p>Waits for <strong>all</strong> promises to fulfill, or <strong>one</strong> to reject (fast fail).</p>
+                    
+                    <div class="visualizer-container">
+                        <div style="margin-bottom: 1rem;">
+                            <div class="badge">Promise.all</div>
+                            <span style="color: var(--text-muted);">All for one, one fail for all</span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; margin: 1rem 0;">
+                            <div id="all1" class="promise-box promise-pending" style="width: 100px; height: 60px; font-size: 0.8rem;">API 1</div>
+                            <div id="all2" class="promise-box promise-pending" style="width: 100px; height: 60px; font-size: 0.8rem;">API 2</div>
+                            <div id="all3" class="promise-box promise-pending" style="width: 100px; height: 60px; font-size: 0.8rem;">API 3</div>
+                        </div>
+                        
+                        <button class="btn" onclick="simulatePromiseAll(true)">✅ All Succeed</button>
+                        <button class="btn btn-danger" onclick="simulatePromiseAll(false)">❌ One Fails</button>
+                        
+                        <div id="allConsole" class="console-output" style="margin-top: 1rem;"></div>
+                    </div>
+
+                    <div class="code-block">
+<span class="code-keyword">const</span> [users, posts, comments] = <span class="code-keyword">await</span> <span class="code-function">Promise.all</span>([
+    <span class="code-function">fetchUsers</span>(),
+    <span class="code-function">fetchPosts</span>(),
+    <span class="code-function">fetchComments</span>()
+]);
+<span class="code-comment">// Either all succeed, or entire operation fails</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Promise.race - First to Finish</h3>
+                    <p>Settles as soon as <strong>any</strong> promise settles (fulfilled OR rejected).</p>
+                    
+                    <div class="race-track" id="raceTrack">
+                        <div class="runner" id="runner1" style="width: 80px;">Request A (slow)</div>
+                        <div class="runner" id="runner2" style="width: 80px;">Request B (fast)</div>
+                        <div class="runner" id="runner3" style="width: 80px;">Request C (medium)</div>
+                    </div>
+                    
+                    <button class="btn" onclick="startRace()">🏁 Start Race</button>
+                    <div id="raceConsole" class="console-output" style="margin-top: 1rem;"></div>
+
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(6, 182, 212, 0.1); border-radius: 8px; border-left: 4px solid var(--accent-secondary);">
+                        <strong>💡 Use Case:</strong> Timeout patterns - race your request against a timeout promise!
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Promise.allSettled - The Diplomat</h3>
+                    <p>Waits for <strong>all</strong> promises to settle (fulfilled OR rejected). Never fails!</p>
+                    
+                    <div class="code-block">
+<span class="code-keyword">const</span> results = <span class="code-keyword">await</span> <span class="code-function">Promise.allSettled</span>([
+    <span class="code-function">fetch</span>(<span class="code-string">'/api/a'</span>),
+    <span class="code-function">fetch</span>(<span class="code-string">'/api/b'</span>),
+    <span class="code-function">fetch</span>(<span class="code-string">'/api/c'</span>)
+]);
+
+results.forEach(result => {
+    <span class="code-keyword">if</span> (result.status === <span class="code-string">'fulfilled'</span>) {
+        console.log(<span class="code-string">'Success:'</span>, result.value);
+    } <span class="code-keyword">else</span> {
+        console.log(<span class="code-string">'Failed:'</span>, result.reason);
+    }
+});
+                    </div>
+                    
+                    <table style="width: 100%; margin-top: 1rem; border-collapse: collapse; font-size: 0.9rem;">
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <th style="text-align: left; padding: 0.5rem;">Method</th>
+                            <th style="text-align: left; padding: 0.5rem;">Resolves When</th>
+                            <th style="text-align: left; padding: 0.5rem;">Rejects When</th>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.5rem;">Promise.all</td>
+                            <td style="padding: 0.5rem;">All fulfill</td>
+                            <td style="padding: 0.5rem; color: var(--error);">First rejection</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.5rem;">Promise.race</td>
+                            <td style="padding: 0.5rem; color: var(--success);">First to settle</td>
+                            <td style="padding: 0.5rem; color: var(--error);">First to settle (if error)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem;">Promise.allSettled</td>
+                            <td style="padding: 0.5rem; color: var(--success);">Always resolves</td>
+                            <td style="padding: 0.5rem;">Never rejects</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button class="btn" onclick="app.showSuccess()">Complete Module →</button>
+                </div>
+            `;
+        }
+
+        function simulatePromiseAll(allSucceed) {
+            app.clearConsole('allConsole');
+            ['all1', 'all2', 'all3'].forEach(id => {
+                const el = document.getElementById(id);
+                el.className = 'promise-box promise-pending';
+                el.textContent = el.textContent.replace(' ✅', '').replace(' ❌', '');
+            });
+
+            let completed = 0;
+            const checkComplete = () => {
+                completed++;
+                if (completed === 3) {
+                    if (allSucceed) {
+                        app.log('allConsole', 'Promise.all resolved with [data1, data2, data3]', 'success');
+                    }
+                }
+            };
+
+            [1, 2, 3].forEach((num, idx) => {
+                setTimeout(() => {
+                    const el = document.getElementById('all' + num);
+                    if (allSucceed || idx < 2) {
+                        el.className = 'promise-box promise-fulfilled';
+                        el.textContent += ' ✅';
+                        app.log('allConsole', `API ${num} fulfilled`, 'success');
+                        checkComplete();
+                    } else {
+                        el.className = 'promise-box promise-rejected';
+                        el.textContent += ' ❌';
+                        app.log('allConsole', `API ${num} rejected! Promise.all aborts!`, 'error');
+                        // Mark remaining as cancelled
+                        for (let i = num + 1; i <= 3; i++) {
+                            document.getElementById('all' + i).style.opacity = '0.3';
+                        }
+                    }
+                }, num * 800);
+            });
+        }
+
+        function startRace() {
+            app.clearConsole('raceConsole');
+            const runners = [
+                { id: 'runner1', speed: 30, name: 'Slow API' },
+                { id: 'runner2', speed: 80, name: 'Fast API' },
+                { id: 'runner3', speed: 50, name: 'Medium API' }
+            ];
+
+            runners.forEach(r => {
+                const el = document.getElementById(r.id);
+                el.style.left = '10px';
+                el.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.4)';
+            });
+
+            let winner = null;
+            
+            const interval = setInterval(() => {
+                runners.forEach(r => {
+                    if (winner && winner !== r.id) return;
+                    
+                    const el = document.getElementById(r.id);
+                    const currentLeft = parseInt(el.style.left || 10);
+                    const newLeft = currentLeft + Math.random() * r.speed;
+                    
+                    if (newLeft > 600 && !winner) {
+                        winner = r.id;
+                        el.style.boxShadow = '0 0 30px #10b981';
+                        app.log('raceConsole', `${r.name} won the race! Promise.race resolves with this result.`, 'success');
+                        clearInterval(interval);
+                    }
+                    
+                    el.style.left = Math.min(newLeft, 650) + 'px';
+                });
+            }, 100);
+        }
+
+        // Module 6: Error Handling
+        function renderErrorsModule() {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">Error Handling Mastery 🛡️</h1>
+                    <p class="module-subtitle">Building bulletproof asynchronous code</p>
+                </div>
+
+                <div class="card">
+                    <h3>The Error Propagation Chain</h3>
+                    <p>Errors flow down the chain until caught. If uncaught, they become "Unhandled Promise Rejection".</p>
+                    
+                    <div class="pitfall-box">
+                        <div class="pitfall-title">⚠️ The Forgotten Catch</div>
+                        <p>Always end your chains with .catch() or use try/catch with async/await!</p>
+                    </div>
+
+                    <div class="code-block">
+<span class="code-comment">// BAD: Silent failure in production</span>
+<span class="code-function">fetchData</span>()
+    .then(data => riskyOperation(data));
+
+<span class="code-comment">// GOOD: Errors handled</span>
+<span class="code-function">fetchData</span>()
+    .then(data => riskyOperation(data))
+    .catch(err => {
+        console.error(<span class="code-string">'Operation failed:'</span>, err);
+        <span class="code-keyword">return</span> defaultData;
+    });
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Recovery Strategies</h3>
+                    
+                    <div style="margin: 1rem 0;">
+                        <h4>1. Fallback Values</h4>
+                        <div class="code-block">
+<span class="code-function">getUserPreferences</span>()
+    .catch(err => {
+        console.warn(<span class="code-string">'Using default prefs'</span>);
+        <span class="code-keyword">return</span> { theme: <span class="code-string">'dark'</span>, lang: <span class="code-string">'en'</span> };
+    })
+    .then(prefs => applyTheme(prefs.theme));
+                        </div>
+                    </div>
+
+                    <div style="margin: 1rem 0;">
+                        <h4>2. Retry Logic</h4>
+                        <div class="code-block">
+<span class="code-keyword">function</span> <span class="code-function">fetchWithRetry</span>(url, retries = <span class="code-number">3</span>) {
+    <span class="code-keyword">return</span> <span class="code-function">fetch</span>(url).catch(err => {
+        <span class="code-keyword">if</span> (retries > <span class="code-number">0</span>) {
+            console.log(<span class="code-string">\`Retrying... \${retries} left\`</span>);
+            <span class="code-keyword">return</span> <span class="code-function">fetchWithRetry</span>(url, retries - <span class="code-number">1</span>);
+        }
+        <span class="code-keyword">throw</span> err;
+    });
+}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Exercise: Implement Retry</h3>
+                    <p>Fix this function to retry 2 times before giving up:</p>
+                    <textarea class="code-editor" id="retryExercise">function unstableRequest() {
+    return fetch('/api/data').catch(err => {
+        // TODO: Retry logic
+        throw err;
+    });
+}</textarea>
+                    <button class="btn" onclick="checkRetry()">Check Solution</button>
+                    <div id="retryFeedback"></div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button class="btn" onclick="app.showSuccess()">Complete Module →</button>
+                </div>
+            `;
+        }
+
+        function checkRetry() {
+            const code = document.getElementById('retryExercise').value;
+            const hasRecursion = code.includes('unstableRequest') && code.includes('retries') || code.includes('retry');
+            const hasCountCheck = code.includes('> 0') || code.includes('!== 0');
+            
+            if (hasRecursion && hasCountCheck) {
+                document.getElementById('retryFeedback').innerHTML = '<div style="color: var(--success); margin-top: 1rem;">✅ Great! You implemented recursive retry logic.</div>';
+                app.addXP(30);
+            } else {
+                document.getElementById('retryFeedback').innerHTML = '<div style="color: var(--error); margin-top: 1rem;">❌ Hint: Call unstableRequest again with decremented count inside catch.</div>';
+            }
+        }
+
+        // Module 7: Pitfalls
+        function renderPitfallsModule() {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">Common Mistakes ⚠️</h1>
+                    <p class="module-subtitle">Avoid these anti-patterns in production</p>
+                </div>
+
+                <div class="card">
+                    <h3>1. The Floating Promise</h3>
+                    <div class="pitfall-box">
+                        <div class="pitfall-box">
+                            <div class="pitfall-title">❌ Fire and Forget (Dangerous)</div>
+                            <div class="code-block">
+<span class="code-keyword">function</span> <span class="code-function">saveData</span>(data) {
+    <span class="code-function">database.save</span>(data); <span class="code-comment">// Returns promise, but not returned!</span>
+}
+
+<span class="code-comment">// Caller thinks it's done, but it's not:</span>
+<span class="code-function">saveData</span>({ name: <span class="code-string">'John'</span> });
+console.log(<span class="code-string">'Saved!'</span>); <span class="code-comment">// Lies! Still pending.</span>
+                            </div>
+                        </div>
+                        
+                        <div class="solution-box">
+                            <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">✅ Always Return Promises</div>
+                            <div class="code-block">
+<span class="code-keyword">function</span> <span class="code-function">saveData</span>(data) {
+    <span class="code-keyword">return</span> <span class="code-function">database.save</span>(data); <span class="code-comment">// Return the chain!</span>
+}
+
+<span class="code-function">saveData</span>({ name: <span class="code-string">'John'</span> })
+    .then(() => console.log(<span class="code-string">'Actually saved!'</span>));
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>2. The await in Loop Trap</h3>
+                    <div class="pitfall-box">
+                        <div class="pitfall-title">❌ Sequential (Slow)</div>
+                        <div class="code-block">
+<span class="code-comment">// This runs one by one - 3 seconds total!</span>
+<span class="code-keyword">await</span> urls.forEach(<span class="code-keyword">async</span> url => {
+    <span class="code-keyword">await</span> <span class="code-function">fetch</span>(url);
+});
+                        </div>
+                    </div>
+                    
+                    <div class="solution-box">
+                        <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">✅ Parallel with Promise.all</div>
+                        <div class="code-block">
+<span class="code-comment">// This runs all at once - 1 second total!</span>
+<span class="code-keyword">await</span> <span class="code-function">Promise.all</span>(
+    urls.map(url => <span class="code-function">fetch</span>(url))
+);
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>3. Error Swallowing</h3>
+                    <div class="pitfall-box">
+                        <div class="pitfall-title">❌ Empty Catch</div>
+                        <div class="code-block">
+<span class="code-function">fetchUser</span>()
+    .catch(err => {
+        <span class="code-comment">// Empty catch = Silent failure</span>
+        <span class="code-comment">// User sees infinite spinner</span>
+    });
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--warning); padding: 1rem; border-radius: 0 8px 8px 0;">
+                        <div style="color: var(--warning); font-weight: bold; margin-bottom: 0.5rem;">⚠️ At Minimum, Log It</div>
+                        <div class="code-block" style="margin: 0;">
+.catch(err => {
+    console.error(err);
+    <span class="code-keyword">throw</span> err; <span class="code-comment">// Re-throw if you can't handle it</span>
+});
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>4. Creating Promises Unnecessarily</h3>
+                    <div class="pitfall-box">
+                        <div class="pitfall-title">❌ Promise Constructor Anti-pattern</div>
+                        <div class="code-block">
+<span class="code-comment">// Don't wrap existing promises!</span>
+<span class="code-keyword">new</span> <span class="code-function">Promise</span>((resolve, reject) => {
+    <span class="code-function">fetch</span>(url)
+        .then(response => <span class="code-function">resolve</span>(response))
+        .catch(err => <span class="code-function">reject</span>(err));
+});
+                        </div>
+                    </div>
+                    
+                    <div class="solution-box">
+                        <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">✅ Return Directly</div>
+                        <div class="code-block">
+<span class="code-comment">// fetch already returns a Promise!</span>
+<span class="code-keyword">return</span> <span class="code-function">fetch</span>(url);
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Final Challenge: Spot All Bugs</h3>
+                    <p>How many issues can you find in this code?</p>
+                    <div class="code-block">
+<span class="code-keyword">async function</span> <span class="code-function">loadDashboard</span>() {
+    <span class="code-keyword">const</span> user = <span class="code-keyword">await</span> <span class="code-function">fetchUser</span>();
+    <span class="code-function">updateUI</span>(user);
+    
+    <span class="code-keyword">const</span> posts = <span class="code-keyword">await</span> <span class="code-function">fetchPosts</span>();
+    <span class="code-keyword">const</span> comments = <span class="code-keyword">await</span> <span class="code-function">fetchComments</span>();
+    
+    <span class="code-keyword">return</span> { user, posts, comments };
+}
+
+<span class="code-function">loadDashboard</span>();
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-secondary" onclick="this.nextElementSibling.classList.toggle('hidden')">Reveal Answer</button>
+                        <div class="hidden" style="margin-top: 1rem; padding: 1rem; background: var(--bg-dark); border-radius: 8px;">
+                            <strong>Issues:</strong>
+                            <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                                <li>No error handling (try/catch or .catch())</li>
+                                <li>Floating Promise at bottom (loadDashboard() not awaited)</li>
+                                <li>Sequential fetching (posts and comments could use Promise.all)</li>
+                                <li>No loading state management</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-top: 2rem;">
+                    <button class="btn" onclick="app.showSuccess(); app.addXP(100);">Graduate! 🎓</button>
+                </div>
+            `;
+        }
+
+        // Quiz Handler
+        function checkAnswer(element, isCorrect) {
+            const parent = element.parentElement;
+            Array.from(parent.children).forEach(child => {
+                child.onclick = null;
+                child.style.cursor = 'default';
+            });
+            
+            if (isCorrect) {
+                element.classList.add('correct');
+                app.addXP(10);
+                setTimeout(() => alert('Correct! +10 XP'), 100);
+            } else {
+                element.classList.add('wrong');
+                // Highlight correct answer
+                Array.from(parent.children).find(el => 
+                    el.getAttribute('onclick').includes('true')
+                ).classList.add('correct');
+            }
+        }
+
+        // Initialize
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>
