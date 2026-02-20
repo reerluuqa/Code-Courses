@@ -1,0 +1,2731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Closures & Scoping Mastery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0e1a;--bg2:#111630;--bg3:#1a1f42;--bg4:#232952;
+--accent:#00d4ff;--accent2:#7c4dff;--green:#4caf50;--red:#ff5252;
+--orange:#ff9800;--yellow:#ffd740;--pink:#ff4081;
+--text:#e0e6f0;--text2:#8892b0;--text3:#5a6380;
+--code-bg:#0d1117;--card-border:#2a3060;
+--font:'Segoe UI',system-ui,-apple-system,sans-serif;
+--mono:'Fira Code','Cascadia Code','JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;width:280px;height:100vh;background:var(--bg2);
+border-right:1px solid var(--card-border);z-index:100;display:flex;flex-direction:column;
+transition:transform .3s}
+.sidebar-header{padding:24px 20px;border-bottom:1px solid var(--card-border)}
+.sidebar-header h2{font-size:18px;color:var(--accent);display:flex;align-items:center;gap:10px}
+.sidebar-header h2 span{font-size:24px}
+.sidebar-header p{font-size:12px;color:var(--text2);margin-top:4px}
+
+.progress-section{padding:16px 20px;border-bottom:1px solid var(--card-border)}
+.progress-bar-bg{width:100%;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+border-radius:4px;transition:width .5s;width:0%}
+.progress-text{font-size:12px;color:var(--text2);margin-top:6px;display:flex;justify-content:space-between}
+.xp-badge{background:var(--bg3);padding:2px 8px;border-radius:10px;color:var(--yellow);font-weight:700}
+
+.nav-list{flex:1;overflow-y:auto;padding:12px 0}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;
+transition:all .2s;font-size:14px;color:var(--text2);position:relative}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{color:var(--accent);background:rgba(0,212,255,.08)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;height:100%;width:3px;
+background:var(--accent);border-radius:0 2px 2px 0}
+.nav-item .icon{width:24px;text-align:center;font-size:16px}
+.nav-item .check{margin-left:auto;color:var(--green);font-size:14px;opacity:0;transition:.2s}
+.nav-item.completed .check{opacity:1}
+
+.menu-toggle{display:none;position:fixed;top:16px;left:16px;z-index:200;background:var(--bg2);
+border:1px solid var(--card-border);color:var(--accent);width:44px;height:44px;border-radius:12px;
+font-size:20px;cursor:pointer}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90}
+
+/* MAIN */
+.main{margin-left:280px;min-height:100vh;padding:40px 48px 80px}
+.section{display:none;animation:fadeIn .4s}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+h1{font-size:36px;font-weight:800;margin-bottom:8px;
+background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;background-clip:text}
+.section-subtitle{color:var(--text2);font-size:18px;margin-bottom:32px}
+h2{font-size:24px;color:var(--text);margin:40px 0 16px;padding-bottom:8px;
+border-bottom:2px solid var(--bg3)}
+h3{font-size:18px;color:var(--accent);margin:28px 0 12px}
+p{margin-bottom:16px;color:var(--text2)}
+strong{color:var(--text)}
+ul,ol{margin:0 0 16px 24px;color:var(--text2)}
+li{margin-bottom:8px}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--card-border);border-radius:16px;
+padding:28px;margin:20px 0}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:20px 0}
+.feature-card{background:var(--bg2);border:1px solid var(--card-border);border-radius:16px;
+padding:24px;transition:all .3s;cursor:default}
+.feature-card:hover{transform:translateY(-4px);border-color:var(--accent);
+box-shadow:0 8px 30px rgba(0,212,255,.1)}
+.feature-card .icon-big{font-size:36px;margin-bottom:12px}
+.feature-card h4{color:var(--text);margin-bottom:8px;font-size:16px}
+.feature-card p{font-size:14px;margin:0}
+
+/* INFO BOXES */
+.info-box{border-radius:12px;padding:20px 24px;margin:20px 0;border-left:4px solid}
+.info-box.tip{background:rgba(76,175,80,.08);border-color:var(--green)}
+.info-box.warn{background:rgba(255,152,0,.08);border-color:var(--orange)}
+.info-box.danger{background:rgba(255,82,82,.08);border-color:var(--red)}
+.info-box.info{background:rgba(0,212,255,.08);border-color:var(--accent)}
+.info-box .label{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.info-box.tip .label{color:var(--green)}
+.info-box.warn .label{color:var(--orange)}
+.info-box.danger .label{color:var(--red)}
+.info-box.info .label{color:var(--accent)}
+
+/* CODE BLOCKS */
+.code-block{background:var(--code-bg);border:1px solid var(--card-border);border-radius:12px;
+margin:16px 0;overflow:hidden;font-family:var(--mono);font-size:14px}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;
+background:var(--bg3);border-bottom:1px solid var(--card-border)}
+.code-header .lang{color:var(--accent);font-size:12px;font-weight:700;text-transform:uppercase}
+.code-header .dots{display:flex;gap:6px}
+.code-header .dot{width:10px;height:10px;border-radius:50%}
+.code-header .dot:nth-child(1){background:#ff5f57}
+.code-header .dot:nth-child(2){background:#ffbd2e}
+.code-header .dot:nth-child(3){background:#28c840}
+pre{padding:20px;overflow-x:auto;line-height:1.6;color:#c9d1d9}
+.kw{color:#ff7b72} .fn{color:#d2a8ff} .str{color:#a5d6ff} .num{color:#79c0ff}
+.cm{color:#8b949e;font-style:italic} .op{color:#ff7b72} .var{color:#ffa657}
+.ret{color:#ff7b72} .prop{color:#7ee787} .cls{color:#f0883e}
+
+/* PLAYGROUND */
+.playground{background:var(--bg2);border:1px solid var(--card-border);border-radius:16px;
+margin:20px 0;overflow:hidden}
+.playground-header{display:flex;align-items:center;justify-content:space-between;
+padding:12px 20px;background:var(--bg3);border-bottom:1px solid var(--card-border)}
+.playground-header h4{font-size:14px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.playground-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.playground-body.stacked{grid-template-columns:1fr}
+.code-input{background:var(--code-bg);color:#c9d1d9;border:none;padding:20px;font-family:var(--mono);
+font-size:14px;resize:vertical;min-height:180px;line-height:1.6;outline:none;
+border-right:1px solid var(--card-border);tab-size:2}
+.code-output{padding:16px 20px;background:var(--bg);font-family:var(--mono);font-size:13px;
+white-space:pre-wrap;overflow-y:auto;max-height:400px;color:var(--green);min-height:100px}
+.code-output.error{color:var(--red)}
+.btn{padding:8px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;
+font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-run{background:var(--green);color:#fff}
+.btn-run:hover{background:#66bb6a;transform:scale(1.05)}
+.btn-reset{background:var(--bg);color:var(--text2);border:1px solid var(--card-border)}
+.btn-reset:hover{border-color:var(--text2)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-primary:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(0,212,255,.3)}
+.btn-sm{padding:6px 14px;font-size:12px}
+
+/* VISUAL DIAGRAMS */
+.scope-diagram{display:flex;flex-direction:column;gap:0;margin:20px 0;padding:20px}
+.scope-box{border:2px solid;border-radius:12px;padding:16px 20px;position:relative;
+margin:0 0 -1px;background:rgba(0,0,0,.2)}
+.scope-box.global{border-color:var(--accent);margin-left:0}
+.scope-box.outer{border-color:var(--accent2);margin-left:30px}
+.scope-box.inner{border-color:var(--pink);margin-left:60px}
+.scope-box.innermost{border-color:var(--yellow);margin-left:90px}
+.scope-label{position:absolute;top:-12px;left:16px;background:var(--bg2);padding:0 8px;
+font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.scope-box.global .scope-label{color:var(--accent)}
+.scope-box.outer .scope-label{color:var(--accent2)}
+.scope-box.inner .scope-label{color:var(--pink)}
+.scope-box.innermost .scope-label{color:var(--yellow)}
+.scope-var{font-family:var(--mono);font-size:13px;color:var(--text2);padding:4px 0}
+.scope-var span{color:var(--yellow)}
+
+.closure-visual{display:flex;align-items:center;gap:24px;margin:24px 0;flex-wrap:wrap;
+justify-content:center}
+.closure-bubble{background:var(--bg3);border:2px dashed var(--accent);border-radius:20px;
+padding:20px 28px;text-align:center;position:relative}
+.closure-bubble .emoji{font-size:32px;margin-bottom:8px}
+.closure-bubble h5{color:var(--accent);font-size:14px}
+.closure-bubble p{font-size:12px;color:var(--text2);margin:0}
+.closure-arrow{font-size:28px;color:var(--accent2);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* IIFE ANIMATION */
+.iife-flow{display:flex;align-items:center;gap:16px;margin:24px 0;flex-wrap:wrap;justify-content:center}
+.flow-step{background:var(--bg3);border:1px solid var(--card-border);border-radius:12px;
+padding:16px 20px;text-align:center;min-width:140px;transition:all .3s}
+.flow-step.active{border-color:var(--accent);box-shadow:0 0 20px rgba(0,212,255,.2);
+transform:scale(1.05)}
+.flow-step .step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);
+color:var(--bg);font-weight:700;font-size:13px;display:flex;align-items:center;
+justify-content:center;margin:0 auto 8px}
+.flow-step h5{color:var(--text);font-size:13px;margin-bottom:4px}
+.flow-step p{font-size:11px;color:var(--text2);margin:0}
+.flow-arrow{color:var(--accent);font-size:20px}
+
+/* QUIZ */
+.quiz-card{background:var(--bg2);border:1px solid var(--card-border);border-radius:16px;
+padding:28px;margin:20px 0}
+.quiz-card h4{color:var(--text);margin-bottom:16px;font-size:16px}
+.quiz-card .question-num{color:var(--accent);font-size:13px;font-weight:700;margin-bottom:8px}
+.quiz-options{display:flex;flex-direction:column;gap:10px}
+.quiz-opt{padding:14px 18px;border:2px solid var(--card-border);border-radius:10px;
+cursor:pointer;transition:all .2s;font-family:var(--mono);font-size:13px;background:var(--bg)}
+.quiz-opt:hover{border-color:var(--accent);background:rgba(0,212,255,.05)}
+.quiz-opt.selected{border-color:var(--accent);background:rgba(0,212,255,.1)}
+.quiz-opt.correct{border-color:var(--green)!important;background:rgba(76,175,80,.15)!important}
+.quiz-opt.wrong{border-color:var(--red)!important;background:rgba(255,82,82,.15)!important}
+.quiz-opt.disabled{pointer-events:none}
+.quiz-explanation{margin-top:16px;padding:16px;background:var(--bg);border-radius:10px;
+display:none;font-size:14px;line-height:1.6}
+.quiz-explanation.show{display:block;animation:fadeIn .3s}
+.quiz-result{text-align:center;padding:40px;background:var(--bg2);border:2px solid var(--accent);
+border-radius:20px;margin:30px 0}
+.quiz-result .score{font-size:64px;font-weight:800;
+background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;
+-webkit-text-fill-color:transparent}
+.quiz-result .label{color:var(--text2);font-size:18px;margin-top:8px}
+
+/* EXERCISE */
+.exercise{background:var(--bg2);border:2px solid var(--accent2);border-radius:16px;
+padding:28px;margin:24px 0}
+.exercise h4{color:var(--accent2);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.exercise .task{background:var(--bg);border-radius:10px;padding:16px;margin:12px 0;
+border-left:3px solid var(--accent2)}
+.exercise .hint-btn{background:none;border:1px dashed var(--text3);color:var(--text2);
+padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;margin-top:8px}
+.exercise .hint{display:none;margin-top:12px;padding:12px;background:rgba(124,77,255,.1);
+border-radius:8px;font-size:13px;color:var(--text2)}
+.exercise .hint.show{display:block}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin:20px 0 0;border-bottom:2px solid var(--bg3)}
+.tab{padding:10px 20px;cursor:pointer;color:var(--text2);font-size:14px;font-weight:600;
+border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+.tab:hover{color:var(--text)}
+.tab-content{display:none;padding:20px 0}
+.tab-content.active{display:block;animation:fadeIn .3s}
+
+/* COMPARISON TABLE */
+.compare-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:14px}
+.compare-table th{background:var(--bg3);color:var(--accent);padding:14px 16px;text-align:left;
+border:1px solid var(--card-border)}
+.compare-table td{padding:12px 16px;border:1px solid var(--card-border);color:var(--text2)}
+.compare-table tr:hover td{background:rgba(0,212,255,.03)}
+
+/* MISTAKE CARD */
+.mistake-card{background:var(--bg2);border:1px solid var(--card-border);border-radius:16px;
+margin:20px 0;overflow:hidden}
+.mistake-header{display:flex;align-items:center;gap:12px;padding:18px 24px;
+background:rgba(255,82,82,.08);border-bottom:1px solid var(--card-border);cursor:pointer}
+.mistake-header .num{background:var(--red);color:#fff;width:28px;height:28px;border-radius:50%;
+display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.mistake-header h4{color:var(--text);font-size:15px;flex:1}
+.mistake-header .toggle-icon{color:var(--text2);font-size:18px;transition:.3s}
+.mistake-header.open .toggle-icon{transform:rotate(180deg)}
+.mistake-body{padding:0 24px;max-height:0;overflow:hidden;transition:all .4s}
+.mistake-body.open{max-height:2000px;padding:20px 24px}
+.mistake-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+.mistake-bad,.mistake-good{border-radius:10px;padding:16px;font-family:var(--mono);font-size:13px}
+.mistake-bad{background:rgba(255,82,82,.08);border:1px solid rgba(255,82,82,.3)}
+.mistake-good{background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.3)}
+.mistake-bad .tag,.mistake-good .tag{font-size:11px;font-weight:700;text-transform:uppercase;
+letter-spacing:1px;margin-bottom:8px}
+.mistake-bad .tag{color:var(--red)}
+.mistake-good .tag{color:var(--green)}
+
+.nav-btn-row{display:flex;justify-content:space-between;margin-top:48px;padding-top:24px;
+border-top:1px solid var(--card-border)}
+
+/* ACHIEVEMENT */
+.achievement-popup{position:fixed;top:20px;right:20px;background:var(--bg2);border:2px solid var(--yellow);
+border-radius:16px;padding:20px 24px;z-index:300;display:flex;align-items:center;gap:14px;
+transform:translateX(400px);transition:.5s;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.achievement-popup.show{transform:translateX(0)}
+.achievement-popup .ach-icon{font-size:36px}
+.achievement-popup .ach-text h5{color:var(--yellow);font-size:13px;text-transform:uppercase;letter-spacing:1px}
+.achievement-popup .ach-text p{color:var(--text);font-size:14px;margin:0}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 24px;border-radius:12px;
+z-index:300;transform:translateY(100px);opacity:0;transition:.4s;font-size:14px;font-weight:600}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green);color:#fff}
+.toast.error{background:var(--red);color:#fff}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+.sidebar{transform:translateX(-100%)}
+.sidebar.open{transform:translateX(0)}
+.main{margin-left:0;padding:24px 20px 80px}
+.menu-toggle{display:flex;align-items:center;justify-content:center}
+.overlay.show{display:block}
+h1{font-size:28px}
+.playground-body{grid-template-columns:1fr}
+.mistake-split{grid-template-columns:1fr}
+.code-input{border-right:none;border-bottom:1px solid var(--card-border)}
+}
+@media(max-width:600px){
+.card-grid{grid-template-columns:1fr}
+.iife-flow{flex-direction:column}
+.flow-arrow{transform:rotate(90deg)}
+.closure-visual{flex-direction:column}
+.closure-arrow{transform:rotate(90deg)}
+}
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" id="menuToggle">☰</button>
+<div class="overlay" id="overlay"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<h2><span>🧠</span> Closure Mastery</h2>
+<p>Advanced JavaScript Patterns</p>
+</div>
+<div class="progress-section">
+<div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+<div class="progress-text"><span id="progressText">0% Complete</span><span class="xp-badge" id="xpBadge">0 XP</span></div>
+</div>
+<div class="nav-list" id="navList"></div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="mainContent">
+
+<!-- ============ SECTION 0: WELCOME ============ -->
+<div class="section active" id="sec-0">
+<h1>🚀 Advanced Closures & Scoping</h1>
+<p class="section-subtitle">Master the patterns that separate junior devs from senior engineers</p>
+
+<div class="card">
+<p>Welcome to the <strong>most comprehensive interactive guide</strong> on advanced closures and scoping patterns in JavaScript. These concepts appear in <strong>every major framework</strong> (React, Vue, Angular) and are <strong>top interview topics</strong> at companies like Google, Meta, and Amazon.</p>
+</div>
+
+<div class="card-grid">
+<div class="feature-card"><div class="icon-big">⚡</div><h4>IIFE Patterns</h4><p>Immediately Invoked Function Expressions — the foundation of modular JS</p></div>
+<div class="feature-card"><div class="icon-big">📦</div><h4>Module Pattern</h4><p>Encapsulate code like a pro with the classic module pattern</p></div>
+<div class="feature-card"><div class="icon-big">🔒</div><h4>Private Variables</h4><p>True data privacy without classes — the power of closures</p></div>
+<div class="feature-card"><div class="icon-big">🏗️</div><h4>Namespace Pattern</h4><p>Organize large codebases and avoid global pollution</p></div>
+<div class="feature-card"><div class="icon-big">⚠️</div><h4>Pitfalls & Gotchas</h4><p>Learn the traps that catch even experienced developers</p></div>
+<div class="feature-card"><div class="icon-big">🎯</div><h4>Quiz Challenge</h4><p>Test your knowledge with tricky interview-style questions</p></div>
+</div>
+
+<div class="info-box tip">
+<div class="label">💡 How to Use This App</div>
+<p style="margin:0">Navigate through each section using the sidebar. <strong>Run code examples</strong> by clicking the ▶ button. <strong>Edit code</strong> freely — experimentation is the best teacher! Complete exercises and quizzes to earn XP and track your progress.</p>
+</div>
+
+<div class="nav-btn-row">
+<div></div>
+<button class="btn btn-primary" onclick="goToSection(1)">Start Learning →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 1: CLOSURE DEEP DIVE ============ -->
+<div class="section" id="sec-1">
+<h1>🔍 Closure Deep Dive</h1>
+<p class="section-subtitle">Understanding closures at a fundamental level before advanced patterns</p>
+
+<h2>What Is a Closure, Really?</h2>
+<p>A closure is created when a <strong>function "remembers"</strong> the variables from its <strong>lexical scope</strong> even after the outer function has finished executing. Think of it as a function carrying a <strong>backpack</strong> of variables wherever it goes.</p>
+
+<div class="closure-visual">
+<div class="closure-bubble">
+<div class="emoji">🎒</div>
+<h5>Outer Scope Variables</h5>
+<p>count, name, config...</p>
+</div>
+<div class="closure-arrow">→</div>
+<div class="closure-bubble">
+<div class="emoji">⚙️</div>
+<h5>Inner Function</h5>
+<p>Has access to backpack</p>
+</div>
+<div class="closure-arrow">→</div>
+<div class="closure-bubble">
+<div class="emoji">🌍</div>
+<h5>Called Anywhere</h5>
+<p>Still remembers everything!</p>
+</div>
+</div>
+
+<h3>Scope Chain Visualization</h3>
+<p>Every function creates a scope. Inner functions can access outer scopes — this is the <strong>scope chain</strong>:</p>
+
+<div class="scope-diagram">
+<div class="scope-box global">
+<span class="scope-label">Global Scope</span>
+<div class="scope-var"><span>var</span> APP_NAME = "MyApp"</div>
+<div class="scope-box outer" style="margin-left:0;margin-top:12px">
+<span class="scope-label">createUser() Scope</span>
+<div class="scope-var"><span>let</span> name = "Alice"</div>
+<div class="scope-var"><span>let</span> role = "admin"</div>
+<div class="scope-box inner" style="margin-left:0;margin-top:12px">
+<span class="scope-label">getGreeting() Scope — CLOSURE</span>
+<div class="scope-var">✅ Can access: <span>name</span>, <span>role</span>, <span>APP_NAME</span></div>
+<div class="scope-var">📦 Captures outer variables in closure</div>
+</div>
+</div>
+</div>
+</div>
+
+<h3>Example 1: Basic Closure</h3>
+<div class="playground" data-id="closure-basic">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('closure-basic')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('closure-basic')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">function createCounter() {
+  let count = 0; // Private! Only accessible via closure
+
+  return function() {
+    count++;
+    return count;
+  };
+}
+
+const counter = createCounter();
+console.log(counter()); // ?
+console.log(counter()); // ?
+console.log(counter()); // ?
+
+// count is NOT accessible directly:
+// console.log(count); // ReferenceError!</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Example 2: Multiple Closures Over Same Variable</h3>
+<div class="playground" data-id="closure-shared">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('closure-shared')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('closure-shared')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">function createSharedCounter() {
+  let count = 0;
+
+  return {
+    increment: function() { count++; },
+    decrement: function() { count--; },
+    getCount: function() { return count; }
+  };
+}
+
+const shared = createSharedCounter();
+shared.increment();
+shared.increment();
+shared.increment();
+shared.decrement();
+console.log("Count:", shared.getCount());
+// Both functions close over the SAME 'count' variable!
+
+// Key insight: the variable is shared, not copied!
+console.log("count is truly private - no way to access directly!");</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Example 3: Closure Factory</h3>
+<div class="playground" data-id="closure-factory">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('closure-factory')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('closure-factory')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Each call creates a NEW closure with its own scope
+function multiplier(factor) {
+  return function(number) {
+    return number * factor;
+  };
+}
+
+const double = multiplier(2);
+const triple = multiplier(3);
+const tenX = multiplier(10);
+
+console.log("double(5):", double(5));   // 10
+console.log("triple(5):", triple(5));   // 15
+console.log("tenX(5):", tenX(5));       // 50
+
+// Each function has its OWN copy of 'factor'
+// double has factor=2, triple has factor=3</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<div class="info-box info">
+<div class="label">🎯 Interview Insight</div>
+<p style="margin:0">"Explain closures" is the #1 JavaScript interview question. The key points: (1) A closure is a function + its lexical environment, (2) Variables are <strong>referenced, not copied</strong>, (3) Each invocation of the outer function creates a <strong>new closure scope</strong>.</p>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(0)">← Welcome</button>
+<button class="btn btn-primary" onclick="completeSection(1);goToSection(2)">Next: IIFE →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 2: IIFE ============ -->
+<div class="section" id="sec-2">
+<h1>⚡ IIFE — Immediately Invoked Function Expressions</h1>
+<p class="section-subtitle">Functions that execute the moment they're defined</p>
+
+<h2>What Is an IIFE?</h2>
+<p>An <strong>IIFE</strong> (pronounced "iffy") is a function that <strong>runs immediately</strong> after it's created. It creates a <strong>new scope</strong> that doesn't pollute the global namespace. Before ES6 modules, this was THE way to create isolated code.</p>
+
+<h3>How IIFE Execution Works</h3>
+<div class="iife-flow" id="iifeFlow">
+<div class="flow-step" id="iifeStep1">
+<div class="step-num">1</div>
+<h5>Wrap in ( )</h5>
+<p>Makes JS parse it as expression</p>
+</div>
+<div class="flow-arrow">→</div>
+<div class="flow-step" id="iifeStep2">
+<div class="step-num">2</div>
+<h5>Define Function</h5>
+<p>function body is created</p>
+</div>
+<div class="flow-arrow">→</div>
+<div class="flow-step" id="iifeStep3">
+<div class="step-num">3</div>
+<h5>Invoke with ( )</h5>
+<p>Trailing () calls it immediately</p>
+</div>
+<div class="flow-arrow">→</div>
+<div class="flow-step" id="iifeStep4">
+<div class="step-num">4</div>
+<h5>Scope Created & Destroyed</h5>
+<p>Variables are private, cleaned up</p>
+</div>
+</div>
+<button class="btn btn-primary btn-sm" onclick="animateIIFE()" style="display:block;margin:10px auto">▶ Animate Flow</button>
+
+<h3>IIFE Syntax Variations</h3>
+<div class="playground" data-id="iife-syntax">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('iife-syntax')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('iife-syntax')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Style 1: Classic (most common)
+(function() {
+  console.log("Style 1: Classic IIFE");
+})();
+
+// Style 2: Douglas Crockford style
+(function() {
+  console.log("Style 2: Crockford IIFE");
+}());
+
+// Style 3: Arrow function IIFE
+(() => {
+  console.log("Style 3: Arrow IIFE");
+})();
+
+// Style 4: With parameters
+(function(name, version) {
+  console.log("App:", name, "v" + version);
+})("MyApp", "2.0");
+
+// Style 5: Named IIFE (useful for debugging)
+(function bootstrap() {
+  console.log("Style 5: Named IIFE - bootstrap()");
+})();
+
+// Style 6: Async IIFE
+(async function() {
+  console.log("Style 6: Async IIFE");
+  // await fetch(...)
+})();</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Why Use IIFE? — Avoiding Global Pollution</h3>
+<div class="playground" data-id="iife-global">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('iife-global')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('iife-global')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// ❌ WITHOUT IIFE - pollutes global scope
+// var helper = "I'm global!";
+// var count = 0;
+// function doStuff() { ... }
+
+// ✅ WITH IIFE - everything is private
+var myLibrary = (function() {
+  // These are PRIVATE - not on global scope!
+  var helper = "I'm private!";
+  var count = 0;
+
+  function privateHelper() {
+    return helper + " (count: " + count + ")";
+  }
+
+  // Only return what should be public
+  return {
+    increment: function() {
+      count++;
+      console.log(privateHelper());
+    },
+    getCount: function() {
+      return count;
+    }
+  };
+})();
+
+myLibrary.increment();
+myLibrary.increment();
+console.log("Public count:", myLibrary.getCount());
+// console.log(helper); // ReferenceError!
+// console.log(count);  // Would get global count, not ours!</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>IIFE with Return Values</h3>
+<div class="playground" data-id="iife-return">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('iife-return')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('iife-return')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// IIFE can return any value
+const config = (function() {
+  const env = "production";
+  const apiBase = "https://api.example.com";
+  const version = "3.2.1";
+
+  return Object.freeze({
+    env,
+    apiBase,
+    version,
+    isProduction: env === "production",
+    getFullUrl: function(path) {
+      return apiBase + "/" + path;
+    }
+  });
+})();
+
+console.log("Environment:", config.env);
+console.log("Is Production:", config.isProduction);
+console.log("API URL:", config.getFullUrl("users"));
+
+// Can't modify - Object.freeze!
+config.env = "development";
+console.log("Still:", config.env); // Still "production"</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<div class="info-box warn">
+<div class="label">⚠️ When NOT to Use IIFE</div>
+<p style="margin:0">With ES6 modules (<code>import/export</code>), IIFEs are less necessary for module encapsulation. However, they're still useful for: (1) Inline scripts in HTML, (2) Legacy code maintenance, (3) One-off initialization, (4) Creating block scopes in older code. You'll see them heavily in library source code (jQuery, Lodash, etc).</p>
+</div>
+
+<div class="exercise">
+<h4>💪 Exercise: Build a Config IIFE</h4>
+<div class="task">
+<p style="margin:0"><strong>Task:</strong> Create an IIFE that returns a configuration object with: a <code>theme</code> property (dark/light), a <code>toggleTheme()</code> method that switches between them, and a <code>getTheme()</code> method. The actual theme variable should be private.</p>
+</div>
+<button class="hint-btn" onclick="toggleHint(this)">💡 Show Hint</button>
+<div class="hint">Use a private variable <code>let currentTheme = "dark"</code> inside the IIFE. Return an object with methods that access this variable through closure. <code>toggleTheme</code> should check the current value and flip it.</div>
+<div class="playground" data-id="iife-exercise">
+<div class="playground-header">
+<h4>Your Solution</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('iife-exercise')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('iife-exercise')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Your code here!
+const themeManager = (function() {
+  // Create a private theme variable
+
+  // Return an object with toggleTheme() and getTheme()
+
+})();
+
+// Test it:
+// console.log(themeManager.getTheme()); // "dark"
+// themeManager.toggleTheme();
+// console.log(themeManager.getTheme()); // "light"
+// themeManager.toggleTheme();
+// console.log(themeManager.getTheme()); // "dark"</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(1)">← Closures</button>
+<button class="btn btn-primary" onclick="completeSection(2);goToSection(3)">Next: Module Pattern →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 3: MODULE PATTERN ============ -->
+<div class="section" id="sec-3">
+<h1>📦 The Module Pattern</h1>
+<p class="section-subtitle">The most important pattern in JavaScript architecture</p>
+
+<h2>What Is the Module Pattern?</h2>
+<p>The Module Pattern combines <strong>IIFE + Closures + Objects</strong> to create self-contained units of code with <strong>private state</strong> and a <strong>public API</strong>. It's the foundation of how libraries like jQuery, Lodash, and Underscore are built.</p>
+
+<div class="closure-visual">
+<div class="closure-bubble" style="border-color:var(--accent2)">
+<div class="emoji">🏭</div>
+<h5>IIFE Container</h5>
+<p>Creates isolated scope</p>
+</div>
+<div class="closure-arrow">+</div>
+<div class="closure-bubble" style="border-color:var(--pink)">
+<div class="emoji">🔒</div>
+<h5>Private Variables</h5>
+<p>Hidden from outside</p>
+</div>
+<div class="closure-arrow">+</div>
+<div class="closure-bubble" style="border-color:var(--green)">
+<div class="emoji">📡</div>
+<h5>Public API</h5>
+<p>Returned object/methods</p>
+</div>
+<div class="closure-arrow">=</div>
+<div class="closure-bubble" style="border-color:var(--yellow)">
+<div class="emoji">📦</div>
+<h5>Module!</h5>
+<p>Clean, encapsulated code</p>
+</div>
+</div>
+
+<h3>Basic Module Pattern</h3>
+<div class="playground" data-id="module-basic">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('module-basic')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('module-basic')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">const UserModule = (function() {
+  // ====== PRIVATE ======
+  let users = [];
+  let nextId = 1;
+
+  function validateEmail(email) {
+    return email.includes("@");
+  }
+
+  function log(message) {
+    console.log("[UserModule]", message);
+  }
+
+  // ====== PUBLIC API ======
+  return {
+    addUser: function(name, email) {
+      if (!validateEmail(email)) {
+        log("Invalid email: " + email);
+        return null;
+      }
+      const user = { id: nextId++, name, email };
+      users.push(user);
+      log("Added user: " + name);
+      return user;
+    },
+    getUser: function(id) {
+      return users.find(u => u.id === id) || null;
+    },
+    getAllUsers: function() {
+      return [...users]; // Return copy, not reference!
+    },
+    count: function() {
+      return users.length;
+    }
+  };
+})();
+
+UserModule.addUser("Alice", "alice@example.com");
+UserModule.addUser("Bob", "bob@example.com");
+UserModule.addUser("Charlie", "bad-email"); // fails!
+console.log("Total users:", UserModule.count());
+console.log("All users:", UserModule.getAllUsers());
+console.log("Find user 1:", UserModule.getUser(1));</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h2>Revealing Module Pattern</h2>
+<p>Created by <strong>Christian Heilmann</strong>, this variation defines all functions privately first, then "reveals" them in the return object. This makes the code <strong>cleaner</strong> and <strong>more consistent</strong>.</p>
+
+<div class="playground" data-id="module-revealing">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('module-revealing')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('module-revealing')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">const Calculator = (function() {
+  // ALL functions defined as private first
+  let history = [];
+
+  function add(a, b) {
+    const result = a + b;
+    _record("add", a, b, result);
+    return result;
+  }
+
+  function subtract(a, b) {
+    const result = a - b;
+    _record("subtract", a, b, result);
+    return result;
+  }
+
+  function multiply(a, b) {
+    const result = a * b;
+    _record("multiply", a, b, result);
+    return result;
+  }
+
+  function _record(op, a, b, result) {
+    history.push({ op, a, b, result, time: new Date().toISOString() });
+  }
+
+  function getHistory() {
+    return [...history];
+  }
+
+  function clearHistory() {
+    history = [];
+  }
+
+  // REVEAL public API — clean mapping!
+  return {
+    add,           // public
+    subtract,      // public
+    multiply,      // public
+    getHistory,    // public
+    clearHistory   // public
+    // _record is NOT exposed — it stays private!
+  };
+})();
+
+console.log("5 + 3 =", Calculator.add(5, 3));
+console.log("10 - 4 =", Calculator.subtract(10, 4));
+console.log("6 × 7 =", Calculator.multiply(6, 7));
+console.log("History:", Calculator.getHistory());
+// Calculator._record(...); // TypeError! Not accessible</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Module vs Revealing Module — Comparison</h3>
+<table class="compare-table">
+<tr><th>Feature</th><th>Module Pattern</th><th>Revealing Module</th></tr>
+<tr><td>Function definition</td><td>Public functions defined inline in return object</td><td>All functions defined privately first</td></tr>
+<tr><td>Readability</td><td>Can get messy with large APIs</td><td>Cleaner — easy to see what's public</td></tr>
+<tr><td>Overriding</td><td>Public methods can be overridden externally</td><td>Can't override (points to private ref)</td></tr>
+<tr><td>Debugging</td><td>Harder to trace</td><td>Easier — all functions named</td></tr>
+<tr><td>Flexibility</td><td>More flexible</td><td>Slightly less flexible</td></tr>
+</table>
+
+<h2>Module with Dependency Injection</h2>
+<div class="playground" data-id="module-di">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('module-di')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('module-di')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Pass dependencies as IIFE parameters
+const APIModule = (function(config, logger) {
+
+  function get(endpoint) {
+    const url = config.baseUrl + "/" + endpoint;
+    logger.log("GET " + url);
+    return { data: "response from " + url };
+  }
+
+  function post(endpoint, data) {
+    const url = config.baseUrl + "/" + endpoint;
+    logger.log("POST " + url);
+    return { success: true, data };
+  }
+
+  return { get, post };
+
+})(
+  // Injected dependencies:
+  { baseUrl: "https://api.example.com/v2" },
+  { log: function(msg) { console.log("[API]", msg); } }
+);
+
+console.log(APIModule.get("users"));
+console.log(APIModule.post("users", { name: "Alice" }));</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h2>Module Augmentation (Extending Modules)</h2>
+<div class="playground" data-id="module-augment">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('module-augment')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('module-augment')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Base module
+var StringUtils = (function() {
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+  function lowercase(str) {
+    return str.toLowerCase();
+  }
+  return { capitalize, lowercase };
+})();
+
+// AUGMENT the module — add new features!
+StringUtils = (function(module) {
+  // Add new methods
+  module.reverse = function(str) {
+    return str.split("").reverse().join("");
+  };
+
+  module.truncate = function(str, maxLen) {
+    if (str.length <= maxLen) return str;
+    return str.slice(0, maxLen) + "...";
+  };
+
+  return module;
+})(StringUtils); // Pass existing module in
+
+console.log(StringUtils.capitalize("hello"));
+console.log(StringUtils.reverse("hello"));
+console.log(StringUtils.truncate("This is a long string", 10));</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<div class="info-box tip">
+<div class="label">💡 Real-World Usage</div>
+<p style="margin:0">jQuery's entire architecture is a module pattern. When you write <code>$(selector)</code>, you're calling a method exposed by jQuery's revealing module. React's <code>useState</code> hook internally uses closures similar to the module pattern to maintain state between renders.</p>
+</div>
+
+<div class="exercise">
+<h4>💪 Exercise: Build a Shopping Cart Module</h4>
+<div class="task">
+<p style="margin:0"><strong>Task:</strong> Create a <code>ShoppingCart</code> module with: private <code>items</code> array, public methods <code>addItem(name, price)</code>, <code>removeItem(name)</code>, <code>getTotal()</code>, and <code>getItems()</code>. Use the Revealing Module Pattern.</p>
+</div>
+<button class="hint-btn" onclick="toggleHint(this)">💡 Show Hint</button>
+<div class="hint">Define all functions first: <code>addItem</code> pushes {name, price} to items. <code>getTotal</code> uses reduce to sum prices. <code>removeItem</code> uses findIndex + splice. Return all public methods in the object at the end.</div>
+<div class="playground" data-id="module-exercise">
+<div class="playground-header">
+<h4>Your Solution</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('module-exercise')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('module-exercise')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">const ShoppingCart = (function() {
+  // Your code here!
+
+})();
+
+// Test:
+// ShoppingCart.addItem("Laptop", 999);
+// ShoppingCart.addItem("Mouse", 29);
+// ShoppingCart.addItem("Keyboard", 79);
+// console.log("Items:", ShoppingCart.getItems());
+// console.log("Total: $" + ShoppingCart.getTotal());
+// ShoppingCart.removeItem("Mouse");
+// console.log("After removal:", ShoppingCart.getItems());
+// console.log("New Total: $" + ShoppingCart.getTotal());</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(2)">← IIFE</button>
+<button class="btn btn-primary" onclick="completeSection(3);goToSection(4)">Next: Private Variables →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 4: PRIVATE VARIABLES ============ -->
+<div class="section" id="sec-4">
+<h1>🔒 Private Methods & Variables</h1>
+<p class="section-subtitle">True encapsulation using closures — no classes needed</p>
+
+<h2>Why Privacy Matters</h2>
+<p>Private variables prevent external code from <strong>accidentally modifying internal state</strong>. This is the principle of <strong>encapsulation</strong> — one of the pillars of good software design. Without privacy, any code can break your module's invariants.</p>
+
+<div class="card-grid">
+<div class="feature-card" style="border-color:var(--red)">
+<div class="icon-big">🚫</div>
+<h4>Without Privacy</h4>
+<p>user.password = ""; // Anyone can do this<br>user._balance = -1000; // Oops</p>
+</div>
+<div class="feature-card" style="border-color:var(--green)">
+<div class="icon-big">✅</div>
+<h4>With Closure Privacy</h4>
+<p>password and balance are INVISIBLE to outside code. Only controlled methods can access them.</p>
+</div>
+</div>
+
+<h3>Pattern 1: Factory Functions with Private State</h3>
+<div class="playground" data-id="private-factory">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('private-factory')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('private-factory')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">function createBankAccount(ownerName, initialBalance) {
+  // ====== TRULY PRIVATE ======
+  let balance = initialBalance;
+  let transactionLog = [];
+  const pin = Math.floor(1000 + Math.random() * 9000);
+
+  function logTransaction(type, amount) {
+    transactionLog.push({
+      type,
+      amount,
+      balance,
+      date: new Date().toLocaleString()
+    });
+  }
+
+  // ====== PUBLIC API ======
+  return {
+    get owner() { return ownerName; },
+
+    deposit(amount) {
+      if (amount <= 0) throw new Error("Invalid amount");
+      balance += amount;
+      logTransaction("deposit", amount);
+      console.log("Deposited $" + amount + ". New balance: $" + balance);
+    },
+
+    withdraw(amount, enteredPin) {
+      if (enteredPin !== pin) {
+        console.log("❌ Wrong PIN!");
+        return false;
+      }
+      if (amount > balance) {
+        console.log("❌ Insufficient funds!");
+        return false;
+      }
+      balance -= amount;
+      logTransaction("withdraw", amount);
+      console.log("Withdrew $" + amount + ". New balance: $" + balance);
+      return true;
+    },
+
+    getBalance(enteredPin) {
+      if (enteredPin !== pin) return "Wrong PIN";
+      return "$" + balance;
+    },
+
+    getStatement() {
+      return transactionLog.map(t =>
+        t.type + ": $" + t.amount + " (bal: $" + t.balance + ")"
+      );
+    }
+  };
+}
+
+const account = createBankAccount("Alice", 1000);
+account.deposit(500);
+console.log("Owner:", account.owner);
+console.log("Statement:", account.getStatement());
+
+// Can't access privates!
+console.log("account.balance:", account.balance); // undefined!
+console.log("account.pin:", account.pin); // undefined!
+console.log("account.transactionLog:", account.transactionLog); // undefined!</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 2: Private Methods</h3>
+<div class="playground" data-id="private-methods">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('private-methods')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('private-methods')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">const Validator = (function() {
+  // Private validation rules
+  const rules = {
+    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    phone: /^\d{10,}$/,
+    zipCode: /^\d{5}(-\d{4})?$/
+  };
+
+  // Private helper — NOT accessible outside
+  function _testRule(ruleName, value) {
+    if (!rules[ruleName]) {
+      throw new Error("Unknown rule: " + ruleName);
+    }
+    return rules[ruleName].test(value);
+  }
+
+  // Private helper for formatting
+  function _formatErrors(errors) {
+    return errors.map(e => "• " + e).join("\n");
+  }
+
+  // PUBLIC API
+  return {
+    validateEmail(email) {
+      return _testRule("email", email);
+    },
+
+    validatePhone(phone) {
+      return _testRule("phone", phone);
+    },
+
+    validateForm(data) {
+      const errors = [];
+      if (!_testRule("email", data.email)) errors.push("Invalid email");
+      if (!_testRule("phone", data.phone)) errors.push("Invalid phone");
+      if (!_testRule("zipCode", data.zip)) errors.push("Invalid ZIP");
+
+      return {
+        valid: errors.length === 0,
+        errors: _formatErrors(errors)
+      };
+    },
+
+    // Can add custom rules
+    addRule(name, regex) {
+      rules[name] = regex;
+      console.log("Added rule: " + name);
+    }
+  };
+})();
+
+console.log("Email valid:", Validator.validateEmail("test@example.com"));
+console.log("Phone valid:", Validator.validatePhone("1234567890"));
+
+const result = Validator.validateForm({
+  email: "bad-email",
+  phone: "123",
+  zip: "12345"
+});
+console.log("Form valid:", result.valid);
+console.log("Errors:\n" + result.errors);</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 3: Getters & Setters via Closures</h3>
+<div class="playground" data-id="private-getset">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('private-getset')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('private-getset')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">function createPerson(initialName, initialAge) {
+  // Private with validation through setters
+  let _name = initialName;
+  let _age = initialAge;
+
+  return {
+    getName() { return _name; },
+    setName(newName) {
+      if (typeof newName !== "string" || newName.trim() === "") {
+        throw new Error("Name must be a non-empty string");
+      }
+      _name = newName.trim();
+    },
+
+    getAge() { return _age; },
+    setAge(newAge) {
+      if (typeof newAge !== "number" || newAge < 0 || newAge > 150) {
+        throw new Error("Age must be 0-150");
+      }
+      _age = Math.floor(newAge);
+    },
+
+    greet() {
+      return "Hi, I'm " + _name + " and I'm " + _age + " years old.";
+    }
+  };
+}
+
+const person = createPerson("Alice", 30);
+console.log(person.greet());
+
+person.setName("Bob");
+person.setAge(25);
+console.log(person.greet());
+
+// Validation works:
+try {
+  person.setAge(-5);
+} catch(e) {
+  console.log("Caught:", e.message);
+}
+
+try {
+  person.setName("");
+} catch(e) {
+  console.log("Caught:", e.message);
+}</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<div class="info-box info">
+<div class="label">🔮 Modern Alternative: Class Private Fields</div>
+<p style="margin:0">ES2022 introduced <code>#privateField</code> syntax for classes. However, closure-based privacy is still widely used because: (1) It works everywhere, (2) It's truly private (not just syntactic), (3) Factory functions are more flexible than classes, (4) Many codebases predate class fields.</p>
+</div>
+
+<h3>Closure Privacy vs. Class Private Fields</h3>
+<div class="playground" data-id="private-vs-class">
+<div class="playground-header">
+<h4>🎮 Comparison</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('private-vs-class')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('private-vs-class')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Approach 1: Closure Privacy (works everywhere)
+function createCounter1() {
+  let count = 0;
+  return {
+    increment() { return ++count; },
+    getCount() { return count; }
+  };
+}
+
+// Approach 2: Class Private Fields (ES2022+)
+class Counter2 {
+  #count = 0;
+  increment() { return ++this.#count; }
+  getCount() { return this.#count; }
+}
+
+// Both work the same way:
+const c1 = createCounter1();
+const c2 = new Counter2();
+
+console.log("Closure:", c1.increment(), c1.increment(), c1.getCount());
+console.log("Class:  ", c2.increment(), c2.increment(), c2.getCount());
+
+// Both are truly private:
+console.log("c1.count:", c1.count);     // undefined
+// console.log(c2.#count);              // SyntaxError!</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(3)">← Module Pattern</button>
+<button class="btn btn-primary" onclick="completeSection(4);goToSection(5)">Next: Namespace Pattern →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 5: NAMESPACE PATTERN ============ -->
+<div class="section" id="sec-5">
+<h1>🏗️ The Namespace Pattern</h1>
+<p class="section-subtitle">Organizing large codebases and preventing naming collisions</p>
+
+<h2>The Problem: Global Namespace Pollution</h2>
+<p>In JavaScript, every global variable or function lives on the <strong>window object</strong> (in browsers). When multiple scripts run on a page, they share this global space. If two scripts define a function called <code>init()</code>, the second one <strong>overwrites the first</strong>!</p>
+
+<div class="scope-diagram">
+<div class="scope-box global">
+<span class="scope-label">Global Scope (window)</span>
+<div class="scope-var" style="color:var(--red)">❌ var init = ... (script1.js)</div>
+<div class="scope-var" style="color:var(--red)">❌ var init = ... (script2.js) — OVERWRITES!</div>
+<div class="scope-var" style="color:var(--red)">❌ var helpers = ... (utils.js)</div>
+<div class="scope-var" style="color:var(--red)">❌ var helpers = ... (lib.js) — COLLISION!</div>
+<div class="scope-var" style="color:var(--green)">✅ var MyApp = { ... } — ONE global, organized!</div>
+</div>
+</div>
+
+<h3>Pattern 1: Object Literal Namespace</h3>
+<div class="playground" data-id="ns-object">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ns-object')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ns-object')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// ONE global object = your namespace
+const MyApp = {
+  config: {
+    name: "Awesome App",
+    version: "2.0",
+    debug: true
+  },
+
+  utils: {
+    formatDate: function(date) {
+      return new Date(date).toLocaleDateString();
+    },
+    capitalize: function(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+  },
+
+  models: {
+    User: function(name, email) {
+      return { name, email, createdAt: new Date() };
+    }
+  },
+
+  init: function() {
+    console.log(this.config.name + " v" + this.config.version + " started!");
+  }
+};
+
+MyApp.init();
+console.log(MyApp.utils.capitalize("hello world"));
+console.log(MyApp.utils.formatDate("2024-01-15"));
+const user = MyApp.models.User("Alice", "alice@test.com");
+console.log("User:", user);</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 2: IIFE Namespace (with Privacy)</h3>
+<div class="playground" data-id="ns-iife">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ns-iife')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ns-iife')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">var ACME = ACME || {}; // Safe initialization
+
+ACME.UserService = (function() {
+  // Private to this namespace
+  const API_URL = "https://api.acme.com";
+  let cache = {};
+
+  function fetchFromAPI(endpoint) {
+    console.log("Fetching: " + API_URL + "/" + endpoint);
+    return { data: "mock data for " + endpoint };
+  }
+
+  return {
+    getUser: function(id) {
+      if (cache[id]) {
+        console.log("Cache hit for user " + id);
+        return cache[id];
+      }
+      const user = fetchFromAPI("users/" + id);
+      cache[id] = user;
+      return user;
+    },
+    clearCache: function() {
+      cache = {};
+      console.log("Cache cleared");
+    }
+  };
+})();
+
+ACME.Logger = (function() {
+  let logs = [];
+
+  return {
+    log: function(msg) {
+      logs.push({ msg, time: Date.now() });
+      console.log("[LOG]", msg);
+    },
+    getLogs: function() { return [...logs]; }
+  };
+})();
+
+// Usage:
+ACME.Logger.log("App starting...");
+console.log(ACME.UserService.getUser(1));
+console.log(ACME.UserService.getUser(1)); // cached!
+ACME.Logger.log("Users loaded");</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 3: Namespace Function (Safe Deep Nesting)</h3>
+<div class="playground" data-id="ns-deep">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ns-deep')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ns-deep')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Utility to safely create nested namespaces
+function namespace(nsString) {
+  const parts = nsString.split(".");
+  let parent = (typeof window !== "undefined") ? {} : {};
+
+  // Reuse 'this' context or create fresh
+  let current = parent;
+  for (let i = 0; i < parts.length; i++) {
+    if (!current[parts[i]]) {
+      current[parts[i]] = {};
+    }
+    current = current[parts[i]];
+  }
+  return parent;
+}
+
+// Create deep namespaces safely
+const app = namespace("com.mycompany.app.modules.auth");
+console.log("Namespace created:", JSON.stringify(app, null, 2));
+
+// Real-world approach: Manual safe nesting
+var Company = Company || {};
+Company.App = Company.App || {};
+Company.App.Auth = Company.App.Auth || {};
+Company.App.Utils = Company.App.Utils || {};
+
+Company.App.Auth.login = function(user, pass) {
+  console.log("Logging in:", user);
+  return { token: "abc123", user };
+};
+
+Company.App.Utils.hash = function(str) {
+  return "hashed_" + str;
+};
+
+const result = Company.App.Auth.login("alice", "secret");
+console.log("Login result:", result);
+console.log("Hash:", Company.App.Utils.hash("password"));</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 4: Namespace Injection</h3>
+<div class="playground" data-id="ns-inject">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ns-inject')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ns-inject')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Namespace injection — pass namespace into IIFE
+var MyFramework = {};
+
+// Module 1 injects itself into the namespace
+(function(ns) {
+  let version = "1.0";
+
+  ns.Router = {
+    routes: {},
+    add: function(path, handler) {
+      this.routes[path] = handler;
+      console.log("Route added:", path);
+    },
+    navigate: function(path) {
+      if (this.routes[path]) {
+        this.routes[path]();
+      } else {
+        console.log("404: " + path);
+      }
+    }
+  };
+
+  ns.getVersion = function() { return version; };
+})(MyFramework);
+
+// Module 2 extends the same namespace
+(function(ns) {
+  ns.EventBus = {
+    listeners: {},
+    on: function(event, cb) {
+      if (!this.listeners[event]) this.listeners[event] = [];
+      this.listeners[event].push(cb);
+    },
+    emit: function(event, data) {
+      (this.listeners[event] || []).forEach(cb => cb(data));
+    }
+  };
+})(MyFramework);
+
+// Usage
+MyFramework.Router.add("/home", () => console.log("Home page!"));
+MyFramework.Router.add("/about", () => console.log("About page!"));
+MyFramework.Router.navigate("/home");
+MyFramework.Router.navigate("/about");
+console.log("Framework version:", MyFramework.getVersion());</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<div class="info-box tip">
+<div class="label">💡 Modern Equivalent</div>
+<p style="margin:0">ES6 modules (<code>import/export</code>) have largely replaced the namespace pattern for new projects. However, understanding namespaces is critical for: (1) Working with legacy code, (2) Understanding library internals, (3) Non-module environments (inline scripts, WordPress, etc.), (4) Interview knowledge.</p>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(4)">← Private Variables</button>
+<button class="btn btn-primary" onclick="completeSection(5);goToSection(6)">Next: Advanced Patterns →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 6: ADVANCED PATTERNS ============ -->
+<div class="section" id="sec-6">
+<h1>🧩 Advanced Closure Patterns</h1>
+<p class="section-subtitle">Production-grade patterns used by senior engineers</p>
+
+<h3>Pattern 1: Memoization</h3>
+<p>Cache expensive function results using closures:</p>
+<div class="playground" data-id="adv-memo">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('adv-memo')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('adv-memo')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">function memoize(fn) {
+  const cache = new Map(); // Private cache via closure!
+
+  return function(...args) {
+    const key = JSON.stringify(args);
+
+    if (cache.has(key)) {
+      console.log("  ⚡ Cache hit for:", key);
+      return cache.get(key);
+    }
+
+    console.log("  🔄 Computing for:", key);
+    const result = fn.apply(this, args);
+    cache.set(key, result);
+    return result;
+  };
+}
+
+// Expensive function
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// Memoized version
+const fastFib = memoize(function fib(n) {
+  if (n <= 1) return n;
+  return fastFib(n - 1) + fastFib(n - 2);
+});
+
+console.log("fib(10):", fastFib(10));
+console.log("fib(10) again:", fastFib(10)); // instant!
+console.log("fib(8):", fastFib(8)); // already cached!</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 2: Currying</h3>
+<div class="playground" data-id="adv-curry">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('adv-curry')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('adv-curry')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Generic curry function using closures
+function curry(fn) {
+  return function curried(...args) {
+    if (args.length >= fn.length) {
+      return fn.apply(this, args);
+    }
+    // Return a new function that collects more args (closure!)
+    return function(...moreArgs) {
+      return curried.apply(this, args.concat(moreArgs));
+    };
+  };
+}
+
+// Example: configurable logger
+const log = curry(function(level, prefix, message) {
+  console.log("[" + level + "] " + prefix + ": " + message);
+});
+
+// Create specialized versions via partial application
+const errorLog = log("ERROR");
+const errorAuth = errorLog("Auth");
+const infoLog = log("INFO");
+
+errorAuth("Login failed");
+errorAuth("Token expired");
+infoLog("App", "Started successfully");
+log("WARN")("DB")("Connection slow");
+
+// Practical: event handler factory
+const on = curry((event, element, handler) => {
+  console.log("Registered '" + event + "' on " + element);
+});
+
+const onClick = on("click");
+onClick("button#save", () => {});
+onClick("button#delete", () => {});</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 3: Once / Singleton</h3>
+<div class="playground" data-id="adv-once">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('adv-once')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('adv-once')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// "once" — function that only runs once
+function once(fn) {
+  let called = false;   // Closure variable!
+  let result;
+
+  return function(...args) {
+    if (!called) {
+      called = true;
+      result = fn.apply(this, args);
+      console.log("✅ Function executed!");
+    } else {
+      console.log("⏭️ Already called, returning cached result");
+    }
+    return result;
+  };
+}
+
+const initDatabase = once(function(config) {
+  console.log("  Connecting to " + config.host + "...");
+  return { connected: true, host: config.host };
+});
+
+// Only first call actually runs
+const db1 = initDatabase({ host: "localhost" });
+const db2 = initDatabase({ host: "remote-server" }); // ignored!
+const db3 = initDatabase({ host: "another-server" }); // ignored!
+
+console.log("db1 === db2:", db1 === db2); // true!
+
+// Singleton pattern using closures
+const Database = (function() {
+  let instance = null;
+
+  function createInstance(config) {
+    return {
+      host: config.host,
+      query: function(sql) {
+        return "Result from " + this.host + ": " + sql;
+      }
+    };
+  }
+
+  return {
+    getInstance: function(config) {
+      if (!instance) {
+        instance = createInstance(config);
+        console.log("New DB instance created");
+      }
+      return instance;
+    }
+  };
+})();
+
+const a = Database.getInstance({ host: "db1.example.com" });
+const b = Database.getInstance({ host: "db2.example.com" });
+console.log("Same instance:", a === b);</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 4: Pub/Sub (Observer) Pattern</h3>
+<div class="playground" data-id="adv-pubsub">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('adv-pubsub')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('adv-pubsub')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">const EventEmitter = (function() {
+  const events = {};  // Private event store
+
+  return {
+    on(event, callback) {
+      if (!events[event]) events[event] = [];
+      events[event].push(callback);
+      // Return unsubscribe function (closure!)
+      return function unsubscribe() {
+        events[event] = events[event].filter(cb => cb !== callback);
+        console.log("  Unsubscribed from: " + event);
+      };
+    },
+
+    emit(event, ...data) {
+      if (!events[event]) return;
+      console.log("📢 Emitting: " + event);
+      events[event].forEach(cb => cb(...data));
+    },
+
+    listenerCount(event) {
+      return (events[event] || []).length;
+    }
+  };
+})();
+
+// Subscribe
+const unsub1 = EventEmitter.on("userLogin", (user) => {
+  console.log("  Welcome back, " + user + "!");
+});
+
+EventEmitter.on("userLogin", (user) => {
+  console.log("  Logging activity for " + user);
+});
+
+// Emit
+EventEmitter.emit("userLogin", "Alice");
+console.log("Listeners:", EventEmitter.listenerCount("userLogin"));
+
+// Unsubscribe first listener
+unsub1();
+EventEmitter.emit("userLogin", "Bob");
+console.log("Listeners:", EventEmitter.listenerCount("userLogin"));</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<h3>Pattern 5: Middleware Pipeline</h3>
+<div class="playground" data-id="adv-middleware">
+<div class="playground-header">
+<h4>🎮 Interactive Playground</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('adv-middleware')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('adv-middleware')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Express-like middleware using closures
+function createPipeline() {
+  const middlewares = [];  // Private!
+
+  return {
+    use(fn) {
+      middlewares.push(fn);
+      return this; // chainable
+    },
+
+    execute(context) {
+      // Each middleware calls next() — a closure!
+      function runMiddleware(index) {
+        if (index >= middlewares.length) return;
+
+        const next = () => runMiddleware(index + 1);
+        middlewares[index](context, next);
+      }
+
+      runMiddleware(0);
+      return context;
+    }
+  };
+}
+
+const pipeline = createPipeline();
+
+pipeline
+  .use((ctx, next) => {
+    console.log("1. Auth check...");
+    ctx.user = "Alice";
+    next();
+  })
+  .use((ctx, next) => {
+    console.log("2. Logging: " + ctx.user + " accessing " + ctx.path);
+    next();
+  })
+  .use((ctx, next) => {
+    console.log("3. Processing request...");
+    ctx.response = { status: 200, data: "Hello " + ctx.user };
+    next();
+  })
+  .use((ctx, next) => {
+    console.log("4. Response:", JSON.stringify(ctx.response));
+  });
+
+pipeline.execute({ path: "/api/data" });</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(5)">← Namespace</button>
+<button class="btn btn-primary" onclick="completeSection(6);goToSection(7)">Next: Pitfalls →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 7: PITFALLS ============ -->
+<div class="section" id="sec-7">
+<h1>⚠️ Pitfalls & Common Mistakes</h1>
+<p class="section-subtitle">Traps that catch even experienced developers — and how to avoid them</p>
+
+<div class="mistake-card">
+<div class="mistake-header" onclick="toggleMistake(this)">
+<div class="num">1</div>
+<h4>The Classic Loop Trap (var + closures)</h4>
+<span class="toggle-icon">▼</span>
+</div>
+<div class="mistake-body">
+<p>The most famous closure gotcha. All closures share the <strong>same variable reference</strong>:</p>
+<div class="mistake-split">
+<div class="mistake-bad">
+<div class="tag">❌ Bug</div>
+<pre style="margin:0;color:var(--text2)">for (var i = 0; i < 3; i++) {
+  setTimeout(function() {
+    console.log(i); // 3, 3, 3 !!!
+  }, 100);
+}
+// All callbacks see i=3 (final value)</pre>
+</div>
+<div class="mistake-good">
+<div class="tag">✅ Fix 1: let</div>
+<pre style="margin:0;color:var(--text2)">for (let i = 0; i < 3; i++) {
+  setTimeout(function() {
+    console.log(i); // 0, 1, 2 ✓
+  }, 100);
+}
+// let creates new binding per iteration</pre>
+</div>
+</div>
+<div class="playground" data-id="pitfall-loop">
+<div class="playground-header">
+<h4>🎮 Try Both Versions</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('pitfall-loop')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('pitfall-loop')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// ❌ BUG with var:
+console.log("--- var (buggy) ---");
+for (var i = 0; i < 3; i++) {
+  setTimeout(function() {
+    console.log("var i:", i); // All 3!
+  }, 10);
+}
+
+// ✅ FIX 1: use let
+console.log("--- let (fixed) ---");
+for (let j = 0; j < 3; j++) {
+  setTimeout(function() {
+    console.log("let j:", j); // 0, 1, 2
+  }, 50);
+}
+
+// ✅ FIX 2: IIFE (pre-ES6 solution)
+console.log("--- IIFE (fixed) ---");
+for (var k = 0; k < 3; k++) {
+  (function(captured) {
+    setTimeout(function() {
+      console.log("IIFE k:", captured);
+    }, 100);
+  })(k); // k is captured by value!
+}</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="mistake-card">
+<div class="mistake-header" onclick="toggleMistake(this)">
+<div class="num">2</div>
+<h4>Stale Closures (React Hooks Trap)</h4>
+<span class="toggle-icon">▼</span>
+</div>
+<div class="mistake-body">
+<p>Closures capture variables at a <strong>point in time</strong>. If the variable changes later, the closure still sees the old value:</p>
+<div class="playground" data-id="pitfall-stale">
+<div class="playground-header">
+<h4>🎮 Interactive Demo</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('pitfall-stale')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('pitfall-stale')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Simulating React's useState stale closure problem
+function createComponent() {
+  let state = 0;
+
+  function handleClick() {
+    // This captures 'state' at creation time
+    const currentState = state; // snapshot!
+    setTimeout(() => {
+      console.log("Stale value:", currentState); // old!
+      console.log("Fresh value:", state);        // current!
+    }, 100);
+  }
+
+  function increment() {
+    state++;
+    console.log("State is now:", state);
+  }
+
+  return { handleClick, increment };
+}
+
+const comp = createComponent();
+comp.handleClick(); // schedules with state=0
+comp.increment();   // state=1
+comp.increment();   // state=2
+// After timeout: stale=0, fresh=2!
+
+// FIX: Use a ref-like pattern
+function createFixedComponent() {
+  let stateRef = { current: 0 };
+
+  function handleClick() {
+    setTimeout(() => {
+      console.log("Always current:", stateRef.current);
+    }, 200);
+  }
+
+  function increment() {
+    stateRef.current++;
+  }
+
+  return { handleClick, increment };
+}
+
+const fixed = createFixedComponent();
+fixed.handleClick();
+fixed.increment();
+fixed.increment();</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="mistake-card">
+<div class="mistake-header" onclick="toggleMistake(this)">
+<div class="num">3</div>
+<h4>Memory Leaks from Closures</h4>
+<span class="toggle-icon">▼</span>
+</div>
+<div class="mistake-body">
+<p>Closures keep their entire outer scope alive. If a closure references a <strong>large object</strong> and the closure lives a long time, that object <strong>can't be garbage collected</strong>:</p>
+<div class="mistake-split">
+<div class="mistake-bad">
+<div class="tag">❌ Memory leak</div>
+<pre style="margin:0;color:var(--text2)">function createHandler() {
+  const hugeData = new Array(1000000);
+  // hugeData stays in memory forever
+  // because the closure references it!
+  return function() {
+    console.log(hugeData.length);
+  };
+}
+const handler = createHandler();
+// hugeData can NEVER be GC'd</pre>
+</div>
+<div class="mistake-good">
+<div class="tag">✅ Fixed</div>
+<pre style="margin:0;color:var(--text2)">function createHandler() {
+  const hugeData = new Array(1000000);
+  const len = hugeData.length; // extract what you need
+  // hugeData can now be GC'd!
+  return function() {
+    console.log(len);
+  };
+}
+const handler = createHandler();
+// Only 'len' (a number) is kept</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div class="mistake-card">
+<div class="mistake-header" onclick="toggleMistake(this)">
+<div class="num">4</div>
+<h4>`this` Context Lost in Closures</h4>
+<span class="toggle-icon">▼</span>
+</div>
+<div class="mistake-body">
+<p>Regular functions have their own <code>this</code>. Inside a closure, <code>this</code> might not be what you expect:</p>
+<div class="playground" data-id="pitfall-this">
+<div class="playground-header">
+<h4>🎮 Interactive Demo</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('pitfall-this')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('pitfall-this')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">const user = {
+  name: "Alice",
+  friends: ["Bob", "Charlie"],
+
+  // ❌ BUG: `this` inside regular function callback
+  showFriendsBuggy: function() {
+    this.friends.forEach(function(friend) {
+      // 'this' is undefined (strict) or window!
+      // console.log(this.name + " knows " + friend);
+      console.log("Bug: 'this' is:", typeof this.name);
+    });
+  },
+
+  // ✅ FIX 1: Arrow function (inherits `this`)
+  showFriendsArrow: function() {
+    this.friends.forEach((friend) => {
+      console.log(this.name + " knows " + friend);
+    });
+  },
+
+  // ✅ FIX 2: Save `this` in variable (old pattern)
+  showFriendsSelf: function() {
+    const self = this;
+    this.friends.forEach(function(friend) {
+      console.log(self.name + " knows " + friend);
+    });
+  },
+
+  // ✅ FIX 3: bind()
+  showFriendsBind: function() {
+    this.friends.forEach(function(friend) {
+      console.log(this.name + " knows " + friend);
+    }.bind(this));
+  }
+};
+
+console.log("--- Bug ---");
+user.showFriendsBuggy();
+console.log("--- Arrow Fix ---");
+user.showFriendsArrow();
+console.log("--- Self Fix ---");
+user.showFriendsSelf();</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="mistake-card">
+<div class="mistake-header" onclick="toggleMistake(this)">
+<div class="num">5</div>
+<h4>Accidentally Sharing Mutable State</h4>
+<span class="toggle-icon">▼</span>
+</div>
+<div class="mistake-body">
+<p>If a module returns a reference to a private array/object, external code can mutate it:</p>
+<div class="playground" data-id="pitfall-mutable">
+<div class="playground-header">
+<h4>🎮 Interactive Demo</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('pitfall-mutable')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('pitfall-mutable')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// ❌ BUG: Leaking private reference
+const BadModule = (function() {
+  const items = ["apple", "banana"];
+  return {
+    getItems: function() {
+      return items; // Returns THE actual array!
+    }
+  };
+})();
+
+const leaked = BadModule.getItems();
+leaked.push("HACKED!");
+leaked.length = 0; // Destroys all items!
+console.log("❌ Corrupted:", BadModule.getItems()); // []
+
+// ✅ FIX: Return copies
+const GoodModule = (function() {
+  const items = ["apple", "banana"];
+  return {
+    getItems: function() {
+      return [...items]; // Return a COPY!
+    },
+    addItem: function(item) {
+      items.push(item); // Controlled mutation
+    }
+  };
+})();
+
+const safe = GoodModule.getItems();
+safe.push("HACKED!");
+console.log("✅ Still safe:", GoodModule.getItems());</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="mistake-card">
+<div class="mistake-header" onclick="toggleMistake(this)">
+<div class="num">6</div>
+<h4>IIFE Semicolon Trap</h4>
+<span class="toggle-icon">▼</span>
+</div>
+<div class="mistake-body">
+<p>Missing semicolons before IIFEs cause JavaScript to interpret the previous expression and the IIFE as one statement:</p>
+<div class="mistake-split">
+<div class="mistake-bad">
+<div class="tag">❌ Breaks</div>
+<pre style="margin:0;color:var(--text2)">const x = 42
+(function() {
+  // JS reads this as:
+  // const x = 42(function(){...})()
+  // TypeError: 42 is not a function!
+})();</pre>
+</div>
+<div class="mistake-good">
+<div class="tag">✅ Safe</div>
+<pre style="margin:0;color:var(--text2)">const x = 42;  // semicolon!
+(function() {
+  console.log("Works!");
+})();
+
+// Or defensive semicolon:
+;(function() {
+  console.log("Also works!");
+})();</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(6)">← Advanced Patterns</button>
+<button class="btn btn-primary" onclick="completeSection(7);goToSection(8)">Next: Exercises →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 8: EXERCISES ============ -->
+<div class="section" id="sec-8">
+<h1>💪 Practice Exercises</h1>
+<p class="section-subtitle">Hands-on challenges to cement your understanding</p>
+
+<div class="exercise">
+<h4>💪 Exercise 1: Rate Limiter</h4>
+<div class="task">
+<p style="margin:0"><strong>Task:</strong> Create a <code>createRateLimiter(maxCalls, timeWindow)</code> function that returns a function. The returned function should only allow <code>maxCalls</code> within <code>timeWindow</code> milliseconds. If the limit is exceeded, it should log "Rate limited!" instead of executing.</p>
+</div>
+<button class="hint-btn" onclick="toggleHint(this)">💡 Show Hint</button>
+<div class="hint">Use an array to track timestamps of calls. On each call, filter out timestamps older than the timeWindow. If the remaining count is less than maxCalls, execute and push the new timestamp. Otherwise, reject.</div>
+<div class="playground" data-id="ex-ratelimit">
+<div class="playground-header">
+<h4>Your Solution</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ex-ratelimit')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ex-ratelimit')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">function createRateLimiter(maxCalls, timeWindowMs) {
+  // Your implementation here
+  // Use closures to track call timestamps
+
+}
+
+// Test: allow 3 calls per 1000ms
+const limited = createRateLimiter(3, 1000);
+
+// Should work:
+// limited(() => console.log("Call 1")); // ✓
+// limited(() => console.log("Call 2")); // ✓
+// limited(() => console.log("Call 3")); // ✓
+// limited(() => console.log("Call 4")); // Rate limited!</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+
+<div class="exercise">
+<h4>💪 Exercise 2: State Machine Module</h4>
+<div class="task">
+<p style="margin:0"><strong>Task:</strong> Build a <code>TrafficLight</code> module (IIFE) with private state. It should cycle through "red" → "green" → "yellow" → "red". Expose methods: <code>next()</code> (advance to next state), <code>current()</code> (get current state), <code>reset()</code> (back to red).</p>
+</div>
+<button class="hint-btn" onclick="toggleHint(this)">💡 Show Hint</button>
+<div class="hint">Store the states in a private array: <code>["red", "green", "yellow"]</code>. Keep a private <code>currentIndex</code>. <code>next()</code> increments the index modulo 3. <code>current()</code> returns <code>states[currentIndex]</code>.</div>
+<div class="playground" data-id="ex-statemachine">
+<div class="playground-header">
+<h4>Your Solution</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ex-statemachine')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ex-statemachine')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">const TrafficLight = (function() {
+  // Your implementation here
+
+})();
+
+// Test:
+// console.log(TrafficLight.current()); // "red"
+// TrafficLight.next();
+// console.log(TrafficLight.current()); // "green"
+// TrafficLight.next();
+// console.log(TrafficLight.current()); // "yellow"
+// TrafficLight.next();
+// console.log(TrafficLight.current()); // "red"
+// TrafficLight.reset();
+// console.log(TrafficLight.current()); // "red"</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+
+<div class="exercise">
+<h4>💪 Exercise 3: Private Event System with Namespaces</h4>
+<div class="task">
+<p style="margin:0"><strong>Task:</strong> Create a namespaced event system: <code>App.Events</code>. It should have private listeners storage and expose: <code>on(event, callback)</code>, <code>off(event, callback)</code>, <code>emit(event, data)</code>, and <code>once(event, callback)</code> (fires only once then auto-removes). Use the namespace + module pattern combination.</p>
+</div>
+<button class="hint-btn" onclick="toggleHint(this)">💡 Show Hint</button>
+<div class="hint">Create <code>var App = App || {}</code>, then <code>App.Events = (function() {...})()</code>. For <code>once()</code>, create a wrapper function that calls the callback and then calls <code>off()</code> to remove itself.</div>
+<div class="playground" data-id="ex-events">
+<div class="playground-header">
+<h4>Your Solution</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ex-events')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ex-events')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">var App = App || {};
+
+App.Events = (function() {
+  // Your implementation here
+
+})();
+
+// Test:
+// App.Events.on("save", (data) => console.log("Saved:", data));
+// App.Events.once("init", () => console.log("Init called!"));
+//
+// App.Events.emit("save", { id: 1 });
+// App.Events.emit("init");  // fires
+// App.Events.emit("init");  // does NOT fire (once!)</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+
+<div class="exercise">
+<h4>💪 Exercise 4: Compose & Pipe</h4>
+<div class="task">
+<p style="margin:0"><strong>Task:</strong> Implement <code>compose(...fns)</code> and <code>pipe(...fns)</code> using closures. <code>compose</code> applies functions right-to-left. <code>pipe</code> applies left-to-right. They should return a new function.</p>
+</div>
+<button class="hint-btn" onclick="toggleHint(this)">💡 Show Hint</button>
+<div class="hint"><code>pipe = (...fns) => (x) => fns.reduce((acc, fn) => fn(acc), x)</code>. Compose is the same but with <code>reduceRight</code>. The closure captures the <code>fns</code> array.</div>
+<div class="playground" data-id="ex-compose">
+<div class="playground-header">
+<h4>Your Solution</h4>
+<div><button class="btn btn-reset btn-sm" onclick="resetPlayground('ex-compose')">↺ Reset</button>
+<button class="btn btn-run btn-sm" onclick="runPlayground('ex-compose')">▶ Run</button></div>
+</div>
+<div class="playground-body">
+<textarea class="code-input">// Implement compose and pipe
+
+const add10 = x => x + 10;
+const multiply2 = x => x * 2;
+const subtract3 = x => x - 3;
+
+// compose(f, g, h)(x) = f(g(h(x)))
+// pipe(f, g, h)(x) = h(g(f(x)))
+
+// const transform = pipe(add10, multiply2, subtract3);
+// console.log(transform(5)); // ((5+10)*2)-3 = 27
+
+// const transform2 = compose(subtract3, multiply2, add10);
+// console.log(transform2(5)); // subtract3(multiply2(add10(5))) = 27</textarea>
+<div class="code-output"></div>
+</div>
+</div>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(7)">← Pitfalls</button>
+<button class="btn btn-primary" onclick="completeSection(8);goToSection(9)">Next: Quiz Challenge →</button>
+</div>
+</div>
+
+<!-- ============ SECTION 9: QUIZ ============ -->
+<div class="section" id="sec-9">
+<h1>🎯 Quiz Challenge</h1>
+<p class="section-subtitle">Test your mastery with 10 interview-level questions</p>
+
+<div id="quizContainer"></div>
+
+<div id="quizResult" class="quiz-result" style="display:none">
+<div class="score" id="quizScore">0/10</div>
+<div class="label" id="quizLabel">Loading...</div>
+<button class="btn btn-primary" onclick="resetQuiz()" style="margin-top:20px">🔄 Retake Quiz</button>
+</div>
+
+<div class="nav-btn-row">
+<button class="btn btn-reset" onclick="goToSection(8)">← Exercises</button>
+<button class="btn btn-primary" onclick="completeSection(9);goToSection(0)">🏠 Back to Home</button>
+</div>
+</div>
+
+</main>
+
+<!-- ACHIEVEMENT POPUP -->
+<div class="achievement-popup" id="achievementPopup">
+<div class="ach-icon">🏆</div>
+<div class="ach-text">
+<h5>Achievement Unlocked!</h5>
+<p id="achievementText">Section Complete</p>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// NAVIGATION & PROGRESS
+// =============================================
+const sections = [
+  { id: 0, title: 'Welcome', icon: '🏠' },
+  { id: 1, title: 'Closure Deep Dive', icon: '🔍' },
+  { id: 2, title: 'IIFE', icon: '⚡' },
+  { id: 3, title: 'Module Pattern', icon: '📦' },
+  { id: 4, title: 'Private Variables', icon: '🔒' },
+  { id: 5, title: 'Namespace Pattern', icon: '🏗️' },
+  { id: 6, title: 'Advanced Patterns', icon: '🧩' },
+  { id: 7, title: 'Pitfalls & Mistakes', icon: '⚠️' },
+  { id: 8, title: 'Exercises', icon: '💪' },
+  { id: 9, title: 'Quiz Challenge', icon: '🎯' }
+];
+
+let completedSections = new Set(JSON.parse(localStorage.getItem('closureMasteryCompleted') || '[]'));
+let xp = parseInt(localStorage.getItem('closureMasteryXP') || '0');
+let currentSection = 0;
+
+function buildNav() {
+  const navList = document.getElementById('navList');
+  navList.innerHTML = sections.map(s => `
+    <div class="nav-item ${s.id === currentSection ? 'active' : ''} ${completedSections.has(s.id) ? 'completed' : ''}"
+         onclick="goToSection(${s.id})" data-id="${s.id}">
+      <span class="icon">${s.icon}</span>
+      <span>${s.title}</span>
+      <span class="check">✓</span>
+    </div>
+  `).join('');
+}
+
+function goToSection(id) {
+  currentSection = id;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  buildNav();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  closeSidebar();
+}
+
+function completeSection(id) {
+  if (!completedSections.has(id)) {
+    completedSections.add(id);
+    localStorage.setItem('closureMasteryCompleted', JSON.stringify([...completedSections]));
+    addXP(50);
+    showAchievement(sections[id].icon + ' ' + sections[id].title + ' completed!');
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = sections.length - 1; // exclude welcome
+  const done = [...completedSections].filter(id => id > 0).length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% Complete';
+  document.getElementById('xpBadge').textContent = xp + ' XP';
+  buildNav();
+}
+
+function addXP(amount) {
+  xp += amount;
+  localStorage.setItem('closureMasteryXP', xp.toString());
+  updateProgress();
+}
+
+function showAchievement(text) {
+  const el = document.getElementById('achievementPopup');
+  document.getElementById('achievementText').textContent = text;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + type;
+  setTimeout(() => el.classList.add('show'), 10);
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Mobile sidebar
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+document.getElementById('menuToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+});
+document.getElementById('overlay').addEventListener('click', closeSidebar);
+
+// =============================================
+// CODE PLAYGROUND
+// =============================================
+const originalCode = {};
+
+function initPlaygrounds() {
+  document.querySelectorAll('.playground').forEach(pg => {
+    const id = pg.dataset.id;
+    const textarea = pg.querySelector('.code-input');
+    if (textarea) {
+      originalCode[id] = textarea.value;
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const start = this.selectionStart;
+          const end = this.selectionEnd;
+          this.value = this.value.substring(0, start) + '  ' + this.value.substring(end);
+          this.selectionStart = this.selectionEnd = start + 2;
+        }
+      });
+    }
+  });
+}
+
+function runPlayground(id) {
+  const pg = document.querySelector(`.playground[data-id="${id}"]`);
+  const code = pg.querySelector('.code-input').value;
+  const output = pg.querySelector('.code-output');
+
+  const logs = [];
+  const customConsole = {
+    log: (...args) => {
+      logs.push(args.map(a => {
+        if (a === undefined) return 'undefined';
+        if (a === null) return 'null';
+        if (typeof a === 'object') {
+          try { return JSON.stringify(a, null, 2); }
+          catch(e) { return String(a); }
+        }
+        return String(a);
+      }).join(' '));
+    },
+    error: (...args) => logs.push('❌ ' + args.join(' ')),
+    warn: (...args) => logs.push('⚠️ ' + args.join(' '))
+  };
+
+  try {
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    let fn;
+    if (code.includes('await')) {
+      fn = new AsyncFunction('console', code);
+    } else {
+      fn = new Function('console', code);
+    }
+    const result = fn(customConsole);
+
+    if (result instanceof Promise) {
+      result.then(() => {
+        output.textContent = logs.join('\n') || '(no output)';
+        output.className = 'code-output';
+      }).catch(e => {
+        logs.push('❌ Error: ' + e.message);
+        output.textContent = logs.join('\n');
+        output.className = 'code-output error';
+      });
+      // Show immediate sync output
+      setTimeout(() => {
+        output.textContent = logs.join('\n') || '⏳ Waiting for async...';
+        output.className = 'code-output';
+      }, 20);
+      setTimeout(() => {
+        output.textContent = logs.join('\n') || '(no output)';
+        output.className = 'code-output';
+      }, 250);
+    } else {
+      output.textContent = logs.join('\n') || '(no output)';
+      output.className = 'code-output';
+    }
+  } catch(e) {
+    logs.push('❌ Error: ' + e.message);
+    output.textContent = logs.join('\n');
+    output.className = 'code-output error';
+  }
+}
+
+function resetPlayground(id) {
+  const pg = document.querySelector(`.playground[data-id="${id}"]`);
+  const textarea = pg.querySelector('.code-input');
+  const output = pg.querySelector('.code-output');
+  if (originalCode[id]) textarea.value = originalCode[id];
+  output.textContent = '';
+  output.className = 'code-output';
+}
+
+// =============================================
+// IIFE ANIMATION
+// =============================================
+function animateIIFE() {
+  const steps = ['iifeStep1', 'iifeStep2', 'iifeStep3', 'iifeStep4'];
+  steps.forEach(s => document.getElementById(s).classList.remove('active'));
+
+  steps.forEach((s, i) => {
+    setTimeout(() => {
+      if (i > 0) document.getElementById(steps[i-1]).classList.remove('active');
+      document.getElementById(s).classList.add('active');
+    }, i * 700);
+  });
+
+  setTimeout(() => {
+    document.getElementById(steps[steps.length-1]).classList.remove('active');
+  }, steps.length * 700 + 500);
+}
+
+// =============================================
+// HINTS & MISTAKES TOGGLE
+// =============================================
+function toggleHint(btn) {
+  const hint = btn.nextElementSibling;
+  hint.classList.toggle('show');
+  btn.textContent = hint.classList.contains('show') ? '🙈 Hide Hint' : '💡 Show Hint';
+}
+
+function toggleMistake(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// Open first mistake by default
+document.addEventListener('DOMContentLoaded', () => {
+  const firstMistake = document.querySelector('.mistake-header');
+  if (firstMistake) {
+    firstMistake.classList.add('open');
+    firstMistake.nextElementSibling.classList.add('open');
+  }
+});
+
+// =============================================
+// QUIZ
+// =============================================
+const quizQuestions = [
+  {
+    q: 'What will this code output?<br><pre style="background:var(--code-bg);padding:12px;border-radius:8px;margin:8px 0;font-size:13px">function outer() {\n  let x = 10;\n  function inner() {\n    console.log(x);\n  }\n  x = 20;\n  return inner;\n}\nouter()();</pre>',
+    options: ['10', '20', 'undefined', 'ReferenceError'],
+    correct: 1,
+    explanation: 'Closures capture variables by <strong>reference</strong>, not by value. When inner() executes, x has already been changed to 20. The closure sees the current value of x at the time of execution.'
+  },
+  {
+    q: 'Which of the following is a valid IIFE syntax?',
+    options: [
+      'function(){}()',
+      '(function(){})()',
+      'function(){}.()',
+      'invoke function(){}'
+    ],
+    correct: 1,
+    explanation: 'An IIFE requires wrapping the function in parentheses to make it an expression: <code>(function(){})()</code>. Without the wrapping parens, JS tries to parse it as a function declaration (which requires a name).'
+  },
+  {
+    q: 'What is the main advantage of the Revealing Module Pattern over the basic Module Pattern?',
+    options: [
+      'Better performance',
+      'Smaller file size',
+      'Clearer API — all functions defined privately, then revealed in return',
+      'Supports async/await'
+    ],
+    correct: 2,
+    explanation: 'The Revealing Module Pattern defines all functions as private first, then maps them to public names in the return object. This gives a cleaner overview of the public API and keeps function definitions consistent.'
+  },
+  {
+    q: 'What will this code log?<br><pre style="background:var(--code-bg);padding:12px;border-radius:8px;margin:8px 0;font-size:13px">for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}</pre>',
+    options: ['0 1 2', '3 3 3', '0 0 0', 'undefined undefined undefined'],
+    correct: 1,
+    explanation: 'The classic closure trap! <code>var</code> is function-scoped, so all three callbacks share the same <code>i</code>. By the time setTimeout fires, the loop has finished and <code>i</code> is 3. Use <code>let</code> or an IIFE to fix this.'
+  },
+  {
+    q: 'In the Module Pattern, how are private variables achieved?',
+    options: [
+      'Using the private keyword',
+      'Using # prefix on variable names',
+      'Variables declared inside an IIFE/closure that aren\'t returned',
+      'Using Object.defineProperty with enumerable: false'
+    ],
+    correct: 2,
+    explanation: 'Private variables in the Module Pattern are simply variables declared inside the IIFE scope. Since they\'re not included in the returned object, they\'re inaccessible from outside — the closure keeps them alive but hidden.'
+  },
+  {
+    q: 'What does this code return?<br><pre style="background:var(--code-bg);padding:12px;border-radius:8px;margin:8px 0;font-size:13px">const module = (function() {\n  let items = [1, 2, 3];\n  return {\n    getItems: () => items\n  };\n})();\nconst ref = module.getItems();\nref.push(4);\nconsole.log(module.getItems().length);</pre>',
+    options: ['3', '4', 'undefined', 'TypeError'],
+    correct: 1,
+    explanation: 'This is the <strong>mutable state leak pitfall</strong>! <code>getItems()</code> returns a direct reference to the private array. External code can modify it. The fix is to return a copy: <code>[...items]</code>.'
+  },
+  {
+    q: 'What is the primary purpose of the Namespace Pattern?',
+    options: [
+      'To make code run faster',
+      'To prevent global namespace pollution and naming collisions',
+      'To enable async programming',
+      'To replace ES6 modules'
+    ],
+    correct: 1,
+    explanation: 'The Namespace Pattern organizes code under a single (or few) global objects instead of polluting the global scope with many variables. This prevents naming collisions between scripts.'
+  },
+  {
+    q: 'What will this code output?<br><pre style="background:var(--code-bg);padding:12px;border-radius:8px;margin:8px 0;font-size:13px">function once(fn) {\n  let called = false;\n  return function(...args) {\n    if (!called) {\n      called = true;\n      return fn(...args);\n    }\n  };\n}\nconst init = once((x) => x * 2);\nconsole.log(init(5));\nconsole.log(init(10));</pre>',
+    options: ['10, 20', '10, 10', '10, undefined', '5, 10'],
+    correct: 2,
+    explanation: 'The <code>once</code> function uses a closure over <code>called</code>. The first call returns <code>5 * 2 = 10</code> and sets <code>called = true</code>. The second call skips the body (no return statement), so it returns <code>undefined</code>.'
+  },
+  {
+    q: 'What is Module Augmentation?',
+    options: [
+      'Making modules bigger in file size',
+      'Adding new features to an existing module after its creation',
+      'Compressing modules for production',
+      'Converting modules to classes'
+    ],
+    correct: 1,
+    explanation: 'Module Augmentation passes an existing module into a new IIFE that adds new properties/methods and returns the extended module. This allows splitting module code across files while maintaining the pattern.'
+  },
+  {
+    q: 'Why does the following IIFE cause an error?<br><pre style="background:var(--code-bg);padding:12px;border-radius:8px;margin:8px 0;font-size:13px">const value = 42\n(function() {\n  console.log("hello");\n})()</pre>',
+    options: [
+      'IIFE syntax is wrong',
+      'JS interprets it as 42(function(){...})()',
+      'const cannot be used before IIFE',
+      'Missing return statement'
+    ],
+    correct: 1,
+    explanation: 'Without a semicolon after <code>42</code>, JS interprets the <code>(</code> as a function call: <code>42(function(){...})()</code>. Since 42 is not a function, it throws TypeError. Always use semicolons before IIFEs, or start with <code>;(function...</code>.'
+  }
+];
+
+let quizAnswers = {};
+let quizSubmitted = false;
+
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = quizQuestions.map((q, i) => `
+    <div class="quiz-card" id="quiz-q-${i}">
+      <div class="question-num">Question ${i + 1} of ${quizQuestions.length}</div>
+      <h4>${q.q}</h4>
+      <div class="quiz-options">
+        ${q.options.map((opt, j) => `
+          <div class="quiz-opt" onclick="selectAnswer(${i}, ${j})" data-q="${i}" data-opt="${j}">
+            <strong>${String.fromCharCode(65 + j)}.</strong> ${opt}
+          </div>
+        `).join('')}
+      </div>
+      <div class="quiz-explanation" id="quiz-exp-${i}">
+        ${q.explanation}
+      </div>
+    </div>
+  `).join('') + `
+    <div style="text-align:center;margin:32px 0">
+      <button class="btn btn-primary" onclick="submitQuiz()" id="submitQuizBtn" style="font-size:16px;padding:14px 40px">
+        📝 Submit Answers
+      </button>
+    </div>
+  `;
+}
+
+function selectAnswer(qIndex, optIndex) {
+  if (quizSubmitted) return;
+
+  quizAnswers[qIndex] = optIndex;
+
+  // Update UI
+  document.querySelectorAll(`[data-q="${qIndex}"]`).forEach(el => {
+    el.classList.remove('selected');
+  });
+  document.querySelector(`[data-q="${qIndex}"][data-opt="${optIndex}"]`).classList.add('selected');
+}
+
+function submitQuiz() {
+  if (Object.keys(quizAnswers).length < quizQuestions.length) {
+    showToast('Please answer all questions first!', 'error');
+    return;
+  }
+
+  quizSubmitted = true;
+  let score = 0;
+
+  quizQuestions.forEach((q, i) => {
+    const userAnswer = quizAnswers[i];
+    const isCorrect = userAnswer === q.correct;
+    if (isCorrect) score++;
+
+    document.querySelectorAll(`[data-q="${i}"]`).forEach(el => {
+      el.classList.add('disabled');
+      const optIdx = parseInt(el.dataset.opt);
+      if (optIdx === q.correct) el.classList.add('correct');
+      if (optIdx === userAnswer && !isCorrect) el.classList.add('wrong');
+    });
+
+    document.getElementById(`quiz-exp-${i}`).classList.add('show');
+  });
+
+  // Show result
+  const resultEl = document.getElementById('quizResult');
+  resultEl.style.display = 'block';
+  document.getElementById('quizScore').textContent = score + '/' + quizQuestions.length;
+
+  const pct = (score / quizQuestions.length) * 100;
+  let label = '';
+  if (pct === 100) label = '🏆 PERFECT! You\'re a closure master!';
+  else if (pct >= 80) label = '🌟 Excellent! Almost there!';
+  else if (pct >= 60) label = '👍 Good effort! Review the explanations.';
+  else if (pct >= 40) label = '📚 Keep studying! Go back through the sections.';
+  else label = '💪 Don\'t give up! Review each section carefully.';
+
+  document.getElementById('quizLabel').textContent = label;
+  document.getElementById('submitQuizBtn').style.display = 'none';
+
+  addXP(score * 20);
+  if (pct >= 80) {
+    completeSection(9);
+    showAchievement('Quiz Master! ' + score + '/' + quizQuestions.length);
+  }
+
+  resultEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetQuiz() {
+  quizAnswers = {};
+  quizSubmitted = false;
+  buildQuiz();
+  document.getElementById('quizResult').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =============================================
+// INITIALIZATION
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+  buildNav();
+  updateProgress();
+  initPlaygrounds();
+  buildQuiz();
+
+  // Open first mistake card
+  setTimeout(() => {
+    const firstHeader = document.querySelector('.mistake-header');
+    if (firstHeader && !firstHeader.classList.contains('open')) {
+      firstHeader.classList.add('open');
+      firstHeader.nextElementSibling.classList.add('open');
+    }
+  }, 100);
+});
+</script>
+</body>
+</html>c7

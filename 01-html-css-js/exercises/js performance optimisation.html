@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Performance Mastery - Interactive Learning Lab</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border: #475569;
+            --font-mono: 'Courier New', monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+     
+.app-container {
+  display: block;         /* not grid */
+  min-height: 100vh;
+}
+        /* Sidebar */
+       .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 280px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+
+        .progress-container {
+            background: var(--bg-tertiary);
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+
+        .nav-link.completed {
+            color: var(--accent-success);
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+   .main-content {
+  margin-left: 280px;
+  width: calc(100vw - 280px);
+  padding: 2rem;
+  max-width: none;
+}
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-description {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            max-width: 600px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Interactive Demo Areas */
+        .demo-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+        }
+
+        input[type="range"] {
+            width: 200px;
+            accent-color: var(--accent-primary);
+        }
+
+        /* Visualizations */
+        .visualizer {
+            height: 200px;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+            margin: 1rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .event-bar {
+            position: absolute;
+            height: 20px;
+            background: var(--accent-danger);
+            border-radius: 2px;
+            opacity: 0.8;
+            animation: slideIn 0.3s ease;
+        }
+
+        .execution-bar {
+            position: absolute;
+            height: 20px;
+            background: var(--accent-success);
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 0.8; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-box {
+            background: var(--bg-primary);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: var(--font-mono);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            overflow-x: auto;
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .code-title {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .copy-btn {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #444;
+        }
+
+        .code-content {
+            color: #e4e4e4;
+            line-height: 1.6;
+        }
+
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .number { color: #b5cea8; }
+        .operator { color: #d4d4d4; }
+
+        /* Exercise Area */
+        .exercise-area {
+            background: var(--bg-primary);
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .exercise-title {
+            color: var(--accent-warning);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quiz-option {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent-primary);
+            transform: translateX(4px);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--accent-success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--accent-danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .quiz-option input[type="radio"] {
+            accent-color: var(--accent-primary);
+        }
+
+        /* Pitfalls */
+        .pitfall {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--accent-danger);
+            padding: 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1rem 0;
+        }
+
+        .pitfall-title {
+            color: var(--accent-danger);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tip {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--accent-success);
+            padding: 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1rem 0;
+        }
+
+        .tip-title {
+            color: var(--accent-success);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Lazy Load Demo */
+        .scroll-container {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            position: relative;
+        }
+
+        .lazy-image-placeholder {
+            width: 100%;
+            height: 200px;
+            background: var(--bg-tertiary);
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lazy-image-placeholder.loaded {
+            background: transparent;
+            border: 2px solid var(--accent-success);
+        }
+
+        .lazy-image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .lazy-image-placeholder.loaded img {
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--bg-tertiary);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: absolute;
+        }
+
+        .loaded .loading-spinner {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Performance Timeline */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 2rem;
+            position: relative;
+            padding-left: 3rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: -2rem;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            border: 2px solid var(--bg-primary);
+        }
+
+        .timeline-content {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+
+        .timeline-time {
+            font-family: var(--font-mono);
+            color: var(--accent-primary);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Bundle Visualizer */
+        .bundle-visualizer {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            height: 200px;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .bundle-chunk {
+            background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 0.25rem 0.25rem 0 0;
+            transition: all 0.5s ease;
+            position: relative;
+            min-width: 60px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 0.5rem;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .bundle-chunk.lazy {
+            background: linear-gradient(180deg, var(--accent-warning), #f97316);
+            opacity: 0.6;
+        }
+
+        .bundle-chunk:hover {
+            opacity: 1;
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--accent-primary);
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            /* Sidebar */
+.sidebar {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  padding: 2rem 1.5rem;
+
+  position: sticky;   /* <-- change from fixed */
+  top: 0;
+  height: 100vh;
+  width: auto;        /* <-- remove fixed width */
+  overflow-y: auto;
+  z-index: 100;
+}
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Console Output */
+        .console-output {
+            background: #000;
+            color: #0f0;
+            font-family: var(--font-mono);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            margin: 0.25rem 0;
+            border-bottom: 1px solid #111;
+            padding-bottom: 0.25rem;
+        }
+
+        .console-timestamp {
+            color: #666;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">⚡ JS Perf Lab</div>
+            <div class="subtitle">Master Optimization</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="overallProgress"></div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" onclick="showSection('intro')">
+                        <span class="nav-icon">🚀</span>
+                        <span>Getting Started</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('debounce')">
+                        <span class="nav-icon">⏱️</span>
+                        <span>Debounce & Throttle</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('lazyloading')">
+                        <span class="nav-icon">🖼️</span>
+                        <span>Lazy Loading</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('performance-api')">
+                        <span class="nav-icon">📊</span>
+                        <span>Performance API</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('codesplit')">
+                        <span class="nav-icon">📦</span>
+                        <span>Code Splitting</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" onclick="showSection('challenge')">
+                        <span class="nav-icon">🏆</span>
+                        <span>Final Challenge</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Intro Section -->
+            <section id="intro" class="section active">
+                <div class="section-header">
+                    <h1 class="section-title">Welcome to Performance Mastery</h1>
+                    <p class="section-description">
+                        Master the critical optimization techniques that separate senior developers from juniors. 
+                        Interactive labs, real-world scenarios, and common pitfalls to avoid.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🎯 Why These Skills Matter</div>
+                    <p style="margin-bottom: 1rem;">
+                        In competitive technical interviews, you'll be asked to optimize React apps, 
+                        reduce bundle sizes, and handle high-frequency events. This lab prepares you for:
+                    </p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary); line-height: 2;">
+                        <li>Frontend System Design interviews</li>
+                        <li>Performance debugging scenarios</li>
+                        <li>Real-world scalability challenges</li>
+                        <li>Web Vitals optimization (Core Web Vitals)</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🎮 How to Use This Lab</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div class="tip">
+                            <div class="tip-title">Interactive Demos</div>
+                            <p>Adjust parameters in real-time to see how debounce, throttle, and lazy loading affect performance.</p>
+                        </div>
+                        <div class="tip">
+                            <div class="tip-title">Code Challenges</div>
+                            <p>Fix broken implementations and optimize snippets. Check your answers instantly.</p>
+                        </div>
+                        <div class="tip">
+                            <div class="tip-title">Red Flags</div>
+                            <p>Learn what NOT to do. Common mistakes that cost developers job offers.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="showSection('debounce')" style="margin-top: 1rem;">
+                    Start Learning →
+                </button>
+            </section>
+
+            <!-- Debounce & Throttle Section -->
+            <section id="debounce" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Debounce & Throttle</h1>
+                    <p class="section-description">
+                        Control the rate of function execution to prevent performance bottlenecks in scroll, resize, and input events.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🧪 Interactive Lab: Event Storm</div>
+                    <p>Move your mouse rapidly in the box below or click "Simulate Events" to see the difference between uncontrolled, debounced, and throttled execution.</p>
+                    
+                    <div class="demo-container" id="mouseArea" style="height: 300px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary)); cursor: crosshair;">
+                        <span style="color: var(--text-muted); pointer-events: none;">Move mouse here or click simulate</span>
+                    </div>
+
+                    <div class="demo-controls">
+                        <button class="btn btn-primary" onclick="simulateEvents()">🔥 Simulate Events</button>
+                        <button class="btn btn-secondary" onclick="clearVisualization()">Clear</button>
+                        <div class="slider-container">
+                            <label>Delay (ms):</label>
+                            <input type="range" id="delaySlider" min="100" max="1000" value="300" oninput="updateDelay(this.value)">
+                            <span id="delayValue">300ms</span>
+                        </div>
+                    </div>
+
+                    <div class="visualizer" id="eventVisualizer">
+                        <div style="position: absolute; top: 10px; left: 10px; color: var(--text-muted); font-size: 0.875rem;">Event Timeline</div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="rawCount">0</div>
+                            <div class="stat-label">Raw Events</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="debounceCount">0</div>
+                            <div class="stat-label">Debounced</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="throttleCount">0</div>
+                            <div class="stat-label">Throttled</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📚 The Concepts</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                        <div>
+                            <h3 style="color: var(--accent-primary); margin-bottom: 0.5rem;">Debounce</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                <strong>Wait until the pause.</strong> Executes only after the event stops firing for the specified delay. 
+                                Perfect for search inputs (wait for user to stop typing).
+                            </p>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-title">Debounce Implementation</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <div class="code-content">
+<span class="keyword">function</span> <span class="function">debounce</span>(<span class="operator">func</span>, <span class="operator">wait</span>) {
+  <span class="keyword">let</span> timeout;
+  <span class="keyword">return</span> <span class="keyword">function</span> <span class="function">executedFunction</span>(<span class="operator">...args</span>) {
+    <span class="keyword">const</span> later = <span class="operator">()</span> <span class="operator">=></span> {
+      <span class="function">clearTimeout</span>(timeout);
+      <span class="operator">func</span>(<span class="operator">...args</span>);
+    };
+    <span class="function">clearTimeout</span>(timeout);
+    timeout = <span class="function">setTimeout</span>(later, wait);
+  };
+}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 style="color: var(--accent-secondary); margin-bottom: 0.5rem;">Throttle</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                                <strong>Execute at intervals.</strong> Ensures the function runs at most once per specified period. 
+                                Perfect for scroll events (update position every 100ms).
+                            </p>
+                            <div class="code-block">
+                                <div class="code-header">
+                                    <span class="code-title">Throttle Implementation</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <div class="code-content">
+<span class="keyword">function</span> <span class="function">throttle</span>(<span class="operator">func</span>, <span class="operator">limit</span>) {
+  <span class="keyword">let</span> inThrottle;
+  <span class="keyword">return</span> <span class="keyword">function</span>(<span class="operator">...args</span>) {
+    <span class="keyword">if</span> (!inThrottle) {
+      <span class="operator">func</span>(<span class="operator">...args</span>);
+      inThrottle = <span class="keyword">true</span>;
+      <span class="function">setTimeout</span>(() <span class="operator">=></span> inThrottle = <span class="keyword">false</span>, limit);
+    }
+  };
+}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall">
+                    <div class="pitfall-title">⚠️ Critical Interview Mistake</div>
+                    <p><strong>Memory Leak:</strong> Always clean up debounced functions in React useEffect return functions. 
+                    Otherwise, timers continue running after component unmount.</p>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <span class="comment">// WRONG: Creates new function every render, breaks cleanup</span>
+                        <span class="operator">useEffect</span>(() <span class="operator">=></span> {
+          window.<span class="function">addEventListener</span>(<span class="string">'scroll'</span>, <span class="function">debounce</span>(handleScroll, 100));
+        }, []);
+        
+        <span class="comment">// CORRECT: Stable reference</span>
+        <span class="keyword">const</span> debouncedScroll = <span class="function">useMemo</span>(
+          () <span class="operator">=></span> <span class="function">debounce</span>(handleScroll, 100), 
+          []
+        );
+        <span class="operator">useEffect</span>(() <span class="operator">=></span> {
+          window.<span class="function">addEventListener</span>(<span class="string">'scroll'</span>, debouncedScroll);
+          <span class="keyword">return</span> () <span class="operator">=></span> window.<span class="function">removeEventListener</span>(<span class="string">'scroll'</span>, debouncedScroll);
+        }, [debouncedScroll]);
+                    </div>
+                </div>
+
+                <div class="exercise-area">
+                    <div class="exercise-title">💪 Challenge: Fix the Search</div>
+                    <p>The search below triggers an API call on every keystroke. Fix it using debounce.</p>
+                    
+                    <div style="margin: 1rem 0;">
+                        <input type="text" id="searchInput" placeholder="Type to search..." style="width: 100%; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+                    </div>
+
+                    <div class="console-output" id="searchConsole">
+                        <div class="console-line"><span class="console-timestamp">[Console]</span> Ready...</div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkDebounceChallenge()" style="margin-top: 1rem;">
+                        Verify Solution
+                    </button>
+                </div>
+            </section>
+
+            <!-- Lazy Loading Section -->
+            <section id="lazyloading" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Lazy Loading</h1>
+                    <p class="section-description">
+                        Defer loading of non-critical resources until they're needed. Critical for Core Web Vitals (LCP, CLS).
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🖼️ Intersection Observer Lab</div>
+                    <p>Scroll down to see images load dynamically as they enter the viewport. Observe the network savings.</p>
+
+                    <div class="demo-controls">
+                        <button class="btn btn-primary" onclick="resetLazyDemo()">Reset Demo</button>
+                        <button class="btn btn-secondary" onclick="toggleEagerLoad()">Toggle Eager Loading (Bad)</button>
+                        <span style="color: var(--text-secondary); font-size: 0.875rem;">
+                            Images loaded: <strong id="loadedCount" style="color: var(--accent-success);">0</strong> / 10
+                        </span>
+                    </div>
+
+                    <div class="scroll-container" id="lazyScrollContainer">
+                        <!-- Generated by JS -->
+                    </div>
+
+                    <div class="tip" style="margin-top: 1rem;">
+                        <div class="tip-title">💡 Pro Tip: Prevent Layout Shift</div>
+                        <p>Always specify width and height attributes or aspect-ratio to prevent Cumulative Layout Shift (CLS) penalties.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🔧 Modern Implementation</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-title">Lazy Loading with Intersection Observer</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+<span class="comment">// Native lazy loading (simple, supported in modern browsers)</span>
+&lt;img <span class="function">loading</span>=<span class="string">"lazy"</span> src=<span class="string">"image.jpg"</span> width=<span class="string">"800"</span> height=<span class="string">"600"</span> /&gt;
+
+<span class="comment">// Intersection Observer API (more control, older browser support)</span>
+<span class="keyword">const</span> imageObserver = <span class="keyword">new</span> <span class="function">IntersectionObserver</span>((entries, observer) <span class="operator">=></span> {
+  entries.<span class="function">forEach</span>(entry <span class="operator">=></span> {
+    <span class="keyword">if</span> (entry.isIntersecting) {
+      <span class="keyword">const</span> img = entry.target;
+      img.src = img.dataset.src; <span class="comment">// Swap data-src to src</span>
+      img.<span class="function">classList</span>.<span class="function">add</span>(<span class="string">'loaded'</span>);
+      observer.<span class="function">unobserve</span>(img); <span class="comment">// Stop observing once loaded</span>
+    }
+  });
+}, {
+  rootMargin: <span class="string">'50px 0px'</span>, <span class="comment">// Start loading 50px before viewport</span>
+  threshold: 0.01
+});
+
+<span class="comment">// Observe all images with data-src attribute</span>
+document.<span class="function">querySelectorAll</span>(<span class="string">'img[data-src]'</span>).<span class="function">forEach</span>(img <span class="operator">=></span> {
+  imageObserver.<span class="function">observe</span>(img);
+});
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall">
+                    <div class="pitfall-title">🚨 SEO & Accessibility Trap</div>
+                    <p><strong>Don't lazy load above-the-fold images.</strong> This hurts LCP (Largest Contentful Paint) and SEO. 
+                    Hero images should use <code>fetchpriority="high"</code> and <code>loading="eager"</code>.</p>
+                </div>
+
+                <div class="exercise-area">
+                    <div class="exercise-title">🎯 Quiz: When to Lazy Load?</div>
+                    <div class="quiz-option" onclick="selectQuiz(this, false)">
+                        <input type="radio" name="lazyquiz"> A company's logo in the header
+                    </div>
+                    <div class="quiz-option" onclick="selectQuiz(this, true)">
+                        <input type="radio" name="lazyquiz"> Comments section on a blog post
+                    </div>
+                    <div class="quiz-option" onclick="selectQuiz(this, false)">
+                        <input type="radio" name="lazyquiz"> Critical CSS for initial paint
+                    </div>
+                    <div class="quiz-option" onclick="selectQuiz(this, false)">
+                        <input type="radio" name="lazyquiz"> The main navigation menu
+                    </div>
+                    <div id="quizFeedback" style="margin-top: 1rem; font-weight: 600;"></div>
+                </div>
+            </section>
+
+            <!-- Performance API Section -->
+            <section id="performance-api" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Performance API</h1>
+                    <p class="section-description">
+                        Measure precisely, not approximately. High-resolution timing for benchmarking and real user monitoring (RUM).
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">⏱️ Precision Timing Lab</div>
+                    <p>Measure the difference between Date.now() (millisecond precision) and performance.now() (microsecond precision).</p>
+
+                    <div class="demo-controls">
+                        <button class="btn btn-primary" onclick="runPrecisionTest()">Run Precision Test</button>
+                        <button class="btn btn-secondary" onclick="measureFunctionSpeed()">Measure Function Speed</button>
+                    </div>
+
+                    <div class="timeline" id="perfTimeline">
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-time">Navigation Start</div>
+                                <div>When the browser starts loading the document</div>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-content">
+                                <div class="timeline-time">DOM Interactive</div>
+                                <div>DOM is ready, images/styles may still be loading</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="console-output" id="perfConsole">
+                        <div class="console-line"><span class="console-timestamp">[System]</span> Click "Run Precision Test" to begin...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📊 User Timing API</div>
+                    <p>Mark specific moments in your app lifecycle for detailed analysis.</p>
+                    
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-title">Measuring Component Render Time</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+<span class="comment">// React example with Performance Observer</span>
+<span class="keyword">useEffect</span>(() <span class="operator">=></span> {
+  <span class="comment">// Mark start</span>
+  performance.<span class="function">mark</span>(<span class="string">'dashboard-render-start'</span>);
+  
+  <span class="comment">// Your expensive operation...</span>
+  <span class="function">loadHeavyData</span>().<span class="function">then</span>(() <span class="operator">=></span> {
+    <span class="comment">// Mark end</span>
+    performance.<span class="function">mark</span>(<span class="string">'dashboard-render-end'</span>);
+    
+    <span class="comment">// Measure between marks</span>
+    performance.<span class="function">measure</span>(
+      <span class="string">'dashboard-load'</span>, 
+      <span class="string">'dashboard-render-start'</span>, 
+      <span class="string">'dashboard-render-end'</span>
+    );
+    
+    <span class="comment">// Log result</span>
+    <span class="keyword">const</span> measure = performance.<span class="function">getEntriesByName</span>(<span class="string">'dashboard-load'</span>)[0];
+    console.<span class="function">log</span>(<span class="string">`Dashboard loaded in ${measure.duration.toFixed(2)}ms`</span>);
+  });
+  
+  <span class="comment">// Cleanup</span>
+  <span class="keyword">return</span> () <span class="operator">=></span> {
+    performance.<span class="function">clearMarks</span>();
+    performance.<span class="function">clearMeasures</span>();
+  };
+}, []);
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall">
+                    <div class="pitfall-title">⏰ The Date.now() Mistake</div>
+                    <p><strong>Never use Date.now() for performance testing.</strong> It's affected by system clock changes (NTP sync, user changing time) and only has millisecond precision.</p>
+                    <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: 0.375rem;">
+                        <span class="keyword">const</span> start = Date.<span class="function">now</span>(); <span class="comment">// ❌ Vulnerable to clock skew</span><br>
+                        <span class="keyword">const</span> start = performance.<span class="function">now</span>(); <span class="comment">// ✅ Monotonic clock, microseconds</span>
+                    </div>
+                </div>
+
+                <div class="exercise-area">
+                    <div class="exercise-title">🔍 Debugging Challenge</div>
+                    <p>You're debugging a slow React app. Which Performance API method helps you identify if the slowdown is:</p>
+                    <ul style="margin: 1rem 0; color: var(--text-secondary);">
+                        <li>Long JavaScript tasks blocking the main thread?</li>
+                        <li>Slow network requests?</li>
+                        <li>Layout thrashing (forced reflows)?</li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="showAPITip()">Reveal Answer</button>
+                    <div id="apiAnswer" class="tip hidden" style="margin-top: 1rem;">
+                        <strong>Long Tasks API:</strong> Use PerformanceObserver with entryType "longtask" to detect JS blocking. 
+                        For network, use Resource Timing API. For layout thrashing, use DevTools Performance tab to see "Recalculate Style" and "Layout" entries.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code Splitting Section -->
+            <section id="codesplit" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">Code Splitting</h1>
+                    <p class="section-description">
+                        Ship only what's needed. Reduce Time to Interactive (TTI) by splitting bundles and lazy loading routes.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📦 Bundle Analyzer</div>
+                    <p>Visual representation of how code splitting affects your bundle size. Click chunks to see details.</p>
+
+                    <div class="bundle-visualizer" id="bundleViz">
+                        <div class="bundle-chunk" style="height: 100%; width: 100%;" onclick="showChunkInfo('main')">
+                            Main Bundle<br>250KB
+                        </div>
+                    </div>
+
+                    <div class="demo-controls" style="justify-content: center;">
+                        <button class="btn btn-primary" onclick="splitBundle()">Apply Code Splitting</button>
+                        <button class="btn btn-secondary" onclick="resetBundle()">Reset</button>
+                    </div>
+
+                    <div id="bundleInfo" style="margin-top: 1rem; padding: 1rem; background: var(--bg-primary); border-radius: 0.5rem; min-height: 60px;">
+                        Click "Apply Code Splitting" to see dynamic imports in action
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">⚡ Dynamic Imports</div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span class="code-title">Route-Based Splitting (React Router)</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+<span class="keyword">import</span> { lazy, Suspense } <span class="keyword">from</span> <span class="string">'react'</span>;
+
+<span class="comment">// Instead of static import</span>
+<span class="comment">// import Dashboard from './Dashboard';</span>
+
+<span class="comment">// Use dynamic import</span>
+<span class="keyword">const</span> Dashboard = <span class="function">lazy</span>(() <span class="operator">=></span> <span class="keyword">import</span>(<span class="string">'./Dashboard'</span>));
+<span class="keyword">const</span> Analytics = <span class="function">lazy</span>(() <span class="operator">=></span> <span class="keyword">import</span>(<span class="string">'./Analytics'</span>));
+
+<span class="keyword">function</span> <span class="function">App</span>() {
+  <span class="keyword">return</span> (
+    &lt;Suspense <span class="function">fallback</span>={&lt;Loading /&gt;}&gt;
+      &lt;Routes&gt;
+        &lt;Route path=<span class="string">"/dashboard"</span> element={&lt;Dashboard /&gt;} /&gt;
+        &lt;Route path=<span class="string">"/analytics"</span> element={&lt;Analytics /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Suspense&gt;
+  );
+}
+                        </div>
+                    </div>
+
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span class="code-title">On-Demand Library Loading</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <div class="code-content">
+<span class="comment">// Load heavy chart library only when user clicks "View Analytics"</span>
+<span class="keyword">async function</span> <span class="function">loadChart</span>() {
+  <span class="keyword">const</span> { default: Chart } = <span class="keyword">await</span> <span class="keyword">import</span>(<span class="string">'heavy-chart-library'</span>);
+  <span class="keyword">new</span> <span class="function">Chart</span>(document.<span class="function">getElementById</span>(<span class="string">'chart'</span>), data);
+}
+
+<span class="comment">// Prefetch on hover (faster perceived performance)</span>
+<span class="keyword">const</span> link = document.<span class="function">createElement</span>(<span class="string">'link'</span>);
+link.rel = <span class="string">'prefetch'</span>;
+link.href = <span class="string">'/chunk-analytics.js'</span>;
+document.head.<span class="function">appendChild</span>(link);
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall">
+                    <div class="pitfall-title">🌊 The Waterfall Problem</div>
+                    <p><strong>Sequential dynamic imports kill performance.</strong> If component A dynamically imports component B, which dynamically imports component C, you create a waterfall.</p>
+                    <div style="margin-top: 1rem;">
+                        <strong>Solution:</strong> Use <code>Promise.all()</code> to parallelize imports, or hoist imports to the parent component if they're always needed together.
+                    </div>
+                </div>
+
+                <div class="exercise-area">
+                    <div class="exercise-title">🧩 Architecture Challenge</div>
+                    <p>You have a 2MB bundle. Users complain the initial load is slow, but you need all features available eventually. What's your strategy?</p>
+                    
+                    <div class="quiz-option" onclick="selectQuiz(this, false)">
+                        Load everything on homepage but show a spinner
+                    </div>
+                    <div class="quiz-option" onclick="selectQuiz(this, true)">
+                        Route-based splitting + prefetch on hover + critical CSS inline
+                    </div>
+                    <div class="quiz-option" onclick="selectQuiz(this, false)">
+                        Move everything to a Web Worker
+                    </div>
+                    
+                    <div id="architectureFeedback" style="margin-top: 1rem;"></div>
+                </div>
+            </section>
+
+            <!-- Final Challenge Section -->
+            <section id="challenge" class="section">
+                <div class="section-header">
+                    <h1 class="section-title">🏆 Final Challenge</h1>
+                    <p class="section-description">
+                        Apply everything you've learned to optimize a real-world scenario. This simulates a senior frontend interview question.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🎮 Scenario: The E-commerce Crisis</div>
+                    <p style="margin-bottom: 1rem;">
+                        You're hired to fix an e-commerce site with these issues:
+                    </p>
+                    <ul style="margin-left: 1.5rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        <li>Search input triggers 50 API calls per user search</li>
+                        <li>Product images (5MB total) load on initial page load</li>
+                        <li>Checkout page includes analytics, maps, and chat widget (1.2MB unused JS)</li>
+                        <li>Mobile users complain the page freezes during scroll</li>
+                    </ul>
+
+                    <div style="background: var(--bg-primary); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--border);">
+                        <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">Your Optimization Plan:</h4>
+                        <textarea id="optimizationPlan" style="width: 100%; height: 150px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 1rem; border-radius: 0.375rem; font-family: inherit; resize: vertical;" placeholder="1. Fix search with debounce (300ms)...
+2. Implement lazy loading for product images...
+3. ..."></textarea>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkFinalChallenge()" style="margin-top: 1rem;">
+                        Submit Solution
+                    </button>
+
+                    <div id="challengeResult" style="margin-top: 1.5rem;"></div>
+                </div>
+
+                <div class="card" id="completionCard" style="display: none; text-align: center; padding: 3rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                    <h2 style="margin-bottom: 1rem; color: var(--accent-success);">Performance Master!</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                        You've mastered the critical optimization techniques. You're ready for senior frontend interviews!
+                    </p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <div class="stat-box" style="min-width: 150px;">
+                            <div class="stat-value" style="color: var(--accent-success);">5/5</div>
+                            <div class="stat-label">Modules Completed</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            currentSection: 'intro',
+            completedSections: [],
+            debounceDelay: 300,
+            lazyLoadedImages: 0,
+            bundleSplit: false
+        };
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update nav
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.closest('.nav-link')?.classList.add('active');
+            
+            // Mark previous as completed
+            if (state.currentSection !== 'intro' && !state.completedSections.includes(state.currentSection)) {
+                state.completedSections.push(state.currentSection);
+                updateProgress();
+            }
+            
+            state.currentSection = sectionId;
+            
+            // Initialize section specific content
+            if (sectionId === 'lazyloading') initLazyLoading();
+            if (sectionId === 'debounce') initDebounceDemo();
+        }
+
+        function updateProgress() {
+            const progress = (state.completedSections.length / 5) * 100;
+            document.getElementById('overallProgress').style.width = progress + '%';
+        }
+
+        // Copy Code Functionality
+        function copyCode(btn) {
+            const code = btn.closest('.code-block').querySelector('.code-content').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const original = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = original, 2000);
+            });
+        }
+
+        // Debounce & Throttle Logic
+        let debounceTimer, throttleTimer;
+        let rawEvents = 0, debounceEvents = 0, throttleEvents = 0;
+        let lastThrottleTime = 0;
+
+        function updateDelay(val) {
+            state.debounceDelay = parseInt(val);
+            document.getElementById('delayValue').textContent = val + 'ms';
+        }
+
+        function simulateEvents() {
+            // Simulate 20 rapid events
+            let count = 0;
+            const interval = setInterval(() => {
+                handleRawEvent();
+                
+                // Debounce logic
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    handleDebounceEvent();
+                }, state.debounceDelay);
+                
+                // Throttle logic
+                const now = Date.now();
+                if (now - lastThrottleTime >= state.debounceDelay) {
+                    handleThrottleEvent();
+                    lastThrottleTime = now;
+                }
+                
+                count++;
+                if (count >= 20) clearInterval(interval);
+            }, 50);
+        }
+
+        function handleRawEvent() {
+            rawEvents++;
+            document.getElementById('rawCount').textContent = rawEvents;
+            addEventBar('event-bar');
+        }
+
+        function handleDebounceEvent() {
+            debounceEvents++;
+            document.getElementById('debounceCount').textContent = debounceEvents;
+            addEventBar('execution-bar', 60);
+        }
+
+        function handleThrottleEvent() {
+            throttleEvents++;
+            document.getElementById('throttleCount').textContent = throttleEvents;
+            addEventBar('execution-bar', 120);
+        }
+
+        function addEventBar(className, offset = 0) {
+            const viz = document.getElementById('eventVisualizer');
+            const bar = document.createElement('div');
+            bar.className = className;
+            bar.style.left = (rawEvents * 20) + 'px';
+            bar.style.top = (20 + offset) + 'px';
+            bar.style.width = '15px';
+            viz.appendChild(bar);
+            
+            // Auto scroll
+            if (rawEvents > 30) {
+                viz.scrollLeft = viz.scrollWidth;
+            }
+        }
+
+        function clearVisualization() {
+            rawEvents = debounceEvents = throttleEvents = 0;
+            document.getElementById('rawCount').textContent = '0';
+            document.getElementById('debounceCount').textContent = '0';
+            document.getElementById('throttleCount').textContent = '0';
+            document.getElementById('eventVisualizer').innerHTML = '<div style="position: absolute; top: 10px; left: 10px; color: var(--text-muted); font-size: 0.875rem;">Event Timeline</div>';
+        }
+
+        function initDebounceDemo() {
+            const mouseArea = document.getElementById('mouseArea');
+            mouseArea.onmousemove = () => {
+                handleRawEvent();
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(handleDebounceEvent, state.debounceDelay);
+                
+                const now = Date.now();
+                if (now - lastThrottleTime >= state.debounceDelay) {
+                    handleThrottleEvent();
+                    lastThrottleTime = now;
+                }
+            };
+        }
+
+        // Search Challenge
+        let searchCallCount = 0;
+        const searchInput = document.getElementById('searchInput');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                searchCallCount++;
+                logToConsole(`API Call #${searchCallCount}: Searching for "${e.target.value}"`, 'searchConsole');
+            });
+        }
+
+        function logToConsole(msg, consoleId) {
+            const console = document.getElementById(consoleId);
+            const line = document.createElement('div');
+            line.className = 'console-line';
+            line.innerHTML = `<span class="console-timestamp">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function checkDebounceChallenge() {
+            if (searchCallCount > 5) {
+                alert('❌ Not quite! You made ' + searchCallCount + ' API calls. Try implementing debounce to limit calls.');
+            } else {
+                alert('✅ Great! You limited the API calls using debounce.');
+                createConfetti();
+            }
+        }
+
+        // Lazy Loading
+        function initLazyLoading() {
+            const container = document.getElementById('lazyScrollContainer');
+            if (!container || container.children.length > 0) return;
+            
+            // Create 10 image placeholders
+            for (let i = 0; i < 10; i++) {
+                const div = document.createElement('div');
+                div.className = 'lazy-image-placeholder';
+                div.innerHTML = `
+                    <div class="loading-spinner"></div>
+                    <span style="position: absolute; color: var(--text-muted);">Image ${i + 1}</span>
+                `;
+                div.dataset.src = `https://picsum.photos/400/200?random=${i}`;
+                container.appendChild(div);
+                
+                // Observe
+                if (window.lazyObserver) {
+                    window.lazyObserver.observe(div);
+                }
+            }
+            
+            // Setup observer
+            if (!window.lazyObserver) {
+                window.lazyObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            loadImage(entry.target);
+                        }
+                    });
+                }, { root: container, rootMargin: '50px' });
+            }
+        }
+
+        function loadImage(element) {
+            if (element.classList.contains('loaded')) return;
+            
+            const img = document.createElement('img');
+            img.src = element.dataset.src;
+            img.onload = () => {
+                element.innerHTML = '';
+                element.appendChild(img);
+                element.classList.add('loaded');
+                state.lazyLoadedImages++;
+                document.getElementById('loadedCount').textContent = state.lazyLoadedImages;
+            };
+        }
+
+        function resetLazyDemo() {
+            state.lazyLoadedImages = 0;
+            document.getElementById('loadedCount').textContent = '0';
+            const container = document.getElementById('lazyScrollContainer');
+            container.innerHTML = '';
+            initLazyLoading();
+        }
+
+        function toggleEagerLoad() {
+            alert('Eager loading would load all 10 images immediately, consuming bandwidth even if user never scrolls. Bad for mobile users!');
+        }
+
+        // Quiz Logic
+        function selectQuiz(element, isCorrect) {
+            // Reset siblings
+            const siblings = element.parentElement.querySelectorAll('.quiz-option');
+            siblings.forEach(sib => {
+                sib.classList.remove('correct', 'wrong');
+                sib.style.pointerEvents = 'none';
+            });
+            
+            if (isCorrect) {
+                element.classList.add('correct');
+                const feedback = element.parentElement.querySelector('#quizFeedback') || element.parentElement.querySelector('#architectureFeedback');
+                if (feedback) {
+                    feedback.innerHTML = '<span style="color: var(--accent-success);">✅ Correct! This minimizes initial load while ensuring features are available when needed.</span>';
+                }
+                createConfetti();
+            } else {
+                element.classList.add('wrong');
+                const feedback = element.parentElement.querySelector('#quizFeedback') || element.parentElement.querySelector('#architectureFeedback');
+                if (feedback) {
+                    feedback.innerHTML = '<span style="color: var(--accent-danger);">❌ Not quite. Think about user experience and resource prioritization.</span>';
+                }
+            }
+        }
+
+        // Performance API
+        function runPrecisionTest() {
+            const console = document.getElementById('perfConsole');
+            console.innerHTML = '';
+            
+            // Date.now() precision test
+            const dateStart = Date.now();
+            let dateSum = 0;
+            for (let i = 0; i < 1000000; i++) dateSum += i;
+            const dateEnd = Date.now();
+            
+            // performance.now() precision test
+            const perfStart = performance.now();
+            let perfSum = 0;
+            for (let i = 0; i < 1000000; i++) perfSum += i;
+            const perfEnd = performance.now();
+            
+            logToConsole(`Date.now() precision: ${dateEnd - dateStart}ms (milliseconds)`, 'perfConsole');
+            logToConsole(`performance.now() precision: ${(perfEnd - perfStart).toFixed(3)}ms (microseconds)`, 'perfConsole');
+            logToConsole(`performance.now() is ${Math.round((perfEnd - perfStart) / (dateEnd - dateStart || 1) * 1000)}x more precise!`, 'perfConsole');
+        }
+
+        function measureFunctionSpeed() {
+            const console = document.getElementById('perfConsole');
+            logToConsole('Measuring expensive DOM operation...', 'perfConsole');
+            
+            performance.mark('dom-start');
+            
+            // Expensive operation
+            const div = document.createElement('div');
+            for (let i = 0; i < 1000; i++) {
+                div.innerHTML += `<span>${i}</span>`;
+            }
+            
+            performance.mark('dom-end');
+            performance.measure('dom-operation', 'dom-start', 'dom-end');
+            
+            const measure = performance.getEntriesByName('dom-operation')[0];
+            logToConsole(`DOM operation took ${measure.duration.toFixed(2)}ms`, 'perfConsole');
+        }
+
+        function showAPITip() {
+            document.getElementById('apiAnswer').classList.remove('hidden');
+        }
+
+        // Code Splitting Visualizer
+        function splitBundle() {
+            const viz = document.getElementById('bundleViz');
+            viz.innerHTML = `
+                <div class="bundle-chunk" style="height: 40%; width: 30%;" onclick="showChunkInfo('main')">
+                    Main<br>100KB
+                </div>
+                <div class="bundle-chunk lazy" style="height: 60%; width: 30%;" onclick="showChunkInfo('dashboard')">
+                    Dashboard<br>50KB<br><small>(lazy)</small>
+                </div>
+                <div class="bundle-chunk lazy" style="height: 80%; width: 30%;" onclick="showChunkInfo('analytics')">
+                    Analytics<br>80KB<br><small>(lazy)</small>
+                </div>
+                <div class="bundle-chunk lazy" style="height: 50%; width: 30%;" onclick="showChunkInfo('chat')">
+                    Chat<br>20KB<br><small>(lazy)</small>
+                </div>
+            `;
+            
+            document.getElementById('bundleInfo').innerHTML = `
+                <strong style="color: var(--accent-success);">✅ Optimized!</strong><br>
+                Initial load: 100KB (vs 250KB before)<br>
+                Other chunks load on demand via dynamic import()
+            `;
+            state.bundleSplit = true;
+        }
+
+        function resetBundle() {
+            const viz = document.getElementById('bundleViz');
+            viz.innerHTML = `
+                <div class="bundle-chunk" style="height: 100%; width: 100%;" onclick="showChunkInfo('main')">
+                    Main Bundle<br>250KB
+                </div>
+            `;
+            document.getElementById('bundleInfo').textContent = 'Click "Apply Code Splitting" to see dynamic imports in action';
+            state.bundleSplit = false;
+        }
+
+        function showChunkInfo(chunk) {
+            const info = {
+                main: 'Critical path: React, Router, Core UI components',
+                dashboard: 'Loaded on /dashboard route access',
+                analytics: 'Heavy charts library, loaded only when user clicks Analytics tab',
+                chat: 'Customer widget, loaded on hover over "Support" button'
+            };
+            document.getElementById('bundleInfo').innerHTML = `<strong>${chunk}:</strong> ${info[chunk] || 'Bundle chunk'}`;
+        }
+
+        // Final Challenge
+        function checkFinalChallenge() {
+            const plan = document.getElementById('optimizationPlan').value.toLowerCase();
+            const resultDiv = document.getElementById('challengeResult');
+            
+            const hasDebounce = plan.includes('debounce') || plan.includes('throttle');
+            const hasLazy = plan.includes('lazy') || plan.includes('intersection');
+            const hasSplit = plan.includes('split') || plan.includes('dynamic') || plan.includes('lazy') && plan.includes('load');
+            const hasScroll = plan.includes('scroll') || plan.includes('throttle') || plan.includes('requestanimation');
+            
+            const score = [hasDebounce, hasLazy, hasSplit, hasScroll].filter(Boolean).length;
+            
+            if (score >= 3) {
+                resultDiv.innerHTML = `
+                    <div class="tip">
+                        <div class="tip-title">🌟 Excellent Solution!</div>
+                        <p>You identified all major bottlenecks:</p>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            ${hasDebounce ? '<li>✅ Debounced search input</li>' : ''}
+                            ${hasLazy ? '<li>✅ Lazy loaded images</li>' : ''}
+                            ${hasSplit ? '<li>✅ Code split checkout bundles</li>' : ''}
+                            ${hasScroll ? '<li>✅ Throttled scroll events</li>' : ''}
+                        </ul>
+                        <p style="margin-top: 1rem;"><strong>You're ready for senior frontend roles!</strong></p>
+                    </div>
+                `;
+                document.getElementById('completionCard').style.display = 'block';
+                createConfetti();
+                if (!state.completedSections.includes('challenge')) {
+                    state.completedSections.push('challenge');
+                    updateProgress();
+                }
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="pitfall">
+                        <div class="pitfall-title">Keep Going!</div>
+                        <p>You mentioned ${score}/4 key optimizations. Consider:</p>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            ${!hasDebounce ? '<li>• How to reduce those 50 API calls?</li>' : ''}
+                            ${!hasLazy ? '<li>• How to defer 5MB of images?</li>' : ''}
+                            ${!hasSplit ? '<li>• How to remove unused 1.2MB JS?</li>' : ''}
+                            ${!hasScroll ? '<li>• How to prevent scroll jank?</li>' : ''}
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // Visual Effects
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'][Math.floor(Math.random() * 4)];
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 4000);
+            }
+        }
+
+        // Initialize
+        window.onload = () => {
+            updateProgress();
+        };
+    </script>
+</body>
+</html>

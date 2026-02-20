@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Router Mastery - Interactive Learning Lab</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --react-blue: #61dafb;
+            --react-dark: #282c34;
+            --accent: #ffd700;
+            --error: #ff6b6b;
+            --success: #4ecdc4;
+            --glass: rgba(40, 44, 52, 0.85);
+            --border: rgba(97, 218, 251, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .route-line {
+            position: absolute;
+            height: 2px;
+            background: var(--react-blue);
+            animation: routeFlow 3s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes routeFlow {
+            0% { transform: translateX(-100%); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100vw); opacity: 0; }
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--react-blue);
+            text-shadow: 0 0 10px rgba(97, 218, 251, 0.5);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--react-blue);
+            width: 0%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px var(--react-blue);
+        }
+
+        .nav-item {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover {
+            background: rgba(97, 218, 251, 0.1);
+            border-color: var(--border);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: rgba(97, 218, 251, 0.2);
+            border-color: var(--react-blue);
+            box-shadow: 0 0 15px rgba(97, 218, 251, 0.2);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            background: var(--accent);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .module-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .module-title {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--react-blue), #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Interactive Cards */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .concept-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .concept-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--react-blue), transparent);
+        }
+
+        /* Browser Simulator */
+        .browser-mockup {
+            background: #2d2d2d;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #444;
+            margin: 2rem 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .browser-header {
+            background: #1a1a1a;
+            padding: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .browser-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .browser-dot.red { background: #ff5f56; }
+        .browser-dot.yellow { background: #ffbd2e; }
+        .browser-dot.green { background: #27c93f; }
+
+        .address-bar {
+            flex: 1;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 0.4rem 1rem;
+            color: #fff;
+            font-family: monospace;
+            margin: 0 1rem;
+        }
+
+        .browser-content {
+            padding: 2rem;
+            min-height: 300px;
+            background: var(--react-dark);
+        }
+
+        /* Route Visualizer */
+        .route-visualizer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            min-height: 100px;
+            align-items: center;
+        }
+
+        .route-node {
+            padding: 0.8rem 1.5rem;
+            background: #3d4550;
+            border: 2px solid #555;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .route-node.active {
+            background: rgba(97, 218, 251, 0.2);
+            border-color: var(--react-blue);
+            box-shadow: 0 0 20px rgba(97, 218, 251, 0.4);
+            transform: scale(1.05);
+        }
+
+        .route-node.matched {
+            background: rgba(78, 205, 196, 0.3);
+            border-color: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px var(--success); }
+            50% { box-shadow: 0 0 20px var(--success); }
+        }
+
+        /* Code Playground */
+        .code-playground {
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 1rem 0;
+            border: 1px solid #333;
+        }
+
+        .playground-tabs {
+            display: flex;
+            background: #252526;
+            border-bottom: 1px solid #333;
+        }
+
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: var(--react-blue);
+            border-bottom-color: var(--react-blue);
+            background: rgba(97, 218, 251, 0.1);
+        }
+
+        .code-area {
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .code-line {
+            padding: 0.2rem 0;
+            display: flex;
+        }
+
+        .line-number {
+            color: #858585;
+            width: 30px;
+            text-align: right;
+            margin-right: 1rem;
+            user-select: none;
+        }
+
+        .code-content {
+            color: #d4d4d4;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .comment { color: #6a9955; }
+        .tag { color: #569cd6; }
+        .attr { color: #9cdcfe; }
+
+        /* Interactive Exercise */
+        .exercise-container {
+            background: linear-gradient(135deg, rgba(97, 218, 251, 0.1), rgba(0,0,0,0.2));
+            border: 2px dashed var(--react-blue);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .exercise-title {
+            color: var(--react-blue);
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed #555;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            transition: all 0.3s;
+            min-height: 80px;
+        }
+
+        .drop-zone.drag-over {
+            background: rgba(97, 218, 251, 0.1);
+            border-color: var(--react-blue);
+        }
+
+        .draggable-item {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #3d4550;
+            border: 1px solid #555;
+            border-radius: 4px;
+            margin: 0.5rem;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .draggable-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Quiz Section */
+        .quiz-option {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(10px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(78, 205, 196, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(255, 107, 107, 0.2);
+            border-color: var(--error);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Pitfalls Section */
+        .pitfall-card {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(0,0,0,0.2));
+            border-left: 4px solid var(--error);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .pitfall-title {
+            color: var(--error);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--react-blue);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(97, 218, 251, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--react-blue);
+            color: var(--react-blue);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(97, 218, 251, 0.1);
+        }
+
+        /* Hidden sections */
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Parameter Playground */
+        .param-playground {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .url-builder {
+            background: rgba(0,0,0,0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .param-input {
+            background: #2d2d2d;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 4px;
+            width: 100%;
+            margin: 0.5rem 0;
+            font-family: monospace;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                height: auto;
+                position: relative;
+            }
+            .param-playground {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Console Output */
+        .console-output {
+            background: #0d0d0d;
+            color: #0f0;
+            font-family: monospace;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+
+        .console-line {
+            margin: 0.3rem 0;
+            border-left: 2px solid #333;
+            padding-left: 0.5rem;
+        }
+
+        .console-line.error { color: #ff6b6b; border-left-color: #ff6b6b; }
+        .console-line.success { color: #4ecdc4; border-left-color: #4ecdc4; }
+        .console-line.info { color: #61dafb; border-left-color: #61dafb; }
+
+        /* Success Animation */
+        .success-check {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--success);
+            border-radius: 50%;
+            position: relative;
+            animation: scaleIn 0.5s;
+        }
+
+        .success-check::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--success);
+            font-size: 24px;
+        }
+
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation" id="bgAnimation"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">⚛️ Router Mastery</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <nav>
+                <div class="nav-item active" onclick="showSection('intro')">
+                    <span>🚀</span> Introduction
+                </div>
+                <div class="nav-item" onclick="showSection('spa-basics')">
+                    <span>🌐</span> SPA Navigation
+                </div>
+                <div class="nav-item" onclick="showSection('route-config')">
+                    <span>⚙️</span> Route Configuration
+                </div>
+                <div class="nav-item" onclick="showSection('dynamic-routing')">
+                    <span>🎯</span> Dynamic Routing
+                </div>
+                <div class="nav-item" onclick="showSection('guards')">
+                    <span>🛡️</span> Navigation Guards
+                </div>
+                <div class="nav-item" onclick="showSection('params')">
+                    <span>📦</span> URL Parameters
+                </div>
+                <div class="nav-item" onclick="showSection('pitfalls')">
+                    <span>⚠️</span> Common Pitfalls
+                </div>
+                <div class="nav-item" onclick="showSection('challenge')">
+                    <span>🏆</span> Final Challenge
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- INTRO SECTION -->
+            <section id="intro" class="section active">
+                <div class="module-header">
+                    <h1 class="module-title">Master React Router</h1>
+                    <p>Learn the most critical routing concepts through interactive play</p>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🎯 What You'll Master</h3>
+                        <ul style="margin-top: 1rem; line-height: 2;">
+                            <li>Client-side navigation without page reloads</li>
+                            <li>Route matching algorithms</li>
+                            <li>Dynamic parameter extraction</li>
+                            <li>Authentication & route protection</li>
+                            <li>Common production pitfalls</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>🎮 How This Works</h3>
+                        <p style="margin-top: 1rem; line-height: 1.8;">
+                            This app simulates React Router's internal mechanisms using vanilla JavaScript. 
+                            By understanding how routing works under the hood, you'll debug React Router 
+                            issues 10x faster in production.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="browser-mockup">
+                    <div class="browser-header">
+                        <div class="browser-dot red"></div>
+                        <div class="browser-dot yellow"></div>
+                        <div class="browser-dot green"></div>
+                        <div class="address-bar" id="demoAddressBar">localhost:3000/</div>
+                    </div>
+                    <div class="browser-content" style="text-align: center; padding: 3rem;">
+                        <h2 style="color: var(--react-blue); margin-bottom: 1rem;">Ready to become a Routing Expert?</h2>
+                        <p style="margin-bottom: 2rem;">Navigate through the modules using the sidebar. Each section includes interactive demos, exercises, and quizzes.</p>
+                        <button class="btn btn-primary" onclick="showSection('spa-basics')">Start Learning →</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SPA BASICS SECTION -->
+            <section id="spa-basics" class="section">
+                <div class="module-header">
+                    <h1 class="module-title">SPA Navigation Deep Dive</h1>
+                    <p>Understanding the History API - the engine behind React Router</p>
+                </div>
+
+                <div class="concept-card">
+                    <h3>🔧 The History API Mechanics</h3>
+                    <p style="margin: 1rem 0;">
+                        React Router is a wrapper around the browser's History API. Before using React Router, 
+                        understand these three core methods:
+                    </p>
+                    
+                    <div class="code-playground">
+                        <div class="playground-tabs">
+                            <div class="tab active">Vanilla JS (Under the Hood)</div>
+                            <div class="tab">React Router v6</div>
+                        </div>
+                        <div class="code-area">
+                            <div class="code-line">
+                                <span class="line-number">1</span>
+                                <span class="code-content"><span class="comment">// Push a new URL without reloading</span></span>
+                            </div>
+                            <div class="code-line">
+                                <span class="line-number">2</span>
+                                <span class="code-content"><span class="keyword">window</span>.history.<span class="function">pushState</span>({page: <span class="string">"profile"</span>}, <span class="string">"Profile"</span>, <span class="string">"/user/123"</span>);</span>
+                            </div>
+                            <div class="code-line">
+                                <span class="line-number">3</span>
+                                <span class="code-content"></span>
+                            </div>
+                            <div class="code-line">
+                                <span class="line-number">4</span>
+                                <span class="code-content"><span class="comment">// Listen for navigation (back/forward buttons)</span></span>
+                            </div>
+                            <div class="code-line">
+                                <span class="line-number">5</span>
+                                <span class="code-content"><span class="keyword">window</span>.<span class="function">addEventListener</span>(<span class="string">'popstate'</span>, (event) => {</span>
+                            </div>
+                            <div class="code-line">
+                                <span class="line-number">6</span>
+                                <span class="code-content">  <span class="keyword">console</span>.<span class="function">log</span>(<span class="string">"URL changed to:"</span>, location.pathname);</span>
+                            </div>
+                            <div class="code-line">
+                                <span class="line-number">7</span>
+                                <span class="code-content">  <span class="comment">// React Router updates components here!</span></span>
+                            </div>
+                            <div class="code-line">
+                                <span class="line-number">8</span>
+                                <span class="code-content">});</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exercise-container">
+                    <div class="exercise-title">🎮 Interactive: History API Playground</div>
+                    <p>Click the buttons to manipulate the browser history. Watch the URL change without a page reload!</p>
+                    
+                    <div class="browser-mockup" style="margin: 1.5rem 0;">
+                        <div class="browser-header">
+                            <div class="browser-dot red"></div>
+                            <div class="browser-dot yellow"></div>
+                            <div class="browser-dot green"></div>
+                            <div class="address-bar" id="historyUrl">/home</div>
+                        </div>
+                        <div class="browser-content">
+                            <div id="historyContent" style="text-align: center;">
+                                <h3 style="color: var(--react-blue); margin-bottom: 1rem;">Home Page</h3>
+                                <p>Current state: <span id="stateDisplay">null</span></p>
+                            </div>
+                            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                                <button class="btn btn-secondary" onclick="historyAction('back')">← Back</button>
+                                <button class="btn btn-primary" onclick="historyAction('push', '/about')">Go to About</button>
+                                <button class="btn btn-primary" onclick="historyAction('push', '/contact')">Go to Contact</button>
+                                <button class="btn btn-secondary" onclick="historyAction('forward')">Forward →</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="console-output" id="historyConsole">
+                        <div class="console-line info">Console ready... Click buttons above to see history API in action</div>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-title">⚠️ Critical Mistake to Avoid</div>
+                    <p><strong>Breaking the Back Button:</strong> Never use <code>window.location.href = '/new-url'</code> in a React app. This causes a full page reload, destroying your React state and causing a jarring UX. Always use the History API or React Router's <code>navigate()</code>.</p>
+                </div>
+
+                <button class="btn btn-primary" onclick="completeModule('spa-basics', 'route-config')" style="margin-top: 2rem;">
+                    Complete & Continue →
+                </button>
+            </section>
+
+            <!-- ROUTE CONFIG SECTION -->
+            <section id="route-config" class="section">
+                <div class="module-header">
+                    <h1 class="module-title">Route Configuration</h1>
+                    <p>Declarative vs Config-based routing patterns</p>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>📍 Route Matching Logic</h3>
+                        <p>React Router v6 uses a "best match" algorithm. Routes are checked in order, and the first match wins (unless using <code>&lt;Routes&gt;</code> which picks the best match).</p>
+                    </div>
+                    <div class="concept-card">
+                        <h3>🎨 Declarative Routing</h3>
+                        <p>Routes are components. This means you can conditionally render routes based on state, permissions, or feature flags!</p>
+                    </div>
+                </div>
+
+                <div class="exercise-container">
+                    <div class="exercise-title">🧩 Exercise: Build the Route Table</div>
+                    <p>Drag the route patterns to match them with the correct components. Order matters!</p>
+
+                    <div style="margin: 2rem 0;">
+                        <h4 style="margin-bottom: 1rem;">Available Routes (Drag to reorder):</h4>
+                        <div id="routeList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div class="draggable-item" draggable="true" data-route="/" data-comp="Home">/ → Home</div>
+                            <div class="draggable-item" draggable="true" data-route="/products/:id" data-comp="ProductDetail">/products/:id → ProductDetail</div>
+                            <div class="draggable-item" draggable="true" data-route="/products" data-comp="ProductList">/products → ProductList</div>
+                            <div class="draggable-item" draggable="true" data-route="*" data-comp="NotFound">* → NotFound</div>
+                        </div>
+                    </div>
+
+                    <div class="browser-mockup">
+                        <div class="browser-header">
+                            <div class="address-bar" id="configTestUrl">/products/123</div>
+                        </div>
+                        <div class="browser-content">
+                            <p>Testing URL: <strong>/products/123</strong></p>
+                            <p style="margin-top: 1rem;">Current Match: <span id="currentMatch" style="color: var(--react-blue); font-size: 1.2rem;">None</span></p>
+                            <button class="btn btn-primary" onclick="testRouteOrder()" style="margin-top: 1rem;">Test Route Matching</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,215,0,0.1); border-radius: 8px; border-left: 4px solid var(--accent);">
+                        <strong>💡 Hint:</strong> Specific routes should come before generic ones. /products/:id should be after /products only if not using exact matching!
+                    </div>
+                </div>
+
+                <div class="quiz-container" style="margin-top: 2rem;">
+                    <h3>🧠 Quick Quiz</h3>
+                    <p style="margin: 1rem 0;">What happens if you define these routes in this order?</p>
+                    <div class="code-area" style="margin: 1rem 0; font-size: 0.8rem;">
+                        <div class="code-line"><span class="tag">&lt;Route</span> <span class="attr">path</span>=<span class="string">"/products/*"</span> <span class="attr">element</span>={&lt;Products /&gt;} <span class="tag">/&gt;</span></div>
+                        <div class="code-line"><span class="tag">&lt;Route</span> <span class="attr">path</span>=<span class="string">"/products/electronics"</span> <span class="attr">element</span>={&lt;Electronics /&gt;} <span class="tag">/&gt;</span></div>
+                    </div>
+                    <div class="quiz-option" onclick="checkAnswer(this, false)">
+                        <span>A</span> Both routes render simultaneously
+                    </div>
+                    <div class="quiz-option" onclick="checkAnswer(this, true)">
+                        <span>B</span> /products/electronics never matches (or matches Products with wildcard)
+                    </div>
+                    <div class="quiz-option" onclick="checkAnswer(this, false)">
+                        <span>C</span> React Router throws an error
+                    </div>
+                </div>
+            </section>
+
+            <!-- DYNAMIC ROUTING SECTION -->
+            <section id="dynamic-routing" class="section">
+                <div class="module-header">
+                    <h1 class="module-title">Dynamic Routing</h1>
+                    <p>URL parameters, wildcards, and nested routes</p>
+                </div>
+
+                <div class="param-playground">
+                    <div class="url-builder">
+                        <h3 style="margin-bottom: 1rem;">🔗 URL Pattern Builder</h3>
+                        <div style="margin-bottom: 1rem;">
+                            <label>Base Path:</label>
+                            <input type="text" class="param-input" value="/users" id="basePath" oninput="updatePattern()">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label>Parameter:</label>
+                            <select class="param-input" id="paramType" onchange="updatePattern()">
+                                <option value=":id">:id (Required)</option>
+                                <option value=":id?">:id? (Optional)</option>
+                                <option value="*">* (Wildcard)</option>
+                                <option value=":id/edit">:id/edit (Nested Static)</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                            <strong>Generated Pattern:</strong>
+                            <div id="generatedPattern" style="color: var(--react-blue); font-family: monospace; margin-top: 0.5rem; font-size: 1.2rem;">
+                                /users/:id
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="url-builder">
+                        <h3 style="margin-bottom: 1rem;">🧪 Test URL Matcher</h3>
+                        <div style="margin-bottom: 1rem;">
+                            <label>Test URL:</label>
+                            <input type="text" class="param-input" value="/users/123" id="testUrl" oninput="testPattern()">
+                        </div>
+                        <div id="matchResult" style="padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+                            Waiting for input...
+                        </div>
+                        <div id="extractedParams" style="margin-top: 1rem; font-family: monospace; font-size: 0.9rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="concept-card" style="margin-top: 2rem;">
+                    <h3>🎯 Route Nesting Visualization</h3>
+                    <div class="route-visualizer" id="nestedRouteVisualizer">
+                        <div class="route-node active" onclick="showNestedRoute('dashboard')">/dashboard</div>
+                        <div class="route-node" onclick="showNestedRoute('settings')">/dashboard/settings</div>
+                        <div class="route-node" onclick="showNestedRoute('profile')">/dashboard/profile/:userId</div>
+                        <div class="route-node" onclick="showNestedRoute('wildcard')">/dashboard/*</div>
+                    </div>
+                    <div id="nestedContent" style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-top: 1rem;">
+                        <p>Click routes above to see how nested outlets work...</p>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-title">⚠️ The Greedy Wildcard Trap</div>
+                    <p>Using <code>*</code> catches everything after it. If you have <code>/products/*</code> and <code>/products/special</code>, the wildcard version matches first unless you use <code>&lt;Routes&gt;</code> (v6) which picks the best match, or order them carefully in v5.</p>
+                </div>
+            </section>
+
+            <!-- NAVIGATION GUARDS SECTION -->
+            <section id="guards" class="section">
+                <div class="module-header">
+                    <h1 class="module-title">Navigation Guards</h1>
+                    <p>Protecting routes with authentication and permissions</p>
+                </div>
+
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🔒 Auth Guard Pattern</h3>
+                        <p>React Router v6 doesn't have built-in "guards" like Vue Router. Instead, we use:</p>
+                        <ul style="margin-top: 1rem; line-height: 2;">
+                            <li><strong>Layout Routes:</strong> Wrapper components that check auth</li>
+                            <li><strong>Loader functions:</strong> Data fetching + auth checks</li>
+                            <li><strong>RequiredAuth component:</strong> HOC pattern</li>
+                        </ul>
+                    </div>
+                    <div class="concept-card">
+                        <h3>🚦 Decision Flow</h3>
+                        <div style="margin-top: 1rem; font-size: 0.9rem;">
+                            <div style="padding: 0.5rem; background: rgba(97,218,251,0.1); margin: 0.5rem 0; border-radius: 4px;">
+                                1. User clicks /admin
+                            </div>
+                            <div style="padding: 0.5rem; background: rgba(255,215,0,0.1); margin: 0.5rem 0; border-radius: 4px;">
+                                2. Guard checks localStorage/JWT
+                            </div>
+                            <div style="padding: 0.5rem; background: rgba(255,107,107,0.1); margin: 0.5rem 0; border-radius: 4px;">
+                                3. Not logged in? → Redirect to /login
+                            </div>
+                            <div style="padding: 0.5rem; background: rgba(78,205,196,0.1); margin: 0.5rem 0; border-radius: 4px;">
+                                4. Logged in? → Render Admin Dashboard
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exercise-container">
+                    <div class="exercise-title">🛡️ Build an Auth Guard</div>
+                    <p>Complete the ProtectedRoute component logic:</p>
+                    
+                    <div class="code-playground">
+                        <div class="code-area" style="background: #1e1e1e;">
+                            <div class="code-line"><span class="keyword">function</span> <span class="function">ProtectedRoute</span>({ children }) {</div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">const</span> isAuthenticated = <span class="function">checkAuth</span>();</div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">const</span> location = <span class="function">useLocation</span>();</div>
+                            <div class="code-line"></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">if</span> (!isAuthenticated) {</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// TODO: Fill in the redirect logic</span></div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> &lt;Navigate <span class="attr">to</span>=<span class="string">"<select id="guardSelect" style="background: #333; color: #ce9178; border: none; padding: 2px;">
+                                <option value="">Choose...</option>
+                                <option value="/login">/login</option>
+                                <option value="back">go back</option>
+                                <option value="null">null</option>
+                            </select>"</span> <span class="attr">state</span>={{ from: location }} <span class="attr">replace</span> /&gt;;</div>
+                            <div class="code-line">&nbsp;&nbsp;}</div>
+                            <div class="code-line"></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">return</span> children;</div>
+                            <div class="code-line">}</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkGuardAnswer()" style="margin-top: 1rem;">Check Answer</button>
+                    <div id="guardFeedback" style="margin-top: 1rem;"></div>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-title">⚠️ The Flash of Unauthenticated Content (FOUC)</div>
+                    <p>Don't just conditionally render content based on auth state. If you do <code>{isAuth ? &lt;Dashboard /&gt; : null}</code>, users see a blank page or flash of content before redirect. Always use <code>&lt;Navigate /&gt;</code> or <code>Navigate</code> function to immediately redirect before render.</p>
+                </div>
+            </section>
+
+            <!-- URL PARAMETERS SECTION -->
+            <section id="params" class="section">
+                <div class="module-header">
+                    <h1 class="module-title">URL Parameters & Query Strings</h1>
+                    <p>Extracting and using dynamic data from URLs</p>
+                </div>
+
+                <div class="concept-card">
+                    <h3>📦 useParams() vs useSearchParams()</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                        <div>
+                            <h4 style="color: var(--react-blue); margin-bottom: 0.5rem;">Path Parameters</h4>
+                            <code style="background: rgba(0,0,0,0.3); padding: 0.2rem 0.5rem; border-radius: 4px;">/user/:id</code>
+                            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Use for resource identification</p>
+                            <ul style="margin-top: 0.5rem; font-size: 0.9rem; line-height: 1.8;">
+                                <li>Required for route matching</li>
+                                <li>Clean, SEO-friendly</li>
+                                <li>Access via useParams()</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--accent); margin-bottom: 0.5rem;">Query Parameters</h4>
+                            <code style="background: rgba(0,0,0,0.3); padding: 0.2rem 0.5rem; border-radius: 4px;">?tab=settings&view=grid</code>
+                            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Use for UI state, filtering, sorting</p>
+                            <ul style="margin-top: 0.5rem; font-size: 0.9rem; line-height: 1.8;">
+                                <li>Optional - doesn't affect routing</li>
+                                <li>Good for temporary state</li>
+                                <li>Access via useSearchParams()</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exercise-container">
+                    <div class="exercise-title">🎯 Parameter Extraction Challenge</div>
+                    <p>Given this URL and Route definition, extract the correct values:</p>
+                    
+                    <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin: 1rem 0; font-family: monospace;">
+                        <div style="color: var(--react-blue); margin-bottom: 0.5rem;">URL: /shop/electronics/123?sort=price&order=asc</div>
+                        <div style="color: #ce9178;">Route: /shop/:category/:productId</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">useParams() returns:</label>
+                            <div style="background: #1e1e1e; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                                { <br>
+                                &nbsp;&nbsp;category: "<input type="text" id="param1" style="width: 100px; background: #333; border: 1px solid #555; color: #fff; padding: 2px;">",<br>
+                                &nbsp;&nbsp;productId: "<input type="text" id="param2" style="width: 100px; background: #333; border: 1px solid #555; color: #fff; padding: 2px;">"<br>
+                                }
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem;">useSearchParams() returns:</label>
+                            <div style="background: #1e1e1e; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                                sort: "<input type="text" id="query1" style="width: 100px; background: #333; border: 1px solid #555; color: #fff; padding: 2px;">"<br>
+                                order: "<input type="text" id="query2" style="width: 100px; background: #333; border: 1px solid #555; color: #fff; padding: 2px;">"
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkParams()" style="margin-top: 1rem;">Validate Extraction</button>
+                    <div id="paramsFeedback"></div>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-title">⚠️ Type Confusion</div>
+                    <p><strong>Everything in URLs is a string!</strong> If you have <code>/user/123</code>, <code>params.id</code> is "123" (string), not 123 (number). This causes bugs with strict equality checks: <code>params.id === 123</code> is false!</p>
+                    <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px; font-family: monospace; font-size: 0.8rem;">
+                        const id = Number(useParams().id); // Always convert if needed
+                    </div>
+                </div>
+            </section>
+
+            <!-- PITFALLS SECTION -->
+            <section id="pitfalls" class="section">
+                <div class="module-header">
+                    <h1 class="module-title">Common Pitfalls & Debugging</h1>
+                    <p>Production mistakes that cost developers hours</p>
+                </div>
+
+                <div id="pitfallsList">
+                    <div class="pitfall-card">
+                        <div class="pitfall-title">1. 🚨 Forgetting &lt;Routes&gt; wrapper (v6)</div>
+                        <p>In React Router v6, you must wrap Route components in &lt;Routes&gt;. In v5, you used &lt;Switch&gt;. If you forget, nothing renders or you get cryptic errors.</p>
+                        <div class="code-area" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                            <div class="code-line"><span class="comment">// ❌ Wrong:</span></div>
+                            <div class="code-line"><span class="tag">&lt;Route</span> <span class="attr">path</span>=<span class="string">"/"</span> <span class="attr">element</span>={&lt;Home /&gt;} <span class="tag">/&gt;</span></div>
+                            <div class="code-line"><span class="comment">// ✅ Correct:</span></div>
+                            <div class="code-line"><span class="tag">&lt;Routes&gt;</span></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="tag">&lt;Route</span> <span class="attr">path</span>=<span class="string">"/"</span> <span class="attr">element</span>={&lt;Home /&gt;} <span class="tag">/&gt;</span></div>
+                            <div class="code-line"><span class="tag">&lt;/Routes&gt;</span></div>
+                        </div>
+                    </div>
+
+                    <div class="pitfall-card">
+                        <div class="pitfall-title">2. 🔄 Relative vs Absolute Links</div>
+                        <p>&lt;Link to="settings"&gt; behaves differently than &lt;Link to="/settings"&gt;. Without the leading slash, it's relative to the current path. If you're at /user/123 and link to "settings", you go to /user/123/settings, not /settings!</p>
+                    </div>
+
+                    <div class="pitfall-card">
+                        <div class="pitfall-title">3. 🎣 useEffect Dependency Hell</div>
+                        <p>When URL params change, your useEffect might not trigger if you forget to add the param to the dependency array.</p>
+                        <div class="code-area" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                            <div class="code-line"><span class="keyword">useEffect</span>(() => {</div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="function">fetchUser</span>(params.id);</div>
+                            <div class="code-line">}, []); <span class="comment">// ❌ Missing dependency!</span></div>
+                            <div class="code-line"><span class="comment">// ✅ Fix: }, [params.id]);</span></div>
+                        </div>
+                    </div>
+
+                    <div class="pitfall-card">
+                        <div class="pitfall-title">4. 🏃 Race Conditions in Loaders</div>
+                        <p>If a user navigates quickly between pages, slow API calls might resolve out of order, showing data for the wrong page. Always cancel requests or check if the component is still mounted.</p>
+                    </div>
+                </div>
+
+                <div class="exercise-container" style="margin-top: 2rem;">
+                    <div class="exercise-title">🐛 Bug Hunter Challenge</div>
+                    <p>Find the bug in this routing setup:</p>
+                    <div class="code-playground">
+                        <div class="code-area">
+                            <div class="code-line"><span class="keyword">function</span> <span class="function">App</span>() {</div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">return</span> (</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&lt;Router&gt;</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Routes&gt;</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Route path=<span class="string">"/"</span> element={&lt;Home /&gt;} /&gt;</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Route path=<span class="string">"/products"</span> element={&lt;Products /&gt;} /&gt;</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Route path=<span class="string">"/products/:id"</span> element={&lt;Product /&gt;} /&gt;</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Routes&gt;</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/Router&gt;</div>
+                            <div class="code-line">&nbsp;&nbsp;);</div>
+                            <div class="code-line">}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-secondary" onclick="alert('Nope! Try again. Hint: Think about what happens when you visit /products/123')">Routes are in wrong order</button>
+                        <button class="btn btn-secondary" onclick="alert('Nope! Both are valid in v6.')" style="margin-left: 0.5rem;">Missing exact prop</button>
+                        <button class="btn btn-primary" onclick="showBugExplanation()" style="margin-left: 0.5rem;">Show Explanation</button>
+                    </div>
+                    <div id="bugExplanation" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(78,205,196,0.1); border-radius: 8px;">
+                        <strong>Actually, this works in v6!</strong> Unlike v5, React Router v6 automatically picks the best match, so /products/:id matches before /products/* if it's more specific. However, if you had /products/* before /products/:id, that would be a problem in v5.
+                    </div>
+                </div>
+            </section>
+
+            <!-- FINAL CHALLENGE -->
+            <section id="challenge" class="section">
+                <div class="module-header">
+                    <h1 class="module-title">🏆 Final Challenge: Build a Mini Router</h1>
+                    <p>Implement a basic router from scratch to prove your mastery</p>
+                </div>
+
+                <div class="concept-card">
+                    <h3>🎯 Challenge Requirements</h3>
+                    <p>Complete the implementation of a custom useRouter hook that handles:</p>
+                    <ul style="margin-top: 1rem; line-height: 2;">
+                        <li>✅ URL matching with parameters (e.g., /user/:id)</li>
+                        <li>✅ Navigation with history API</li>
+                        <li>✅ 404 handling for unmatched routes</li>
+                        <li>✅ Basic navigation guard (check if route requires auth)</li>
+                    </ul>
+                </div>
+
+                <div class="exercise-container">
+                    <div class="exercise-title">📝 Implementation Task</div>
+                    <p>Fill in the missing logic:</p>
+                    
+                    <div class="code-playground">
+                        <div class="code-area" style="font-size: 0.85rem;">
+                            <div class="code-line"><span class="keyword">function</span> <span class="function">matchRoute</span>(path, currentPath) {</div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="comment">// Convert /user/:id to regex: /^\/user\/([^\/]+)$/</span></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">const</span> paramNames = [];</div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">const</span> regexPattern = path.<span class="function">replace</span>(<span class="string">/:([^\/]+)/g</span>, (match, paramName) => {</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;paramNames.<span class="function">push</span>(paramName);</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="string">'([^\\/]+)'</span>; <span class="comment">// Capture group</span></div>
+                            <div class="code-line">&nbsp;&nbsp;});</div>
+                            <div class="code-line"></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">const</span> regex = <span class="keyword">new</span> <span class="function">RegExp</span>(<span class="string">'^'</span> + regexPattern + <span class="string">'$'</span>);</div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">const</span> match = currentPath.<span class="function">match</span>(regex);</div>
+                            <div class="code-line"></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">if</span> (!match) <span class="keyword">return</span> <span class="keyword">null</span>;</div>
+                            <div class="code-line"></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="comment">// TODO: Extract parameters into an object</span></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">const</span> params = {};</div>
+                            <div class="code-line">&nbsp;&nbsp;paramNames.<span class="function">forEach</span>((name, index) => {</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Your code here:</span></div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;params[name] = <input type="text" id="finalAnswer" placeholder="???" style="width: 150px; background: #333; border: 1px solid #555; color: #fff; padding: 2px;">;</div>
+                            <div class="code-line">&nbsp;&nbsp;});</div>
+                            <div class="code-line"></div>
+                            <div class="code-line">&nbsp;&nbsp;<span class="keyword">return</span> { params };</div>
+                            <div class="code-line">}</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkFinalChallenge()" style="margin-top: 1rem;">Submit Solution</button>
+                    <div id="finalFeedback" style="margin-top: 1rem;"></div>
+                </div>
+
+                <div id="certificate" style="display: none; text-align: center; margin-top: 3rem; padding: 3rem; background: linear-gradient(135deg, rgba(97,218,251,0.1), rgba(0,0,0,0.3)); border-radius: 12px; border: 2px solid var(--react-blue);">
+                    <div class="success-check" style="margin: 0 auto 1rem;"></div>
+                    <h2 style="color: var(--react-blue); margin-bottom: 1rem;">Congratulations!</h2>
+                    <p>You've mastered React Router fundamentals!</p>
+                    <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.8;">You now understand the internals well enough to debug any routing issue and implement custom solutions.</p>
+                    <button class="btn btn-primary" onclick="resetProgress()" style="margin-top: 2rem;">Start Over</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Background Animation
+        function createRouteLines() {
+            const container = document.getElementById('bgAnimation');
+            for(let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const line = document.createElement('div');
+                    line.className = 'route-line';
+                    line.style.top = Math.random() * 100 + '%';
+                    line.style.width = Math.random() * 200 + 100 + 'px';
+                    line.style.animationDelay = Math.random() * 2 + 's';
+                    container.appendChild(line);
+                }, i * 1000);
+            }
+        }
+        createRouteLines();
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update sidebar
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Update progress
+            updateProgress();
+        }
+
+        // History API Playground
+        let historyStack = ['/home'];
+        let currentIndex = 0;
+
+        function historyAction(action, path) {
+            const console = document.getElementById('historyConsole');
+            const urlBar = document.getElementById('historyUrl');
+            const content = document.getElementById('historyContent');
+            const stateDisplay = document.getElementById('stateDisplay');
+            
+            if(action === 'push' && path) {
+                // Remove forward history if we push new
+                historyStack = historyStack.slice(0, currentIndex + 1);
+                historyStack.push(path);
+                currentIndex++;
+                
+                urlBar.textContent = path;
+                content.innerHTML = `<h3 style="color: var(--react-blue); margin-bottom: 1rem;">${path.replace('/', '').toUpperCase()} Page</h3><p>State: {page: "${path.replace('/', '')}"}</p>`;
+                stateDisplay.textContent = `{page: "${path.replace('/', '')}"}`;
+                
+                logConsole(`history.pushState({page: "${path.replace('/', '')}"}, "", "${path}")`, 'info');
+            } else if(action === 'back' && currentIndex > 0) {
+                currentIndex--;
+                const prevPath = historyStack[currentIndex];
+                urlBar.textContent = prevPath;
+                content.innerHTML = `<h3 style="color: var(--react-blue); margin-bottom: 1rem;">${prevPath.replace('/', '').toUpperCase()} Page</h3><p>Went back to previous state</p>`;
+                logConsole('popstate event fired! User clicked back button', 'success');
+            } else if(action === 'forward' && currentIndex < historyStack.length - 1) {
+                currentIndex++;
+                const nextPath = historyStack[currentIndex];
+                urlBar.textContent = nextPath;
+                content.innerHTML = `<h3 style="color: var(--react-blue); margin-bottom: 1rem;">${nextPath.replace('/', '').toUpperCase()} Page</h3><p>Went forward</p>`;
+                logConsole('popstate event fired! User clicked forward button', 'success');
+            }
+        }
+
+        function logConsole(message, type) {
+            const console = document.getElementById('historyConsole');
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = `> ${message}`;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // Route Config Exercise
+        let draggedItem = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const items = document.querySelectorAll('.draggable-item');
+            items.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                item.addEventListener('dragend', () => {
+                    draggedItem = null;
+                });
+            });
+
+            const routeList = document.getElementById('routeList');
+            routeList.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(routeList, e.clientY);
+                if(afterElement == null) {
+                    routeList.appendChild(draggedItem);
+                } else {
+                    routeList.insertBefore(draggedItem, afterElement);
+                }
+            });
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.draggable-item:not([style*="opacity: 0.5"])')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if(offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function testRouteOrder() {
+            const routes = [...document.querySelectorAll('.draggable-item')].map(item => ({
+                route: item.dataset.route,
+                comp: item.dataset.comp
+            }));
+            
+            const testUrl = '/products/123';
+            let match = 'NotFound';
+            
+            for(let route of routes) {
+                if(route.route === '*') continue;
+                
+                const pattern = route.route.replace(/:([^/]+)/g, '([^/]+)');
+                const regex = new RegExp(`^${pattern}$`);
+                
+                if(regex.test(testUrl)) {
+                    match = route.comp;
+                    break;
+                }
+            }
+            
+            document.getElementById('currentMatch').textContent = match;
+            
+            // Visual feedback
+            if(match === 'ProductDetail') {
+                alert('✅ Correct! Specific dynamic routes should come before wildcards or generic patterns.');
+            } else {
+                alert(`❌ Currently matches: ${match}. Hint: Check if /products/:id is evaluated before falling through to other patterns.`);
+            }
+        }
+
+        // Dynamic Routing
+        function updatePattern() {
+            const base = document.getElementById('basePath').value;
+            const type = document.getElementById('paramType').value;
+            document.getElementById('generatedPattern').textContent = base + type;
+            testPattern();
+        }
+
+        function testPattern() {
+            const pattern = document.getElementById('generatedPattern').textContent;
+            const testUrl = document.getElementById('testUrl').value;
+            const resultDiv = document.getElementById('matchResult');
+            const paramsDiv = document.getElementById('extractedParams');
+            
+            // Convert pattern to regex
+            let regexPattern = pattern
+                .replace(/:([^/]+)\?/g, '(?:/([^/]+))?') // Optional params
+                .replace(/:([^/]+)/g, '([^/]+)')         // Required params
+                .replace(/\*/g, '(.*)');                 // Wildcard
+            
+            // Handle optional segments properly
+            if(pattern.includes('?')) {
+                regexPattern = regexPattern.replace(/\/\(\?/, '(?:/');
+            }
+            
+            const regex = new RegExp(`^${regexPattern}$`);
+            const match = testUrl.match(regex);
+            
+            if(match) {
+                resultDiv.innerHTML = '<span style="color: var(--success);">✅ Match Found!</span>';
+                resultDiv.style.background = 'rgba(78,205,196,0.1)';
+                
+                // Extract param names and values
+                const paramNames = [];
+                const patternParts = pattern.split('/');
+                patternParts.forEach((part, i) => {
+                    if(part.startsWith(':')) {
+                        paramNames.push(part.replace('?', ''));
+                    }
+                });
+                
+                let paramsHtml = '<strong>Extracted Params:</strong><br>';
+                paramNames.forEach((name, index) => {
+                    paramsHtml += `${name}: ${match[index + 1] || 'undefined'}<br>`;
+                });
+                paramsDiv.innerHTML = paramsHtml;
+            } else {
+                resultDiv.innerHTML = '<span style="color: var(--error);">❌ No Match</span>';
+                resultDiv.style.background = 'rgba(255,107,107,0.1)';
+                paramsDiv.innerHTML = '';
+            }
+        }
+
+        function showNestedRoute(route) {
+            const content = document.getElementById('nestedContent');
+            const nodes = document.querySelectorAll('.route-node');
+            nodes.forEach(n => n.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const scenarios = {
+                dashboard: 'Parent Route: Renders Dashboard Layout with &lt;Outlet /&gt;<br><br>Child Routes render inside the outlet.',
+                settings: 'Exact Match: /dashboard/settings<br><br>Renders Settings component inside Dashboard layout.',
+                profile: 'Dynamic Nested: /dashboard/profile/:userId<br><br>Params available: { userId: "123" }<br>Layout persists, content swaps.',
+                wildcard: 'Wildcard: /dashboard/*<br><br>Catches /dashboard/anything/here<br>Useful for 404s within a section.'
+            };
+            
+            content.innerHTML = `<div style="font-family: monospace; line-height: 1.6;">${scenarios[route]}</div>`;
+        }
+
+        // Guards
+        function checkGuardAnswer() {
+            const select = document.getElementById('guardSelect');
+            const feedback = document.getElementById('guardFeedback');
+            
+            if(select.value === '/login') {
+                feedback.innerHTML = '<div style="color: var(--success); margin-top: 1rem;">✅ Correct! Always redirect to login, passing the current location so you can redirect back after auth.</div>';
+            } else {
+                feedback.innerHTML = '<div style="color: var(--error); margin-top: 1rem;">❌ Not quite. You need to redirect to the login page while preserving the intended destination.</div>';
+            }
+        }
+
+        // URL Params
+        function checkParams() {
+            const p1 = document.getElementById('param1').value;
+            const p2 = document.getElementById('param2').value;
+            const q1 = document.getElementById('query1').value;
+            const q2 = document.getElementById('query2').value;
+            
+            const feedback = document.getElementById('paramsFeedback');
+            
+            if(p1 === 'electronics' && p2 === '123' && q1 === 'price' && q2 === 'asc') {
+                feedback.innerHTML = '<div style="color: var(--success); margin-top: 1rem;">✅ Perfect! You understand the difference between path params and query params.</div>';
+            } else {
+                feedback.innerHTML = '<div style="color: var(--error); margin-top: 1rem;">❌ Check again. Remember: Path params are part of the route definition, query params are after the ?.</div>';
+            }
+        }
+
+        // Bug explanation
+        function showBugExplanation() {
+            document.getElementById('bugExplanation').style.display = 'block';
+        }
+
+        // Final Challenge
+        function checkFinalChallenge() {
+            const answer = document.getElementById('finalAnswer').value.trim();
+            const feedback = document.getElementById('finalFeedback');
+            
+            if(answer === 'match[index + 1]' || answer === 'match[index+1]') {
+                feedback.innerHTML = '<div style="color: var(--success); font-size: 1.1rem; margin-top: 1rem;">🎉 Correct! You understand how regex capture groups work with route parameters.</div>';
+                document.getElementById('certificate').style.display = 'block';
+                updateProgress(100);
+            } else {
+                feedback.innerHTML = '<div style="color: var(--error); margin-top: 1rem;">❌ Not quite. Hint: The match array contains the full match at index 0, and captured groups start at index 1.</div>';
+            }
+        }
+
+        // Progress tracking
+        function updateProgress(override) {
+            if(override) {
+                document.getElementById('progressFill').style.width = override + '%';
+                return;
+            }
+            
+            const sections = ['intro', 'spa-basics', 'route-config', 'dynamic-routing', 'guards', 'params', 'pitfalls', 'challenge'];
+            const current = document.querySelector('.section.active').id;
+            const index = sections.indexOf(current);
+            const progress = ((index + 1) / sections.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function completeModule(current, next) {
+            // Visual feedback
+            const btn = event.target;
+            btn.innerHTML = '✅ Completed!';
+            btn.style.background = 'var(--success)';
+            
+            setTimeout(() => {
+                showSection(next);
+                // Update nav
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                    if(item.getAttribute('onclick').includes(next)) {
+                        item.classList.add('active');
+                    }
+                });
+            }, 1000);
+        }
+
+        function resetProgress() {
+            document.getElementById('certificate').style.display = 'none';
+            showSection('intro');
+            document.querySelectorAll('.nav-item').forEach((item, index) => {
+                item.classList.remove('active');
+                if(index === 0) item.classList.add('active');
+            });
+            updateProgress();
+        }
+
+        // Quiz functionality
+        function checkAnswer(element, isCorrect) {
+            // Remove previous classes
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                opt.onclick = null; // Disable further clicks
+            });
+            
+            if(isCorrect) {
+                element.classList.add('correct');
+                setTimeout(() => {
+                    alert('🎉 Correct! In React Router v5 with Switch, order mattered greatly. In v6, Routes picks the best match, but understanding this helps with debugging legacy code.');
+                }, 500);
+            } else {
+                element.classList.add('wrong');
+            }
+        }
+
+        // Initialize
+        window.onload = () => {
+            updateProgress();
+        };
+    </script>
+</body>
+</html>

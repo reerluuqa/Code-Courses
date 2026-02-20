@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ JS Performance Mastery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2129;--bd:#30363d;
+  --tx:#e6edf3;--txd:#8b949e;
+  --blue:#58a6ff;--green:#3fb950;--orange:#f0883e;--red:#f85149;
+  --purple:#bc8cff;--cyan:#39d2c0;--yellow:#e3b341;
+  --mono:'Consolas','Courier New',monospace;--side:260px;
+}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;min-height:100vh;overflow:hidden}
+.sidebar{width:var(--side);background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;transition:transform .3s}
+.side-hdr{padding:20px;border-bottom:1px solid var(--bd)}
+.side-hdr h1{font-size:17px;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.side-hdr p{font-size:11px;color:var(--txd);margin-top:4px}
+.nav-items{flex:1;padding:10px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:8px;cursor:pointer;color:var(--txd);transition:.2s;margin-bottom:3px;font-size:13px;user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--tx)}
+.nav-item.active{background:rgba(56,139,253,.15);color:var(--blue)}
+.nav-item .ic{font-size:18px;width:26px;text-align:center}
+.nav-item .dot{width:8px;height:8px;border-radius:50%;background:var(--bd);margin-left:auto;flex-shrink:0}
+.nav-item .dot.done{background:var(--green)}
+.prog-wrap{padding:14px 20px;border-top:1px solid var(--bd)}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--txd);margin-bottom:6px}
+.prog-bar{height:5px;background:var(--bd);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--blue));border-radius:3px;transition:width .5s}
+.main{margin-left:var(--side);flex:1;height:100vh;overflow-y:auto;scroll-behavior:smooth}
+.content{max-width:920px;margin:0 auto;padding:36px 28px 60px}
+.s-hdr{margin-bottom:32px}
+.badge{display:inline-block;padding:3px 10px;background:rgba(56,139,253,.15);color:var(--blue);border-radius:16px;font-size:11px;font-weight:600;margin-bottom:10px}
+.s-hdr h2{font-size:30px;margin-bottom:6px;background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.s-hdr>p{color:var(--txd);font-size:15px;line-height:1.6}
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:22px;margin-bottom:22px}
+.card h3{font-size:18px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h4{font-size:15px;margin:14px 0 6px;color:var(--blue)}
+.card p,.card li{color:var(--txd);line-height:1.7;font-size:14px}
+.card ul,.card ol{padding-left:20px;margin:8px 0}
+.card li{margin-bottom:3px}
+code{background:rgba(110,118,129,.2);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.code-block{background:#0a0e14;border:1px solid var(--bd);border-radius:8px;margin:14px 0;overflow:hidden}
+.code-hdr{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--bd);font-size:11px;color:var(--txd)}
+.copy-btn{background:none;border:1px solid var(--bd);color:var(--txd);padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px}
+.copy-btn:hover{color:var(--tx);border-color:var(--txd)}
+pre{padding:14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:var(--tx)}
+.kw{color:var(--purple)}.fn{color:#d2a8ff}.str{color:#a5d6ff}.num{color:var(--orange)}.cm{color:#484f58;font-style:italic}.op{color:var(--red)}.prop{color:#79c0ff}
+.demo{background:rgba(56,139,253,.04);border:1px solid rgba(56,139,253,.18);border-radius:12px;padding:22px;margin:14px 0}
+.demo h4{color:var(--cyan);margin-bottom:14px;font-size:15px}
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.demo-panel{background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--bd)}
+.demo-panel h5{font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.demo-panel.bad h5{color:var(--red)}.demo-panel.good h5{color:var(--green)}
+.demo-input{width:100%;padding:9px 12px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-size:13px;outline:none}
+.demo-input:focus{border-color:var(--blue)}
+.counter{font-size:34px;font-weight:700;text-align:center;padding:12px;font-family:var(--mono)}
+.counter.r{color:var(--red)}.counter.g{color:var(--green)}
+.log{max-height:140px;overflow-y:auto;background:var(--bg);border-radius:6px;padding:6px;margin-top:8px;font-family:var(--mono);font-size:11px}
+.log-entry{padding:2px 6px;border-radius:3px;margin-bottom:2px;animation:slideIn .2s ease}
+.log-entry.r{background:rgba(248,81,73,.08);color:var(--red)}.log-entry.g{background:rgba(63,185,80,.08);color:var(--green)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.btn{padding:8px 14px;border-radius:6px;border:1px solid var(--bd);background:var(--bg2);color:var(--tx);cursor:pointer;font-size:12px;transition:.2s}
+.btn:hover{background:var(--bg3);border-color:var(--blue)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.pri:hover{opacity:.85}
+.btn.suc{background:var(--green);border-color:var(--green);color:#fff}
+.btn.sm{padding:4px 10px;font-size:11px}
+.callout{border-radius:8px;padding:14px 18px;margin:14px 0;display:flex;gap:10px;align-items:flex-start}
+.callout .ci{font-size:18px;flex-shrink:0;line-height:1.4}
+.callout p,.callout code{font-size:13px;line-height:1.6}
+.callout.warn{background:rgba(240,136,62,.08);border:1px solid rgba(240,136,62,.25)}.callout.warn p{color:var(--orange)}
+.callout.danger{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25)}.callout.danger p{color:var(--red)}
+.callout.tip{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.25)}.callout.tip p{color:var(--green)}
+.callout.info{background:rgba(56,139,253,.08);border:1px solid rgba(56,139,253,.25)}.callout.info p{color:var(--blue)}
+.quiz-q{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:22px;margin-bottom:18px}
+.q-num{font-size:11px;color:var(--blue);font-weight:600;margin-bottom:6px}
+.q-text{font-size:15px;margin-bottom:14px;line-height:1.5}
+.q-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--bd);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:.2s;font-size:13px;color:var(--txd)}
+.q-opt:hover{border-color:var(--blue);background:rgba(56,139,253,.04)}
+.q-opt.sel{border-color:var(--blue);background:rgba(56,139,253,.08)}
+.q-opt.correct{border-color:var(--green);background:rgba(63,185,80,.08);color:var(--green)}
+.q-opt.wrong{border-color:var(--red);background:rgba(248,81,73,.08);color:var(--red)}
+.q-letter{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--bg);border:1px solid var(--bd);font-size:11px;font-weight:600;flex-shrink:0}
+.q-expl{margin-top:14px;padding:14px;border-radius:8px;font-size:13px;line-height:1.6;display:none}
+.q-expl.show{display:block}
+.q-expl.ok{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.25);color:var(--green)}
+.q-expl.no{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);color:var(--red)}
+.editor{width:100%;min-height:120px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:14px;color:var(--tx);font-family:var(--mono);font-size:12px;line-height:1.5;resize:vertical;outline:none}
+.editor:focus{border-color:var(--blue)}
+.ex-result{margin-top:10px;padding:10px;border-radius:6px;font-size:13px;display:none}
+.ex-result.show{display:block}
+.ex-result.pass{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.25);color:var(--green)}
+.ex-result.fail{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);color:var(--red)}
+.tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--bd)}
+.tab{padding:7px 14px;cursor:pointer;font-size:13px;color:var(--txd);border-bottom:2px solid transparent;transition:.2s;margin-bottom:-1px;user-select:none}
+.tab:hover{color:var(--tx)}.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-ct{display:none}.tab-ct.active{display:block}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:14px 0}
+.feat-card{background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:18px;text-align:center;transition:.3s;cursor:pointer}
+.feat-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.feat-card .fi{font-size:32px;margin-bottom:10px}
+.feat-card h4{font-size:14px;margin-bottom:4px;color:var(--tx)}
+.feat-card p{font-size:11px;color:var(--txd)}
+.tline-box{background:var(--bg);border-radius:8px;padding:16px;margin:14px 0;position:relative;overflow:hidden}
+.tline-row{display:flex;align-items:center;margin:10px 0;gap:10px}
+.tline-lbl{width:70px;font-size:11px;color:var(--txd);text-align:right;flex-shrink:0}
+.tline-track{flex:1;height:36px;background:rgba(255,255,255,.02);border-radius:6px;position:relative;display:flex;align-items:center;overflow:hidden}
+.tline-dot{width:10px;height:10px;border-radius:50%;position:absolute;transition:.3s;animation:popIn .3s ease}
+.tline-dot.ev{background:var(--red);box-shadow:0 0 6px rgba(248,81,73,.4)}
+.tline-dot.cb{background:var(--green);box-shadow:0 0 6px rgba(63,185,80,.4)}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.mouse-area{height:140px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:crosshair;font-size:12px;color:var(--txd)}
+.trail{width:6px;height:6px;border-radius:50%;position:absolute;pointer-events:none;animation:dotFade .8s forwards}
+@keyframes dotFade{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(0)}}
+.cmp-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}
+.cmp-table th,.cmp-table td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--bd)}
+.cmp-table th{color:var(--blue);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.cmp-table td{color:var(--txd)}
+.cmp-table tr:hover td{background:rgba(255,255,255,.01)}
+.tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600}
+.tag.g{background:rgba(63,185,80,.12);color:var(--green)}
+.tag.r{background:rgba(248,81,73,.12);color:var(--red)}
+.tag.b{background:rgba(56,139,253,.12);color:var(--blue)}
+.tag.o{background:rgba(240,136,62,.12);color:var(--orange)}
+.tag.p{background:rgba(188,140,255,.12);color:var(--purple)}
+.score-wrap{text-align:center;padding:30px}
+.score-circle{width:110px;height:110px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;margin:0 auto 14px}
+.score-circle.great{background:rgba(63,185,80,.15);border:3px solid var(--green);color:var(--green)}
+.score-circle.ok{background:rgba(227,179,65,.15);border:3px solid var(--yellow);color:var(--yellow)}
+.score-circle.bad{background:rgba(248,81,73,.15);border:3px solid var(--red);color:var(--red)}
+.perf-meter{display:flex;align-items:center;gap:10px;margin:6px 0}
+.perf-meter .ml{width:110px;font-size:12px;color:var(--txd)}
+.perf-meter .mb{flex:1;height:22px;background:var(--bg);border-radius:5px;overflow:hidden;position:relative}
+.perf-meter .mf{height:100%;border-radius:5px;transition:width .8s;display:flex;align-items:center;padding-left:6px;font-size:10px;font-weight:600;color:#fff;min-width:40px}
+.mf.fast{background:var(--green)}.mf.med{background:var(--yellow)}.mf.slow{background:var(--red)}
+.bundle-vis{display:flex;gap:30px;justify-content:center;align-items:flex-end;padding:20px;margin:14px 0}
+.bundle{display:flex;flex-direction:column;align-items:center;gap:6px}
+.bundle-block{border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;width:90px;transition:.5s}
+.bundle-lbl{font-size:11px;color:var(--txd)}
+.lazy-gallery{height:280px;overflow-y:auto;border:1px solid var(--bd);border-radius:8px;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-content:start}
+.lazy-item{aspect-ratio:1;border-radius:8px;background:var(--bd);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--txd);transition:.5s;position:relative;overflow:hidden}
+.lazy-item.loaded{animation:fadeScale .5s ease}
+.lazy-item .sb{position:absolute;top:3px;right:3px;font-size:9px;padding:1px 5px;border-radius:3px}
+@keyframes fadeScale{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.menu-toggle{display:none;position:fixed;top:10px;left:10px;z-index:200;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:16px}
+@media(max-width:768px){.menu-toggle{display:block}.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.content{padding:52px 14px 40px}.demo-grid{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:7px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--txd)}
+.flex{display:flex}.gap-8{gap:8px}.gap-12{gap:12px}.mt-8{margin-top:8px}.mt-16{margin-top:16px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}
+.confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;overflow:hidden}
+.confetti-p{position:absolute;width:8px;height:8px;top:-10px}
+@keyframes confFall{0%{top:-10px;transform:rotate(0) translateX(0);opacity:1}100%{top:105vh;transform:rotate(720deg) translateX(80px);opacity:0}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<aside class="sidebar" id="sidebar">
+  <div class="side-hdr">
+    <h1>⚡ Perf Mastery</h1>
+    <p>JavaScript Performance Optimization</p>
+  </div>
+  <div class="nav-items" id="navItems"></div>
+  <div class="prog-wrap">
+    <div class="prog-lbl"><span>Progress</span><span id="progPct">0%</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+</aside>
+
+<main class="main" id="main">
+  <div class="content" id="content"></div>
+</main>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+const state = {
+  currentSection: 'home',
+  completed: JSON.parse(localStorage.getItem('perfCompleted') || '{}'),
+  quizAnswers: {}
+};
+
+const sections = [
+  { id:'home', icon:'🏠', label:'Welcome' },
+  { id:'debounce', icon:'⏱️', label:'Debounce & Throttle' },
+  { id:'lazy', icon:'🖼️', label:'Lazy Loading' },
+  { id:'perfapi', icon:'📊', label:'Performance API' },
+  { id:'codesplit', icon:'📦', label:'Code Splitting' },
+  { id:'quiz', icon:'🏆', label:'Master Quiz' },
+];
+
+// ─── SYNTAX HIGHLIGHT ────────────────────────────────────
+function hi(code) {
+  return code
+    .replace(/\/\/(.*)$/gm, '<span class="cm">//$1</span>')
+    .replace(/\/\*[\s\S]*?\*\//g, m => `<span class="cm">${m}</span>`)
+    .replace(/(["'`])(?:(?!\1|\\).|\\.)*\1/g, m => `<span class="str">${m}</span>`)
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
+    .replace(/\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|class|extends|import|export|from|default|async|await|try|catch|throw|finally|typeof|instanceof|in|of|yield|static|get|set|null|undefined|true|false|void|delete)\b/g, '<span class="kw">$1</span>')
+    .replace(/\b([A-Z]\w+)\b/g, '<span class="fn">$1</span>')
+    .replace(/(\w+)\s*\(/g, '<span class="fn">$1</span>(')
+    .replace(/(=>)/g, '<span class="kw">$1</span>');
+}
+
+function codeBlock(code, label='JavaScript') {
+  const id = 'cb'+Math.random().toString(36).substr(2,6);
+  return `<div class="code-block"><div class="code-hdr"><span>${label}</span><button class="copy-btn" onclick="copyCode('${id}')">Copy</button></div><pre id="${id}">${hi(code.trim())}</pre></div>`;
+}
+
+function copyCode(id) {
+  const el = document.getElementById(id);
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.closest('.code-block').querySelector('.copy-btn');
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+// ─── NAV ─────────────────────────────────────────────────
+function renderNav() {
+  const nav = document.getElementById('navItems');
+  nav.innerHTML = sections.map(s => `
+    <div class="nav-item ${state.currentSection===s.id?'active':''}" onclick="goTo('${s.id}')">
+      <span class="ic">${s.icon}</span>
+      <span>${s.label}</span>
+      <span class="dot ${state.completed[s.id]?'done':''}"></span>
+    </div>
+  `).join('');
+  const done = Object.keys(state.completed).length;
+  const total = sections.length - 1;
+  const pct = Math.round((done/total)*100);
+  document.getElementById('progPct').textContent = pct+'%';
+  document.getElementById('progFill').style.width = pct+'%';
+}
+
+function goTo(id) {
+  state.currentSection = id;
+  renderNav();
+  renderContent();
+  document.getElementById('main').scrollTop = 0;
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+function markDone(id) {
+  state.completed[id] = true;
+  localStorage.setItem('perfCompleted', JSON.stringify(state.completed));
+  renderNav();
+}
+
+// ─── CONTENT ROUTER ──────────────────────────────────────
+function renderContent() {
+  const el = document.getElementById('content');
+  const renderers = { home:renderHome, debounce:renderDebounce, lazy:renderLazy, perfapi:renderPerfAPI, codesplit:renderCodeSplit, quiz:renderQuiz };
+  el.innerHTML = renderers[state.currentSection]();
+  initInteractive();
+}
+
+// ─── HOME ────────────────────────────────────────────────
+function renderHome() {
+  return `
+    <div class="s-hdr">
+      <div class="badge">LEARNING PATH</div>
+      <h2>⚡ Performance Optimization</h2>
+      <p>Master the essential techniques that separate junior developers from senior engineers. Learn to build blazing-fast applications that delight users and impress interviewers.</p>
+    </div>
+
+    <div class="feat-grid">
+      <div class="feat-card" onclick="goTo('debounce')">
+        <div class="fi">⏱️</div>
+        <h4>Debounce & Throttle</h4>
+        <p>Control function execution rate</p>
+      </div>
+      <div class="feat-card" onclick="goTo('lazy')">
+        <div class="fi">🖼️</div>
+        <h4>Lazy Loading</h4>
+        <p>Load resources on demand</p>
+      </div>
+      <div class="feat-card" onclick="goTo('perfapi')">
+        <div class="fi">📊</div>
+        <h4>Performance API</h4>
+        <p>Measure & analyze performance</p>
+      </div>
+      <div class="feat-card" onclick="goTo('codesplit')">
+        <div class="fi">📦</div>
+        <h4>Code Splitting</h4>
+        <p>Optimize bundle sizes</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 Why Performance Matters</h3>
+      <ul>
+        <li><strong>53%</strong> of mobile users abandon sites that take over 3 seconds to load</li>
+        <li>A <strong>100ms</strong> delay in response time can reduce conversions by 7%</li>
+        <li>Google uses page speed as a <strong>ranking factor</strong></li>
+        <li>Top companies like Google, Meta, and Amazon heavily test performance knowledge in <strong>interviews</strong></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>📋 How to Use This App</h3>
+      <ul>
+        <li>📖 Read through each section — concepts build on each other</li>
+        <li>🎮 Try every interactive demo — hands-on learning sticks</li>
+        <li>💻 Complete the coding exercises — practice makes perfect</li>
+        <li>✅ Take each section quiz — test your understanding</li>
+        <li>🏆 Complete the Master Quiz — prove your mastery</li>
+      </ul>
+    </div>
+  `;
+}
+
+// ─── DEBOUNCE & THROTTLE ─────────────────────────────────
+function renderDebounce() {
+  return `
+    <div class="s-hdr">
+      <div class="badge">CHAPTER 1</div>
+      <h2>⏱️ Debounce & Throttle</h2>
+      <p>Two essential techniques to control how often a function executes. They're everywhere in production apps and a favorite interview topic.</p>
+    </div>
+
+    <!-- DEBOUNCE CONCEPT -->
+    <div class="card">
+      <h3>🔍 What is Debouncing?</h3>
+      <p><strong>Debounce</strong> delays executing a function until a certain amount of time has passed since the last call. If the function is called again before the delay expires, the timer resets.</p>
+      <p style="margin-top:8px"><strong>Real-world analogy:</strong> Think of an elevator door. It doesn't close immediately — it waits a few seconds. Every time someone walks in, the timer resets. It only closes when nobody has entered for a while.</p>
+
+      <h4>Common Use Cases</h4>
+      <ul>
+        <li>Search input auto-complete (wait for user to stop typing)</li>
+        <li>Window resize event handlers</li>
+        <li>Auto-save in text editors</li>
+        <li>Form validation after user finishes typing</li>
+      </ul>
+
+      ${codeBlock(`// Debounce implementation
+function debounce(fn, delay) {
+  let timeoutId;
+  return function(...args) {
+    // Clear previous timer
+    clearTimeout(timeoutId);
+    // Set new timer
+    timeoutId = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
+// Usage
+const searchAPI = debounce((query) => {
+  console.log('Searching for:', query);
+  fetch(\`/api/search?q=\${query}\`);
+}, 300);
+
+input.addEventListener('input', (e) => {
+  searchAPI(e.target.value);
+});`)}
+    </div>
+
+    <!-- DEBOUNCE INTERACTIVE DEMO -->
+    <div class="card">
+      <h3>🎮 Interactive Demo: Debounce in Action</h3>
+      <p>Type in both inputs below and watch the difference. The left fires on every keystroke. The right waits 500ms after you stop typing.</p>
+
+      <div class="demo">
+        <h4>🔬 Type Something — Compare the Results</h4>
+        <div class="demo-grid">
+          <div class="demo-panel bad">
+            <h5>❌ Without Debounce</h5>
+            <input class="demo-input" id="noDeb" placeholder="Type here..." autocomplete="off">
+            <div class="counter r" id="noDebCount">0</div>
+            <div style="font-size:11px;text-align:center;color:var(--txd)">API calls made</div>
+            <div class="log" id="noDebLog"></div>
+          </div>
+          <div class="demo-panel good">
+            <h5>✅ With Debounce (500ms)</h5>
+            <input class="demo-input" id="yesDeb" placeholder="Type here..." autocomplete="off">
+            <div class="counter g" id="yesDebCount">0</div>
+            <div style="font-size:11px;text-align:center;color:var(--txd)">API calls made</div>
+            <div class="log" id="yesDebLog"></div>
+          </div>
+        </div>
+        <div class="mt-16 flex gap-8">
+          <button class="btn sm" onclick="resetDebDemo()">🔄 Reset Counters</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMELINE VISUAL -->
+    <div class="card">
+      <h3>📊 Visual Timeline: Debounce vs Throttle</h3>
+      <p>Click the "Fire Event" button rapidly and watch how each strategy processes events differently.</p>
+      <div class="demo">
+        <h4>⏰ Click rapidly to see the difference</h4>
+        <div class="tline-box">
+          <div class="tline-row">
+            <div class="tline-lbl">Events</div>
+            <div class="tline-track" id="tlEvents"></div>
+          </div>
+          <div class="tline-row">
+            <div class="tline-lbl">Debounced</div>
+            <div class="tline-track" id="tlDebounce"></div>
+          </div>
+          <div class="tline-row">
+            <div class="tline-lbl">Throttled</div>
+            <div class="tline-track" id="tlThrottle"></div>
+          </div>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn pri" id="tlFireBtn">🔥 Fire Event</button>
+          <button class="btn sm" onclick="resetTimeline()">🔄 Reset</button>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--txd)">
+          <span style="color:var(--red)">● Red</span> = event fired &nbsp;
+          <span style="color:var(--green)">● Green</span> = callback executed
+        </div>
+      </div>
+    </div>
+
+    <!-- THROTTLE CONCEPT -->
+    <div class="card">
+      <h3>🔍 What is Throttling?</h3>
+      <p><strong>Throttle</strong> ensures a function executes at most once every X milliseconds, regardless of how many times it's called. It guarantees regular execution during continuous activity.</p>
+      <p style="margin-top:8px"><strong>Real-world analogy:</strong> Like a machine gun with a fire rate limit — no matter how fast you pull the trigger, it only fires at a fixed rate.</p>
+
+      <h4>Common Use Cases</h4>
+      <ul>
+        <li>Scroll event handlers (infinite scroll, parallax)</li>
+        <li>Mouse move tracking (drag operations)</li>
+        <li>API rate limiting</li>
+        <li>Game loop updates</li>
+      </ul>
+
+      ${codeBlock(`// Throttle implementation
+function throttle(fn, limit) {
+  let inThrottle = false;
+  return function(...args) {
+    if (!inThrottle) {
+      fn.apply(this, args);
+      inThrottle = true;
+      setTimeout(() => {
+        inThrottle = false;
+      }, limit);
+    }
+  };
+}
+
+// Usage — track scroll position at most every 100ms
+const onScroll = throttle(() => {
+  console.log('Scroll position:', window.scrollY);
+  updateUI();
+}, 100);
+
+window.addEventListener('scroll', onScroll);`)}
+    </div>
+
+    <!-- THROTTLE INTERACTIVE DEMO -->
+    <div class="card">
+      <h3>🎮 Interactive Demo: Throttle in Action</h3>
+      <p>Move your mouse inside both areas. Watch how throttle dramatically reduces handler calls.</p>
+      <div class="demo">
+        <h4>🖱️ Move your mouse inside the boxes</h4>
+        <div class="demo-grid">
+          <div class="demo-panel bad">
+            <h5>❌ Without Throttle</h5>
+            <div class="mouse-area" id="noThrotArea">Move mouse here</div>
+            <div class="counter r" id="noThrCount">0</div>
+            <div style="font-size:11px;text-align:center;color:var(--txd)">Handler calls</div>
+          </div>
+          <div class="demo-panel good">
+            <h5>✅ With Throttle (100ms)</h5>
+            <div class="mouse-area" id="yesThrotArea">Move mouse here</div>
+            <div class="counter g" id="yesThrCount">0</div>
+            <div style="font-size:11px;text-align:center;color:var(--txd)">Handler calls</div>
+          </div>
+        </div>
+        <div class="mt-16 flex gap-8">
+          <button class="btn sm" onclick="resetThrDemo()">🔄 Reset Counters</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPARISON TABLE -->
+    <div class="card">
+      <h3>📋 Debounce vs Throttle — When to Use Which</h3>
+      <table class="cmp-table">
+        <thead><tr><th>Feature</th><th>Debounce</th><th>Throttle</th></tr></thead>
+        <tbody>
+          <tr><td>Execution</td><td>After activity <em>stops</em></td><td>At regular <em>intervals</em></td></tr>
+          <tr><td>Guarantees execution during activity?</td><td>❌ No</td><td>✅ Yes</td></tr>
+          <tr><td>Best for</td><td>Final value (search, save)</td><td>Continuous updates (scroll, resize)</td></tr>
+          <tr><td>Timer behavior</td><td>Resets on each call</td><td>Runs independently</td></tr>
+          <tr><td>User perceives</td><td>Lag then action</td><td>Smooth, periodic updates</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ADVANCED PATTERNS -->
+    <div class="card">
+      <h3>🚀 Advanced: Leading & Trailing Edge</h3>
+      ${codeBlock(`// Leading edge debounce — fires immediately, then waits
+function debounceLeading(fn, delay) {
+  let timeoutId;
+  return function(...args) {
+    if (!timeoutId) {
+      fn.apply(this, args); // Execute immediately
+    }
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+    }, delay);
+  };
+}
+
+// Throttle with trailing call — ensures last call executes
+function throttleWithTrailing(fn, limit) {
+  let lastCall = 0;
+  let timeoutId;
+  return function(...args) {
+    const now = Date.now();
+    const remaining = limit - (now - lastCall);
+    clearTimeout(timeoutId);
+    if (remaining <= 0) {
+      fn.apply(this, args);
+      lastCall = now;
+    } else {
+      timeoutId = setTimeout(() => {
+        fn.apply(this, args);
+        lastCall = Date.now();
+      }, remaining);
+    }
+  };
+}`)}
+    </div>
+
+    <!-- PITFALLS -->
+    <div class="card">
+      <h3>⚠️ Common Mistakes & Pitfalls</h3>
+
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div>
+          <p><strong>Mistake #1: Creating new debounced functions on every render</strong></p>
+          <p>If you create the debounced function inside a component render or event handler, a NEW debounced function is created each time, defeating the purpose entirely!</p>
+        </div>
+      </div>
+      ${codeBlock(`// ❌ WRONG — new debounce created every render
+function SearchComponent() {
+  const handleSearch = debounce((q) => fetch(q), 300); // NEW each render!
+  return <input onChange={handleSearch} />;
+}
+
+// ✅ CORRECT — create once outside or with useMemo/useCallback
+const handleSearch = debounce((q) => fetch(q), 300);
+function SearchComponent() {
+  return <input onChange={(e) => handleSearch(e.target.value)} />;
+}`)}
+
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div>
+          <p><strong>Mistake #2: Losing 'this' context</strong></p>
+          <p>Arrow functions in debounce/throttle implementations can lose the correct <code>this</code> binding. Always use <code>fn.apply(this, args)</code>.</p>
+        </div>
+      </div>
+
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div>
+          <p><strong>Mistake #3: Not cleaning up on unmount</strong></p>
+          <p>Debounced/throttled functions may fire after a component unmounts, causing memory leaks or errors. Always cancel pending timers.</p>
+        </div>
+      </div>
+      ${codeBlock(`// ✅ Cancel debounce on cleanup
+function debounce(fn, delay) {
+  let timeoutId;
+  const debounced = function(...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
+  debounced.cancel = () => clearTimeout(timeoutId);
+  return debounced;
+}
+
+// Usage in React
+useEffect(() => {
+  return () => debouncedSearch.cancel();
+}, []);`)}
+
+      <div class="callout warn">
+        <span class="ci">⚡</span>
+        <div>
+          <p><strong>Mistake #4: Using throttle when you need debounce (and vice versa)</strong></p>
+          <p>Search autocomplete with throttle? Users see results for incomplete words. Scroll handler with debounce? UI only updates after scrolling stops. Choose wisely!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXERCISE -->
+    <div class="card">
+      <h3>💪 Exercise: Implement Debounce</h3>
+      <p>Write a <code>debounce</code> function from scratch. It should delay calling <code>fn</code> until <code>delay</code> ms have passed since the last invocation.</p>
+      <textarea class="editor" id="debEx" placeholder="function debounce(fn, delay) {
+  // Your code here...
+}">function debounce(fn, delay) {
+  
+}</textarea>
+      <div class="mt-8 flex gap-8">
+        <button class="btn pri" onclick="checkDebEx()">▶ Check Solution</button>
+        <button class="btn sm" onclick="showDebHint()">💡 Hint</button>
+      </div>
+      <div class="ex-result" id="debExResult"></div>
+    </div>
+
+    <!-- SECTION QUIZ -->
+    <div class="card">
+      <h3>✅ Section Quiz</h3>
+      <div id="debQuiz"></div>
+      <button class="btn pri mt-16" onclick="checkSectionQuiz('debounce','debQuiz')">Check Answers</button>
+      <div id="debQuizResult" class="ex-result"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn pri" onclick="markDone('debounce');goTo('lazy')">Continue to Lazy Loading →</button>
+    </div>
+  `;
+}
+
+// ─── LAZY LOADING ────────────────────────────────────────
+function renderLazy() {
+  return `
+    <div class="s-hdr">
+      <div class="badge">CHAPTER 2</div>
+      <h2>🖼️ Lazy Loading Techniques</h2>
+      <p>Load resources only when needed — images, components, data. Dramatically improve initial page load time.</p>
+    </div>
+
+    <div class="card">
+      <h3>🔍 What is Lazy Loading?</h3>
+      <p>Lazy loading is a strategy that defers loading of non-critical resources at page load time. Instead, resources are loaded at the moment they're needed (e.g., when they enter the viewport).</p>
+      <h4>Benefits</h4>
+      <ul>
+        <li><strong>Faster initial load</strong> — less data to download upfront</li>
+        <li><strong>Reduced bandwidth</strong> — don't load what users never see</li>
+        <li><strong>Better Core Web Vitals</strong> — improved LCP and FID scores</li>
+        <li><strong>Lower server costs</strong> — fewer unnecessary requests</li>
+      </ul>
+    </div>
+
+    <!-- NATIVE LAZY LOADING -->
+    <div class="card">
+      <h3>1️⃣ Native HTML Lazy Loading</h3>
+      <p>Modern browsers support lazy loading natively with the <code>loading</code> attribute. It's the simplest approach — no JavaScript needed!</p>
+      ${codeBlock(`<!-- Native lazy loading for images -->
+<img src="photo.jpg" loading="lazy" alt="A photo">
+
+<!-- Native lazy loading for iframes -->
+<iframe src="video.html" loading="lazy"></iframe>
+
+<!-- Options: -->
+<!-- loading="lazy"  — Defer until near viewport -->
+<!-- loading="eager" — Load immediately (default) -->
+<!-- loading="auto"  — Browser decides -->`)}
+      <div class="callout tip">
+        <span class="ci">✅</span>
+        <p><strong>Best practice:</strong> Always use <code>loading="lazy"</code> for below-the-fold images. Never lazy-load your LCP (Largest Contentful Paint) image — the hero image should load eagerly!</p>
+      </div>
+      <div class="callout warn">
+        <span class="ci">⚠️</span>
+        <p><strong>Gotcha:</strong> Always set <code>width</code> and <code>height</code> attributes on lazy images to prevent layout shift (CLS).</p>
+      </div>
+    </div>
+
+    <!-- INTERSECTION OBSERVER -->
+    <div class="card">
+      <h3>2️⃣ Intersection Observer API</h3>
+      <p>For more control, use the <code>IntersectionObserver</code> API. It efficiently detects when elements enter or leave the viewport.</p>
+      ${codeBlock(`// Create an observer
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;  // Load the real image
+      img.classList.add('loaded');
+      observer.unobserve(img);    // Stop watching
+    }
+  });
+}, {
+  rootMargin: '100px',  // Start loading 100px before viewport
+  threshold: 0.1        // Trigger when 10% visible
+});
+
+// Observe all lazy images
+document.querySelectorAll('img[data-src]').forEach(img => {
+  observer.observe(img);
+});`)}
+
+      ${codeBlock(`<!-- HTML for lazy images with Intersection Observer -->
+<img data-src="real-photo.jpg" 
+     src="tiny-placeholder.jpg" 
+     alt="Description"
+     class="lazy-img">`)}
+    </div>
+
+    <!-- LIVE DEMO -->
+    <div class="card">
+      <h3>🎮 Interactive Demo: Lazy Loading Gallery</h3>
+      <p>Scroll down in the gallery below. Watch images load only as they enter the viewport! Notice the status badges change from "pending" to "loaded".</p>
+      <div class="demo">
+        <h4>📜 Scroll down to see images load</h4>
+        <div style="display:flex;gap:12px;margin-bottom:10px;font-size:12px">
+          <span>Loaded: <strong id="lazyLoaded" style="color:var(--green)">0</strong></span>
+          <span>Pending: <strong id="lazyPending" style="color:var(--txd)">0</strong></span>
+          <span>Saved: <strong id="lazySaved" style="color:var(--cyan)">0 requests</strong></span>
+        </div>
+        <div class="lazy-gallery" id="lazyGallery"></div>
+        <div class="mt-8 flex gap-8">
+          <button class="btn sm" onclick="resetLazyDemo()">🔄 Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAZY LOADING COMPONENTS -->
+    <div class="card">
+      <h3>3️⃣ Lazy Loading JavaScript Modules</h3>
+      <p>Use dynamic <code>import()</code> to load JavaScript modules on demand. This is the foundation of code splitting.</p>
+      ${codeBlock(`// Lazy load a module when user clicks a button
+button.addEventListener('click', async () => {
+  const { Chart } = await import('./chart-library.js');
+  const chart = new Chart('#container', data);
+  chart.render();
+});
+
+// Lazy load based on user interaction
+async function openModal() {
+  const { Modal } = await import('./modal.js');
+  const modal = new Modal();
+  modal.show();
+}
+
+// Lazy load with loading state
+async function loadHeavyFeature() {
+  showSpinner();
+  try {
+    const module = await import('./heavy-feature.js');
+    module.init();
+  } catch (err) {
+    showError('Failed to load feature');
+  } finally {
+    hideSpinner();
+  }
+}`)}
+    </div>
+
+    <!-- ADVANCED PATTERNS -->
+    <div class="card">
+      <h3>4️⃣ Advanced Lazy Loading Patterns</h3>
+      <h4>Preloading on Hover (Predictive)</h4>
+      ${codeBlock(`// Preload when user hovers over a link
+link.addEventListener('mouseenter', () => {
+  // User is likely to click — start loading early
+  const preload = document.createElement('link');
+  preload.rel = 'prefetch';
+  preload.href = '/next-page-data.json';
+  document.head.appendChild(preload);
+});`)}
+
+      <h4>Virtual Scrolling / Windowing</h4>
+      ${codeBlock(`// Only render visible items in a long list
+function virtualScroll(container, items, itemHeight) {
+  const visibleCount = Math.ceil(container.clientHeight / itemHeight);
+  
+  container.addEventListener('scroll', throttle(() => {
+    const scrollTop = container.scrollTop;
+    const startIdx = Math.floor(scrollTop / itemHeight);
+    const endIdx = startIdx + visibleCount + 1; // buffer
+    
+    renderItems(items.slice(startIdx, endIdx), startIdx);
+  }, 16)); // ~60fps
+}`)}
+
+      <h4>Progressive Image Loading</h4>
+      ${codeBlock(`// Load tiny placeholder, then full image
+function progressiveLoad(imgElement) {
+  const fullSrc = imgElement.dataset.src;
+  const img = new Image();
+  
+  img.onload = () => {
+    imgElement.src = fullSrc;
+    imgElement.classList.add('loaded');
+  };
+  
+  img.src = fullSrc; // Start loading in background
+}`)}
+    </div>
+
+    <!-- PITFALLS -->
+    <div class="card">
+      <h3>⚠️ Common Mistakes & Pitfalls</h3>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Lazy loading above-the-fold content:</strong> Never lazy-load the hero image or critical content. It hurts LCP and makes the page feel slow. Only lazy-load content below the fold.</p></div>
+      </div>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Not providing dimensions:</strong> Without width/height on lazy images, the page layout jumps as images load (Cumulative Layout Shift). Always set explicit dimensions or use aspect-ratio CSS.</p></div>
+      </div>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Forgetting to unobserve:</strong> If you don't call <code>observer.unobserve(el)</code> after loading, the observer keeps firing unnecessarily, wasting resources.</p></div>
+      </div>
+      <div class="callout warn">
+        <span class="ci">⚡</span>
+        <div><p><strong>No fallback for old browsers:</strong> <code>IntersectionObserver</code> isn't supported in IE11. Use <code>'IntersectionObserver' in window</code> check and load everything eagerly as fallback.</p></div>
+      </div>
+    </div>
+
+    <!-- EXERCISE -->
+    <div class="card">
+      <h3>💪 Exercise: Build an Intersection Observer</h3>
+      <p>Complete the function that sets up lazy loading for all images with <code>data-src</code> attribute.</p>
+      <textarea class="editor" id="lazyEx">function setupLazyLoading() {
+  const images = document.querySelectorAll('img[data-src]');
+  
+  // Create an IntersectionObserver
+  // When an image enters viewport:
+  //   1. Set img.src = img.dataset.src
+  //   2. Add 'loaded' class
+  //   3. Stop observing that image
+  
+  // Observe all images
+}</textarea>
+      <div class="mt-8 flex gap-8">
+        <button class="btn pri" onclick="checkLazyEx()">▶ Check Solution</button>
+        <button class="btn sm" onclick="showLazyHint()">💡 Hint</button>
+      </div>
+      <div class="ex-result" id="lazyExResult"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="card">
+      <h3>✅ Section Quiz</h3>
+      <div id="lazyQuiz"></div>
+      <button class="btn pri mt-16" onclick="checkSectionQuiz('lazy','lazyQuiz')">Check Answers</button>
+      <div id="lazyQuizResult" class="ex-result"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn pri" onclick="markDone('lazy');goTo('perfapi')">Continue to Performance API →</button>
+    </div>
+  `;
+}
+
+// ─── PERFORMANCE API ─────────────────────────────────────
+function renderPerfAPI() {
+  return `
+    <div class="s-hdr">
+      <div class="badge">CHAPTER 3</div>
+      <h2>📊 Performance API</h2>
+      <p>The browser's built-in toolkit for measuring, analyzing, and optimizing performance. Essential knowledge for senior-level interviews.</p>
+    </div>
+
+    <div class="card">
+      <h3>🔍 Overview</h3>
+      <p>The Performance API provides precise timing data to help you measure your application's real-world performance. Key interfaces:</p>
+      <div class="feat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr))">
+        <div class="feat-card" style="cursor:default">
+          <div class="fi">⏱️</div><h4>performance.now()</h4><p>High-res timestamps</p>
+        </div>
+        <div class="feat-card" style="cursor:default">
+          <div class="fi">📍</div><h4>Marks & Measures</h4><p>Custom timing points</p>
+        </div>
+        <div class="feat-card" style="cursor:default">
+          <div class="fi">🌐</div><h4>Navigation Timing</h4><p>Page load metrics</p>
+        </div>
+        <div class="feat-card" style="cursor:default">
+          <div class="fi">📦</div><h4>Resource Timing</h4><p>Asset load metrics</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- performance.now() -->
+    <div class="card">
+      <h3>1️⃣ performance.now() — High-Resolution Timing</h3>
+      <p>Returns a timestamp in milliseconds with microsecond precision. Much more accurate than <code>Date.now()</code>.</p>
+      ${codeBlock(`// Measure how long an operation takes
+const start = performance.now();
+
+// Do some work
+const result = heavyComputation();
+
+const end = performance.now();
+console.log(\`Operation took \${end - start}ms\`);
+
+// Why not Date.now()?
+// Date.now()       → ~1ms precision, affected by system clock
+// performance.now() → ~5μs precision, monotonic (never goes backward)`)}
+
+      <div class="callout info">
+        <span class="ci">💡</span>
+        <p><strong>Key difference:</strong> <code>performance.now()</code> is relative to the page load (time origin), while <code>Date.now()</code> returns Unix epoch time. Performance.now is also <em>monotonic</em> — it never decreases, even if the system clock changes.</p>
+      </div>
+    </div>
+
+    <!-- LIVE PERF DEMO -->
+    <div class="card">
+      <h3>🎮 Interactive Demo: Measure Operation Speed</h3>
+      <p>Click the buttons to run different operations and see how long they take. Watch the performance bars update in real-time!</p>
+      <div class="demo">
+        <h4>🏎️ Operation Speed Comparison</h4>
+        <div class="flex gap-8 mb-16" style="flex-wrap:wrap">
+          <button class="btn" onclick="runPerfTest('sort1k')">Sort 1K items</button>
+          <button class="btn" onclick="runPerfTest('sort100k')">Sort 100K items</button>
+          <button class="btn" onclick="runPerfTest('dom100')">Create 100 DOM nodes</button>
+          <button class="btn" onclick="runPerfTest('dom1000')">Create 1000 DOM nodes</button>
+          <button class="btn" onclick="runPerfTest('regex')">1000 Regex matches</button>
+          <button class="btn" onclick="runPerfTest('json')">Parse large JSON</button>
+        </div>
+        <div id="perfMeters">
+          <div style="font-size:13px;color:var(--txd);text-align:center">Click a button above to measure</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKS & MEASURES -->
+    <div class="card">
+      <h3>2️⃣ performance.mark() & performance.measure()</h3>
+      <p>Create named timestamps (marks) and measure the duration between them. Perfect for tracking multi-step operations.</p>
+      ${codeBlock(`// Create marks at key points
+performance.mark('fetch-start');
+const data = await fetch('/api/users');
+performance.mark('fetch-end');
+
+performance.mark('render-start');
+renderUserList(data);
+performance.mark('render-end');
+
+// Measure durations between marks
+performance.measure('fetch-duration', 'fetch-start', 'fetch-end');
+performance.measure('render-duration', 'render-start', 'render-end');
+
+// Get all measures
+const measures = performance.getEntriesByType('measure');
+measures.forEach(m => {
+  console.log(\`\${m.name}: \${m.duration.toFixed(2)}ms\`);
+});
+
+// Cleanup
+performance.clearMarks();
+performance.clearMeasures();`)}
+    </div>
+
+    <!-- LIVE MARKS DEMO -->
+    <div class="card">
+      <h3>🎮 Interactive Demo: Marks & Measures</h3>
+      <p>Click the buttons to create marks, then measure the time between them.</p>
+      <div class="demo">
+        <h4>📍 Create Your Own Marks & Measures</h4>
+        <div class="flex gap-8 mb-16" style="flex-wrap:wrap">
+          <button class="btn pri" onclick="addMark()">📍 Add Mark</button>
+          <button class="btn suc" onclick="measureMarks()">📏 Measure All</button>
+          <button class="btn sm" onclick="clearMarks()">🔄 Clear</button>
+        </div>
+        <div class="log" id="marksLog" style="max-height:200px;min-height:60px">
+          <div class="log-entry" style="color:var(--txd)">Click "Add Mark" at different times, then "Measure All"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TIMING -->
+    <div class="card">
+      <h3>3️⃣ Navigation Timing API</h3>
+      <p>Provides detailed timing data about the page load process — from DNS lookup to DOM complete.</p>
+      ${codeBlock(`// Get navigation timing data
+const nav = performance.getEntriesByType('navigation')[0];
+
+console.log({
+  // DNS lookup time
+  dns: nav.domainLookupEnd - nav.domainLookupStart,
+  
+  // TCP connection time
+  tcp: nav.connectEnd - nav.connectStart,
+  
+  // Time to First Byte (TTFB)
+  ttfb: nav.responseStart - nav.requestStart,
+  
+  // DOM Content Loaded
+  domReady: nav.domContentLoadedEventEnd - nav.startTime,
+  
+  // Full page load
+  pageLoad: nav.loadEventEnd - nav.startTime,
+  
+  // DOM Interactive
+  domInteractive: nav.domInteractive - nav.startTime,
+});`)}
+
+      <div class="demo">
+        <h4>📊 This Page's Navigation Timing</h4>
+        <div id="navTimingDisplay"></div>
+      </div>
+    </div>
+
+    <!-- RESOURCE TIMING -->
+    <div class="card">
+      <h3>4️⃣ Resource Timing API</h3>
+      ${codeBlock(`// Get all resources loaded by the page
+const resources = performance.getEntriesByType('resource');
+
+resources.forEach(r => {
+  console.log({
+    name: r.name,
+    type: r.initiatorType,  // 'script', 'img', 'css', etc.
+    duration: r.duration,
+    size: r.transferSize,
+    cached: r.transferSize === 0
+  });
+});
+
+// Find slow resources
+const slowResources = resources
+  .filter(r => r.duration > 1000)
+  .sort((a, b) => b.duration - a.duration);
+
+console.log('Slow resources:', slowResources);`)}
+
+      ${codeBlock(`// PerformanceObserver — watch for new entries in real-time
+const observer = new PerformanceObserver((list) => {
+  list.getEntries().forEach(entry => {
+    if (entry.duration > 100) {
+      console.warn('Slow resource:', entry.name, entry.duration);
+    }
+  });
+});
+
+observer.observe({ entryTypes: ['resource', 'longtask'] });`)}
+    </div>
+
+    <!-- PITFALLS -->
+    <div class="card">
+      <h3>⚠️ Common Mistakes & Pitfalls</h3>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Using Date.now() for performance measurement:</strong> <code>Date.now()</code> has only millisecond precision and can be affected by system clock adjustments. Always use <code>performance.now()</code> for accurate timing.</p></div>
+      </div>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Measuring in development mode:</strong> Frameworks like React add extra overhead in dev mode. Always measure performance in production builds!</p></div>
+      </div>
+      <div class="callout warn">
+        <span class="ci">⚡</span>
+        <div><p><strong>Not accounting for JIT compilation:</strong> The first run of a function is often slower due to JIT warmup. Run operations multiple times and average the results for accurate benchmarks.</p></div>
+      </div>
+      <div class="callout warn">
+        <span class="ci">⚡</span>
+        <div><p><strong>Ignoring the resource buffer limit:</strong> The browser's resource timing buffer defaults to 250 entries. Use <code>performance.setResourceTimingBufferSize(500)</code> for pages with many resources.</p></div>
+      </div>
+    </div>
+
+    <!-- EXERCISE -->
+    <div class="card">
+      <h3>💪 Exercise: Build a Performance Monitor</h3>
+      <p>Write a function that measures the execution time of any function and logs the result.</p>
+      <textarea class="editor" id="perfEx">function measureExecution(fn, label) {
+  // 1. Record start time with performance.now()
+  // 2. Execute the function
+  // 3. Record end time
+  // 4. Log the duration with the label
+  // 5. Return the function's result
+}</textarea>
+      <div class="mt-8 flex gap-8">
+        <button class="btn pri" onclick="checkPerfEx()">▶ Check Solution</button>
+        <button class="btn sm" onclick="showPerfHint()">💡 Hint</button>
+      </div>
+      <div class="ex-result" id="perfExResult"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="card">
+      <h3>✅ Section Quiz</h3>
+      <div id="perfQuiz"></div>
+      <button class="btn pri mt-16" onclick="checkSectionQuiz('perfapi','perfQuiz')">Check Answers</button>
+      <div id="perfQuizResult" class="ex-result"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn pri" onclick="markDone('perfapi');goTo('codesplit')">Continue to Code Splitting →</button>
+    </div>
+  `;
+}
+
+// ─── CODE SPLITTING ──────────────────────────────────────
+function renderCodeSplit() {
+  return `
+    <div class="s-hdr">
+      <div class="badge">CHAPTER 4</div>
+      <h2>📦 Code Splitting Strategies</h2>
+      <p>Break your application into smaller chunks that load on demand. Critical for performance in large applications.</p>
+    </div>
+
+    <div class="card">
+      <h3>🔍 What is Code Splitting?</h3>
+      <p>Code splitting divides your JavaScript bundle into smaller pieces that can be loaded on demand. Instead of forcing users to download your entire app upfront, they only download what they need for the current view.</p>
+
+      <div class="demo" style="background:rgba(188,140,255,.04);border-color:rgba(188,140,255,.18)">
+        <h4 style="color:var(--purple)">📊 Bundle Size Visualization</h4>
+        <p style="font-size:12px;color:var(--txd);margin-bottom:12px">Click to see the difference between a monolithic bundle and code-split chunks</p>
+        <div class="flex gap-8 mb-16">
+          <button class="btn" id="showMono" onclick="showBundle('mono')">Show Monolithic</button>
+          <button class="btn" id="showSplit" onclick="showBundle('split')">Show Code-Split</button>
+        </div>
+        <div id="bundleVis" class="bundle-vis">
+          <div class="bundle" id="bundleMono" style="display:none">
+            <div class="bundle-block" style="height:200px;background:var(--red)">500KB</div>
+            <div class="bundle-lbl">main.js</div>
+            <div class="tag r">All at once</div>
+          </div>
+          <div id="bundleSplit" style="display:none;display:flex;gap:12px;align-items:flex-end">
+            <div class="bundle">
+              <div class="bundle-block" style="height:80px;background:var(--green)">80KB</div>
+              <div class="bundle-lbl">core.js</div>
+              <div class="tag g">Initial</div>
+            </div>
+            <div class="bundle">
+              <div class="bundle-block" style="height:60px;background:var(--blue);opacity:.6">120KB</div>
+              <div class="bundle-lbl">dashboard.js</div>
+              <div class="tag b">On demand</div>
+            </div>
+            <div class="bundle">
+              <div class="bundle-block" style="height:50px;background:var(--purple);opacity:.6">100KB</div>
+              <div class="bundle-lbl">settings.js</div>
+              <div class="tag p">On demand</div>
+            </div>
+            <div class="bundle">
+              <div class="bundle-block" style="height:70px;background:var(--orange);opacity:.6">200KB</div>
+              <div class="bundle-lbl">charts.js</div>
+              <div class="tag o">On demand</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DYNAMIC IMPORT -->
+    <div class="card">
+      <h3>1️⃣ Dynamic import() — The Foundation</h3>
+      <p>The <code>import()</code> expression loads a module asynchronously and returns a Promise. It's the primitive that makes code splitting possible.</p>
+      ${codeBlock(`// Static import — loaded at parse time (included in main bundle)
+import { heavyLib } from './heavy-library.js';
+
+// Dynamic import — loaded at runtime (separate chunk)
+const module = await import('./heavy-library.js');
+const { heavyLib } = module;
+
+// Conditional loading
+if (userWantsCharts) {
+  const { Chart } = await import('./chart-library.js');
+  new Chart(data).render();
+}
+
+// Multiple dynamic imports in parallel
+const [moduleA, moduleB] = await Promise.all([
+  import('./module-a.js'),
+  import('./module-b.js')
+]);`)}
+    </div>
+
+    <!-- ROUTE-BASED SPLITTING -->
+    <div class="card">
+      <h3>2️⃣ Route-Based Code Splitting</h3>
+      <p>The most impactful strategy — split by page/route. Each route loads only the code it needs.</p>
+      ${codeBlock(`// Vanilla JS router with code splitting
+const routes = {
+  '/': () => import('./pages/home.js'),
+  '/dashboard': () => import('./pages/dashboard.js'),
+  '/settings': () => import('./pages/settings.js'),
+  '/reports': () => import('./pages/reports.js'),
+};
+
+async function navigate(path) {
+  const loader = routes[path];
+  if (!loader) return show404();
+  
+  showLoadingSpinner();
+  try {
+    const module = await loader();
+    module.render(document.getElementById('app'));
+  } catch (err) {
+    showError('Failed to load page');
+  } finally {
+    hideLoadingSpinner();
+  }
+}`)}
+
+      ${codeBlock(`// React with lazy() and Suspense
+import { lazy, Suspense } from 'react';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Settings = lazy(() => import('./pages/Settings'));
+
+function App() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/settings" element={<Settings />} />
+      </Routes>
+    </Suspense>
+  );
+}`, 'React (JSX)')}
+    </div>
+
+    <!-- COMPONENT-BASED SPLITTING -->
+    <div class="card">
+      <h3>3️⃣ Component-Based Splitting</h3>
+      <p>Split heavy components that aren't immediately visible — modals, drawers, complex widgets.</p>
+      ${codeBlock(`// Load heavy editor only when user clicks "Edit"
+class App {
+  async openEditor() {
+    if (!this.EditorClass) {
+      const { RichTextEditor } = await import('./RichTextEditor.js');
+      this.EditorClass = RichTextEditor;
+    }
+    const editor = new this.EditorClass('#editor-container');
+    editor.init();
+  }
+}
+
+// Load chart library only when data tab is selected
+async function showDataVisualization(data) {
+  const { renderChart } = await import('./visualization.js');
+  renderChart('#chart', data);
+}`)}
+    </div>
+
+    <!-- WEBPACK/VITE STRATEGIES -->
+    <div class="card">
+      <h3>4️⃣ Bundler-Level Strategies</h3>
+      ${codeBlock(`// Webpack: Named chunks with magic comments
+const AdminPanel = () => import(
+  /* webpackChunkName: "admin" */
+  /* webpackPrefetch: true */
+  './AdminPanel'
+);
+
+// Webpack: Prefetch vs Preload
+// webpackPrefetch: true  → loaded during idle time (for future navigation)
+// webpackPreload: true   → loaded in parallel (needed soon)
+
+// Vite: Automatic code splitting for routes
+// Vite splits dynamic imports into separate chunks by default
+// Configure manual chunks in vite.config.js:
+export default {
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom'],
+          'charts': ['d3', 'chart.js'],
+        }
+      }
+    }
+  }
+};`)}
+    </div>
+
+    <!-- LOADING PATTERNS -->
+    <div class="card">
+      <h3>5️⃣ Smart Loading Patterns</h3>
+      ${codeBlock(`// Pattern 1: Preload on hover (predictive loading)
+document.querySelectorAll('[data-route]').forEach(link => {
+  link.addEventListener('mouseenter', () => {
+    const route = link.dataset.route;
+    routes[route](); // Start loading before click
+  });
+});
+
+// Pattern 2: Load during idle time
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(() => {
+    // Preload likely-needed chunks during idle time
+    import('./likely-next-page.js');
+  });
+}
+
+// Pattern 3: Progressive loading with skeleton UI
+async function loadDashboard() {
+  // Show skeleton immediately
+  renderSkeleton();
+  
+  // Load critical data first
+  const data = await fetchDashboardData();
+  renderBasicDashboard(data);
+  
+  // Then load heavy visualization library
+  const { Charts } = await import('./charts.js');
+  renderCharts(data);
+}`)}
+    </div>
+
+    <!-- PITFALLS -->
+    <div class="card">
+      <h3>⚠️ Common Mistakes & Pitfalls</h3>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Over-splitting:</strong> Don't split every file into its own chunk. Too many small chunks create excessive HTTP requests and reduce compression efficiency. Find the right balance — typically route-level splitting + heavy library splitting.</p></div>
+      </div>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Not handling loading states:</strong> Dynamic imports take time. Users see a blank screen or broken UI if you don't show a loading indicator. Always provide feedback!</p></div>
+      </div>
+      <div class="callout danger">
+        <span class="ci">🔥</span>
+        <div><p><strong>Not handling errors:</strong> Network can fail. Always wrap <code>import()</code> in try/catch and provide a retry mechanism or error message.</p></div>
+      </div>
+      <div class="callout warn">
+        <span class="ci">⚡</span>
+        <div><p><strong>Splitting shared dependencies incorrectly:</strong> If two routes both import lodash, make sure it goes into a shared vendor chunk, not duplicated in both route chunks.</p></div>
+      </div>
+      <div class="callout warn">
+        <span class="ci">⚡</span>
+        <div><p><strong>Forgetting about the waterfall:</strong> If chunk A dynamically imports chunk B which imports chunk C, you get a loading waterfall. Use <code>Promise.all</code> for parallel loading or prefetch deeper chunks.</p></div>
+      </div>
+    </div>
+
+    <!-- EXERCISE -->
+    <div class="card">
+      <h3>💪 Exercise: Implement a Lazy Router</h3>
+      <p>Complete the router that lazy-loads page modules based on URL path.</p>
+      <textarea class="editor" id="splitEx">async function router(path) {
+  const routes = {
+    '/': () => import('./Home.js'),
+    '/about': () => import('./About.js'),
+    '/contact': () => import('./Contact.js'),
+  };
+  
+  // 1. Find the matching route loader
+  // 2. Show a loading state
+  // 3. Load the module (handle errors!)
+  // 4. Call module.default.render()
+  // 5. Hide the loading state
+}</textarea>
+      <div class="mt-8 flex gap-8">
+        <button class="btn pri" onclick="checkSplitEx()">▶ Check Solution</button>
+        <button class="btn sm" onclick="showSplitHint()">💡 Hint</button>
+      </div>
+      <div class="ex-result" id="splitExResult"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="card">
+      <h3>✅ Section Quiz</h3>
+      <div id="splitQuiz"></div>
+      <button class="btn pri mt-16" onclick="checkSectionQuiz('codesplit','splitQuiz')">Check Answers</button>
+      <div id="splitQuizResult" class="ex-result"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn pri" onclick="markDone('codesplit');goTo('quiz')">Take the Master Quiz 🏆</button>
+    </div>
+  `;
+}
+
+// ─── MASTER QUIZ ─────────────────────────────────────────
+function renderQuiz() {
+  return `
+    <div class="s-hdr">
+      <div class="badge">FINAL CHALLENGE</div>
+      <h2>🏆 Master Quiz</h2>
+      <p>Test your knowledge of all performance optimization topics. 15 questions covering debounce, throttle, lazy loading, Performance API, and code splitting.</p>
+    </div>
+
+    <div id="masterQuiz"></div>
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn pri" onclick="checkMasterQuiz()" style="padding:12px 32px;font-size:15px">🏆 Submit & Get Score</button>
+    </div>
+    <div id="masterQuizResult"></div>
+  `;
+}
+
+// ─── QUIZ DATA ───────────────────────────────────────────
+const quizData = {
+  debounce: [
+    { q:'What does debounce do?', opts:['Executes function at regular intervals','Delays execution until activity stops','Prevents function from ever running','Runs function immediately'], ans:1, expl:'Debounce waits until a period of inactivity before executing. Each new call resets the timer.' },
+    { q:'Which scenario is best suited for debounce?', opts:['Scroll position tracking','Button click handling','Search autocomplete input','Animation frame updates'], ans:2, expl:'Search autocomplete should wait until the user stops typing before making API calls — perfect for debounce.' },
+    { q:'What happens if you create a new debounced function on every React render?', opts:['It works perfectly','The debounce effect is lost — new timer each render','It crashes the browser','It doubles the delay'], ans:1, expl:'Each render creates a new function with its own timer, so the previous debounce timer is abandoned. The function fires on every call.' },
+    { q:'In a debounce implementation, what does clearTimeout do?', opts:['Stops the function permanently','Resets the timer so it starts counting again','Clears the function arguments','Removes the event listener'], ans:1, expl:'clearTimeout cancels the pending timer. Combined with setting a new setTimeout, this resets the waiting period.' },
+  ],
+  lazy: [
+    { q:'Which HTML attribute enables native lazy loading?', opts:['lazy="true"','defer','loading="lazy"','async'], ans:2, expl:'The loading="lazy" attribute tells the browser to defer loading until the element is near the viewport.' },
+    { q:'Which images should you NOT lazy load?', opts:['Footer images','Background images','Hero/above-the-fold images','Thumbnails in a gallery'], ans:2, expl:'Hero images are part of the Largest Contentful Paint (LCP). Lazy loading them delays LCP and hurts performance scores.' },
+    { q:'What does observer.unobserve(element) do?', opts:['Hides the element','Stops watching that element for intersection','Removes the element from DOM','Pauses all observation'], ans:1, expl:'unobserve stops watching a specific element. You should call it after loading a lazy image to avoid unnecessary callbacks.' },
+    { q:'What is the rootMargin option in IntersectionObserver?', opts:['The margin of the observed element','A buffer zone around the viewport for early detection','The scroll position','The element\'s CSS margin'], ans:1, expl:'rootMargin expands or shrinks the detection area. Setting "100px" means elements are detected 100px before entering the viewport.' },
+  ],
+  perfapi: [
+    { q:'What advantage does performance.now() have over Date.now()?', opts:['It returns a Date object','It\'s microsecond precision and monotonic','It measures network speed','It works offline'], ans:1, expl:'performance.now() provides sub-millisecond precision and is monotonic (never goes backward), unlike Date.now() which can be affected by clock adjustments.' },
+    { q:'What does performance.mark() create?', opts:['A bookmark in code','A named timestamp in the performance timeline','A DOM element','A console log entry'], ans:1, expl:'performance.mark() creates a named high-resolution timestamp that you can later use with performance.measure().' },
+    { q:'What does performance.measure() return?', opts:['The current time','A duration between two marks','A boolean','The page load time'], ans:1, expl:'performance.measure() creates a named measurement entry representing the duration between two marks (or between a mark and the time origin).' },
+    { q:'Which Performance entry type tracks page load phases?', opts:['resource','longtask','navigation','paint'], ans:2, expl:'Navigation Timing entries (type "navigation") contain detailed timing for DNS, TCP, TTFB, DOM parsing, and page load phases.' },
+  ],
+  codesplit: [
+    { q:'What does dynamic import() return?', opts:['The module directly','A Promise that resolves to the module','undefined','A string of code'], ans:1, expl:'import() returns a Promise that resolves to the module object. You can await it or use .then() to access the module\'s exports.' },
+    { q:'Which is the most impactful code splitting strategy?', opts:['Splitting every utility function','Splitting by routes/pages','Splitting only CSS','Splitting node_modules'], ans:1, expl:'Route-based splitting has the biggest impact because each page only loads the code it needs, dramatically reducing initial bundle size.' },
+    { q:'What problem does over-splitting cause?', opts:['Code runs faster','Too many HTTP requests and reduced compression','Memory leaks','Type errors'], ans:1, expl:'Too many tiny chunks create excessive network requests and each chunk has overhead. The combined size may even increase due to reduced compression efficiency.' },
+    { q:'What should you always do when using dynamic import()?', opts:['Use a for loop','Handle errors with try/catch','Make the function synchronous','Import everything at once'], ans:1, expl:'Network requests can fail. Without error handling, dynamic imports can leave users with a broken UI and no feedback.' },
+  ]
+};
+
+const masterQuizData = [
+  { q:'You need to save form data to the server as the user types, but not on every keystroke. Which technique?', opts:['Throttle','Debounce','Lazy loading','Code splitting'], ans:1, expl:'Debounce waits until the user stops typing, then saves — perfect for auto-save functionality.' },
+  { q:'What is the correct order of the page load timeline?', opts:['DNS → TCP → Request → Response → Parse → Render','Request → DNS → TCP → Parse → Render → Response','Parse → DNS → TCP → Request → Response → Render','TCP → DNS → Request → Parse → Response → Render'], ans:0, expl:'The browser first resolves DNS, establishes TCP connection, sends the request, receives the response, parses HTML, then renders.' },
+  { q:'You\'re building infinite scroll. Which is better: debounce or throttle?', opts:['Debounce — wait until scrolling stops','Throttle — check periodically while scrolling','Neither — use setInterval','Both together'], ans:1, expl:'Throttle provides periodic updates during scrolling, allowing content to load as the user scrolls. Debounce would only trigger after scrolling stops.' },
+  { q:'What CSS property prevents layout shift from lazy-loaded images?', opts:['display: none','aspect-ratio (or width+height)','position: absolute','overflow: hidden'], ans:1, expl:'Setting explicit dimensions or aspect-ratio reserves space for images before they load, preventing Cumulative Layout Shift (CLS).' },
+  { q:'Which is NOT a valid use of the Performance API?', opts:['Measuring function execution time','Tracking page load phases','Modifying browser rendering speed','Observing resource loading'], ans:2, expl:'The Performance API is read-only for measurement. You cannot modify or control the browser\'s rendering speed with it.' },
+  { q:'What does webpackPrefetch do?', opts:['Loads chunk immediately','Loads chunk during browser idle time','Prevents chunk from loading','Loads chunk in a Web Worker'], ans:1, expl:'webpackPrefetch tells the browser to fetch the chunk during idle time, so it\'s ready when the user navigates to it.' },
+  { q:'A debounced function with 300ms delay is called at t=0, t=100, t=200, t=400. When does it execute?', opts:['t=300','t=500','t=700','t=400'], ans:2, expl:'Each call resets the 300ms timer. Last call at t=400, so it executes at t=400+300=700ms.' },
+  { q:'Which API detects when elements enter the viewport?', opts:['MutationObserver','ResizeObserver','IntersectionObserver','PerformanceObserver'], ans:2, expl:'IntersectionObserver efficiently detects when elements enter or leave the viewport (or any root element).' },
+  { q:'performance.now() returns time relative to what?', opts:['Unix epoch','Page navigation start (time origin)','Function call time','Server time'], ans:1, expl:'performance.now() returns milliseconds elapsed since the page\'s time origin (when navigation started), not Unix epoch like Date.now().' },
+  { q:'What is the main risk of lazy loading critical above-the-fold content?', opts:['It causes JavaScript errors','It increases LCP (Largest Contentful Paint)','It breaks SEO completely','It uses more memory'], ans:1, expl:'Lazy loading above-the-fold content delays the LCP metric because the browser must first scroll-detect before loading, adding unnecessary delay.' },
+  { q:'Which is a loading waterfall problem in code splitting?', opts:['Loading all chunks at once','Chunk A imports Chunk B which imports Chunk C sequentially','Chunks loading in parallel','Using static imports'], ans:1, expl:'Sequential dynamic imports create a waterfall where each chunk must fully load before the next starts loading, causing slow total load time.' },
+  { q:'What happens if IntersectionObserver rootMargin is set to "200px"?', opts:['Elements are only detected 200px after entering viewport','Elements are detected 200px before entering viewport','The viewport shrinks by 200px','Elements are offset by 200px'], ans:1, expl:'A positive rootMargin expands the detection area, triggering the callback before elements are actually visible — great for preloading.' },
+  { q:'You have a throttled scroll handler at 100ms. User scrolls continuously for 1 second. How many times does the handler fire?', opts:['1','10','100','Depends on scroll speed'], ans:1, expl:'Throttle at 100ms means the handler fires at most once every 100ms. Over 1 second, that\'s approximately 10 executions.' },
+  { q:'What does performance.clearMarks() do?', opts:['Removes DOM elements','Clears all performance marks from the buffer','Resets the page load timer','Deletes cookies'], ans:1, expl:'clearMarks() removes all named marks from the performance timeline buffer. You can also pass a name to clear specific marks.' },
+  { q:'Which pattern is best for loading a heavy chart library?', opts:['Static import at the top of the file','Dynamic import when the chart tab is selected','Inline all chart code in HTML','Load via synchronous XHR'], ans:1, expl:'Dynamic import loads the heavy library only when needed, keeping the initial bundle small. Static import would include it in the main bundle regardless.' },
+];
+
+// ─── QUIZ RENDERER ───────────────────────────────────────
+function renderQuizQuestions(containerId, questions, prefix) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = questions.map((q, i) => `
+    <div class="quiz-q" id="${prefix}_q${i}">
+      <div class="q-num">Question ${i+1} of ${questions.length}</div>
+      <div class="q-text">${q.q}</div>
+      ${q.opts.map((opt, j) => `
+        <div class="q-opt" onclick="selectOpt('${prefix}',${i},${j})" id="${prefix}_q${i}_o${j}">
+          <span class="q-letter">${'ABCD'[j]}</span>
+          <span>${opt}</span>
+        </div>
+      `).join('')}
+      <div class="q-expl" id="${prefix}_q${i}_expl"></div>
+    </div>
+  `).join('');
+}
+
+function selectOpt(prefix, qIdx, oIdx) {
+  if (!state.quizAnswers[prefix]) state.quizAnswers[prefix] = {};
+  const prev = state.quizAnswers[prefix][qIdx];
+  // Check if already answered and revealed
+  const expl = document.getElementById(`${prefix}_q${qIdx}_expl`);
+  if (expl && expl.classList.contains('show')) return;
+  
+  if (prev !== undefined) {
+    document.getElementById(`${prefix}_q${qIdx}_o${prev}`).classList.remove('sel');
+  }
+  state.quizAnswers[prefix][qIdx] = oIdx;
+  document.getElementById(`${prefix}_q${qIdx}_o${oIdx}`).classList.add('sel');
+}
+
+function checkSectionQuiz(section, containerId) {
+  const questions = quizData[section];
+  const prefix = section + 'Q';
+  const answers = state.quizAnswers[prefix] || {};
+  let correct = 0;
+
+  questions.forEach((q, i) => {
+    const userAns = answers[i];
+    const expl = document.getElementById(`${prefix}_q${i}_expl`);
+    
+    // Remove selected styling
+    for (let j = 0; j < q.opts.length; j++) {
+      const optEl = document.getElementById(`${prefix}_q${i}_o${j}`);
+      optEl.classList.remove('sel');
+      if (j === q.ans) optEl.classList.add('correct');
+      else if (j === userAns && j !== q.ans) optEl.classList.add('wrong');
+    }
+    
+    if (userAns === q.ans) {
+      correct++;
+      expl.className = 'q-expl show ok';
+      expl.innerHTML = `✅ Correct! ${q.expl}`;
+    } else {
+      expl.className = 'q-expl show no';
+      expl.innerHTML = `❌ ${userAns !== undefined ? 'Incorrect' : 'Not answered'}. ${q.expl}`;
+    }
+  });
+
+  const resultEl = document.getElementById(containerId + 'Result');
+  const pct = Math.round((correct/questions.length)*100);
+  resultEl.className = `ex-result show ${pct >= 75 ? 'pass' : 'fail'}`;
+  resultEl.innerHTML = `Score: ${correct}/${questions.length} (${pct}%) ${pct >= 75 ? '🎉 Great job!' : '📚 Review the material and try again'}`;
+
+  if (pct >= 75) markDone(section);
+}
+
+function checkMasterQuiz() {
+  const prefix = 'master';
+  const answers = state.quizAnswers[prefix] || {};
+  let correct = 0;
+
+  masterQuizData.forEach((q, i) => {
+    const userAns = answers[i];
+    const expl = document.getElementById(`${prefix}_q${i}_expl`);
+    
+    for (let j = 0; j < q.opts.length; j++) {
+      const optEl = document.getElementById(`${prefix}_q${i}_o${j}`);
+      optEl.classList.remove('sel');
+      if (j === q.ans) optEl.classList.add('correct');
+      else if (j === userAns && j !== q.ans) optEl.classList.add('wrong');
+    }
+    
+    if (userAns === q.ans) {
+      correct++;
+      expl.className = 'q-expl show ok';
+      expl.innerHTML = `✅ Correct! ${q.expl}`;
+    } else {
+      expl.className = 'q-expl show no';
+      expl.innerHTML = `❌ ${userAns !== undefined ? 'Incorrect' : 'Not answered'}. ${q.expl}`;
+    }
+  });
+
+  const pct = Math.round((correct/masterQuizData.length)*100);
+  const grade = pct >= 85 ? 'great' : pct >= 60 ? 'ok' : 'bad';
+  const emoji = pct >= 85 ? '🏆' : pct >= 60 ? '👍' : '📚';
+  const msg = pct >= 85 ? 'Outstanding! You\'re interview-ready!' : pct >= 60 ? 'Good effort! Review the topics you missed.' : 'Keep studying! Review each chapter carefully.';
+
+  document.getElementById('masterQuizResult').innerHTML = `
+    <div class="card mt-16">
+      <div class="score-wrap">
+        <div class="score-circle ${grade}">${correct}/${masterQuizData.length}</div>
+        <h3>${emoji} ${pct}% — ${pct >= 85 ? 'Master Level!' : pct >= 60 ? 'Getting There!' : 'Keep Learning!'}</h3>
+        <p style="color:var(--txd);margin-top:8px">${msg}</p>
+      </div>
+    </div>
+  `;
+
+  if (pct >= 60) {
+    markDone('quiz');
+    launchConfetti();
+  }
+}
+
+// ─── INTERACTIVE DEMOS ───────────────────────────────────
+let demoState = {};
+
+function initInteractive() {
+  const s = state.currentSection;
+  demoState = {};
+
+  if (s === 'debounce') {
+    initDebounceDemo();
+    initThrottleDemo();
+    initTimeline();
+    renderQuizQuestions('debQuiz', quizData.debounce, 'debounceQ');
+  }
+  if (s === 'lazy') {
+    initLazyDemo();
+    renderQuizQuestions('lazyQuiz', quizData.lazy, 'lazyQ');
+  }
+  if (s === 'perfapi') {
+    initPerfDemo();
+    renderQuizQuestions('perfQuiz', quizData.perfapi, 'perfapiQ');
+  }
+  if (s === 'codesplit') {
+    renderQuizQuestions('splitQuiz', quizData.codesplit, 'codesplitQ');
+    showBundle('mono');
+  }
+  if (s === 'quiz') {
+    renderQuizQuestions('masterQuiz', masterQuizData, 'master');
+  }
+}
+
+// ── DEBOUNCE DEMO ──
+function initDebounceDemo() {
+  let noDebCount = 0, yesDebCount = 0;
+  let debTimer;
+
+  const noDeb = document.getElementById('noDeb');
+  const yesDeb = document.getElementById('yesDeb');
+  if (!noDeb || !yesDeb) return;
+
+  noDeb.addEventListener('input', (e) => {
+    noDebCount++;
+    document.getElementById('noDebCount').textContent = noDebCount;
+    const log = document.getElementById('noDebLog');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry r';
+    entry.textContent = `[${new Date().toLocaleTimeString()}] API call: "${e.target.value}"`;
+    log.insertBefore(entry, log.firstChild);
+  });
+
+  yesDeb.addEventListener('input', (e) => {
+    clearTimeout(debTimer);
+    debTimer = setTimeout(() => {
+      yesDebCount++;
+      document.getElementById('yesDebCount').textContent = yesDebCount;
+      const log = document.getElementById('yesDebLog');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry g';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] API call: "${e.target.value}"`;
+      log.insertBefore(entry, log.firstChild);
+    }, 500);
+  });
+
+  demoState.resetDeb = () => {
+    noDebCount = 0; yesDebCount = 0;
+    document.getElementById('noDebCount').textContent = '0';
+    document.getElementById('yesDebCount').textContent = '0';
+    document.getElementById('noDebLog').innerHTML = '';
+    document.getElementById('yesDebLog').innerHTML = '';
+    noDeb.value = ''; yesDeb.value = '';
+  };
+}
+
+function resetDebDemo() { demoState.resetDeb && demoState.resetDeb(); }
+
+// ── THROTTLE DEMO ──
+function initThrottleDemo() {
+  let noThrCount = 0, yesThrCount = 0;
+  let inThrottle = false;
+
+  const noArea = document.getElementById('noThrotArea');
+  const yesArea = document.getElementById('yesThrotArea');
+  if (!noArea || !yesArea) return;
+
+  noArea.addEventListener('mousemove', (e) => {
+    noThrCount++;
+    document.getElementById('noThrCount').textContent = noThrCount;
+    const dot = document.createElement('div');
+    dot.className = 'trail';
+    dot.style.cssText = `left:${e.offsetX}px;top:${e.offsetY}px;background:var(--red)`;
+    noArea.appendChild(dot);
+    setTimeout(() => dot.remove(), 800);
+  });
+
+  yesArea.addEventListener('mousemove', (e) => {
+    if (inThrottle) return;
+    inThrottle = true;
+    yesThrCount++;
+    document.getElementById('yesThrCount').textContent = yesThrCount;
+    const dot = document.createElement('div');
+    dot.className = 'trail';
+    dot.style.cssText = `left:${e.offsetX}px;top:${e.offsetY}px;background:var(--green)`;
+    yesArea.appendChild(dot);
+    setTimeout(() => dot.remove(), 800);
+    setTimeout(() => { inThrottle = false; }, 100);
+  });
+
+  demoState.resetThr = () => {
+    noThrCount = 0; yesThrCount = 0;
+    document.getElementById('noThrCount').textContent = '0';
+    document.getElementById('yesThrCount').textContent = '0';
+  };
+}
+
+function resetThrDemo() { demoState.resetThr && demoState.resetThr(); }
+
+// ── TIMELINE VISUAL ──
+function initTimeline() {
+  let events = [], debEvents = [], thrEvents = [];
+  let debTimer, thrBlock = false;
+  let startTime = Date.now();
+
+  const btn = document.getElementById('tlFireBtn');
+  if (!btn) return;
+
+  function getPos() {
+    const elapsed = Date.now() - startTime;
+    return Math.min(95, (elapsed / 5000) * 100);
+  }
+
+  function addDot(trackId, cls) {
+    const track = document.getElementById(trackId);
+    const dot = document.createElement('div');
+    dot.className = `tline-dot ${cls}`;
+    dot.style.left = getPos() + '%';
+    track.appendChild(dot);
+  }
+
+  btn.addEventListener('click', () => {
+    // Event dot
+    addDot('tlEvents', 'ev');
+
+    // Debounce
+    clearTimeout(debTimer);
+    debTimer = setTimeout(() => addDot('tlDebounce', 'cb'), 600);
+
+    // Throttle
+    if (!thrBlock) {
+      addDot('tlThrottle', 'cb');
+      thrBlock = true;
+      setTimeout(() => { thrBlock = false; }, 400);
+    }
+  });
+
+  demoState.resetTL = () => {
+    startTime = Date.now();
+    ['tlEvents','tlDebounce','tlThrottle'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '';
+    });
+  };
+}
+
+function resetTimeline() { demoState.resetTL && demoState.resetTL(); }
+
+// ── LAZY LOADING DEMO ──
+function initLazyDemo() {
+  const gallery = document.getElementById('lazyGallery');
+  if (!gallery) return;
+
+  const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#2980b9','#27ae60','#8e44ad','#d35400','#16a085','#c0392b','#2c3e50','#f1c40f','#7f8c8d','#e91e63','#00bcd4','#ff5722','#607d8b','#4caf50','#ff9800','#795548','#673ab7'];
+
+  let loadedCount = 0;
+  const total = 24;
+
+  gallery.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const item = document.createElement('div');
+    item.className = 'lazy-item';
+    item.dataset.color = colors[i];
+    item.dataset.idx = i;
+    item.innerHTML = `<span style="opacity:.5">📷 Image ${i+1}</span><span class="sb" style="background:rgba(255,255,255,.1)">pending</span>`;
+    gallery.appendChild(item);
+  }
+
+  updateLazyStats(0, total);
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const item = entry.target;
+        setTimeout(() => {
+          item.style.background = item.dataset.color;
+          item.innerHTML = `<span style="color:#fff;font-weight:600">Image ${parseInt(item.dataset.idx)+1}</span><span class="sb" style="background:rgba(63,185,80,.3);color:var(--green)">loaded ✓</span>`;
+          item.classList.add('loaded');
+          loadedCount++;
+          updateLazyStats(loadedCount, total);
+        }, 200 + Math.random() * 300);
+        observer.unobserve(item);
+      }
+    });
+  }, { root: gallery, rootMargin: '20px', threshold: 0.1 });
+
+  document.querySelectorAll('.lazy-item').forEach(item => observer.observe(item));
+
+  demoState.resetLazy = () => {
+    loadedCount = 0;
+    observer.disconnect();
+    initLazyDemo();
+  };
+}
+
+function updateLazyStats(loaded, total) {
+  const l = document.getElementById('lazyLoaded');
+  const p = document.getElementById('lazyPending');
+  const s = document.getElementById('lazySaved');
+  if (l) l.textContent = loaded;
+  if (p) p.textContent = total - loaded;
+  if (s) s.textContent = (total - loaded) + ' requests';
+}
+
+function resetLazyDemo() { demoState.resetLazy && demoState.resetLazy(); }
+
+// ── PERFORMANCE API DEMO ──
+function initPerfDemo() {
+  // Nav timing
+  const navDisplay = document.getElementById('navTimingDisplay');
+  if (navDisplay) {
+    try {
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (nav) {
+        const metrics = [
+          { label: 'DOM Interactive', value: nav.domInteractive, max: 3000 },
+          { label: 'DOM Complete', value: nav.domComplete, max: 5000 },
+          { label: 'Load Event', value: nav.loadEventEnd, max: 5000 },
+          { label: 'TTFB', value: nav.responseStart, max: 2000 },
+        ];
+        navDisplay.innerHTML = metrics.map(m => {
+          const pct = Math.min(100, (m.value / m.max) * 100);
+          const cls = pct < 40 ? 'fast' : pct < 70 ? 'med' : 'slow';
+          return `<div class="perf-meter">
+            <span class="ml">${m.label}</span>
+            <div class="mb"><div class="mf ${cls}" style="width:${pct}%">${m.value.toFixed(1)}ms</div></div>
+          </div>`;
+        }).join('');
+      } else {
+        navDisplay.innerHTML = '<p style="color:var(--txd);font-size:13px">Navigation timing not available</p>';
+      }
+    } catch(e) {
+      navDisplay.innerHTML = '<p style="color:var(--txd);font-size:13px">Navigation timing not available in this context</p>';
+    }
+  }
+
+  demoState.perfResults = [];
+  demoState.markCount = 0;
+  demoState.marks = [];
+}
+
+function runPerfTest(type) {
+  const start = performance.now();
+  let label, result;
+
+  switch(type) {
+    case 'sort1k':
+      label = 'Sort 1K items';
+      result = Array.from({length:1000}, ()=>Math.random()).sort();
+      break;
+    case 'sort100k':
+      label = 'Sort 100K items';
+      result = Array.from({length:100000}, ()=>Math.random()).sort();
+      break;
+    case 'dom100':
+      label = 'Create 100 DOM nodes';
+      const frag1 = document.createDocumentFragment();
+      for(let i=0;i<100;i++){const d=document.createElement('div');d.textContent='test';frag1.appendChild(d);}
+      break;
+    case 'dom1000':
+      label = 'Create 1000 DOM nodes';
+      const frag2 = document.createDocumentFragment();
+      for(let i=0;i<1000;i++){const d=document.createElement('div');d.textContent='test';frag2.appendChild(d);}
+      break;
+    case 'regex':
+      label = '1000 Regex matches';
+      const rx = /\b[A-Z][a-z]+\b/g;
+      for(let i=0;i<1000;i++)'Hello World Foo Bar Baz'.match(rx);
+      break;
+    case 'json':
+      label = 'Parse large JSON';
+      const bigObj = Array.from({length:10000},(_,i)=>({id:i,name:'User'+i,email:'user'+i+'@test.com',active:Math.random()>.5}));
+      const json = JSON.stringify(bigObj);
+      JSON.parse(json);
+      break;
+  }
+
+  const duration = performance.now() - start;
+  demoState.perfResults.push({ label, duration });
+
+  const container = document.getElementById('perfMeters');
+  const maxDur = Math.max(...demoState.perfResults.map(r=>r.duration), 1);
+
+  container.innerHTML = demoState.perfResults.map(r => {
+    const pct = Math.min(100, (r.duration / Math.max(maxDur, 0.1)) * 80 + 10);
+    const cls = r.duration < 1 ? 'fast' : r.duration < 10 ? 'med' : 'slow';
+    return `<div class="perf-meter">
+      <span class="ml">${r.label}</span>
+      <div class="mb"><div class="mf ${cls}" style="width:${pct}%">${r.duration.toFixed(3)}ms</div></div>
+    </div>`;
+  }).join('');
+}
+
+function addMark() {
+  demoState.markCount++;
+  const name = `mark-${demoState.markCount}`;
+  performance.mark(name);
+  demoState.marks.push({ name, time: performance.now() });
+
+  const log = document.getElementById('marksLog');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry g';
+  entry.textContent = `📍 Mark "${name}" created at ${performance.now().toFixed(2)}ms`;
+  log.insertBefore(entry, log.firstChild);
+}
+
+function measureMarks() {
+  const log = document.getElementById('marksLog');
+  if (demoState.marks.length < 2) {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry r';
+    entry.textContent = '⚠️ Need at least 2 marks to measure';
+    log.insertBefore(entry, log.firstChild);
+    return;
+  }
+
+  for (let i = 1; i < demoState.marks.length; i++) {
+    const measureName = `${demoState.marks[i-1].name} → ${demoState.marks[i].name}`;
+    try {
+      performance.measure(measureName, demoState.marks[i-1].name, demoState.marks[i].name);
+      const measures = performance.getEntriesByName(measureName);
+      const m = measures[measures.length - 1];
+      const entry = document.createElement('div');
+      entry.className = 'log-entry g';
+      entry.textContent = `📏 ${measureName}: ${m.duration.toFixed(2)}ms`;
+      log.insertBefore(entry, log.firstChild);
+    } catch(e) {}
+  }
+}
+
+function clearMarks() {
+  demoState.markCount = 0;
+  demoState.marks = [];
+  performance.clearMarks();
+  performance.clearMeasures();
+  const log = document.getElementById('marksLog');
+  if (log) log.innerHTML = '<div class="log-entry" style="color:var(--txd)">Cleared! Click "Add Mark" to start again.</div>';
+}
+
+// ── BUNDLE VIS ──
+function showBundle(type) {
+  const mono = document.getElementById('bundleMono');
+  const split = document.getElementById('bundleSplit');
+  const btnMono = document.getElementById('showMono');
+  const btnSplit = document.getElementById('showSplit');
+  if (!mono) return;
+
+  if (type === 'mono') {
+    mono.style.display = 'flex';
+    split.style.display = 'none';
+    btnMono.classList.add('pri');
+    btnSplit.classList.remove('pri');
+  } else {
+    mono.style.display = 'none';
+    split.style.display = 'flex';
+    btnSplit.classList.add('pri');
+    btnMono.classList.remove('pri');
+  }
+}
+
+// ─── EXERCISE CHECKERS ───────────────────────────────────
+function checkDebEx() {
+  const code = document.getElementById('debEx').value;
+  const result = document.getElementById('debExResult');
+  const checks = [
+    [/let\s+\w+/, 'Declare a variable to store the timeout ID'],
+    [/return\s+function|return\s*\(/, 'Return a new function (closure)'],
+    [/clearTimeout/, 'Use clearTimeout to cancel previous timer'],
+    [/setTimeout/, 'Use setTimeout to delay execution'],
+    [/\.apply\s*\(|\.call\s*\(|fn\s*\(|fn\.apply/, 'Call the original function'],
+  ];
+
+  const passed = checks.filter(([regex]) => regex.test(code));
+  const failed = checks.filter(([regex]) => !regex.test(code));
+
+  if (passed.length === checks.length) {
+    result.className = 'ex-result show pass';
+    result.innerHTML = '🎉 Excellent! Your debounce implementation looks correct! Key elements: timeout variable, closure, clearTimeout, setTimeout, and fn invocation.';
+  } else {
+    result.className = 'ex-result show fail';
+    result.innerHTML = `Almost! Missing: <ul>${failed.map(([,msg]) => `<li>${msg}</li>`).join('')}</ul>`;
+  }
+}
+
+function showDebHint() {
+  const result = document.getElementById('debExResult');
+  result.className = 'ex-result show pass';
+  result.innerHTML = `💡 Hint: You need:<br>1. A <code>let timeoutId</code> variable in the outer scope<br>2. Return a new function<br>3. Inside: <code>clearTimeout(timeoutId)</code><br>4. Then: <code>timeoutId = setTimeout(() => fn.apply(this, args), delay)</code>`;
+}
+
+function checkLazyEx() {
+  const code = document.getElementById('lazyEx').value;
+  const result = document.getElementById('lazyExResult');
+  const checks = [
+    [/IntersectionObserver/, 'Create an IntersectionObserver'],
+    [/isIntersecting|intersectionRatio/, 'Check if element is intersecting'],
+    [/dataset\.src|\.dataset\[/, 'Access data-src attribute'],
+    [/\.src\s*=/, 'Set the src attribute'],
+    [/unobserve/, 'Stop observing loaded elements'],
+    [/\.observe\s*\(/, 'Observe the images'],
+  ];
+
+  const passed = checks.filter(([regex]) => regex.test(code));
+  const failed = checks.filter(([regex]) => !regex.test(code));
+
+  if (passed.length >= 5) {
+    result.className = 'ex-result show pass';
+    result.innerHTML = '🎉 Great job! Your Intersection Observer implementation covers all the key parts!';
+  } else {
+    result.className = 'ex-result show fail';
+    result.innerHTML = `Keep going! Missing: <ul>${failed.map(([,msg]) => `<li>${msg}</li>`).join('')}</ul>`;
+  }
+}
+
+function showLazyHint() {
+  const result = document.getElementById('lazyExResult');
+  result.className = 'ex-result show pass';
+  result.innerHTML = `💡 Structure:<br><code>const observer = new IntersectionObserver((entries) => {<br>&nbsp;&nbsp;entries.forEach(entry => {<br>&nbsp;&nbsp;&nbsp;&nbsp;if (entry.isIntersecting) {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// set src, add class, unobserve<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>&nbsp;&nbsp;});<br>});<br>images.forEach(img => observer.observe(img));</code>`;
+}
+
+function checkPerfEx() {
+  const code = document.getElementById('perfEx').value;
+  const result = document.getElementById('perfExResult');
+  const checks = [
+    [/performance\.now\(\)/, 'Use performance.now()'],
+    [/fn\s*\(|fn\.call|fn\.apply/, 'Execute the function'],
+    [/console\.log|return/, 'Log or return the duration'],
+  ];
+
+  const passed = checks.filter(([regex]) => regex.test(code));
+  const failed = checks.filter(([regex]) => !regex.test(code));
+
+  if (passed.length === checks.length) {
+    result.className = 'ex-result show pass';
+    result.innerHTML = '🎉 Perfect! You\'ve built a performance measurement utility!';
+  } else {
+    result.className = 'ex-result show fail';
+    result.innerHTML = `Missing: <ul>${failed.map(([,msg]) => `<li>${msg}</li>`).join('')}</ul>`;
+  }
+}
+
+function showPerfHint() {
+  const result = document.getElementById('perfExResult');
+  result.className = 'ex-result show pass';
+  result.innerHTML = `💡 Pattern:<br><code>const start = performance.now();<br>const result = fn();<br>const duration = performance.now() - start;<br>console.log(label + ': ' + duration + 'ms');<br>return result;</code>`;
+}
+
+function checkSplitEx() {
+  const code = document.getElementById('splitEx').value;
+  const result = document.getElementById('splitExResult');
+  const checks = [
+    [/routes\[path\]|routes\[|loader/, 'Look up route handler'],
+    [/await\s+|\.then\s*\(/, 'Await the dynamic import'],
+    [/try|catch|\.catch/, 'Handle errors'],
+    [/render|default/, 'Call the module\'s render function'],
+  ];
+
+  const passed = checks.filter(([regex]) => regex.test(code));
+  const failed = checks.filter(([regex]) => !regex.test(code));
+
+  if (passed.length >= 3) {
+    result.className = 'ex-result show pass';
+    result.innerHTML = '🎉 Your lazy router implementation looks solid!';
+  } else {
+    result.className = 'ex-result show fail';
+    result.innerHTML = `Missing: <ul>${failed.map(([,msg]) => `<li>${msg}</li>`).join('')}</ul>`;
+  }
+}
+
+function showSplitHint() {
+  const result = document.getElementById('splitExResult');
+  result.className = 'ex-result show pass';
+  result.innerHTML = `💡 Structure:<br><code>const loader = routes[path];<br>if (!loader) return show404();<br>try {<br>&nbsp;&nbsp;const module = await loader();<br>&nbsp;&nbsp;module.default.render();<br>} catch (err) {<br>&nbsp;&nbsp;showError(err);<br>}</code>`;
+}
+
+// ─── CONFETTI ────────────────────────────────────────────
+function launchConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti';
+  document.body.appendChild(container);
+
+  const colors = ['#f85149','#58a6ff','#3fb950','#f0883e','#bc8cff','#39d2c0','#e3b341'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-p';
+    piece.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      animation:confFall ${2+Math.random()*2}s ease-in ${Math.random()*0.5}s forwards;
+      width:${6+Math.random()*8}px;
+      height:${6+Math.random()*8}px;
+      border-radius:${Math.random()>.5?'50%':'2px'};
+    `;
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => container.remove(), 4000);
+}
+
+// ─── INIT ────────────────────────────────────────────────
+renderNav();
+renderContent();
+</script>
+</body>
+</html>

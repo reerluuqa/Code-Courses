@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Event Loop Mastery</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-pink: #ec4899;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header & Navigation */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--bg-tertiary);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--accent-blue);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            color: var(--accent-blue);
+            font-size: 1.8rem;
+            margin-top: 2rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+            padding-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--bg-tertiary);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-stack { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
+        .badge-micro { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
+        .badge-macro { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+        .badge-raf { background: rgba(236, 72, 153, 0.2); color: var(--accent-pink); }
+        .badge-pitfall { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+
+        /* Simulator Layout */
+        .simulator-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .simulator-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Code Editor */
+        .code-panel {
+            background: #1e1e1e;
+            border-radius: var(--border-radius);
+            border: 1px solid #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .code-header {
+            background: #2d2d2d;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .code-editor {
+            flex: 1;
+            padding: 1rem;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d4d4d4;
+            background: #1e1e1e;
+            border: none;
+            resize: none;
+            outline: none;
+            tab-size: 2;
+        }
+
+        .line-numbers {
+            color: #858585;
+            padding-right: 1rem;
+            border-right: 1px solid #333;
+            margin-right: 1rem;
+            user-select: none;
+        }
+
+        .code-controls {
+            padding: 1rem;
+            background: #252526;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Visualization Panel */
+        .viz-panel {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--bg-tertiary);
+            padding: 1.5rem;
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .viz-title {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .viz-stage {
+            flex: 1;
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 1rem;
+        }
+
+        .viz-box {
+            background: var(--bg-primary);
+            border: 2px solid var(--bg-tertiary);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            position: relative;
+            min-height: 120px;
+            transition: var(--transition);
+        }
+
+        .viz-box.active {
+            border-color: currentColor;
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .viz-box.stack { color: var(--accent-blue); grid-column: 2; grid-row: 1; }
+        .viz-box.webapi { color: var(--accent-purple); grid-column: 1; grid-row: 2; }
+        .viz-box.micro { color: var(--accent-green); grid-column: 1; grid-row: 3; }
+        .viz-box.macro { color: var(--accent-orange); grid-column: 2; grid-row: 3; }
+        .viz-box.raf { color: var(--accent-pink); grid-column: 1; grid-row: 1; }
+
+        .viz-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .viz-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .task-item {
+            background: currentColor;
+            color: var(--bg-primary);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: monospace;
+            animation: slideIn 0.3s ease;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .task-item:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .event-loop-indicator {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, var(--accent-blue), transparent);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: rotate 4s linear infinite;
+            z-index: 10;
+            border: 3px solid var(--accent-blue);
+        }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Console Output */
+        .console-panel {
+            background: #000;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            height: 150px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+
+        .console-line {
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #1a1a1a;
+            animation: typeIn 0.3s ease;
+        }
+
+        @keyframes typeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .console-prompt {
+            color: var(--accent-green);
+            margin-right: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* Learning Content */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .concept-card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border-left: 4px solid;
+            transition: var(--transition);
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .concept-card.stack { border-left-color: var(--accent-blue); }
+        .concept-card.micro { border-left-color: var(--accent-green); }
+        .concept-card.macro { border-left-color: var(--accent-orange); }
+        .concept-card.raf { border-left-color: var(--accent-pink); }
+
+        .concept-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .quiz-question {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--bg-tertiary);
+        }
+
+        .quiz-code {
+            background: #1e1e1e;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 1rem 0;
+            color: #d4d4d4;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .quiz-option {
+            background: var(--bg-primary);
+            border: 2px solid var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--accent-red);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .quiz-option input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-blue);
+        }
+
+        .explanation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--accent-blue);
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--bg-tertiary);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        /* Pitfall Section */
+        .pitfall-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pitfall-card::before {
+            content: '⚠️';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 4rem;
+            opacity: 0.1;
+        }
+
+        .pitfall-title {
+            color: var(--accent-red);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .code-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .code-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .code-block.bad {
+            border-left: 4px solid var(--accent-red);
+        }
+
+        .code-block.good {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        /* Animations for Event Loop */
+        .flow-arrow {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.5;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .highlight-text {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .highlight-text.green { color: var(--accent-green); }
+        .highlight-text.orange { color: var(--accent-orange); }
+        .highlight-text.pink { color: var(--accent-pink); }
+
+        /* Scenario Selector */
+        .scenario-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .scenario-chip {
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .scenario-chip:hover {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .scenario-chip.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        /* Speed Control */
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: blink 1s infinite;
+        }
+
+        .status-indicator.running { background: var(--accent-green); }
+        .status-indicator.paused { background: var(--accent-orange); }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 2px dotted var(--accent-blue);
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            border: 1px solid var(--bg-tertiary);
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            h1 { font-size: 1.8rem; }
+            .viz-stage {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(5, auto);
+            }
+            .viz-box.stack { grid-column: 1; grid-row: 1; }
+            .viz-box.raf { grid-column: 1; grid-row: 2; }
+            .viz-box.webapi { grid-column: 1; grid-row: 3; }
+            .viz-box.micro { grid-column: 1; grid-row: 4; }
+            .viz-box.macro { grid-column: 1; grid-row: 5; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <span>🔄</span>
+                <span>EventLoopMaster</span>
+            </div>
+            <div class="nav-links">
+                <button class="nav-btn active" onclick="showSection('learn')">📚 Learn</button>
+                <button class="nav-btn" onclick="showSection('simulator')">🔬 Simulator</button>
+                <button class="nav-btn" onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+                <button class="nav-btn" onclick="showSection('quiz')">🎯 Quiz</button>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- LEARN SECTION -->
+        <section id="learn" class="section active">
+            <h1>Master the JavaScript Event Loop</h1>
+            <p class="subtitle">Understand concurrency, asynchronicity, and the single-threaded nature of JavaScript through interactive visualizations.</p>
+
+            <div class="progress-container">
+                <div class="progress-bar" id="learnProgress" style="width: 0%"></div>
+            </div>
+
+            <div class="concept-grid">
+                <div class="concept-card stack">
+                    <div class="concept-icon">📚</div>
+                    <h3>The Call Stack</h3>
+                    <p>JavaScript is single-threaded with one call stack. It can only do one thing at a time. Understand LIFO (Last In, First Out) execution.</p>
+                    <button class="btn btn-secondary" onclick="loadScenario('stack')">Try in Simulator</button>
+                </div>
+
+                <div class="concept-card macro">
+                    <div class="concept-icon">⏰</div>
+                    <h3>Macrotasks (Task Queue)</h3>
+                    <p><span class="tooltip" data-tooltip="setTimeout, setInterval, I/O, UI rendering">setTimeout</span>, setInterval, and I/O operations go here. Executed one per loop iteration.</p>
+                    <button class="btn btn-secondary" onclick="loadScenario('timeout')">Try in Simulator</button>
+                </div>
+
+                <div class="concept-card micro">
+                    <div class="concept-icon">⚡</div>
+                    <h3>Microtasks</h3>
+                    <p>Promises, <code>queueMicrotask</code>, and <code>MutationObserver</code>. Higher priority than macrotasks. The entire queue is drained before next render.</p>
+                    <button class="btn btn-secondary" onclick="loadScenario('promise')">Try in Simulator</button>
+                </div>
+
+                <div class="concept-card raf">
+                    <div class="concept-icon">🎨</div>
+                    <h3>requestAnimationFrame</h3>
+                    <p>Syncs with the browser's refresh rate (usually 60fps). Runs before repaint. Ideal for animations but can be paused in background tabs.</p>
+                    <button class="btn btn-secondary" onclick="loadScenario('raf')">Try in Simulator</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>How the Event Loop Works</h2>
+                <p>The event loop is the secret behind JavaScript's asynchronous programming. Despite being single-threaded, JS can perform non-blocking operations.</p>
+                
+                <div style="margin: 2rem 0; padding: 2rem; background: var(--bg-primary); border-radius: var(--border-radius); border: 2px solid var(--bg-tertiary);">
+                    <h3 style="color: var(--accent-blue); margin-bottom: 1rem;">The Algorithm (Simplified)</h3>
+                    <ol style="margin-left: 1.5rem; line-height: 2;">
+                        <li>Execute the current <span class="highlight-text">Call Stack</span> until it's empty</li>
+                        <li>Move all <span class="highlight-text green">Microtasks</span> from queue to stack and execute (repeat until microtask queue empty)</li>
+                        <li>Execute <span class="highlight-text pink">requestAnimationFrame</span> callbacks</li>
+                        <li>Render/Update the UI (if needed)</li>
+                        <li>Execute one <span class="highlight-text orange">Macrotask</span> from the Task Queue</li>
+                        <li>Return to step 1</li>
+                    </ol>
+                </div>
+
+                <div class="card" style="background: rgba(59, 130, 246, 0.1); border-color: var(--accent-blue);">
+                    <h3>🎯 Key Insight</h3>
+                    <p>Microtasks can <strong>starve</strong> the browser! If you keep adding microtasks recursively, macrotasks (like setTimeout) and rendering will never get a chance to run. This is a common interview trap.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Visual Execution Order</h2>
+                <p>Consider this classic interview question:</p>
+                <div class="code-block" style="margin: 1rem 0;">
+console.log('Script start');
+
+setTimeout(() => {
+    console.log('setTimeout 0');
+}, 0);
+
+Promise.resolve().then(() => {
+    console.log('Promise 1');
+});
+
+console.log('Script end');
+                </div>
+                <p><strong>Output Order:</strong> Script start → Script end → Promise 1 → setTimeout 0</p>
+                <button class="btn btn-primary" onclick="loadScenario('classic')">Run in Simulator</button>
+            </div>
+        </section>
+
+        <!-- SIMULATOR SECTION -->
+        <section id="simulator" class="section">
+            <h1>Interactive Event Loop Simulator</h1>
+            <p class="subtitle">Step through code execution visually. Watch how tasks move between the stack, queues, and Web APIs.</p>
+
+            <div class="scenario-selector">
+                <div class="scenario-chip active" onclick="loadScenario('classic')">Classic Interview</div>
+                <div class="scenario-chip" onclick="loadScenario('stack')">Call Stack Only</div>
+                <div class="scenario-chip" onclick="loadScenario('promise')">Promise Chain</div>
+                <div class="scenario-chip" onclick="loadScenario('timeout')">Nested Timeouts</div>
+                <div class="scenario-chip" onclick="loadScenario('micro-macro')">Micro vs Macro</div>
+                <div class="scenario-chip" onclick="loadScenario('raf')">RAF vs Timeout</div>
+                <div class="scenario-chip" onclick="loadScenario('blocking')">Blocking Example</div>
+                <div class="scenario-chip" onclick="loadScenario('starvation')">Microtask Starvation</div>
+            </div>
+
+            <div class="simulator-container">
+                <div class="code-panel">
+                    <div class="code-header">
+                        <span style="color: #858585; font-size: 0.9rem;">main.js</span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
+                            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
+                            <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
+                        </div>
+                    </div>
+                    <textarea class="code-editor" id="codeInput" spellcheck="false">
+console.log('Script start');
+
+setTimeout(() => {
+    console.log('setTimeout');
+}, 0);
+
+Promise.resolve().then(() => {
+    console.log('Promise');
+});
+
+console.log('Script end');
+                    </textarea>
+                    <div class="code-controls">
+                        <button class="btn btn-primary" onclick="simulator.run()">
+                            <span>▶</span> Run
+                        </button>
+                        <button class="btn btn-secondary" onclick="simulator.step()">
+                            <span>⏭</span> Step
+                        </button>
+                        <button class="btn btn-secondary" onclick="simulator.reset()">
+                            <span>↺</span> Reset
+                        </button>
+                        <div style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem; color: #858585; font-size: 0.85rem;">
+                            <span id="statusIndicator" class="status-indicator paused"></span>
+                            <span id="statusText">Ready</span>
+                        </div>
+                    </div>
+                    <div class="speed-control">
+                        <span>🐢</span>
+                        <input type="range" id="speedSlider" min="100" max="2000" value="1000" step="100">
+                        <span>🐰</span>
+                        <span id="speedValue" style="color: #858585; font-size: 0.85rem; min-width: 60px;">1.0s</span>
+                    </div>
+                </div>
+
+                <div class="viz-panel">
+                    <div class="viz-title">Event Loop Visualization</div>
+                    
+                    <div class="viz-stage">
+                        <div class="event-loop-indicator">🔄</div>
+                        
+                        <div class="viz-box raf" id="rafBox">
+                            <div class="viz-label">Request Animation Frame</div>
+                            <div class="viz-content" id="rafQueue"></div>
+                        </div>
+
+                        <div class="viz-box stack" id="stackBox">
+                            <div class="viz-label">Call Stack (LIFO)</div>
+                            <div class="viz-content" id="callStack"></div>
+                        </div>
+
+                        <div class="viz-box webapi" id="webapiBox">
+                            <div class="viz-label">Web APIs (Browser)</div>
+                            <div class="viz-content" id="webApis"></div>
+                        </div>
+
+                        <div class="viz-box micro" id="microBox">
+                            <div class="viz-label">Microtask Queue (High Priority)</div>
+                            <div class="viz-content" id="microQueue"></div>
+                        </div>
+
+                        <div class="viz-box macro" id="macroBox">
+                            <div class="viz-label">Macrotask Queue (Task Queue)</div>
+                            <div class="viz-content" id="macroQueue"></div>
+                        </div>
+                    </div>
+
+                    <div class="console-panel" id="console">
+                        <div class="console-line"><span class="console-prompt">></span> Console ready...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 2rem;">
+                <h3>Current Scenario Explanation</h3>
+                <p id="scenarioExplanation">The classic JavaScript interview question. Notice how Promise microtasks execute before setTimeout macrotasks, even with a delay of 0ms.</p>
+            </div>
+        </section>
+
+        <!-- PITFALLS SECTION -->
+        <section id="pitfalls" class="section">
+            <h1>Common Mistakes & Pitfalls</h1>
+            <p class="subtitle">Avoid these traps that even experienced developers fall into.</p>
+
+            <div class="pitfall-card">
+                <div class="pitfall-title">Mistake #1: Assuming setTimeout(0) is Immediate</div>
+                <p>setTimeout with 0ms doesn't execute immediately. It goes to the macrotask queue, which only gets processed after microtasks and the current stack clear.</p>
+                
+                <div class="code-comparison">
+                    <div>
+                        <div style="color: var(--accent-red); margin-bottom: 0.5rem; font-weight: 600;">❌ Wrong Assumption</div>
+                        <div class="code-block bad">
+// Assuming this order: A, B, C
+console.log('A');
+setTimeout(() => console.log('B'), 0);
+Promise.resolve().then(() => console.log('C'));
+
+// Reality: A, C, B
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: var(--accent-green); margin-bottom: 0.5rem; font-weight: 600;">✅ Correct Understanding</div>
+                        <div class="code-block good">
+// Microtasks (Promises) always run 
+// before Macrotasks (setTimeout)
+console.log('A'); // Sync
+Promise.resolve().then(() => {
+    console.log('C'); // Microtask
+});
+setTimeout(() => {
+    console.log('B'); // Macrotask
+}, 0);
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pitfall-card">
+                <div class="pitfall-title">Mistake #2: Blocking the Main Thread</div>
+                <p>Heavy computation freezes the UI because JavaScript can't render while executing code on the stack.</p>
+                
+                <div class="code-comparison">
+                    <div>
+                        <div style="color: var(--accent-red); margin-bottom: 0.5rem; font-weight: 600;">❌ Blocking</div>
+                        <div class="code-block bad">
+// UI freezes for 5 seconds!
+const bigArray = new Array(10000000);
+for (let i = 0; i < bigArray.length; i++) {
+    heavyCalculation(bigArray[i]);
+}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: var(--accent-green); margin-bottom: 0.5rem; font-weight: 600;">✅ Yielding to Event Loop</div>
+                        <div class="code-block good">
+// Process in chunks
+function processChunk(i) {
+    if (i >= bigArray.length) return;
+    
+    // Process 1000 items at a time
+    for (let j = 0; j < 1000 && i < bigArray.length; j++, i++) {
+        heavyCalculation(bigArray[i]);
+    }
+    
+    // Yield control
+    setTimeout(() => processChunk(i), 0);
+}
+processChunk(0);
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pitfall-card">
+                <div class="pitfall-title">Mistake #3: Microtask Starvation</div>
+                <p>Recursively creating microtasks can block the event loop indefinitely, preventing renders and macrotasks.</p>
+                
+                <div class="code-block bad" style="margin-top: 1rem;">
+function starveEventLoop() {
+    Promise.resolve().then(() => {
+        console.log('Microtask');
+        starveEventLoop(); // Recursive microtask!
+    });
+}
+// This will prevent ANY setTimeout from running
+// and freeze the UI rendering!
+                </div>
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">
+                    <strong>Fix:</strong> Use <code>setTimeout(fn, 0)</code> instead if you need to yield between iterations, or use <code>requestAnimationFrame</code> for visual updates.
+                </div>
+            </div>
+
+            <div class="pitfall-card">
+                <div class="pitfall-title">Mistake #4: Confusing RAF with setTimeout</div>
+                <p>requestAnimationFrame pauses in background tabs to save battery, while setTimeout continues running.</p>
+                
+                <div class="code-block" style="margin-top: 1rem; border-left-color: var(--accent-pink);">
+// In a background tab:
+setTimeout(updateGame, 16); // Keeps running! 💻🔥
+
+requestAnimationFrame(updateGame); // Pauses! ✅
+                </div>
+                <p style="margin-top: 0.5rem; color: var(--text-secondary);">Use RAF for visual updates, setTimeout for logic that must continue when tab is hidden.</p>
+            </div>
+
+            <div class="card">
+                <h3>🎯 Interview Tip</h3>
+                <p>When asked about Event Loop questions, always mention:</p>
+                <ul style="margin-left: 1.5rem; margin-top: 0.5rem; line-height: 2;">
+                    <li>Synchronous code executes first (Call Stack)</li>
+                    <li>Then all Microtasks (Promises) are drained</li>
+                    <li>Then one Macrotask runs</li>
+                    <li>Then RAF (if render needed)</li>
+                    <li>Then the cycle repeats</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- QUIZ SECTION -->
+        <section id="quiz" class="section">
+            <h1>Test Your Knowledge</h1>
+            <p class="subtitle">Master these questions to ace your technical interviews.</p>
+
+            <div class="quiz-container" id="quizContainer">
+                <!-- Quiz questions injected by JS -->
+            </div>
+
+            <div id="quizResults" style="display: none; text-align: center; padding: 3rem;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                <h2>Quiz Complete!</h2>
+                <p style="font-size: 1.5rem; margin: 1rem 0;">Score: <span id="finalScore" style="color: var(--accent-blue); font-weight: 700;">0</span>/10</p>
+                <p id="quizFeedback" style="color: var(--text-secondary); margin-bottom: 2rem;"></p>
+                <button class="btn btn-primary" onclick="resetQuiz()">Retake Quiz</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Update progress bar if in learn section
+            if (sectionId === 'learn') {
+                updateLearnProgress();
+            }
+        }
+
+        function updateLearnProgress() {
+            const progress = document.getElementById('learnProgress');
+            progress.style.width = '100%';
+        }
+
+        // Simulator State Management
+        class EventLoopSimulator {
+            constructor() {
+                this.state = {
+                    stack: [],
+                    microtasks: [],
+                    macrotasks: [],
+                    rafCallbacks: [],
+                    webapis: [],
+                    console: [],
+                    isRunning: false,
+                    currentStep: 0,
+                    speed: 1000
+                };
+                
+                this.scenarios = {
+                    'classic': {
+                        code: `console.log('Script start');
+
+setTimeout(() => {
+    console.log('setTimeout');
+}, 0);
+
+Promise.resolve().then(() => {
+    console.log('Promise');
+});
+
+console.log('Script end');`,
+                        explanation: "The classic interview question. Synchronous code runs first, then microtasks (Promises), then macrotasks (setTimeout).",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'log', value: 'Script start'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout(0ms)'},
+                            {action: 'micro', target: 'microtasks', value: 'Promise.then()'},
+                            {action: 'log', value: 'Script end'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'Promise.then()'},
+                            {action: 'log', value: 'Promise'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout cb'},
+                            {action: 'log', value: 'setTimeout'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    },
+                    'stack': {
+                        code: `function first() {
+    console.log('First');
+    second();
+}
+
+function second() {
+    console.log('Second');
+    third();
+}
+
+function third() {
+    console.log('Third');
+}
+
+first();`,
+                        explanation: "Demonstrates LIFO (Last In, First Out) nature of the Call Stack. Functions are pushed and popped in reverse order.",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'push', target: 'stack', value: 'first()'},
+                            {action: 'log', value: 'First'},
+                            {action: 'push', target: 'stack', value: 'second()'},
+                            {action: 'log', value: 'Second'},
+                            {action: 'push', target: 'stack', value: 'third()'},
+                            {action: 'log', value: 'Third'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    },
+                    'promise': {
+                        code: `console.log('Start');
+
+Promise.resolve()
+    .then(() => {
+        console.log('Promise 1');
+        return Promise.resolve('Promise 2');
+    })
+    .then(val => console.log(val));
+
+console.log('End');`,
+                        explanation: "Promise chaining creates multiple microtasks. Each .then() adds a new microtask to the queue.",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'log', value: 'Start'},
+                            {action: 'micro', target: 'microtasks', value: 'Promise.then()'},
+                            {action: 'log', value: 'End'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'Promise 1'},
+                            {action: 'log', value: 'Promise 1'},
+                            {action: 'micro', target: 'microtasks', value: 'Promise.then()'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'Promise 2'},
+                            {action: 'log', value: 'Promise 2'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    },
+                    'micro-macro': {
+                        code: `console.log('1');
+
+setTimeout(() => console.log('2'), 0);
+setTimeout(() => console.log('3'), 0);
+
+Promise.resolve().then(() => {
+    console.log('4');
+    Promise.resolve().then(() => console.log('5'));
+});
+
+console.log('6');`,
+                        explanation: "All microtasks execute before the next macrotask. Even Promise 5 (created during Promise 4) runs before setTimeout 2.",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'log', value: '1'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout A'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout B'},
+                            {action: 'micro', target: 'microtasks', value: 'Promise.then()'},
+                            {action: 'log', value: '6'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'Promise.then()'},
+                            {action: 'log', value: '4'},
+                            {action: 'micro', target: 'microtasks', value: 'Nested Promise'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'Nested Promise'},
+                            {action: 'log', value: '5'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout A'},
+                            {action: 'log', value: '2'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout B'},
+                            {action: 'log', value: '3'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    },
+                    'raf': {
+                        code: `console.log('Start');
+
+setTimeout(() => console.log('Timeout'), 0);
+requestAnimationFrame(() => console.log('RAF'));
+Promise.resolve().then(() => console.log('Promise'));
+
+console.log('End');`,
+                        explanation: "Order: Sync → Microtasks → RAF → Macrotasks. requestAnimationFrame runs right before render, after microtasks but before setTimeout.",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'log', value: 'Start'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout'},
+                            {action: 'raf', target: 'rafcallbacks', value: 'RAF()'},
+                            {action: 'micro', target: 'microtasks', value: 'Promise'},
+                            {action: 'log', value: 'End'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'Promise'},
+                            {action: 'log', value: 'Promise'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'rafexec', from: 'rafcallbacks', to: 'stack', value: 'RAF()'},
+                            {action: 'log', value: 'RAF'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout'},
+                            {action: 'log', value: 'Timeout'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    },
+                    'blocking': {
+                        code: `console.log('Before loop');
+const start = Date.now();
+
+while (Date.now() - start < 2000) {
+    // Blocking for 2 seconds!
+}
+
+console.log('After loop');
+setTimeout(() => console.log('Timeout'), 0);`,
+                        explanation: "The while loop blocks the stack. The setTimeout can't execute until the stack is clear, so it waits at least 2 seconds even though it's set to 0ms.",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'log', value: 'Before loop'},
+                            {action: 'block', duration: 2000, text: 'Heavy Computation...'},
+                            {action: 'log', value: 'After loop'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout(0)'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout'},
+                            {action: 'log', value: 'Timeout'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    },
+                    'starvation': {
+                        code: `let count = 0;
+function loop() {
+    Promise.resolve().then(() => {
+        count++;
+        if (count < 3) {
+            console.log('Microtask ' + count);
+            loop(); // Recursive!
+        }
+    });
+}
+loop();
+setTimeout(() => console.log('Timeout'), 0);`,
+                        explanation: "Recursive microtasks create starvation. The setTimeout waits until ALL microtasks complete, even though it was scheduled first.",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'micro', target: 'microtasks', value: 'loop()'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'loop()'},
+                            {action: 'log', value: 'Microtask 1'},
+                            {action: 'micro', target: 'microtasks', value: 'loop()'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'loop()'},
+                            {action: 'log', value: 'Microtask 2'},
+                            {action: 'micro', target: 'microtasks', value: 'loop()'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'microexec', from: 'microtasks', to: 'stack', value: 'loop()'},
+                            {action: 'log', value: 'Microtask 3'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout'},
+                            {action: 'log', value: 'Timeout'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    },
+                    'timeout': {
+                        code: `console.log('A');
+setTimeout(() => {
+    console.log('B');
+    setTimeout(() => console.log('C'), 0);
+}, 0);
+console.log('D');`,
+                        explanation: "Nested setTimeouts create new macrotasks. C cannot run until B completes and the next event loop iteration starts.",
+                        steps: [
+                            {action: 'push', target: 'stack', value: 'main()'},
+                            {action: 'log', value: 'A'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout 1'},
+                            {action: 'log', value: 'D'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout 1 cb'},
+                            {action: 'log', value: 'B'},
+                            {action: 'webapi', target: 'webapis', value: 'setTimeout 2'},
+                            {action: 'pop', target: 'stack'},
+                            {action: 'macroexec', from: 'macrotasks', to: 'stack', value: 'setTimeout 2 cb'},
+                            {action: 'log', value: 'C'},
+                            {action: 'pop', target: 'stack'}
+                        ]
+                    }
+                };
+                
+                this.currentScenario = null;
+                this.stepIndex = 0;
+                this.timer = null;
+            }
+
+            loadScenario(name) {
+                const scenario = this.scenarios[name];
+                if (!scenario) return;
+                
+                this.reset();
+                document.getElementById('codeInput').value = scenario.code;
+                document.getElementById('scenarioExplanation').textContent = scenario.explanation;
+                this.currentScenario = scenario;
+                this.stepIndex = 0;
+                
+                // Update UI
+                document.querySelectorAll('.scenario-chip').forEach(chip => {
+                    chip.classList.remove('active');
+                    if (chip.textContent.toLowerCase().includes(name.replace('-', ' '))) {
+                        chip.classList.add('active');
+                    }
+                });
+                
+                // Switch to simulator tab
+                showSection('simulator');
+                document.querySelectorAll('.nav-btn').forEach(b => {
+                    b.classList.remove('active');
+                    if (b.textContent.includes('Simulator')) b.classList.add('active');
+                });
+            }
+
+            reset() {
+                clearTimeout(this.timer);
+                this.state = {
+                    stack: [],
+                    microtasks: [],
+                    macrotasks: [],
+                    rafCallbacks: [],
+                    webapis: [],
+                    console: [],
+                    isRunning: false,
+                    currentStep: 0
+                };
+                this.stepIndex = 0;
+                this.updateUI();
+                this.setStatus('Ready', 'paused');
+                
+                // Clear console
+                document.getElementById('console').innerHTML = 
+                    '<div class="console-line"><span class="console-prompt">></span> Console ready...</div>';
+                
+                // Remove active highlights
+                document.querySelectorAll('.viz-box').forEach(box => box.classList.remove('active'));
+            }
+
+            setStatus(text, state) {
+                document.getElementById('statusText').textContent = text;
+                const indicator = document.getElementById('statusIndicator');
+                indicator.className = 'status-indicator ' + state;
+            }
+
+            run() {
+                if (this.state.isRunning) return;
+                this.state.isRunning = true;
+                this.setStatus('Running...', 'running');
+                this.executeStep();
+            }
+
+            step() {
+                if (!this.currentScenario) {
+                    this.loadScenario('classic');
+                }
+                this.executeSingleStep();
+            }
+
+            executeStep() {
+                if (!this.state.isRunning) return;
+                
+                const done = this.executeSingleStep();
+                if (!done && this.state.isRunning) {
+                    this.timer = setTimeout(() => this.executeStep(), this.state.speed);
+                } else {
+                    this.state.isRunning = false;
+                    this.setStatus('Complete', 'paused');
+                }
+            }
+
+            executeSingleStep() {
+                if (!this.currentScenario || this.stepIndex >= this.currentScenario.steps.length) {
+                    this.state.isRunning = false;
+                    this.setStatus('Complete', 'paused');
+                    return true;
+                }
+
+                const step = this.currentScenario.steps[this.stepIndex];
+                this.processStep(step);
+                this.stepIndex++;
+                this.updateUI();
+                
+                return this.stepIndex >= this.currentScenario.steps.length;
+            }
+
+            processStep(step) {
+                switch(step.action) {
+                    case 'push':
+                        this.state.stack.push(step.value);
+                        this.highlight('stack');
+                        break;
+                    case 'pop':
+                        this.state.stack.pop();
+                        this.highlight('stack');
+                        break;
+                    case 'log':
+                        this.state.console.push(step.value);
+                        this.addConsoleLine(step.value);
+                        break;
+                    case 'webapi':
+                        this.state.webapis.push(step.value);
+                        setTimeout(() => {
+                            // Simulate Web API completion
+                            this.state.webapis = this.state.webapis.filter(w => w !== step.value);
+                            if (step.value.includes('setTimeout')) {
+                                this.state.macrotasks.push(step.value.replace('setTimeout', 'cb'));
+                            }
+                            this.updateUI();
+                        }, this.state.speed * 0.5);
+                        this.highlight('webapi');
+                        break;
+                    case 'micro':
+                        this.state.microtasks.push(step.value);
+                        this.highlight('micro');
+                        break;
+                    case 'macro':
+                        this.state.macrotasks.push(step.value);
+                        this.highlight('macro');
+                        break;
+                    case 'raf':
+                        this.state.rafCallbacks.push(step.value);
+                        this.highlight('raf');
+                        break;
+                    case 'microexec':
+                        this.state.microtasks.shift();
+                        this.state.stack.push(step.value);
+                        this.highlight('micro');
+                        setTimeout(() => this.highlight('stack'), 100);
+                        break;
+                    case 'macroexec':
+                        this.state.macrotasks.shift();
+                        this.state.stack.push(step.value);
+                        this.highlight('macro');
+                        setTimeout(() => this.highlight('stack'), 100);
+                        break;
+                    case 'rafexec':
+                        this.state.rafCallbacks.shift();
+                        this.state.stack.push(step.value);
+                        this.highlight('raf');
+                        setTimeout(() => this.highlight('stack'), 100);
+                        break;
+                    case 'block':
+                        // Visual blocking indicator
+                        this.highlight('stack');
+                        break;
+                }
+            }
+
+            highlight(elementId) {
+                const element = document.getElementById(elementId + 'Box');
+                if (element) {
+                    element.classList.add('active');
+                    setTimeout(() => element.classList.remove('active'), 300);
+                }
+            }
+
+            updateUI() {
+                // Update Call Stack
+                const stackEl = document.getElementById('callStack');
+                stackEl.innerHTML = this.state.stack.map(item => 
+                    `<div class="task-item">${item}</div>`
+                ).reverse().join('');
+
+                // Update Microtasks
+                const microEl = document.getElementById('microQueue');
+                microEl.innerHTML = this.state.microtasks.map(item => 
+                    `<div class="task-item" style="background: var(--accent-green)">${item}</div>`
+                ).join('');
+
+                // Update Macrotasks
+                const macroEl = document.getElementById('macroQueue');
+                macroEl.innerHTML = this.state.macrotasks.map(item => 
+                    `<div class="task-item" style="background: var(--accent-orange)">${item}</div>`
+                ).join('');
+
+                // Update Web APIs
+                const webEl = document.getElementById('webApis');
+                webEl.innerHTML = this.state.webapis.map(item => 
+                    `<div class="task-item" style="background: var(--accent-purple)">${item}</div>`
+                ).join('');
+
+                // Update RAF
+                const rafEl = document.getElementById('rafQueue');
+                rafEl.innerHTML = this.state.rafCallbacks.map(item => 
+                    `<div class="task-item" style="background: var(--accent-pink)">${item}</div>`
+                ).join('');
+            }
+
+            addConsoleLine(text) {
+                const consoleEl = document.getElementById('console');
+                const line = document.createElement('div');
+                line.className = 'console-line';
+                line.innerHTML = `<span class="console-prompt">></span> ${text}`;
+                consoleEl.appendChild(line);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            setSpeed(ms) {
+                this.state.speed = 2100 - ms; // Invert so right is faster
+                document.getElementById('speedValue').textContent = (this.state.speed/1000).toFixed(1) + 's';
+            }
+        }
+
+        // Quiz Data
+        const quizQuestions = [
+            {
+                question: "What is the output order of this code?",
+                code: `console.log('1');
+setTimeout(() => console.log('2'), 0);
+Promise.resolve().then(() => console.log('3'));
+console.log('4');`,
+                options: ["1, 2, 3, 4", "1, 4, 3, 2", "1, 4, 2, 3", "1, 3, 4, 2"],
+                correct: 1,
+                explanation: "Synchronous code (1, 4) runs first. Then microtasks (Promise 3) execute before macrotasks (setTimeout 2)."
+            },
+            {
+                question: "Which queue has the highest priority?",
+                code: null,
+                options: ["Macrotask Queue", "Microtask Queue", "RequestAnimationFrame", "They have equal priority"],
+                correct: 1,
+                explanation: "Microtasks (Promises, queueMicrotask) have higher priority than macrotasks. The entire microtask queue is drained before the next macrotask runs."
+            },
+            {
+                question: "What happens if you create infinite recursive Promises?",
+                code: `function loop() {
+    Promise.resolve().then(loop);
+}
+loop();
+setTimeout(() => console.log('timeout'), 0);`,
+                options: ["Stack Overflow", "Timeout prints eventually", "Timeout never prints", "Browser crashes immediately"],
+                correct: 2,
+                explanation: "This creates microtask starvation. Since microtasks run before macrotasks, and we're continuously adding microtasks, the setTimeout (macrotask) never gets a chance to run."
+            },
+            {
+                question: "When does requestAnimationFrame execute relative to setTimeout(..., 0)?",
+                code: null,
+                options: ["Before", "After", "At the same time", "It depends on the browser"],
+                correct: 0,
+                explanation: "RAF runs after microtasks but before macrotasks. setTimeout(..., 0) is a macrotask, so RAF executes before it."
+            },
+            {
+                question: "What is the Call Stack?",
+                code: null,
+                options: ["A database for function calls", "A LIFO structure tracking execution context", "The event loop queue", "A memory heap"],
+                correct: 1,
+                explanation: "The Call Stack is a LIFO (Last In, First Out) structure that tracks where the program is in execution. When a function returns, it's popped off the stack."
+            },
+            {
+                question: "Why does setTimeout(0) not execute immediately?",
+                code: null,
+                options: ["The browser is slow", "It must go through the Web API and Task Queue", "0ms is treated as 4ms minimum", "It executes immediately"],
+                correct: 1,
+                explanation: "setTimeout(0) sends the callback to the Web API, then to the Macrotask Queue. It only executes after the current stack is clear and all microtasks are processed."
+            },
+            {
+                question: "What is the output?",
+                code: `Promise.resolve().then(() => {
+    console.log('A');
+    return Promise.resolve('B');
+}).then(val => console.log(val));
+console.log('C');`,
+                options: ["A, B, C", "C, A, B", "A, C, B", "C, B, A"],
+                correct: 1,
+                explanation: "C logs first (synchronous). Then A (first microtask). The returned Promise creates another microtask for B, which logs last."
+            },
+            {
+                question: "Which operation would you use for smooth animations?",
+                code: null,
+                options: ["setTimeout(fn, 16)", "setInterval(fn, 16)", "requestAnimationFrame(fn)", "Promise.resolve().then(fn)"],
+                correct: 2,
+                explanation: "requestAnimationFrame syncs with the browser's refresh rate (usually 60fps) and pauses in background tabs to save battery."
+            },
+            {
+                question: "What causes a stack overflow?",
+                code: `function recurse() {
+    recurse();
+}
+recurse();`,
+                code: null,
+                options: ["Infinite loop", "Recursive function calls without base case", "Too many setTimeouts", "Memory leak"],
+                correct: 1,
+                explanation: "Recursive functions that never return (no base case) keep pushing onto the Call Stack until it exceeds its limit."
+            },
+            {
+                question: "In what order do these execute?",
+                code: `// Assume all scheduled simultaneously
+1. Synchronous code
+2. Promise.then()
+3. setTimeout()
+4. requestAnimationFrame()`,
+                options: ["1, 2, 4, 3", "1, 2, 3, 4", "1, 4, 2, 3", "1, 3, 2, 4"],
+                correct: 0,
+                explanation: "Order: Sync (1) → Microtasks Promise (2) → RAF (4) → Macrotask setTimeout (3)."
+            }
+        ];
+
+        let currentQuiz = 0;
+        let quizScore = 0;
+        let quizAnswers = [];
+
+        function initQuiz() {
+            const container = document.getElementById('quizContainer');
+            container.innerHTML = '';
+            
+            quizQuestions.forEach((q, idx) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'quiz-question';
+                questionDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span class="badge badge-stack">Question ${idx + 1}/10</span>
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">${q.code ? 'Code Analysis' : 'Concept'}</span>
+                    </div>
+                    <h3 style="margin-bottom: 1rem;">${q.question}</h3>
+                    ${q.code ? `<div class="quiz-code"><pre>${q.code}</pre></div>` : ''}
+                    <div class="quiz-options" id="options-${idx}">
+                        ${q.options.map((opt, optIdx) => `
+                            <div class="quiz-option" onclick="selectOption(${idx}, ${optIdx})">
+                                <input type="radio" name="q${idx}" id="q${idx}-${optIdx}" value="${optIdx}">
+                                <label for="q${idx}-${optIdx}" style="cursor: pointer; flex: 1;">${opt}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation-${idx}">
+                        <strong>Explanation:</strong><br>${q.explanation}
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+
+            // Add submit button
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'btn btn-primary';
+            submitBtn.style.width = '100%';
+            submitBtn.style.marginTop = '1rem';
+            submitBtn.textContent = 'Submit Answers';
+            submitBtn.onclick = submitQuiz;
+            submitBtn.id = 'submitQuizBtn';
+            container.appendChild(submitBtn);
+        }
+
+        function selectOption(questionIdx, optionIdx) {
+            quizAnswers[questionIdx] = optionIdx;
+            
+            // Update UI
+            const options = document.querySelectorAll(`#options-${questionIdx} .quiz-option`);
+            options.forEach((opt, idx) => {
+                if (idx === optionIdx) {
+                    opt.style.borderColor = 'var(--accent-blue)';
+                    opt.style.background = 'rgba(59, 130, 246, 0.1)';
+                } else {
+                    opt.style.borderColor = 'var(--bg-tertiary)';
+                    opt.style.background = 'var(--bg-primary)';
+                }
+            });
+        }
+
+        function submitQuiz() {
+            if (quizAnswers.length < quizQuestions.length || quizAnswers.some(a => a === undefined)) {
+                alert('Please answer all questions before submitting!');
+                return;
+            }
+
+            quizScore = 0;
+            quizQuestions.forEach((q, idx) => {
+                const correct = quizAnswers[idx] === q.correct;
+                if (correct) quizScore++;
+                
+                // Show correct/incorrect styling
+                const options = document.querySelectorAll(`#options-${idx} .quiz-option`);
+                options.forEach((opt, optIdx) => {
+                    if (optIdx === q.correct) {
+                        opt.classList.add('correct');
+                    } else if (optIdx === quizAnswers[idx] && !correct) {
+                        opt.classList.add('wrong');
+                    }
+                    opt.onclick = null; // Disable further clicks
+                    opt.style.cursor = 'default';
+                });
+                
+                // Show explanation
+                document.getElementById(`explanation-${idx}`).classList.add('show');
+            });
+
+            // Hide submit button, show results
+            document.getElementById('submitQuizBtn').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('quizResults').style.display = 'block';
+            document.getElementById('finalScore').textContent = quizScore;
+            
+            const feedback = document.getElementById('quizFeedback');
+            if (quizScore === 10) {
+                feedback.textContent = 'Perfect! You are an Event Loop Master! 🏆';
+                feedback.style.color = 'var(--accent-green)';
+            } else if (quizScore >= 8) {
+                feedback.textContent = 'Great job! You have a solid understanding.';
+                feedback.style.color = 'var(--accent-blue)';
+            } else if (quizScore >= 6) {
+                feedback.textContent = 'Good start, but review the pitfall section.';
+                feedback.style.color = 'var(--accent-orange)';
+            } else {
+                feedback.textContent = 'Keep studying! Use the simulator to practice.';
+                feedback.style.color = 'var(--accent-red)';
+            }
+        }
+
+        function resetQuiz() {
+            quizAnswers = [];
+            currentQuiz = 0;
+            quizScore = 0;
+            document.getElementById('quizContainer').style.display = 'block';
+            document.getElementById('quizResults').style.display = 'none';
+            initQuiz();
+        }
+
+        // Initialize
+        const simulator = new EventLoopSimulator();
+        
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            simulator.setSpeed(e.target.value);
+        });
+
+        // Load default scenario on startup
+        window.addEventListener('load', () => {
+            simulator.loadScenario('classic');
+            initQuiz();
+        });
+
+        function loadScenario(name) {
+            simulator.loadScenario(name);
+        }
+    </script>
+</body>
+</html>

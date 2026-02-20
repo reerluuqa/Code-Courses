@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>React State Management Mastery</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0a0e1a;--bg2:#111827;--bg3:#1e293b;--bg4:#263348;
+    --accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;
+    --green:#10b981;--green2:#34d399;--red:#ef4444;--red2:#f87171;
+    --orange:#f59e0b;--orange2:#fbbf24;--cyan:#06b6d4;--cyan2:#22d3ee;
+    --pink:#ec4899;--purple:#8b5cf6;
+    --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+    --radius:12px;--shadow:0 4px 24px rgba(0,0,0,.3);
+  }
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:var(--bg2)}
+  ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+  /* Header */
+  .header{background:linear-gradient(135deg,#1e1b4b,#312e81,#1e1b4b);border-bottom:1px solid rgba(99,102,241,.3);padding:16px 24px;position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(20px)}
+  .header h1{font-size:1.3rem;background:linear-gradient(135deg,var(--accent3),var(--cyan2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:10px}
+  .header h1 span{font-size:1.6rem}
+  .progress-bar{display:flex;align-items:center;gap:12px;font-size:.85rem;color:var(--text2)}
+  .progress-track{width:200px;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:4px;transition:width .5s ease;width:0%}
+  .xp-badge{background:linear-gradient(135deg,var(--orange),var(--pink));padding:4px 12px;border-radius:20px;font-weight:700;font-size:.8rem;color:#fff}
+
+  /* Layout */
+  .layout{display:flex;margin-top:65px;min-height:calc(100vh - 65px)}
+  
+  /* Sidebar */
+  .sidebar{width:280px;background:var(--bg2);border-right:1px solid rgba(255,255,255,.06);padding:20px 0;position:fixed;top:65px;bottom:0;overflow-y:auto;z-index:50}
+  .nav-section{padding:8px 20px;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text3);margin-top:12px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;transition:all .2s;font-size:.9rem;color:var(--text2);border-left:3px solid transparent;position:relative}
+  .nav-item:hover{background:rgba(99,102,241,.08);color:var(--text)}
+  .nav-item.active{background:rgba(99,102,241,.12);color:var(--accent3);border-left-color:var(--accent)}
+  .nav-item .icon{font-size:1.1rem;width:24px;text-align:center}
+  .nav-item .check{position:absolute;right:12px;font-size:.7rem;color:var(--green)}
+  .nav-item.completed .check{display:block}
+  .nav-item .check{display:none}
+
+  /* Main Content */
+  .main{margin-left:280px;flex:1;padding:30px 40px;max-width:1000px}
+  .section{display:none}
+  .section.active{display:block;animation:fadeUp .4s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  /* Typography */
+  .section-title{font-size:2rem;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,#fff,var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .section-subtitle{color:var(--text2);font-size:1.05rem;margin-bottom:30px}
+  h3{font-size:1.3rem;color:var(--accent3);margin:28px 0 12px;display:flex;align-items:center;gap:8px}
+  h4{font-size:1.05rem;color:var(--cyan2);margin:20px 0 8px}
+  p{margin-bottom:14px;color:var(--text2)}
+  strong{color:var(--text)}
+
+  /* Cards */
+  .card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;margin:16px 0;box-shadow:var(--shadow)}
+  .card.accent{border-color:rgba(99,102,241,.3);background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(6,182,212,.05))}
+  .card.warning{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
+  .card.danger{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.05)}
+  .card.success{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)}
+  .card-title{font-size:1.05rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .card.warning .card-title{color:var(--orange2)}
+  .card.danger .card-title{color:var(--red2)}
+  .card.success .card-title{color:var(--green2)}
+  .card.accent .card-title{color:var(--accent3)}
+
+  /* Code Blocks */
+  .code-block{background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:18px;margin:12px 0;overflow-x:auto;font-family:'Fira Code','Cascadia Code',Consolas,monospace;font-size:.85rem;line-height:1.8;position:relative}
+  .code-block .lang{position:absolute;top:8px;right:12px;font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
+  .code-block .copy-btn{position:absolute;top:8px;right:60px;background:var(--bg4);border:none;color:var(--text2);padding:2px 8px;border-radius:4px;font-size:.7rem;cursor:pointer;opacity:0;transition:opacity .2s}
+  .code-block:hover .copy-btn{opacity:1}
+  .kw{color:#ff7b72}.str{color:#a5d6ff}.fn{color:#d2a8ff}.cm{color:#8b949e}.num{color:#79c0ff}.op{color:#ff7b72}.type{color:#ffa657}.prop{color:#79c0ff}.key{color:#7ee787}
+
+  /* Interactive Flow Diagram */
+  .flow-diagram{background:var(--bg3);border-radius:var(--radius);padding:30px;margin:20px 0;position:relative;overflow:hidden}
+  .flow-diagram::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(99,102,241,.08),transparent 70%)}
+  .flow-nodes{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;position:relative;z-index:1}
+  .flow-node{background:var(--bg2);border:2px solid var(--accent);border-radius:12px;padding:16px 24px;text-align:center;cursor:pointer;transition:all .3s;min-width:120px;position:relative}
+  .flow-node:hover{transform:translateY(-4px);box-shadow:0 8px 25px rgba(99,102,241,.3)}
+  .flow-node.active-node{border-color:var(--green);background:rgba(16,185,129,.1);transform:scale(1.05)}
+  .flow-node .node-icon{font-size:2rem;margin-bottom:6px}
+  .flow-node .node-label{font-size:.8rem;font-weight:700;color:var(--text)}
+  .flow-node .node-desc{font-size:.7rem;color:var(--text2);margin-top:4px}
+  .flow-arrow{color:var(--accent);font-size:1.5rem;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .flow-info{margin-top:16px;padding:16px;background:rgba(0,0,0,.3);border-radius:8px;font-size:.9rem;color:var(--text2);min-height:60px;text-align:center}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;margin:16px 0;border-bottom:2px solid var(--bg3);padding-bottom:0}
+  .tab{padding:10px 20px;cursor:pointer;font-size:.85rem;color:var(--text2);transition:all .2s;border-bottom:2px solid transparent;margin-bottom:-2px;border-radius:8px 8px 0 0}
+  .tab:hover{color:var(--text);background:rgba(99,102,241,.08)}
+  .tab.active{color:var(--accent3);border-bottom-color:var(--accent);background:rgba(99,102,241,.08)}
+  .tab-content{display:none}
+  .tab-content.active{display:block;animation:fadeUp .3s ease}
+
+  /* Quiz */
+  .quiz-container{margin:20px 0}
+  .quiz-question{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;margin:16px 0}
+  .quiz-q{font-size:1rem;font-weight:600;margin-bottom:16px;color:var(--text);display:flex;gap:10px}
+  .quiz-q .q-num{background:var(--accent);color:#fff;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
+  .quiz-options{display:flex;flex-direction:column;gap:8px}
+  .quiz-opt{padding:12px 16px;border:2px solid var(--bg4);border-radius:8px;cursor:pointer;transition:all .2s;font-size:.9rem;display:flex;align-items:center;gap:10px}
+  .quiz-opt:hover{border-color:var(--accent);background:rgba(99,102,241,.05)}
+  .quiz-opt.selected{border-color:var(--accent);background:rgba(99,102,241,.1)}
+  .quiz-opt.correct{border-color:var(--green)!important;background:rgba(16,185,129,.1)!important}
+  .quiz-opt.wrong{border-color:var(--red)!important;background:rgba(239,68,68,.1)!important}
+  .quiz-opt .opt-letter{width:24px;height:24px;border-radius:50%;border:2px solid var(--bg4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;transition:all .2s}
+  .quiz-opt.selected .opt-letter{border-color:var(--accent);background:var(--accent);color:#fff}
+  .quiz-opt.correct .opt-letter{border-color:var(--green);background:var(--green);color:#fff}
+  .quiz-opt.wrong .opt-letter{border-color:var(--red);background:var(--red);color:#fff}
+  .quiz-explain{margin-top:12px;padding:12px;background:rgba(0,0,0,.3);border-radius:8px;font-size:.85rem;display:none}
+  .quiz-explain.show{display:block;animation:fadeUp .3s ease}
+
+  /* Buttons */
+  .btn{padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#4f46e5);color:#fff}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(99,102,241,.4)}
+  .btn-success{background:linear-gradient(135deg,var(--green),#059669);color:#fff}
+  .btn-success:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(16,185,129,.4)}
+  .btn-outline{background:transparent;border:2px solid var(--accent);color:var(--accent3)}
+  .btn-outline:hover{background:rgba(99,102,241,.1)}
+  .btn-sm{padding:6px 14px;font-size:.8rem}
+
+  /* Exercise */
+  .exercise{background:var(--bg2);border:2px solid var(--accent);border-radius:var(--radius);padding:24px;margin:20px 0}
+  .exercise-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .exercise-badge{background:linear-gradient(135deg,var(--accent),var(--purple));padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700;color:#fff}
+  .exercise textarea,.exercise input[type="text"]{width:100%;background:#0d1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:14px;color:var(--text);font-family:'Fira Code',monospace;font-size:.85rem;resize:vertical;min-height:120px;outline:none;transition:border-color .2s}
+  .exercise textarea:focus,.exercise input[type="text"]:focus{border-color:var(--accent)}
+  .exercise-result{margin-top:12px;padding:12px;border-radius:8px;font-size:.85rem;display:none}
+  .exercise-result.show{display:block;animation:fadeUp .3s ease}
+  .exercise-result.pass{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--green2)}
+  .exercise-result.fail{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red2)}
+
+  /* Comparison Table */
+  .comparison{width:100%;border-collapse:collapse;margin:16px 0;font-size:.85rem}
+  .comparison th{background:rgba(99,102,241,.15);padding:12px 16px;text-align:left;color:var(--accent3);border-bottom:2px solid var(--accent)}
+  .comparison td{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06);color:var(--text2)}
+  .comparison tr:hover td{background:rgba(99,102,241,.05)}
+
+  /* Visual State Demo */
+  .state-demo{background:var(--bg3);border-radius:var(--radius);padding:24px;margin:20px 0;text-align:center}
+  .state-demo .demo-title{font-size:.85rem;color:var(--text3);margin-bottom:16px;text-transform:uppercase;letter-spacing:2px}
+  .state-visual{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin:16px 0}
+  .state-box{background:var(--bg2);border:2px solid var(--bg4);border-radius:12px;padding:20px;min-width:160px;transition:all .3s}
+  .state-box.highlight{border-color:var(--accent);box-shadow:0 0 20px rgba(99,102,241,.2)}
+  .state-box .box-label{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+  .state-box .box-value{font-size:1.8rem;font-weight:800;color:var(--text)}
+  .demo-controls{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+
+  /* Tooltip */
+  .tip{position:relative;display:inline-block;color:var(--cyan);cursor:help;border-bottom:1px dotted var(--cyan)}
+  .tip:hover .tiptext{visibility:visible;opacity:1;transform:translateY(0)}
+  .tiptext{visibility:hidden;opacity:0;background:var(--bg2);color:var(--text);padding:8px 12px;border-radius:8px;font-size:.8rem;position:absolute;z-index:10;bottom:130%;left:50%;transform:translateX(-50%) translateY(5px);width:220px;text-align:center;border:1px solid var(--accent);transition:all .2s;pointer-events:none}
+
+  /* Animations */
+  .animate-glow{animation:glow 2s ease-in-out infinite alternate}
+  @keyframes glow{from{box-shadow:0 0 5px rgba(99,102,241,.2)}to{box-shadow:0 0 20px rgba(99,102,241,.5)}}
+
+  .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600;margin:2px}
+  .tag-purple{background:rgba(139,92,246,.2);color:#a78bfa}
+  .tag-green{background:rgba(16,185,129,.2);color:#34d399}
+  .tag-blue{background:rgba(6,182,212,.2);color:#22d3ee}
+  .tag-orange{background:rgba(245,158,11,.2);color:#fbbf24}
+
+  /* Mistake Pattern */
+  .mistake-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  .mistake-bad,.mistake-good{border-radius:var(--radius);padding:18px;position:relative}
+  .mistake-bad{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2)}
+  .mistake-good{background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2)}
+  .mistake-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .mistake-bad .mistake-label{color:var(--red2)}
+  .mistake-good .mistake-label{color:var(--green2)}
+
+  /* Nav buttons */
+  .nav-buttons{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid rgba(255,255,255,.06)}
+
+  /* Diagram connector animation */
+  .data-flow{display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--text3);margin:4px 0}
+  .data-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:flowDot 1.5s infinite}
+  @keyframes flowDot{0%{opacity:0;transform:translateX(-10px)}50%{opacity:1}100%{opacity:0;transform:translateX(10px)}}
+
+  /* Interactive Store Visual */
+  .store-container{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  .store-state{background:var(--bg2);border:2px solid var(--purple);border-radius:12px;padding:20px}
+  .store-state h4{color:var(--purple);margin:0 0 12px}
+  .state-tree{font-family:monospace;font-size:.85rem}
+  .state-tree .key{color:var(--key)}
+  .state-tree .val{color:var(--str)}
+  .state-tree .indent{margin-left:16px}
+  .action-log{background:var(--bg2);border:2px solid var(--cyan);border-radius:12px;padding:20px;max-height:300px;overflow-y:auto}
+  .action-log h4{color:var(--cyan);margin:0 0 12px}
+  .log-entry{padding:8px;margin:4px 0;border-radius:6px;font-size:.8rem;font-family:monospace;background:rgba(0,0,0,.3);border-left:3px solid var(--cyan)}
+  .log-entry .log-type{color:var(--orange2);font-weight:700}
+  .log-entry .log-payload{color:var(--text2)}
+
+  /* Responsive */
+  @media(max-width:900px){
+    .sidebar{display:none}
+    .main{margin-left:0;padding:20px}
+    .mistake-pair{grid-template-columns:1fr}
+    .store-container{grid-template-columns:1fr}
+  }
+
+  /* Confetti Effect */
+  .confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;overflow:hidden}
+  .confetti-piece{position:absolute;width:10px;height:10px;top:-10px;animation:confettiFall 3s ease-in forwards}
+  @keyframes confettiFall{to{top:110vh;transform:rotate(720deg)}}
+
+  /* Pill nav for mobile */
+  .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid rgba(255,255,255,.1);padding:8px;z-index:100;overflow-x:auto;white-space:nowrap}
+  @media(max-width:900px){.mobile-nav{display:flex;gap:4px}}
+  .mobile-nav .mnav{padding:8px 14px;background:var(--bg3);border-radius:20px;font-size:.75rem;color:var(--text2);cursor:pointer;flex-shrink:0}
+  .mobile-nav .mnav.active{background:var(--accent);color:#fff}
+
+  .inline-code{background:rgba(99,102,241,.15);color:var(--accent3);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.85em}
+
+  /* Stepper animation */
+  .stepper{display:flex;align-items:center;gap:0;margin:20px 0}
+  .step-circle{width:36px;height:36px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;transition:all .3s;flex-shrink:0;color:var(--text3);border:2px solid var(--bg4)}
+  .step-circle.active-step{background:var(--accent);border-color:var(--accent);color:#fff}
+  .step-circle.done-step{background:var(--green);border-color:var(--green);color:#fff}
+  .step-line{height:2px;flex:1;background:var(--bg4);transition:background .3s}
+  .step-line.done-line{background:var(--green)}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1><span>⚛️</span> State Management Mastery</h1>
+  <div class="progress-bar">
+    <span id="progressText">0% Complete</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="xp-badge" id="xpBadge">0 XP</div>
+  </div>
+</div>
+
+<!-- Layout -->
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <!-- Main Content -->
+  <div class="main" id="mainContent"></div>
+</div>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav" id="mobileNav"></div>
+
+<!-- Confetti Container -->
+<div class="confetti" id="confetti"></div>
+
+<script>
+// ============================================================
+// APP DATA & STATE
+// ============================================================
+const APP = {
+  xp: 0,
+  currentSection: 0,
+  completed: new Set(),
+  quizAnswers: {},
+  totalSections: 0
+};
+
+// ============================================================
+// ALL SECTIONS CONTENT
+// ============================================================
+const sections = [
+  // ===== 0: WELCOME =====
+  {
+    id:'welcome', icon:'🏠', title:'Welcome', group:'Start',
+    render: ()=>`
+      <div class="section-title">Welcome to State Management Mastery 🚀</div>
+      <p class="section-subtitle">Master Redux, Zustand, and state management patterns to ace your React interviews.</p>
+      
+      <div class="card accent">
+        <div class="card-title">📋 What You'll Learn</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+          ${['Why State Management Matters','Redux Core: Store, Actions, Reducers','Redux Toolkit (RTK)','Middleware & Async','Zustand & Alternatives','State Patterns & Best Practices','Common Pitfalls to Avoid','Interview-Ready Knowledge'].map(t=>`<div style="display:flex;align-items:center;gap:8px;font-size:.9rem"><span style="color:var(--green)">✓</span>${t}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎮 How This App Works</div>
+        <p>Navigate using the <strong>sidebar</strong>. Each section has:</p>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
+          ${[['📖','Visual Explanations'],['💻','Code Examples'],['🧪','Interactive Exercises'],['❓','Quizzes'],['⚠️','Pitfalls to Avoid']].map(([i,t])=>`<div class="tag tag-purple" style="font-size:.85rem">${i} ${t}</div>`).join('')}
+        </div>
+      </div>
+
+      <div class="state-demo">
+        <div class="demo-title">🎯 Your First State Visualization</div>
+        <p style="color:var(--text2);font-size:.9rem;margin-bottom:16px">Click the buttons below — this is essentially what state management does!</p>
+        <div class="state-visual">
+          <div class="state-box" id="welcomeCount">
+            <div class="box-label">Count</div>
+            <div class="box-value" id="wCountVal">0</div>
+          </div>
+          <div class="state-box" id="welcomeUser">
+            <div class="box-label">User</div>
+            <div class="box-value" id="wUserVal" style="font-size:1.2rem">Guest</div>
+          </div>
+        </div>
+        <div class="demo-controls">
+          <button class="btn btn-primary btn-sm" onclick="wDemo('inc')">➕ Increment</button>
+          <button class="btn btn-primary btn-sm" onclick="wDemo('dec')">➖ Decrement</button>
+          <button class="btn btn-outline btn-sm" onclick="wDemo('login')">👤 Login</button>
+          <button class="btn btn-outline btn-sm" onclick="wDemo('reset')">🔄 Reset</button>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:30px">
+        <button class="btn btn-success" onclick="goToSection(1)">Let's Begin! 🎉</button>
+      </div>
+    `
+  },
+
+  // ===== 1: WHY STATE MANAGEMENT =====
+  {
+    id:'why-state', icon:'🤔', title:'Why State Management?', group:'Fundamentals',
+    render: ()=>`
+      <div class="section-title">Why Do We Need State Management? 🤔</div>
+      <p class="section-subtitle">Understanding the problem before the solution.</p>
+
+      <h3>🌳 The Prop Drilling Problem</h3>
+      <p>In React, data flows <strong>top-down</strong> via props. When deeply nested components need the same data, you end up passing props through many levels — this is called <strong>prop drilling</strong>.</p>
+
+      <div class="flow-diagram">
+        <div class="flow-nodes" style="flex-direction:column;gap:8px">
+          <div class="flow-node" style="border-color:var(--red)">
+            <div class="node-icon">📦</div>
+            <div class="node-label">App</div>
+            <div class="node-desc">user, theme, cart, auth...</div>
+          </div>
+          <div class="flow-arrow" style="transform:rotate(90deg)">→</div>
+          <div style="display:flex;gap:40px">
+            <div>
+              <div class="flow-node" style="border-color:var(--orange)">
+                <div class="node-label">Header</div>
+                <div class="node-desc">needs: user</div>
+              </div>
+            </div>
+            <div>
+              <div class="flow-node" style="border-color:var(--orange)">
+                <div class="node-label">Dashboard</div>
+                <div class="node-desc">passes down everything 😩</div>
+              </div>
+            </div>
+          </div>
+          <div class="flow-arrow" style="transform:rotate(90deg)">→</div>
+          <div class="flow-node" style="border-color:var(--cyan)">
+            <div class="node-label">CartButton</div>
+            <div class="node-desc">Finally uses cart! 🎯</div>
+          </div>
+        </div>
+        <div class="flow-info">
+          ⚠️ <strong>Problem:</strong> Dashboard doesn't even use cart — it just passes it down. Every middle component re-renders unnecessarily!
+        </div>
+      </div>
+
+      <h3>💡 The Solution: Centralized State</h3>
+      <p>State management libraries provide a <strong>central store</strong> that any component can access directly — no prop drilling needed.</p>
+
+      <div class="flow-diagram">
+        <div class="flow-nodes">
+          <div class="flow-node" style="border-color:var(--green);min-width:180px">
+            <div class="node-icon">🏪</div>
+            <div class="node-label">Store</div>
+            <div class="node-desc">Single source of truth</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:60px;margin-top:16px">
+          ${['Header','Dashboard','CartButton'].map(n=>`
+            <div style="text-align:center">
+              <div style="color:var(--green);margin-bottom:4px">↕️</div>
+              <div class="flow-node" style="border-color:var(--accent);min-width:100px;padding:10px 16px">
+                <div class="node-label" style="font-size:.75rem">${n}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="flow-info" style="color:var(--green2)">
+          ✅ <strong>Solution:</strong> Any component subscribes directly to the store. No unnecessary passing or re-renders!
+        </div>
+      </div>
+
+      <h3>📊 When Do You Need State Management?</h3>
+      <table class="comparison">
+        <tr><th>Scenario</th><th>Solution</th><th>Why</th></tr>
+        <tr><td>Local UI state (toggle, form input)</td><td><span class="tag tag-green">useState</span></td><td>Simple, local, one component</td></tr>
+        <tr><td>Shared between parent-child</td><td><span class="tag tag-green">Props / useState</span></td><td>Direct relationship</td></tr>
+        <tr><td>Shared across few siblings</td><td><span class="tag tag-blue">Lifting state up</span></td><td>Common ancestor pattern</td></tr>
+        <tr><td>Theme, locale (rarely changes)</td><td><span class="tag tag-blue">Context API</span></td><td>Low-frequency updates</td></tr>
+        <tr><td>Complex app-wide state</td><td><span class="tag tag-purple">Redux / Zustand</span></td><td>Predictable, scalable</td></tr>
+        <tr><td>Server state (API data)</td><td><span class="tag tag-orange">React Query / SWR</span></td><td>Caching, sync, deduping</td></tr>
+      </table>
+
+      <div class="card warning">
+        <div class="card-title">⚠️ Don't Over-Engineer!</div>
+        <p>Not every app needs Redux. Start with <span class="inline-code">useState</span> and <span class="inline-code">useContext</span>. Add Redux/Zustand when state logic becomes complex or shared across many components.</p>
+      </div>
+
+      ${makeQuiz('why-q1','When should you NOT use Redux?', [
+        'Small app with local UI state only',
+        'Large e-commerce with cart, auth, filters',
+        'Dashboard with real-time data across many components',
+        'App with complex undo/redo requirements'
+      ], 0, 'Redux adds boilerplate. For simple apps with local state, useState and Context API are sufficient. Don\'t add complexity where it\'s not needed!')}
+    `
+  },
+
+  // ===== 2: REDUX CORE CONCEPTS =====
+  {
+    id:'redux-core', icon:'🏗️', title:'Redux Core Concepts', group:'Redux',
+    render: ()=>`
+      <div class="section-title">Redux Core Concepts 🏗️</div>
+      <p class="section-subtitle">The three pillars: Store, Actions, and Reducers.</p>
+
+      <h3>🎯 The Three Principles of Redux</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0">
+        ${[
+          ['1️⃣','Single Source of Truth','The entire app state lives in ONE store object'],
+          ['2️⃣','State is Read-Only','You can\'t modify state directly — only through actions'],
+          ['3️⃣','Pure Reducers','Changes are made with pure functions (reducers)']
+        ].map(([n,t,d])=>`
+          <div class="card" style="text-align:center">
+            <div style="font-size:2rem;margin-bottom:8px">${n}</div>
+            <div style="font-weight:700;color:var(--accent3);margin-bottom:6px">${t}</div>
+            <div style="font-size:.85rem;color:var(--text2)">${d}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <h3>🔄 The Redux Data Flow</h3>
+      <p>Redux follows a <strong>strict unidirectional data flow</strong>. Click each node to learn more:</p>
+
+      <div class="flow-diagram" id="reduxFlowDiagram">
+        <div class="flow-nodes">
+          <div class="flow-node" onclick="showFlowInfo(0)" id="fn0">
+            <div class="node-icon">👆</div>
+            <div class="node-label">UI Event</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" onclick="showFlowInfo(1)" id="fn1">
+            <div class="node-icon">📨</div>
+            <div class="node-label">Action</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" onclick="showFlowInfo(2)" id="fn2">
+            <div class="node-icon">⚙️</div>
+            <div class="node-label">Reducer</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" onclick="showFlowInfo(3)" id="fn3">
+            <div class="node-icon">🏪</div>
+            <div class="node-label">Store</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" onclick="showFlowInfo(4)" id="fn4">
+            <div class="node-icon">🖥️</div>
+            <div class="node-label">UI Update</div>
+          </div>
+        </div>
+        <div class="flow-info" id="flowInfoText">👆 Click on any node above to see detailed explanation</div>
+      </div>
+
+      <h3>📨 Actions</h3>
+      <p>Actions are <strong>plain JavaScript objects</strong> that describe "what happened." They must have a <span class="inline-code">type</span> property.</p>
+
+      <div class="code-block"><span class="lang">JS</span>
+<span class="cm">// Action object</span>
+<span class="kw">const</span> addTodoAction = {
+  <span class="prop">type</span>: <span class="str">'todos/add'</span>,
+  <span class="prop">payload</span>: {
+    <span class="prop">id</span>: <span class="num">1</span>,
+    <span class="prop">text</span>: <span class="str">'Learn Redux'</span>,
+    <span class="prop">completed</span>: <span class="kw">false</span>
+  }
+};
+
+<span class="cm">// Action Creator (function that returns an action)</span>
+<span class="kw">const</span> <span class="fn">addTodo</span> = (<span class="type">text</span>) => ({
+  <span class="prop">type</span>: <span class="str">'todos/add'</span>,
+  <span class="prop">payload</span>: { <span class="prop">id</span>: Date.<span class="fn">now</span>(), text, <span class="prop">completed</span>: <span class="kw">false</span> }
+});
+
+<span class="cm">// Dispatching</span>
+store.<span class="fn">dispatch</span>(<span class="fn">addTodo</span>(<span class="str">'Learn Redux'</span>));</div>
+
+      <h3>⚙️ Reducers</h3>
+      <p>Reducers are <strong>pure functions</strong> that take the current state and an action, and return a <strong>new state</strong>.</p>
+
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">const</span> initialState = {
+  <span class="prop">todos</span>: [],
+  <span class="prop">filter</span>: <span class="str">'all'</span>
+};
+
+<span class="kw">function</span> <span class="fn">todoReducer</span>(state = initialState, action) {
+  <span class="kw">switch</span> (action.<span class="prop">type</span>) {
+    <span class="kw">case</span> <span class="str">'todos/add'</span>:
+      <span class="kw">return</span> {
+        ...state,  <span class="cm">// spread existing state</span>
+        <span class="prop">todos</span>: [...state.<span class="prop">todos</span>, action.<span class="prop">payload</span>]
+      };
+    
+    <span class="kw">case</span> <span class="str">'todos/toggle'</span>:
+      <span class="kw">return</span> {
+        ...state,
+        <span class="prop">todos</span>: state.<span class="prop">todos</span>.<span class="fn">map</span>(todo =>
+          todo.<span class="prop">id</span> === action.<span class="prop">payload</span>
+            ? { ...todo, <span class="prop">completed</span>: !todo.<span class="prop">completed</span> }
+            : todo
+        )
+      };
+    
+    <span class="kw">case</span> <span class="str">'filter/set'</span>:
+      <span class="kw">return</span> { ...state, <span class="prop">filter</span>: action.<span class="prop">payload</span> };
+    
+    <span class="kw">default</span>:
+      <span class="kw">return</span> state;  <span class="cm">// ALWAYS return state for unknown actions!</span>
+  }
+}</div>
+
+      <div class="card success">
+        <div class="card-title">✅ Reducer Rules (MUST follow)</div>
+        <ul style="list-style:none;padding:0">
+          ${[
+            'Must be a PURE function — same inputs = same output',
+            'Must NOT mutate the existing state — return NEW objects',
+            'Must NOT have side effects (API calls, random values)',
+            'Must return the current state for unknown action types',
+            'Must calculate new state from (state, action) ONLY'
+          ].map(r=>`<li style="padding:4px 0;font-size:.9rem;display:flex;gap:8px"><span style="color:var(--green)">✓</span><span>${r}</span></li>`).join('')}
+        </ul>
+      </div>
+
+      <h3>🏪 Store</h3>
+      <p>The store holds the state tree, allows access via <span class="inline-code">getState()</span>, updating via <span class="inline-code">dispatch()</span>, and listening via <span class="inline-code">subscribe()</span>.</p>
+
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">import</span> { createStore } <span class="kw">from</span> <span class="str">'redux'</span>;
+
+<span class="cm">// Create the store with our reducer</span>
+<span class="kw">const</span> store = <span class="fn">createStore</span>(todoReducer);
+
+<span class="cm">// Read state</span>
+console.<span class="fn">log</span>(store.<span class="fn">getState</span>());
+<span class="cm">// { todos: [], filter: 'all' }</span>
+
+<span class="cm">// Subscribe to changes</span>
+<span class="kw">const</span> unsubscribe = store.<span class="fn">subscribe</span>(() => {
+  console.<span class="fn">log</span>(<span class="str">'State changed:'</span>, store.<span class="fn">getState</span>());
+});
+
+<span class="cm">// Dispatch actions</span>
+store.<span class="fn">dispatch</span>({ <span class="prop">type</span>: <span class="str">'todos/add'</span>, <span class="prop">payload</span>: { <span class="prop">id</span>: <span class="num">1</span>, <span class="prop">text</span>: <span class="str">'Learn Redux'</span> } });
+
+<span class="cm">// Unsubscribe when done</span>
+<span class="fn">unsubscribe</span>();</div>
+
+      <h3>🎮 Interactive Redux Simulator</h3>
+      <div id="reduxSimulator"></div>
+
+      ${makeQuiz('redux-q1', 'What must a Redux action always have?', [
+        'A payload property',
+        'A type property',
+        'An id property',
+        'A reducer property'
+      ], 1, 'Every Redux action MUST have a "type" property (string). The "payload" is conventional but optional. The type tells the reducer what happened.')}
+
+      ${makeQuiz('redux-q2', 'What should a reducer do if it receives an unknown action type?', [
+        'Throw an error',
+        'Return undefined',
+        'Return the current state unchanged',
+        'Return an empty object'
+      ], 2, 'Reducers must return the current state for any action type they don\'t handle. This is critical because Redux dispatches an init action at startup, and multiple reducers may receive the same action.')}
+    `
+  },
+
+  // ===== 3: REDUX TOOLKIT =====
+  {
+    id:'rtk', icon:'🧰', title:'Redux Toolkit (RTK)', group:'Redux',
+    render: ()=>`
+      <div class="section-title">Redux Toolkit (RTK) 🧰</div>
+      <p class="section-subtitle">The official, recommended way to write Redux — less boilerplate, more power.</p>
+
+      <div class="card accent">
+        <div class="card-title">💡 Why Redux Toolkit?</div>
+        <p>Classic Redux requires too much boilerplate. RTK simplifies everything:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+          <div><span class="tag tag-green">✓</span> <span class="inline-code">configureStore</span> — sets up store with good defaults</div>
+          <div><span class="tag tag-green">✓</span> <span class="inline-code">createSlice</span> — generates actions + reducers</div>
+          <div><span class="tag tag-green">✓</span> <span class="inline-code">createAsyncThunk</span> — handles async logic</div>
+          <div><span class="tag tag-green">✓</span> Immer built-in — "mutate" state safely</div>
+        </div>
+      </div>
+
+      <h3>📦 createSlice — The Game Changer</h3>
+      <p><span class="inline-code">createSlice</span> auto-generates action creators and action types based on reducer functions you provide.</p>
+
+      <div class="tabs" id="sliceTabs">
+        <div class="tab active" onclick="switchTab('sliceTabs','sliceContent',0)">RTK (Modern) ✨</div>
+        <div class="tab" onclick="switchTab('sliceTabs','sliceContent',1)">Classic Redux 😰</div>
+        <div class="tab" onclick="switchTab('sliceTabs','sliceContent',2)">Comparison</div>
+      </div>
+      <div id="sliceContent">
+        <div class="tab-content active">
+          <div class="code-block"><span class="lang">RTK</span>
+<span class="kw">import</span> { createSlice } <span class="kw">from</span> <span class="str">'@reduxjs/toolkit'</span>;
+
+<span class="kw">const</span> todosSlice = <span class="fn">createSlice</span>({
+  <span class="prop">name</span>: <span class="str">'todos'</span>,
+  <span class="prop">initialState</span>: {
+    <span class="prop">items</span>: [],
+    <span class="prop">filter</span>: <span class="str">'all'</span>
+  },
+  <span class="prop">reducers</span>: {
+    <span class="cm">// ✅ RTK uses Immer! You can "mutate" state directly</span>
+    <span class="fn">addTodo</span>(state, action) {
+      state.<span class="prop">items</span>.<span class="fn">push</span>(action.<span class="prop">payload</span>);  <span class="cm">// This is OK!</span>
+    },
+    <span class="fn">toggleTodo</span>(state, action) {
+      <span class="kw">const</span> todo = state.<span class="prop">items</span>.<span class="fn">find</span>(t => t.<span class="prop">id</span> === action.<span class="prop">payload</span>);
+      <span class="kw">if</span> (todo) todo.<span class="prop">completed</span> = !todo.<span class="prop">completed</span>;
+    },
+    <span class="fn">removeTodo</span>(state, action) {
+      state.<span class="prop">items</span> = state.<span class="prop">items</span>.<span class="fn">filter</span>(t => t.<span class="prop">id</span> !== action.<span class="prop">payload</span>);
+    },
+    <span class="fn">setFilter</span>(state, action) {
+      state.<span class="prop">filter</span> = action.<span class="prop">payload</span>;
+    }
+  }
+});
+
+<span class="cm">// Auto-generated action creators! 🎉</span>
+<span class="kw">export const</span> { addTodo, toggleTodo, removeTodo, setFilter } = todosSlice.<span class="prop">actions</span>;
+<span class="kw">export default</span> todosSlice.<span class="prop">reducer</span>;</div>
+        </div>
+        <div class="tab-content">
+          <div class="code-block"><span class="lang">Classic</span>
+<span class="cm">// action types</span>
+<span class="kw">const</span> ADD_TODO = <span class="str">'todos/addTodo'</span>;
+<span class="kw">const</span> TOGGLE_TODO = <span class="str">'todos/toggleTodo'</span>;
+<span class="kw">const</span> REMOVE_TODO = <span class="str">'todos/removeTodo'</span>;
+<span class="kw">const</span> SET_FILTER = <span class="str">'todos/setFilter'</span>;
+
+<span class="cm">// action creators</span>
+<span class="kw">const</span> <span class="fn">addTodo</span> = (payload) => ({ <span class="prop">type</span>: ADD_TODO, payload });
+<span class="kw">const</span> <span class="fn">toggleTodo</span> = (id) => ({ <span class="prop">type</span>: TOGGLE_TODO, <span class="prop">payload</span>: id });
+<span class="kw">const</span> <span class="fn">removeTodo</span> = (id) => ({ <span class="prop">type</span>: REMOVE_TODO, <span class="prop">payload</span>: id });
+<span class="kw">const</span> <span class="fn">setFilter</span> = (filter) => ({ <span class="prop">type</span>: SET_FILTER, <span class="prop">payload</span>: filter });
+
+<span class="cm">// reducer with immutable updates 😰</span>
+<span class="kw">function</span> <span class="fn">todosReducer</span>(state = { items:[], filter:<span class="str">'all'</span> }, action) {
+  <span class="kw">switch</span> (action.<span class="prop">type</span>) {
+    <span class="kw">case</span> ADD_TODO:
+      <span class="kw">return</span> { ...state, <span class="prop">items</span>: [...state.<span class="prop">items</span>, action.<span class="prop">payload</span>] };
+    <span class="kw">case</span> TOGGLE_TODO:
+      <span class="kw">return</span> { ...state, <span class="prop">items</span>: state.<span class="prop">items</span>.<span class="fn">map</span>(t =>
+        t.<span class="prop">id</span> === action.<span class="prop">payload</span> ? {...t, <span class="prop">completed</span>:!t.<span class="prop">completed</span>} : t
+      )};
+    <span class="kw">case</span> REMOVE_TODO:
+      <span class="kw">return</span> { ...state, <span class="prop">items</span>: state.<span class="prop">items</span>.<span class="fn">filter</span>(t =>
+        t.<span class="prop">id</span> !== action.<span class="prop">payload</span>
+      )};
+    <span class="kw">case</span> SET_FILTER:
+      <span class="kw">return</span> { ...state, <span class="prop">filter</span>: action.<span class="prop">payload</span> };
+    <span class="kw">default</span>:
+      <span class="kw">return</span> state;
+  }
+}</div>
+        </div>
+        <div class="tab-content">
+          <table class="comparison">
+            <tr><th>Feature</th><th>Classic Redux</th><th>Redux Toolkit</th></tr>
+            <tr><td>Action Types</td><td>Manual string constants</td><td>Auto-generated ✨</td></tr>
+            <tr><td>Action Creators</td><td>Manual functions</td><td>Auto-generated ✨</td></tr>
+            <tr><td>Immutability</td><td>Spread operators everywhere</td><td>Immer (write "mutations") ✨</td></tr>
+            <tr><td>Store Setup</td><td>Manual middleware config</td><td>configureStore ✨</td></tr>
+            <tr><td>Boilerplate</td><td>😰 Lots</td><td>😊 Minimal</td></tr>
+            <tr><td>DevTools</td><td>Manual setup</td><td>Included ✨</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <h3>🏪 configureStore</h3>
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">import</span> { configureStore } <span class="kw">from</span> <span class="str">'@reduxjs/toolkit'</span>;
+<span class="kw">import</span> todosReducer <span class="kw">from</span> <span class="str">'./todosSlice'</span>;
+<span class="kw">import</span> authReducer <span class="kw">from</span> <span class="str">'./authSlice'</span>;
+
+<span class="kw">const</span> store = <span class="fn">configureStore</span>({
+  <span class="prop">reducer</span>: {
+    <span class="prop">todos</span>: todosReducer,  <span class="cm">// state.todos</span>
+    <span class="prop">auth</span>: authReducer,    <span class="cm">// state.auth</span>
+  },
+  <span class="cm">// DevTools enabled by default ✅</span>
+  <span class="cm">// Redux Thunk middleware included by default ✅</span>
+  <span class="cm">// Serialization checks in development ✅</span>
+});
+
+<span class="kw">export default</span> store;</div>
+
+      <h3>🔗 Using in React Components</h3>
+      <div class="code-block"><span class="lang">JSX</span>
+<span class="kw">import</span> { useSelector, useDispatch } <span class="kw">from</span> <span class="str">'react-redux'</span>;
+<span class="kw">import</span> { addTodo, toggleTodo } <span class="kw">from</span> <span class="str">'./todosSlice'</span>;
+
+<span class="kw">function</span> <span class="fn">TodoList</span>() {
+  <span class="cm">// Read from store</span>
+  <span class="kw">const</span> todos = <span class="fn">useSelector</span>(state => state.<span class="prop">todos</span>.<span class="prop">items</span>);
+  <span class="kw">const</span> filter = <span class="fn">useSelector</span>(state => state.<span class="prop">todos</span>.<span class="prop">filter</span>);
+  
+  <span class="cm">// Get dispatch function</span>
+  <span class="kw">const</span> dispatch = <span class="fn">useDispatch</span>();
+
+  <span class="kw">const</span> <span class="fn">handleAdd</span> = () => {
+    dispatch(<span class="fn">addTodo</span>({
+      <span class="prop">id</span>: Date.<span class="fn">now</span>(),
+      <span class="prop">text</span>: <span class="str">'New todo'</span>,
+      <span class="prop">completed</span>: <span class="kw">false</span>
+    }));
+  };
+
+  <span class="kw">return</span> (
+    &lt;<span class="type">div</span>&gt;
+      {todos.<span class="fn">map</span>(todo =&gt; (
+        &lt;<span class="type">div</span> <span class="prop">key</span>={todo.id} <span class="prop">onClick</span>={() =&gt; dispatch(<span class="fn">toggleTodo</span>(todo.id))}&gt;
+          {todo.text} {todo.completed &amp;&amp; <span class="str">'✅'</span>}
+        &lt;/<span class="type">div</span>&gt;
+      ))}
+      &lt;<span class="type">button</span> <span class="prop">onClick</span>={handleAdd}&gt;Add Todo&lt;/<span class="type">button</span>&gt;
+    &lt;/<span class="type">div</span>&gt;
+  );
+}</div>
+
+      <h3>✏️ Prepare Callbacks</h3>
+      <p>Use <span class="inline-code">prepare</span> to customize the action payload before it reaches the reducer:</p>
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">const</span> todosSlice = <span class="fn">createSlice</span>({
+  <span class="prop">name</span>: <span class="str">'todos'</span>,
+  <span class="prop">initialState</span>: [],
+  <span class="prop">reducers</span>: {
+    <span class="fn">addTodo</span>: {
+      <span class="cm">// ✅ prepare: customize payload</span>
+      <span class="fn">prepare</span>(text) {
+        <span class="kw">return</span> {
+          <span class="prop">payload</span>: {
+            <span class="prop">id</span>: <span class="fn">nanoid</span>(),  <span class="cm">// auto-generate ID</span>
+            <span class="prop">text</span>,
+            <span class="prop">completed</span>: <span class="kw">false</span>,
+            <span class="prop">createdAt</span>: <span class="kw">new</span> Date().<span class="fn">toISOString</span>()
+          }
+        };
+      },
+      <span class="fn">reducer</span>(state, action) {
+        state.<span class="fn">push</span>(action.<span class="prop">payload</span>);
+      }
+    }
+  }
+});
+
+<span class="cm">// Now component just passes text!</span>
+dispatch(<span class="fn">addTodo</span>(<span class="str">'Learn RTK'</span>));
+<span class="cm">// Action: { type: 'todos/addTodo', payload: { id: 'abc123', text: 'Learn RTK', ... } }</span></div>
+
+      ${makeQuiz('rtk-q1', 'Why can you write state.items.push() in RTK reducers?', [
+        'Redux Toolkit disables immutability checks',
+        'RTK uses Immer under the hood, which creates immutable updates from "mutative" code',
+        'JavaScript arrays are always mutable',
+        'RTK automatically clones the state before each reducer'
+      ], 1, 'RTK uses Immer library internally. When you write "mutative" code inside createSlice reducers, Immer intercepts the mutations and produces a new immutable state. You\'re not actually mutating — Immer creates a draft!')}
+    `
+  },
+
+  // ===== 4: MIDDLEWARE =====
+  {
+    id:'middleware', icon:'🔌', title:'Middleware & Async', group:'Redux',
+    render: ()=>`
+      <div class="section-title">Middleware & Async Logic 🔌</div>
+      <p class="section-subtitle">Handling side effects, API calls, and async operations in Redux.</p>
+
+      <h3>🤔 What is Middleware?</h3>
+      <p>Middleware sits <strong>between dispatching an action and the reducer</strong>. It can intercept, modify, delay, or replace actions.</p>
+
+      <div class="flow-diagram">
+        <div class="flow-nodes">
+          <div class="flow-node" style="border-color:var(--cyan)">
+            <div class="node-icon">📨</div>
+            <div class="node-label">dispatch()</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node animate-glow" style="border-color:var(--orange);background:rgba(245,158,11,.08)">
+            <div class="node-icon">🔌</div>
+            <div class="node-label">Middleware</div>
+            <div class="node-desc">Logger, Thunk, etc.</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-color:var(--green)">
+            <div class="node-icon">⚙️</div>
+            <div class="node-label">Reducer</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node" style="border-color:var(--purple)">
+            <div class="node-icon">🏪</div>
+            <div class="node-label">Store</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>📝 Custom Logger Middleware</h3>
+      <p>Understanding the middleware signature: <span class="inline-code">store => next => action</span></p>
+
+      <div class="code-block"><span class="lang">JS</span>
+<span class="cm">// The middleware "triple-nested function" pattern</span>
+<span class="kw">const</span> <span class="fn">loggerMiddleware</span> = (store) => (next) => (action) => {
+  console.<span class="fn">group</span>(action.<span class="prop">type</span>);
+  console.<span class="fn">log</span>(<span class="str">'Previous state:'</span>, store.<span class="fn">getState</span>());
+  console.<span class="fn">log</span>(<span class="str">'Action:'</span>, action);
+  
+  <span class="kw">const</span> result = <span class="fn">next</span>(action);  <span class="cm">// Pass to next middleware or reducer</span>
+  
+  console.<span class="fn">log</span>(<span class="str">'Next state:'</span>, store.<span class="fn">getState</span>());
+  console.<span class="fn">groupEnd</span>();
+  
+  <span class="kw">return</span> result;
+};
+
+<span class="cm">// Add to store</span>
+<span class="kw">const</span> store = <span class="fn">configureStore</span>({
+  <span class="prop">reducer</span>: rootReducer,
+  <span class="prop">middleware</span>: (getDefaultMiddleware) =>
+    getDefaultMiddleware().<span class="fn">concat</span>(loggerMiddleware)
+});</div>
+
+      <h3>⚡ createAsyncThunk — Handling API Calls</h3>
+      <p>Thunks let you dispatch <strong>functions</strong> instead of plain objects, perfect for async operations.</p>
+
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">import</span> { createSlice, createAsyncThunk } <span class="kw">from</span> <span class="str">'@reduxjs/toolkit'</span>;
+
+<span class="cm">// 1. Create the async thunk</span>
+<span class="kw">export const</span> fetchUsers = <span class="fn">createAsyncThunk</span>(
+  <span class="str">'users/fetchAll'</span>,        <span class="cm">// action type prefix</span>
+  <span class="kw">async</span> (_, { rejectWithValue }) => {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.example.com/users'</span>);
+      <span class="kw">if</span> (!response.<span class="prop">ok</span>) <span class="kw">throw new</span> <span class="type">Error</span>(<span class="str">'Failed'</span>);
+      <span class="kw">return await</span> response.<span class="fn">json</span>();  <span class="cm">// This becomes action.payload</span>
+    } <span class="kw">catch</span> (err) {
+      <span class="kw">return</span> <span class="fn">rejectWithValue</span>(err.<span class="prop">message</span>);
+    }
+  }
+);
+
+<span class="cm">// 2. Handle in slice with extraReducers</span>
+<span class="kw">const</span> usersSlice = <span class="fn">createSlice</span>({
+  <span class="prop">name</span>: <span class="str">'users'</span>,
+  <span class="prop">initialState</span>: {
+    <span class="prop">items</span>: [],
+    <span class="prop">loading</span>: <span class="kw">false</span>,
+    <span class="prop">error</span>: <span class="kw">null</span>
+  },
+  <span class="prop">reducers</span>: {},  <span class="cm">// sync reducers here</span>
+  <span class="prop">extraReducers</span>: (builder) => {
+    builder
+      .<span class="fn">addCase</span>(fetchUsers.<span class="prop">pending</span>, (state) => {
+        state.<span class="prop">loading</span> = <span class="kw">true</span>;
+        state.<span class="prop">error</span> = <span class="kw">null</span>;
+      })
+      .<span class="fn">addCase</span>(fetchUsers.<span class="prop">fulfilled</span>, (state, action) => {
+        state.<span class="prop">loading</span> = <span class="kw">false</span>;
+        state.<span class="prop">items</span> = action.<span class="prop">payload</span>;
+      })
+      .<span class="fn">addCase</span>(fetchUsers.<span class="prop">rejected</span>, (state, action) => {
+        state.<span class="prop">loading</span> = <span class="kw">false</span>;
+        state.<span class="prop">error</span> = action.<span class="prop">payload</span>;
+      });
+  }
+});</div>
+
+      <h3>🔄 Async Thunk Lifecycle</h3>
+      <div class="stepper" id="thunkStepper">
+        <div class="step-circle active-step" id="ts0">1</div>
+        <div class="step-line" id="tl0"></div>
+        <div class="step-circle" id="ts1">2</div>
+        <div class="step-line" id="tl1"></div>
+        <div class="step-circle" id="ts2">3</div>
+        <div class="step-line" id="tl2"></div>
+        <div class="step-circle" id="ts3">4</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--text2)">
+        <span>dispatch(fetchUsers())</span>
+        <span>pending ⏳</span>
+        <span>API Call 🌐</span>
+        <span>fulfilled ✅ / rejected ❌</span>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="animateThunkStepper()">▶️ Simulate Async Flow</button>
+      </div>
+
+      <h3>🔗 Using in Component</h3>
+      <div class="code-block"><span class="lang">JSX</span>
+<span class="kw">function</span> <span class="fn">UserList</span>() {
+  <span class="kw">const</span> dispatch = <span class="fn">useDispatch</span>();
+  <span class="kw">const</span> { items, loading, error } = <span class="fn">useSelector</span>(s => s.<span class="prop">users</span>);
+
+  <span class="fn">useEffect</span>(() => {
+    dispatch(<span class="fn">fetchUsers</span>());
+  }, [dispatch]);
+
+  <span class="kw">if</span> (loading) <span class="kw">return</span> &lt;<span class="type">Spinner</span> /&gt;;
+  <span class="kw">if</span> (error) <span class="kw">return</span> &lt;<span class="type">Error</span> <span class="prop">message</span>={error} /&gt;;
+
+  <span class="kw">return</span> (
+    &lt;<span class="type">ul</span>&gt;
+      {items.<span class="fn">map</span>(user =&gt; &lt;<span class="type">li</span> <span class="prop">key</span>={user.id}&gt;{user.name}&lt;/<span class="type">li</span>&gt;)}
+    &lt;/<span class="type">ul</span>&gt;
+  );
+}</div>
+
+      ${makeQuiz('mw-q1', 'What are the three lifecycle actions createAsyncThunk generates?', [
+        'start, success, failure',
+        'loading, loaded, error',
+        'pending, fulfilled, rejected',
+        'begin, complete, failed'
+      ], 2, 'createAsyncThunk automatically dispatches three action types: "pending" (request started), "fulfilled" (success), and "rejected" (error). You handle each in extraReducers.')}
+    `
+  },
+
+  // ===== 5: ZUSTAND =====
+  {
+    id:'zustand', icon:'🐻', title:'Zustand', group:'Alternatives',
+    render: ()=>`
+      <div class="section-title">Zustand — The Bear Minimum 🐻</div>
+      <p class="section-subtitle">A small, fast, and scalable state management library. No boilerplate!</p>
+
+      <div class="card accent">
+        <div class="card-title">Why Zustand? 🤔</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;font-size:.9rem">
+          <div>✅ Tiny bundle size (~1KB)</div>
+          <div>✅ No providers needed</div>
+          <div>✅ No boilerplate</div>
+          <div>✅ Works outside React</div>
+          <div>✅ Built-in middleware</div>
+          <div>✅ TypeScript friendly</div>
+        </div>
+      </div>
+
+      <h3>🚀 Basic Usage</h3>
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">import</span> { create } <span class="kw">from</span> <span class="str">'zustand'</span>;
+
+<span class="cm">// Create a store (that's it! No reducers, no actions, no providers!)</span>
+<span class="kw">const</span> useStore = <span class="fn">create</span>((set, get) => ({
+  <span class="cm">// State</span>
+  <span class="prop">count</span>: <span class="num">0</span>,
+  <span class="prop">todos</span>: [],
+  
+  <span class="cm">// Actions (just functions!)</span>
+  <span class="fn">increment</span>: () => <span class="fn">set</span>(state => ({ <span class="prop">count</span>: state.<span class="prop">count</span> + <span class="num">1</span> })),
+  <span class="fn">decrement</span>: () => <span class="fn">set</span>(state => ({ <span class="prop">count</span>: state.<span class="prop">count</span> - <span class="num">1</span> })),
+  <span class="fn">reset</span>: () => <span class="fn">set</span>({ <span class="prop">count</span>: <span class="num">0</span> }),
+  
+  <span class="cm">// Async actions — just use async/await!</span>
+  <span class="fn">fetchTodos</span>: <span class="kw">async</span> () => {
+    <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/todos'</span>);
+    <span class="kw">const</span> todos = <span class="kw">await</span> res.<span class="fn">json</span>();
+    <span class="fn">set</span>({ todos });
+  },
+  
+  <span class="cm">// Access current state with get()</span>
+  <span class="fn">addTodo</span>: (text) => <span class="fn">set</span>(state => ({
+    <span class="prop">todos</span>: [...state.<span class="prop">todos</span>, { <span class="prop">id</span>: Date.<span class="fn">now</span>(), text, <span class="prop">done</span>: <span class="kw">false</span> }]
+  })),
+}));</div>
+
+      <h3>🔗 Using in Components</h3>
+      <div class="code-block"><span class="lang">JSX</span>
+<span class="cm">// ✅ No Provider wrapper needed!</span>
+
+<span class="kw">function</span> <span class="fn">Counter</span>() {
+  <span class="cm">// Subscribe to specific state (auto re-renders on change)</span>
+  <span class="kw">const</span> count = <span class="fn">useStore</span>(state => state.<span class="prop">count</span>);
+  <span class="kw">const</span> increment = <span class="fn">useStore</span>(state => state.<span class="prop">increment</span>);
+  
+  <span class="kw">return</span> (
+    &lt;<span class="type">div</span>&gt;
+      &lt;<span class="type">span</span>&gt;{count}&lt;/<span class="type">span</span>&gt;
+      &lt;<span class="type">button</span> <span class="prop">onClick</span>={increment}&gt;+1&lt;/<span class="type">button</span>&gt;
+    &lt;/<span class="type">div</span>&gt;
+  );
+}
+
+<span class="cm">// ✅ Multiple selectors for better performance</span>
+<span class="kw">function</span> <span class="fn">TodoList</span>() {
+  <span class="kw">const</span> todos = <span class="fn">useStore</span>(state => state.<span class="prop">todos</span>);
+  <span class="kw">const</span> addTodo = <span class="fn">useStore</span>(state => state.<span class="prop">addTodo</span>);
+  <span class="cm">// Only re-renders when todos changes, not when count changes!</span>
+}</div>
+
+      <h3>🔧 Zustand Middleware</h3>
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">import</span> { create } <span class="kw">from</span> <span class="str">'zustand'</span>;
+<span class="kw">import</span> { persist, devtools } <span class="kw">from</span> <span class="str">'zustand/middleware'</span>;
+<span class="kw">import</span> { immer } <span class="kw">from</span> <span class="str">'zustand/middleware/immer'</span>;
+
+<span class="kw">const</span> useStore = <span class="fn">create</span>(
+  <span class="fn">devtools</span>(           <span class="cm">// Redux DevTools support</span>
+    <span class="fn">persist</span>(          <span class="cm">// Persist to localStorage</span>
+      <span class="fn">immer</span>(          <span class="cm">// Immer for easy mutations</span>
+        (set) => ({
+          <span class="prop">user</span>: <span class="kw">null</span>,
+          <span class="fn">setUser</span>: (user) => <span class="fn">set</span>(state => {
+            state.<span class="prop">user</span> = user;  <span class="cm">// Immer makes this safe!</span>
+          })
+        })
+      ),
+      { <span class="prop">name</span>: <span class="str">'my-store'</span> }  <span class="cm">// localStorage key</span>
+    )
+  )
+);</div>
+
+      <h3>⚔️ Redux vs Zustand</h3>
+      <table class="comparison">
+        <tr><th>Feature</th><th>Redux Toolkit</th><th>Zustand</th></tr>
+        <tr><td>Bundle Size</td><td>~11KB</td><td>~1KB</td></tr>
+        <tr><td>Boilerplate</td><td>Moderate</td><td>Minimal</td></tr>
+        <tr><td>Provider Required</td><td>Yes</td><td>No</td></tr>
+        <tr><td>DevTools</td><td>Built-in</td><td>Via middleware</td></tr>
+        <tr><td>Middleware</td><td>Rich ecosystem</td><td>Simple plugins</td></tr>
+        <tr><td>Async</td><td>createAsyncThunk</td><td>Just async/await</td></tr>
+        <tr><td>Learning Curve</td><td>Steeper</td><td>Gentle</td></tr>
+        <tr><td>Community</td><td>Massive</td><td>Growing fast</td></tr>
+        <tr><td>Best For</td><td>Large complex apps</td><td>Small-medium apps</td></tr>
+      </table>
+
+      ${makeQuiz('z-q1', 'What is NOT true about Zustand?', [
+        'It has a tiny bundle size (~1KB)',
+        'It requires a Provider component at the root',
+        'Actions are just functions defined in the store',
+        'It supports middleware like persist and devtools'
+      ], 1, 'Zustand does NOT require a Provider. This is one of its biggest advantages — you just import and use the hook directly in any component!')}
+    `
+  },
+
+  // ===== 6: PATTERNS =====
+  {
+    id:'patterns', icon:'🏛️', title:'State Patterns', group:'Patterns',
+    render: ()=>`
+      <div class="section-title">State Management Patterns 🏛️</div>
+      <p class="section-subtitle">Battle-tested patterns used by top companies.</p>
+
+      <h3>1️⃣ Normalized State Shape</h3>
+      <p>Store entities in a flat structure using IDs, like a database. This prevents data duplication and makes updates easy.</p>
+
+      <div class="mistake-pair">
+        <div class="mistake-bad">
+          <div class="mistake-label">❌ Nested (Bad)</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+{
+  <span class="prop">posts</span>: [
+    {
+      <span class="prop">id</span>: <span class="num">1</span>,
+      <span class="prop">title</span>: <span class="str">'Hello'</span>,
+      <span class="prop">author</span>: {
+        <span class="prop">id</span>: <span class="num">42</span>,
+        <span class="prop">name</span>: <span class="str">'Alice'</span>  <span class="cm">// duplicated!</span>
+      },
+      <span class="prop">comments</span>: [
+        { <span class="prop">id</span>: <span class="num">101</span>, <span class="prop">text</span>: <span class="str">'Nice'</span>,
+          <span class="prop">author</span>: { <span class="prop">id</span>: <span class="num">42</span>, <span class="prop">name</span>: <span class="str">'Alice'</span> }
+        }  <span class="cm">// Alice duplicated again!</span>
+      ]
+    }
+  ]
+}</div>
+        </div>
+        <div class="mistake-good">
+          <div class="mistake-label">✅ Normalized (Good)</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+{
+  <span class="prop">users</span>: {
+    <span class="prop">byId</span>: { <span class="num">42</span>: { <span class="prop">id</span>: <span class="num">42</span>, <span class="prop">name</span>: <span class="str">'Alice'</span> } },
+    <span class="prop">allIds</span>: [<span class="num">42</span>]
+  },
+  <span class="prop">posts</span>: {
+    <span class="prop">byId</span>: { <span class="num">1</span>: { <span class="prop">id</span>: <span class="num">1</span>, <span class="prop">title</span>: <span class="str">'Hello'</span>,
+      <span class="prop">authorId</span>: <span class="num">42</span>, <span class="prop">commentIds</span>: [<span class="num">101</span>] } },
+    <span class="prop">allIds</span>: [<span class="num">1</span>]
+  },
+  <span class="prop">comments</span>: {
+    <span class="prop">byId</span>: { <span class="num">101</span>: { <span class="prop">id</span>:<span class="num">101</span>, <span class="prop">text</span>:<span class="str">'Nice'</span>,
+      <span class="prop">authorId</span>:<span class="num">42</span> } },
+    <span class="prop">allIds</span>: [<span class="num">101</span>]
+  }
+}</div>
+        </div>
+      </div>
+
+      <h3>2️⃣ Selector Pattern</h3>
+      <p>Create <strong>reusable selector functions</strong> to derive data from state. Use <span class="inline-code">createSelector</span> for memoization.</p>
+
+      <div class="code-block"><span class="lang">JS</span>
+<span class="kw">import</span> { createSelector } <span class="kw">from</span> <span class="str">'@reduxjs/toolkit'</span>;
+
+<span class="cm">// Simple selectors</span>
+<span class="kw">const</span> <span class="fn">selectTodos</span> = (state) => state.<span class="prop">todos</span>.<span class="prop">items</span>;
+<span class="kw">const</span> <span class="fn">selectFilter</span> = (state) => state.<span class="prop">todos</span>.<span class="prop">filter</span>;
+
+<span class="cm">// Memoized selector — only recalculates when inputs change</span>
+<span class="kw">const</span> <span class="fn">selectFilteredTodos</span> = <span class="fn">createSelector</span>(
+  [selectTodos, selectFilter],
+  (todos, filter) => {
+    <span class="kw">switch</span> (filter) {
+      <span class="kw">case</span> <span class="str">'completed'</span>: <span class="kw">return</span> todos.<span class="fn">filter</span>(t => t.<span class="prop">completed</span>);
+      <span class="kw">case</span> <span class="str">'active'</span>: <span class="kw">return</span> todos.<span class="fn">filter</span>(t => !t.<span class="prop">completed</span>);
+      <span class="kw">default</span>: <span class="kw">return</span> todos;
+    }
+  }
+);
+
+<span class="cm">// In component</span>
+<span class="kw">const</span> filteredTodos = <span class="fn">useSelector</span>(selectFilteredTodos);</div>
+
+      <h3>3️⃣ Slice Pattern (Feature-Based Organization)</h3>
+      <div class="code-block"><span class="lang">Structure</span>
+src/
+├── app/
+│   └── store.js           <span class="cm"># configureStore</span>
+├── features/
+│   ├── auth/
+│   │   ├── authSlice.js   <span class="cm"># createSlice + thunks</span>
+│   │   ├── authSelectors.js
+│   │   ├── LoginForm.jsx
+│   │   └── AuthGuard.jsx
+│   ├── todos/
+│   │   ├── todosSlice.js
+│   │   ├── todosSelectors.js
+│   │   ├── TodoList.jsx
+│   │   └── TodoItem.jsx
+│   └── cart/
+│       ├── cartSlice.js
+│       └── Cart.jsx</div>
+
+      <h3>4️⃣ Loading State Pattern</h3>
+      <p>Standardize how you handle async states across your app:</p>
+      <div class="code-block"><span class="lang">JS</span>
+<span class="cm">// Standard async state shape</span>
+<span class="kw">const</span> asyncState = {
+  <span class="prop">data</span>: <span class="kw">null</span>,
+  <span class="prop">status</span>: <span class="str">'idle'</span>,  <span class="cm">// 'idle' | 'loading' | 'succeeded' | 'failed'</span>
+  <span class="prop">error</span>: <span class="kw">null</span>
+};
+
+<span class="cm">// Helper to create standard loading reducers</span>
+<span class="kw">const</span> <span class="fn">createLoadingHandlers</span> = (thunk, dataKey = <span class="str">'data'</span>) => ({
+  [thunk.<span class="prop">pending</span>]: (state) => {
+    state.<span class="prop">status</span> = <span class="str">'loading'</span>;
+    state.<span class="prop">error</span> = <span class="kw">null</span>;
+  },
+  [thunk.<span class="prop">fulfilled</span>]: (state, action) => {
+    state.<span class="prop">status</span> = <span class="str">'succeeded'</span>;
+    state[dataKey] = action.<span class="prop">payload</span>;
+  },
+  [thunk.<span class="prop">rejected</span>]: (state, action) => {
+    state.<span class="prop">status</span> = <span class="str">'failed'</span>;
+    state.<span class="prop">error</span> = action.<span class="prop">payload</span>;
+  }
+});</div>
+
+      <h3>5️⃣ Colocated State Pattern</h3>
+      <div class="card accent">
+        <div class="card-title">📐 State Placement Rules</div>
+        <div style="font-size:.9rem">
+          <p><strong>Rule 1:</strong> Keep state as close to where it's used as possible</p>
+          <p><strong>Rule 2:</strong> Lift state up only when needed by siblings</p>
+          <p><strong>Rule 3:</strong> Use global store only for truly global state</p>
+          <p><strong>Rule 4:</strong> Use React Query for server state, not Redux</p>
+        </div>
+      </div>
+
+      ${makeQuiz('pat-q1', 'Why should you normalize state shape?', [
+        'To make the state tree deeper and more organized',
+        'To avoid data duplication and make updates consistent',
+        'Because Redux requires normalized state',
+        'To make the bundle size smaller'
+      ], 1, 'Normalization prevents duplicate data. If user "Alice" appears in 10 posts, you update her name in ONE place (users.byId[42]) instead of hunting through nested objects.')}
+    `
+  },
+
+  // ===== 7: PITFALLS =====
+  {
+    id:'pitfalls', icon:'⚠️', title:'Pitfalls & Mistakes', group:'Patterns',
+    render: ()=>`
+      <div class="section-title">Common Pitfalls & Mistakes ⚠️</div>
+      <p class="section-subtitle">Avoid these mistakes that even experienced devs make.</p>
+
+      <h3>🚫 Pitfall #1: Mutating State Directly</h3>
+      <div class="mistake-pair">
+        <div class="mistake-bad">
+          <div class="mistake-label">❌ Wrong</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+<span class="cm">// In classic Redux reducer:</span>
+<span class="kw">case</span> <span class="str">'ADD_ITEM'</span>:
+  state.items.<span class="fn">push</span>(action.payload);
+  <span class="kw">return</span> state; <span class="cm">// Same reference!</span>
+
+<span class="cm">// React won't re-render because</span>
+<span class="cm">// oldState === newState is true!</span></div>
+        </div>
+        <div class="mistake-good">
+          <div class="mistake-label">✅ Correct</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+<span class="cm">// Classic Redux — new references:</span>
+<span class="kw">case</span> <span class="str">'ADD_ITEM'</span>:
+  <span class="kw">return</span> {
+    ...state,
+    items: [...state.items, action.payload]
+  };
+
+<span class="cm">// RTK — Immer handles it:</span>
+addItem(state, action) {
+  state.items.<span class="fn">push</span>(action.payload); <span class="cm">// OK!</span>
+}</div>
+        </div>
+      </div>
+
+      <h3>🚫 Pitfall #2: Putting Everything in Redux</h3>
+      <div class="card danger">
+        <div class="card-title">❌ Don't Do This</div>
+        <div class="code-block" style="margin:4px 0"><span class="lang">JS</span>
+<span class="cm">// These do NOT belong in Redux:</span>
+{
+  <span class="prop">isModalOpen</span>: <span class="kw">false</span>,         <span class="cm">// Local UI state → useState</span>
+  <span class="prop">inputValue</span>: <span class="str">''</span>,             <span class="cm">// Form state → useState/React Hook Form</span>
+  <span class="prop">isHovered</span>: <span class="kw">false</span>,           <span class="cm">// UI interaction → useState</span>
+  <span class="prop">serverData</span>: [],             <span class="cm">// Server cache → React Query</span>
+  <span class="prop">scrollPosition</span>: <span class="num">0</span>,         <span class="cm">// Ephemeral → ref or useState</span>
+}</div>
+        <p style="margin-top:8px"><strong>Rule of thumb:</strong> If only one component uses it, or it resets on unmount, it shouldn't be in Redux.</p>
+      </div>
+
+      <h3>🚫 Pitfall #3: Creating New References in Selectors</h3>
+      <div class="mistake-pair">
+        <div class="mistake-bad">
+          <div class="mistake-label">❌ Causes Re-renders</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+<span class="cm">// New array every render!</span>
+<span class="kw">const</span> items = <span class="fn">useSelector</span>(state =>
+  state.items.<span class="fn">filter</span>(i => i.active)
+);
+<span class="cm">// filter() creates a new array</span>
+<span class="cm">// every time = infinite re-renders</span></div>
+        </div>
+        <div class="mistake-good">
+          <div class="mistake-label">✅ Memoized</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+<span class="cm">// Use createSelector!</span>
+<span class="kw">const</span> selectActive = <span class="fn">createSelector</span>(
+  state => state.items,
+  items => items.<span class="fn">filter</span>(i => i.active)
+);
+
+<span class="kw">const</span> items = <span class="fn">useSelector</span>(selectActive);
+<span class="cm">// Only recalculates when</span>
+<span class="cm">// state.items actually changes</span></div>
+        </div>
+      </div>
+
+      <h3>🚫 Pitfall #4: Dispatching in Loops</h3>
+      <div class="mistake-pair">
+        <div class="mistake-bad">
+          <div class="mistake-label">❌ Multiple Dispatches</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+<span class="cm">// Each dispatch triggers re-render!</span>
+items.<span class="fn">forEach</span>(item => {
+  dispatch(<span class="fn">addItem</span>(item));
+});
+<span class="cm">// 100 items = 100 re-renders 😱</span></div>
+        </div>
+        <div class="mistake-good">
+          <div class="mistake-label">✅ Batch Update</div>
+          <div class="code-block" style="margin:0"><span class="lang">JS</span>
+<span class="cm">// Single dispatch with all items</span>
+dispatch(<span class="fn">addItems</span>(items));
+
+<span class="cm">// Reducer handles the array:</span>
+<span class="fn">addItems</span>(state, action) {
+  state.items.<span class="fn">push</span>(...action.payload);
+}
+<span class="cm">// 1 dispatch = 1 re-render ✅</span></div>
+        </div>
+      </div>
+
+      <h3>🚫 Pitfall #5: Forgetting the Default Case</h3>
+      <div class="card danger">
+        <div class="card-title">❌ Missing Default Return</div>
+        <div class="code-block"><span class="lang">JS</span>
+<span class="kw">function</span> <span class="fn">reducer</span>(state = initialState, action) {
+  <span class="kw">switch</span> (action.type) {
+    <span class="kw">case</span> <span class="str">'INCREMENT'</span>: <span class="kw">return</span> { ...state, count: state.count + 1 };
+    <span class="cm">// ❌ No default! Returns undefined for unknown actions!</span>
+    <span class="cm">// This BREAKS Redux because state becomes undefined</span>
+  }
+}
+
+<span class="cm">// ✅ ALWAYS add:</span>
+<span class="kw">default</span>: <span class="kw">return</span> state;</div>
+      </div>
+
+      <h3>🚫 Pitfall #6: Async in Reducers</h3>
+      <div class="card danger">
+        <div class="card-title">❌ NEVER Do This</div>
+        <div class="code-block"><span class="lang">JS</span>
+<span class="cm">// ❌ Reducers must be PURE — no side effects!</span>
+<span class="fn">addTodo</span>(state, action) {
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/todos'</span>);  <span class="cm">// ❌ NO!</span>
+  localStorage.<span class="fn">setItem</span>(<span class="str">'key'</span>, <span class="str">'val'</span>);    <span class="cm">// ❌ NO!</span>
+  state.id = Math.<span class="fn">random</span>();                <span class="cm">// ❌ NO!</span>
+}
+
+<span class="cm">// ✅ Use createAsyncThunk or middleware for side effects</span></div>
+      </div>
+
+      <h3>📋 Quick Reference: What Goes Where?</h3>
+      <table class="comparison">
+        <tr><th>What</th><th>Where</th><th>Why</th></tr>
+        <tr><td>Form input value</td><td>useState</td><td>Local, ephemeral</td></tr>
+        <tr><td>Modal open/close</td><td>useState</td><td>Single component concern</td></tr>
+        <tr><td>Auth token</td><td>Redux/Zustand</td><td>Needed everywhere</td></tr>
+        <tr><td>Shopping cart</td><td>Redux/Zustand</td><td>Shared across pages</td></tr>
+        <tr><td>API response cache</td><td>React Query</td><td>Built for server state</td></tr>
+        <tr><td>Theme preference</td><td>Context or Zustand</td><td>Infrequent changes</td></tr>
+        <tr><td>Scroll position</td><td>useRef</td><td>No re-render needed</td></tr>
+      </table>
+
+      ${makeQuiz('pit-q1', 'Which of these should NOT be in Redux store?', [
+        'User authentication status',
+        'Shopping cart items',
+        'Whether a tooltip is currently visible',
+        'App-wide notification queue'
+      ], 2, 'Tooltip visibility is local UI state that belongs in useState. It only matters to one component and should be cleaned up on unmount. Putting it in Redux adds unnecessary complexity.')}
+    `
+  },
+
+  // ===== 8: EXERCISES =====
+  {
+    id:'exercises', icon:'💪', title:'Exercises', group:'Practice',
+    render: ()=>`
+      <div class="section-title">Hands-On Exercises 💪</div>
+      <p class="section-subtitle">Practice what you've learned. Write real code!</p>
+
+      <div class="exercise">
+        <div class="exercise-header">
+          <div class="exercise-badge">Exercise 1</div>
+          <strong>Write an Action Creator</strong>
+        </div>
+        <p style="font-size:.9rem;color:var(--text2)">Create an action creator called <span class="inline-code">deleteUser</span> that takes a userId and returns an action with type <span class="inline-code">'users/delete'</span> and the userId as payload.</p>
+        <textarea id="ex1" placeholder="const deleteUser = (userId) => ..."  spellcheck="false"></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="checkExercise(1)">Check Answer ✅</button>
+          <button class="btn btn-outline btn-sm" onclick="showHint(1)">💡 Hint</button>
+        </div>
+        <div class="exercise-result" id="ex1-result"></div>
+        <div class="exercise-result" id="ex1-hint" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--accent3)"></div>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-header">
+          <div class="exercise-badge">Exercise 2</div>
+          <strong>Complete the Reducer</strong>
+        </div>
+        <p style="font-size:.9rem;color:var(--text2)">Complete the reducer to handle 'cart/addItem' action. The item should be added to the items array. Use immutable update pattern (spread operator).</p>
+        <div class="code-block"><span class="lang">Template</span>
+function cartReducer(state = { items: [], total: 0 }, action) {
+  switch (action.type) {
+    case 'cart/addItem':
+      // YOUR CODE HERE
+    default:
+      return state;
+  }
+}</div>
+        <textarea id="ex2" placeholder="return { ...state, items: ... }" spellcheck="false"></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="checkExercise(2)">Check Answer ✅</button>
+          <button class="btn btn-outline btn-sm" onclick="showHint(2)">💡 Hint</button>
+        </div>
+        <div class="exercise-result" id="ex2-result"></div>
+        <div class="exercise-result" id="ex2-hint" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--accent3)"></div>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-header">
+          <div class="exercise-badge">Exercise 3</div>
+          <strong>Write a createSlice</strong>
+        </div>
+        <p style="font-size:.9rem;color:var(--text2)">Create a slice called 'counter' with initialState { value: 0 } and three reducers: increment, decrement, and incrementByAmount.</p>
+        <textarea id="ex3" placeholder="const counterSlice = createSlice({ ... })" spellcheck="false" style="min-height:180px"></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="checkExercise(3)">Check Answer ✅</button>
+          <button class="btn btn-outline btn-sm" onclick="showHint(3)">💡 Hint</button>
+        </div>
+        <div class="exercise-result" id="ex3-result"></div>
+        <div class="exercise-result" id="ex3-hint" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--accent3)"></div>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-header">
+          <div class="exercise-badge">Exercise 4</div>
+          <strong>Zustand Store</strong>
+        </div>
+        <p style="font-size:.9rem;color:var(--text2)">Create a Zustand store with a 'theme' state (default: 'light') and a toggleTheme action that switches between 'light' and 'dark'.</p>
+        <textarea id="ex4" placeholder="const useThemeStore = create((set) => ({ ... }))" spellcheck="false"></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="checkExercise(4)">Check Answer ✅</button>
+          <button class="btn btn-outline btn-sm" onclick="showHint(4)">💡 Hint</button>
+        </div>
+        <div class="exercise-result" id="ex4-result"></div>
+        <div class="exercise-result" id="ex4-hint" style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--accent3)"></div>
+      </div>
+
+      <div class="exercise">
+        <div class="exercise-header">
+          <div class="exercise-badge">Exercise 5</div>
+          <strong>Spot the Bug</strong>
+        </div>
+        <p style="font-size:.9rem;color:var(--text2)">This reducer has a critical bug. Find it and explain what's wrong:</p>
+        <div class="code-block"><span class="lang">Buggy Code</span>
+function todoReducer(state = { todos: [] }, action) {
+  switch (action.type) {
+    case 'ADD_TODO':
+      state.todos.push(action.payload);
+      return state;
+    case 'CLEAR_ALL':
+      state.todos = [];
+      return state;
+  }
+}</div>
+        <textarea id="ex5" placeholder="Describe ALL the bugs you can find..." spellcheck="false"></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary btn-sm" onclick="checkExercise(5)">Check Answer ✅</button>
+        </div>
+        <div class="exercise-result" id="ex5-result"></div>
+      </div>
+    `
+  },
+
+  // ===== 9: FINAL QUIZ =====
+  {
+    id:'final-quiz', icon:'🏆', title:'Final Quiz', group:'Practice',
+    render: ()=>`
+      <div class="section-title">Final Assessment Quiz 🏆</div>
+      <p class="section-subtitle">Test your mastery! 10 questions covering everything.</p>
+
+      ${makeQuiz('fq1','In Redux, what is the correct data flow?',[
+        'Component → Store → Reducer → Action → Component',
+        'Component → Action → Reducer → Store → Component',
+        'Store → Action → Component → Reducer → Store',
+        'Action → Component → Store → Reducer → Action'
+      ],1,'The flow is: UI dispatches an ACTION → REDUCER processes it → STORE updates → Component re-renders with new state.')}
+
+      ${makeQuiz('fq2','What does createSlice NOT auto-generate?',[
+        'Action types',
+        'Action creators',
+        'The store configuration',
+        'Reducer logic'
+      ],2,'createSlice generates action types, action creators, and the reducer. You still need to configure the store yourself with configureStore.')}
+
+      ${makeQuiz('fq3','Which is true about Immer in Redux Toolkit?',[
+        'It lets you actually mutate state for better performance',
+        'It creates a draft proxy — your "mutations" produce new immutable state',
+        'It removes the need for reducers entirely',
+        'It only works with arrays, not objects'
+      ],1,'Immer creates a "draft" proxy. When you write state.push() in an RTK reducer, Immer records your changes and produces a NEW immutable state object. The original is never mutated.')}
+
+      ${makeQuiz('fq4','What is the purpose of middleware in Redux?',[
+        'To replace reducers',
+        'To intercept and process actions between dispatch and reducer',
+        'To directly modify the store state',
+        'To create React components'
+      ],1,'Middleware sits between dispatch() and the reducer. It can log actions, handle async operations, modify actions, or even stop them from reaching the reducer.')}
+
+      ${makeQuiz('fq5','How does Zustand differ from Redux?',[
+        'Zustand requires more boilerplate than Redux',
+        'Zustand stores can only hold one value',
+        'Zustand doesn\'t need a Provider and has minimal boilerplate',
+        'Zustand doesn\'t support middleware'
+      ],2,'Zustand is much simpler: no Provider wrapper, no action types, no switch statements. Just create a hook with state and functions. It also supports middleware.')}
+
+      ${makeQuiz('fq6','What should you use for server state (API data caching)?',[
+        'Redux with createAsyncThunk for everything',
+        'React Query or SWR — they\'re built for server state',
+        'useState with useEffect in every component',
+        'Zustand with custom fetch logic'
+      ],1,'React Query and SWR are purpose-built for server state. They handle caching, deduplication, background refetching, and stale data — things you\'d have to build manually in Redux.')}
+
+      ${makeQuiz('fq7','What is state normalization?',[
+        'Converting all state values to strings',
+        'Storing entities in flat structures with IDs, like a database',
+        'Removing all null and undefined values',
+        'Sorting state alphabetically'
+      ],1,'Normalization means structuring your state like a database: entities stored by ID in objects, with arrays of IDs for ordering. This prevents duplication and makes updates O(1).')}
+
+      ${makeQuiz('fq8','Why use createSelector from Reselect?',[
+        'It creates Redux actions automatically',
+        'It memoizes computed values to prevent unnecessary recalculations',
+        'It validates the shape of your state',
+        'It replaces useSelector entirely'
+      ],1,'createSelector memoizes the output. If the input selectors return the same values, the output selector skips recalculation and returns the cached result. This prevents unnecessary re-renders.')}
+
+      ${makeQuiz('fq9','Which is NOT a valid place to put side effects in Redux?',[
+        'Middleware',
+        'Thunks (createAsyncThunk)',
+        'Inside a reducer function',
+        'In the component using useEffect'
+      ],2,'Reducers must be PURE functions — no API calls, no localStorage, no random values. Side effects belong in middleware, thunks, or components (useEffect).')}
+
+      ${makeQuiz('fq10','A component only needs one value from a large Redux store. What\'s the best approach?',[
+        'useSelector(state => state) and destructure what you need',
+        'useSelector(state => state.specific.value) to select only what you need',
+        'Connect the entire store and pass as props',
+        'Copy the whole store into useState'
+      ],1,'Select ONLY the specific value you need. useSelector uses strict equality by default, so selecting the whole state would cause re-renders on ANY state change, killing performance.')}
+
+      <div style="text-align:center;margin-top:30px">
+        <button class="btn btn-success" onclick="gradeQuiz()" style="font-size:1.1rem;padding:14px 40px">🎯 Grade My Quiz!</button>
+      </div>
+      <div id="quizResults" style="margin-top:20px"></div>
+    `
+  },
+
+  // ===== 10: CHEATSHEET =====
+  {
+    id:'cheatsheet', icon:'📋', title:'Cheat Sheet', group:'Reference',
+    render: ()=>`
+      <div class="section-title">State Management Cheat Sheet 📋</div>
+      <p class="section-subtitle">Your quick reference for interviews and development.</p>
+
+      <h3>🏗️ Redux Toolkit Setup</h3>
+      <div class="code-block"><span class="lang">Quick Setup</span>
+<span class="cm">// 1. Create slice (features/counter/counterSlice.js)</span>
+<span class="kw">import</span> { createSlice } <span class="kw">from</span> <span class="str">'@reduxjs/toolkit'</span>;
+
+<span class="kw">export const</span> counterSlice = <span class="fn">createSlice</span>({
+  <span class="prop">name</span>: <span class="str">'counter'</span>,
+  <span class="prop">initialState</span>: { <span class="prop">value</span>: <span class="num">0</span> },
+  <span class="prop">reducers</span>: {
+    <span class="fn">increment</span>: state => { state.<span class="prop">value</span> += <span class="num">1</span> },
+    <span class="fn">decrement</span>: state => { state.<span class="prop">value</span> -= <span class="num">1</span> },
+    <span class="fn">addBy</span>: (state, action) => { state.<span class="prop">value</span> += action.<span class="prop">payload</span> }
+  }
+});
+<span class="kw">export const</span> { increment, decrement, addBy } = counterSlice.<span class="prop">actions</span>;
+<span class="kw">export default</span> counterSlice.<span class="prop">reducer</span>;
+
+<span class="cm">// 2. Configure store (app/store.js)</span>
+<span class="kw">import</span> { configureStore } <span class="kw">from</span> <span class="str">'@reduxjs/toolkit'</span>;
+<span class="kw">import</span> counterReducer <span class="kw">from</span> <span class="str">'../features/counter/counterSlice'</span>;
+<span class="kw">export const</span> store = <span class="fn">configureStore</span>({
+  <span class="prop">reducer</span>: { <span class="prop">counter</span>: counterReducer }
+});
+
+<span class="cm">// 3. Provide store (index.js)</span>
+<span class="kw">import</span> { Provider } <span class="kw">from</span> <span class="str">'react-redux'</span>;
+root.<span class="fn">render</span>(&lt;<span class="type">Provider</span> store={store}&gt;&lt;<span class="type">App</span>/&gt;&lt;/<span class="type">Provider</span>&gt;);
+
+<span class="cm">// 4. Use in component</span>
+<span class="kw">import</span> { useSelector, useDispatch } <span class="kw">from</span> <span class="str">'react-redux'</span>;
+<span class="kw">import</span> { increment } <span class="kw">from</span> <span class="str">'./counterSlice'</span>;
+<span class="kw">const</span> count = <span class="fn">useSelector</span>(s => s.<span class="prop">counter</span>.<span class="prop">value</span>);
+<span class="kw">const</span> dispatch = <span class="fn">useDispatch</span>();
+dispatch(<span class="fn">increment</span>());</div>
+
+      <h3>🐻 Zustand Quick Setup</h3>
+      <div class="code-block"><span class="lang">Quick Setup</span>
+<span class="kw">import</span> { create } <span class="kw">from</span> <span class="str">'zustand'</span>;
+
+<span class="kw">const</span> useStore = <span class="fn">create</span>((set) => ({
+  <span class="prop">count</span>: <span class="num">0</span>,
+  <span class="fn">inc</span>: () => <span class="fn">set</span>(s => ({ <span class="prop">count</span>: s.<span class="prop">count</span> + <span class="num">1</span> })),
+  <span class="fn">reset</span>: () => <span class="fn">set</span>({ <span class="prop">count</span>: <span class="num">0</span> }),
+}));
+
+<span class="cm">// Use directly — no Provider!</span>
+<span class="kw">function</span> <span class="fn">App</span>() {
+  <span class="kw">const</span> count = <span class="fn">useStore</span>(s => s.<span class="prop">count</span>);
+  <span class="kw">const</span> inc = <span class="fn">useStore</span>(s => s.<span class="prop">inc</span>);
+  <span class="kw">return</span> &lt;button onClick={inc}&gt;{count}&lt;/button&gt;;
+}</div>
+
+      <h3>🎯 Interview Quick Answers</h3>
+      <div class="card">
+        ${[
+          ['What is Redux?','A predictable state container with a single store, where state changes through dispatched actions processed by pure reducers.'],
+          ['Redux vs Context API?','Context is for infrequent low-velocity updates (theme, locale). Redux handles complex, frequent state with middleware, devtools, and time-travel debugging.'],
+          ['What are Redux Thunks?','Middleware that lets you dispatch functions (not just objects) for handling async operations like API calls.'],
+          ['What is Immer?','A library that lets you write "mutative" code that actually produces immutable updates. Built into Redux Toolkit.'],
+          ['When to use Zustand over Redux?','For smaller apps where Redux\'s boilerplate is overkill. Zustand is simpler, lighter, and doesn\'t need a Provider.'],
+          ['What is state normalization?','Structuring state like a database — entities stored by ID in flat objects to avoid duplication and enable O(1) lookups.']
+        ].map(([q,a])=>`
+          <div style="margin:12px 0;padding:12px;border-left:3px solid var(--accent);background:rgba(0,0,0,.2);border-radius:0 8px 8px 0">
+            <div style="font-weight:700;color:var(--accent3);font-size:.9rem">Q: ${q}</div>
+            <div style="font-size:.85rem;color:var(--text2);margin-top:4px">A: ${a}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="text-align:center;margin:30px 0">
+        <div style="font-size:3rem;margin-bottom:12px">🎓</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--green2)">You've completed the course!</div>
+        <p style="color:var(--text2)">Keep practicing, build projects, and you'll ace those interviews!</p>
+      </div>
+    `
+  }
+];
+
+// ============================================================
+// HELPER: Quiz Generator
+// ============================================================
+function makeQuiz(id, question, options, correctIndex, explanation) {
+  return `
+    <div class="quiz-question" id="quiz-${id}">
+      <div class="quiz-q">
+        <div class="q-num">?</div>
+        <span>${question}</span>
+      </div>
+      <div class="quiz-options">
+        ${options.map((o,i)=>`
+          <div class="quiz-opt" onclick="answerQuiz('${id}',${i},${correctIndex})" id="${id}-opt-${i}">
+            <div class="opt-letter">${String.fromCharCode(65+i)}</div>
+            <span>${o}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="quiz-explain" id="${id}-explain">
+        <strong>💡 Explanation:</strong> ${explanation}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function buildSidebar() {
+  const sb = document.getElementById('sidebar');
+  const mn = document.getElementById('mobileNav');
+  let html = '';
+  let mhtml = '';
+  let currentGroup = '';
+  
+  sections.forEach((s, i) => {
+    if (s.group !== currentGroup) {
+      currentGroup = s.group;
+      html += `<div class="nav-section">${currentGroup}</div>`;
+    }
+    html += `
+      <div class="nav-item ${i===0?'active':''}" onclick="goToSection(${i})" id="nav-${i}">
+        <span class="icon">${s.icon}</span>
+        <span>${s.title}</span>
+        <span class="check">✅</span>
+      </div>
+    `;
+    mhtml += `<div class="mnav ${i===0?'active':''}" onclick="goToSection(${i})" id="mnav-${i}">${s.icon}</div>`;
+  });
+  
+  sb.innerHTML = html;
+  mn.innerHTML = mhtml;
+  APP.totalSections = sections.length;
+}
+
+function goToSection(index) {
+  // Mark current as completed
+  if (APP.currentSection !== index) {
+    APP.completed.add(APP.currentSection);
+    document.getElementById(`nav-${APP.currentSection}`)?.classList.add('completed');
+  }
+  
+  APP.currentSection = index;
+  
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach((n,i) => {
+    n.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.mnav').forEach((n,i) => {
+    n.classList.toggle('active', i === index);
+  });
+  
+  // Render section
+  const main = document.getElementById('mainContent');
+  main.innerHTML = `<div class="section active">${sections[index].render()}</div>`;
+  
+  // Add nav buttons
+  const navBtns = document.createElement('div');
+  navBtns.className = 'nav-buttons';
+  navBtns.innerHTML = `
+    ${index > 0 ? `<button class="btn btn-outline" onclick="goToSection(${index-1})">← ${sections[index-1].title}</button>` : '<div></div>'}
+    ${index < sections.length-1 ? `<button class="btn btn-primary" onclick="goToSection(${index+1})">${sections[index+1].title} →</button>` : '<div></div>'}
+  `;
+  main.querySelector('.section').appendChild(navBtns);
+  
+  // Scroll to top
+  window.scrollTo({top:0,behavior:'smooth'});
+  
+  // Update progress
+  updateProgress();
+  
+  // Init section-specific features
+  if (index === 2) initReduxSimulator();
+}
+
+function updateProgress() {
+  const pct = Math.round((APP.completed.size / (APP.totalSections-1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% Complete';
+  document.getElementById('xpBadge').textContent = APP.xp + ' XP';
+}
+
+function addXP(amount) {
+  APP.xp += amount;
+  updateProgress();
+  const badge = document.getElementById('xpBadge');
+  badge.style.transform = 'scale(1.3)';
+  setTimeout(() => badge.style.transform = 'scale(1)', 300);
+}
+
+// ============================================================
+// WELCOME DEMO
+// ============================================================
+let wState = { count: 0, user: 'Guest' };
+function wDemo(action) {
+  switch(action) {
+    case 'inc': wState.count++; break;
+    case 'dec': wState.count--; break;
+    case 'login': wState.user = wState.user === 'Guest' ? 'Alice 👩‍💻' : 'Guest'; break;
+    case 'reset': wState = {count:0, user:'Guest'}; break;
+  }
+  const cv = document.getElementById('wCountVal');
+  const uv = document.getElementById('wUserVal');
+  if(cv) { cv.textContent = wState.count; cv.parentElement.classList.add('highlight'); setTimeout(()=>cv.parentElement.classList.remove('highlight'),500); }
+  if(uv) { uv.textContent = wState.user; uv.parentElement.classList.add('highlight'); setTimeout(()=>uv.parentElement.classList.remove('highlight'),500); }
+}
+
+// ============================================================
+// FLOW DIAGRAM INFO
+// ============================================================
+const flowInfos = [
+  '👆 <strong>UI Event:</strong> User clicks a button, submits a form, or triggers an event. The component calls dispatch() with an action.',
+  '📨 <strong>Action:</strong> A plain JS object with { type: "todos/add", payload: {...} }. Describes WHAT happened, not HOW to update.',
+  '⚙️ <strong>Reducer:</strong> A pure function that receives (currentState, action) and returns a NEW state. Contains the actual update logic.',
+  '🏪 <strong>Store:</strong> Holds the state tree. Updates when reducer returns new state. Notifies all subscribed components.',
+  '🖥️ <strong>UI Update:</strong> Components re-render with the new state from the store. useSelector detects changes and triggers re-render.'
+];
+
+function showFlowInfo(idx) {
+  document.querySelectorAll('#reduxFlowDiagram .flow-node').forEach((n,i) => {
+    n.classList.toggle('active-node', i === idx);
+  });
+  document.getElementById('flowInfoText').innerHTML = flowInfos[idx];
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tabsId, contentId, idx) {
+  const tabContainer = document.getElementById(tabsId);
+  const contentContainer = document.getElementById(contentId);
+  tabContainer.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  contentContainer.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===idx));
+}
+
+// ============================================================
+// QUIZ SYSTEM
+// ============================================================
+function answerQuiz(id, selected, correct) {
+  if (APP.quizAnswers[id] !== undefined) return; // already answered
+  APP.quizAnswers[id] = selected;
+  
+  const opts = document.querySelectorAll(`#quiz-${id} .quiz-opt`);
+  opts.forEach((o,i) => {
+    o.style.pointerEvents = 'none';
+    if (i === correct) o.classList.add('correct');
+    if (i === selected && selected !== correct) o.classList.add('wrong');
+  });
+  
+  const explain = document.getElementById(`${id}-explain`);
+  explain.classList.add('show');
+  
+  if (selected === correct) {
+    addXP(10);
+    explain.style.borderLeft = '3px solid var(--green)';
+  } else {
+    explain.style.borderLeft = '3px solid var(--red)';
+  }
+}
+
+// ============================================================
+// THUNK STEPPER ANIMATION
+// ============================================================
+function animateThunkStepper() {
+  const steps = [0,1,2,3];
+  const lines = [0,1,2];
+  
+  // Reset
+  steps.forEach(i => {
+    document.getElementById(`ts${i}`).className = 'step-circle';
+    if(i < 3) document.getElementById(`tl${i}`).className = 'step-line';
+  });
+  document.getElementById('ts0').classList.add('active-step');
+  
+  let current = 0;
+  const interval = setInterval(() => {
+    if (current < 3) {
+      document.getElementById(`ts${current}`).className = 'step-circle done-step';
+      document.getElementById(`tl${current}`).className = 'step-line done-line';
+      current++;
+      document.getElementById(`ts${current}`).className = 'step-circle active-step';
+    } else {
+      clearInterval(interval);
+    }
+  }, 800);
+}
+
+// ============================================================
+// REDUX SIMULATOR
+// ============================================================
+function initReduxSimulator() {
+  const container = document.getElementById('reduxSimulator');
+  if(!container) return;
+  
+  let simState = { count: 0, todos: [] };
+  let logs = [];
+  
+  function renderSim() {
+    container.innerHTML = `
+      <div class="store-container">
+        <div class="store-state">
+          <h4 style="margin:0 0 12px;color:var(--purple)">🏪 Store State</h4>
+          <div class="state-tree">
+            <div>{</div>
+            <div class="indent"><span class="key">"count"</span>: <span class="num">${simState.count}</span>,</div>
+            <div class="indent"><span class="key">"todos"</span>: [${simState.todos.map(t=>`<span class="str">"${t}"</span>`).join(', ')}]</div>
+            <div>}</div>
+          </div>
+        </div>
+        <div class="action-log">
+          <h4 style="margin:0 0 12px;color:var(--cyan)">📜 Action Log</h4>
+          ${logs.length === 0 ? '<div style="color:var(--text3);font-size:.8rem">No actions dispatched yet...</div>' : ''}
+          ${logs.slice(-5).reverse().map(l=>`
+            <div class="log-entry">
+              <span class="log-type">${l.type}</span>
+              ${l.payload !== undefined ? `<span class="log-payload"> → ${JSON.stringify(l.payload)}</span>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="demo-controls" style="margin-top:16px">
+        <button class="btn btn-primary btn-sm" onclick="simDispatch('inc')">dispatch(increment())</button>
+        <button class="btn btn-primary btn-sm" onclick="simDispatch('dec')">dispatch(decrement())</button>
+        <button class="btn btn-outline btn-sm" onclick="simDispatch('add')">dispatch(addTodo('Task'))</button>
+        <button class="btn btn-outline btn-sm" onclick="simDispatch('clear')">dispatch(clearTodos())</button>
+        <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="simDispatch('reset')">Reset</button>
+      </div>
+    `;
+  }
+  
+  window.simDispatch = function(type) {
+    let todoCounter = simState.todos.length + 1;
+    switch(type) {
+      case 'inc':
+        simState.count++;
+        logs.push({type:'counter/increment'});
+        break;
+      case 'dec':
+        simState.count--;
+        logs.push({type:'counter/decrement'});
+        break;
+      case 'add':
+        simState.todos.push('Task ' + todoCounter);
+        logs.push({type:'todos/add', payload:'Task ' + todoCounter});
+        break;
+      case 'clear':
+        simState.todos = [];
+        logs.push({type:'todos/clearAll'});
+        break;
+      case 'reset':
+        simState = {count:0, todos:[]};
+        logs = [];
+        break;
+    }
+    addXP(2);
+    renderSim();
+  };
+  
+  renderSim();
+}
+
+// ============================================================
+// EXERCISES
+// ============================================================
+function checkExercise(num) {
+  const input = document.getElementById(`ex${num}`).value.trim().toLowerCase();
+  const result = document.getElementById(`ex${num}-result`);
+  
+  let pass = false;
+  let feedback = '';
+  
+  switch(num) {
+    case 1:
+      pass = input.includes('deleteuser') && input.includes('users/delete') && input.includes('payload') && (input.includes('=>') || input.includes('function'));
+      feedback = pass 
+        ? '✅ Correct! You created a proper action creator that returns an action object with type and payload.'
+        : '❌ Your action creator should: 1) Be a function taking userId, 2) Return an object with type: "users/delete" and payload: userId. Example: const deleteUser = (userId) => ({ type: "users/delete", payload: userId })';
+      break;
+    case 2:
+      pass = input.includes('...state') && input.includes('...state.items') || (input.includes('...state') && input.includes('items') && input.includes('action.payload'));
+      feedback = pass
+        ? '✅ Correct! You used spread operator to create new state immutably.'
+        : '❌ You need to return a new object: return { ...state, items: [...state.items, action.payload] }. Both the outer object AND the array must be new references!';
+      break;
+    case 3:
+      pass = input.includes('createslice') && input.includes('counter') && input.includes('increment') && input.includes('decrement') && input.includes('incrementbyamount') && input.includes('initialstate');
+      feedback = pass
+        ? '✅ Excellent! Your createSlice has the correct structure with name, initialState, and all three reducers.'
+        : '❌ Make sure you have: createSlice({ name: "counter", initialState: { value: 0 }, reducers: { increment, decrement, incrementByAmount } })';
+      break;
+    case 4:
+      pass = input.includes('create') && input.includes('theme') && input.includes('light') && input.includes('dark') && input.includes('set');
+      feedback = pass
+        ? '✅ Perfect Zustand store! Clean and simple.'
+        : '❌ Example: const useThemeStore = create((set) => ({ theme: "light", toggleTheme: () => set(s => ({ theme: s.theme === "light" ? "dark" : "light" })) }))';
+      break;
+    case 5:
+      const bugs = [];
+      if(input.includes('mutati') || input.includes('push') || input.includes('mutat')) bugs.push('mutation');
+      if(input.includes('default') || input.includes('missing')) bugs.push('default');
+      if(input.includes('return') && (input.includes('same') || input.includes('reference'))) bugs.push('reference');
+      pass = bugs.length >= 2;
+      feedback = pass
+        ? '✅ Great bug hunting! You found the key issues.'
+        : '❌ There are 3 bugs: 1) state.todos.push() MUTATES state directly, 2) state.todos = [] also MUTATES, 3) No default case — returns undefined for unknown actions. All should use immutable patterns: return { ...state, todos: [...state.todos, action.payload] }';
+      break;
+  }
+  
+  result.className = `exercise-result show ${pass ? 'pass' : 'fail'}`;
+  result.innerHTML = feedback;
+  if(pass) addXP(20);
+}
+
+function showHint(num) {
+  const hint = document.getElementById(`ex${num}-hint`);
+  const hints = {
+    1: '💡 An action creator is a function that returns a plain object with "type" and "payload" properties. Use arrow function syntax: const fn = (param) => ({ ... })',
+    2: '💡 Use the spread operator to create new references: { ...state, items: [...state.items, newItem] }. Never modify the original state!',
+    3: '💡 createSlice takes { name, initialState, reducers }. Inside reducers, define increment: (state) => { state.value += 1 }, etc. Remember Immer lets you "mutate" here.',
+    4: '💡 Zustand: create((set) => ({ stateKey: value, actionName: () => set(state => ({ ... })) })). Use set() to update state.'
+  };
+  
+  hint.className = 'exercise-result show';
+  hint.style.display = hint.style.display === 'block' ? 'none' : 'block';
+  hint.innerHTML = hints[num] || '';
+}
+
+// ============================================================
+// GRADE FINAL QUIZ
+// ============================================================
+function gradeQuiz() {
+  const quizIds = ['fq1','fq2','fq3','fq4','fq5','fq6','fq7','fq8','fq9','fq10'];
+  const correct = [1,2,1,1,2,1,1,1,2,1];
+  
+  let score = 0;
+  let total = quizIds.length;
+  let unanswered = 0;
+  
+  quizIds.forEach((id, i) => {
+    if (APP.quizAnswers[id] === undefined) {
+      unanswered++;
+    } else if (APP.quizAnswers[id] === correct[i]) {
+      score++;
+    }
+  });
+  
+  const pct = Math.round((score/total)*100);
+  const container = document.getElementById('quizResults');
+  
+  let grade, color, emoji;
+  if (pct >= 90) { grade = 'A+'; color = 'var(--green)'; emoji = '🏆'; }
+  else if (pct >= 80) { grade = 'A'; color = 'var(--green)'; emoji = '🌟'; }
+  else if (pct >= 70) { grade = 'B'; color = 'var(--cyan)'; emoji = '👍'; }
+  else if (pct >= 60) { grade = 'C'; color = 'var(--orange)'; emoji = '📚'; }
+  else { grade = 'D'; color = 'var(--red)'; emoji = '💪'; }
+  
+  container.innerHTML = `
+    <div class="card" style="text-align:center;border-color:${color}">
+      <div style="font-size:3rem;margin-bottom:8px">${emoji}</div>
+      <div style="font-size:2rem;font-weight:800;color:${color}">${score}/${total} — Grade: ${grade}</div>
+      <div style="font-size:1rem;color:var(--text2);margin-top:8px">
+        ${pct >= 80 ? 'Excellent! You\'re interview-ready! 🚀' : pct >= 60 ? 'Good progress! Review the sections you missed.' : 'Keep studying! Review the material and try again.'}
+      </div>
+      ${unanswered > 0 ? `<div style="color:var(--orange);margin-top:8px">${unanswered} question(s) unanswered — scroll up to complete them!</div>` : ''}
+    </div>
+  `;
+  
+  addXP(score * 15);
+  
+  if (pct >= 80) {
+    triggerConfetti();
+  }
+}
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function triggerConfetti() {
+  const container = document.getElementById('confetti');
+  const colors = ['#6366f1','#10b981','#f59e0b','#ec4899','#06b6d4','#8b5cf6'];
+  
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + '%';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.animationDelay = Math.random() * 2 + 's';
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.width = (5 + Math.random() * 10) + 'px';
+    piece.style.height = (5 + Math.random() * 10) + 'px';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    container.appendChild(piece);
+  }
+  
+  setTimeout(() => container.innerHTML = '', 4000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+buildSidebar();
+goToSection(0);
+</script>
+</body>
+</html>

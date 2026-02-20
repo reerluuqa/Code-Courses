@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FP Mastery — Functional Programming in JavaScript</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e1a;--surface:#131830;--surface2:#1a2040;--surface3:#222850;
+  --cyan:#00d4ff;--purple:#7c3aed;--green:#10b981;--amber:#f59e0b;
+  --red:#ef4444;--pink:#ec4899;--text:#e2e8f0;--text2:#94a3b8;
+  --radius:12px;--glow:0 0 20px rgba(0,212,255,.15);
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+
+/* HEADER */
+.header{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(19,24,48,.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;padding:0 24px;z-index:100;gap:20px}
+.logo{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.logo span{font-size:.7em;font-weight:400;-webkit-text-fill-color:var(--text2);margin-left:8px}
+.progress-wrap{flex:1;max-width:400px;margin:0 auto}
+.progress-bar{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;position:relative}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%}
+.xp-badge{background:linear-gradient(135deg,var(--amber),var(--pink));color:#fff;font-weight:700;padding:4px 14px;border-radius:20px;font-size:.85rem;white-space:nowrap;box-shadow:0 0 15px rgba(245,158,11,.2)}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:60px;left:0;width:260px;height:calc(100vh - 60px);background:var(--surface);border-right:1px solid rgba(255,255,255,.06);padding:20px 0;overflow-y:auto;z-index:50;transition:transform .3s}
+.nav-section{padding:8px 20px;font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--text2);margin-top:12px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;color:var(--text2)}
+.nav-item:hover{background:rgba(255,255,255,.03);color:var(--text)}
+.nav-item.active{background:rgba(0,212,255,.05);border-left-color:var(--cyan);color:var(--cyan)}
+.nav-item.completed{color:var(--green)}
+.nav-item .icon{font-size:1.2rem;width:28px;text-align:center}
+.nav-item .check{margin-left:auto;color:var(--green);font-size:.9rem;opacity:0;transition:opacity .3s}
+.nav-item.completed .check{opacity:1}
+
+/* MAIN */
+.main{margin-left:260px;margin-top:60px;padding:30px;min-height:calc(100vh - 60px)}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:24px;flex-wrap:wrap;background:var(--surface);padding:6px;border-radius:var(--radius);border:1px solid rgba(255,255,255,.06)}
+.tab{padding:10px 20px;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:500;color:var(--text2);transition:all .2s;border:none;background:none}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.tab.active{background:var(--cyan);color:var(--bg);font-weight:600}
+.tab-content{display:none;animation:fadeSlide .4s ease}
+.tab-content.active{display:block}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--glow)}
+.card h2{font-size:1.5rem;margin-bottom:8px;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card h3{font-size:1.15rem;margin:16px 0 8px;color:var(--cyan)}
+.card p,.card li{line-height:1.7;color:var(--text2)}
+.card ul{padding-left:20px;margin:8px 0}
+.card li{margin:4px 0}
+.highlight{color:var(--cyan);font-weight:600}
+.warn{color:var(--amber);font-weight:600}
+.bad{color:var(--red);font-weight:600}
+.good{color:var(--green);font-weight:600}
+
+/* CODE EDITOR */
+.code-playground{background:var(--bg);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);overflow:hidden;margin:16px 0}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06)}
+.code-header .title{font-size:.8rem;color:var(--text2);display:flex;align-items:center;gap:6px}
+.code-header .dots{display:flex;gap:6px}
+.code-header .dots span{width:10px;height:10px;border-radius:50%;display:inline-block}
+.code-header .dots span:nth-child(1){background:var(--red)}
+.code-header .dots span:nth-child(2){background:var(--amber)}
+.code-header .dots span:nth-child(3){background:var(--green)}
+.code-editor{width:100%;min-height:120px;padding:16px;background:transparent;border:none;color:#e2e8f0;font-family:'Fira Code','Cascadia Code','Consolas',monospace;font-size:.9rem;line-height:1.6;resize:vertical;outline:none;tab-size:2}
+.code-actions{display:flex;gap:8px;padding:8px 16px;background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.06)}
+.btn{padding:8px 20px;border-radius:8px;border:none;font-weight:600;font-size:.85rem;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-run{background:var(--green);color:#fff}
+.btn-run:hover{background:#0ea572;transform:translateY(-1px);box-shadow:0 4px 15px rgba(16,185,129,.3)}
+.btn-reset{background:var(--surface3);color:var(--text2)}
+.btn-reset:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.btn-check{background:var(--cyan);color:var(--bg)}
+.btn-check:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(0,212,255,.3)}
+.btn-hint{background:var(--amber);color:var(--bg)}
+.btn-next{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;padding:12px 32px;font-size:1rem}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,212,255,.3)}
+.code-output{padding:12px 16px;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.06);font-family:monospace;font-size:.85rem;min-height:40px;white-space:pre-wrap;word-break:break-all}
+.code-output .log{color:var(--text2);padding:2px 0}
+.code-output .error{color:var(--red)}
+.code-output .result{color:var(--green)}
+.code-output .label{color:var(--text2);font-size:.75rem;margin-bottom:4px}
+
+/* VISUAL DEMOS */
+.visual-demo{background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(124,58,237,.05));border:1px solid rgba(0,212,255,.15);border-radius:var(--radius);padding:24px;margin:16px 0;position:relative;overflow:hidden}
+.visual-demo h4{color:var(--cyan);margin-bottom:16px;font-size:1rem}
+.pipe-demo{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center;padding:20px 0}
+.pipe-box{background:var(--surface3);border:2px solid var(--cyan);border-radius:10px;padding:12px 20px;text-align:center;min-width:100px;position:relative;transition:all .3s}
+.pipe-box.active{border-color:var(--green);box-shadow:0 0 20px rgba(16,185,129,.3);transform:scale(1.05)}
+.pipe-box .fn-name{font-weight:700;color:var(--cyan);font-size:.9rem}
+.pipe-box .fn-val{color:var(--text2);font-size:.8rem;margin-top:4px}
+.pipe-arrow{color:var(--cyan);font-size:1.5rem;margin:0 8px;animation:arrowPulse 1.5s infinite}
+@keyframes arrowPulse{0%,100%{opacity:.4}50%{opacity:1}}
+.data-ball{display:inline-block;background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;font-weight:700;padding:6px 16px;border-radius:20px;font-size:.9rem;margin:0 8px;animation:float 2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* PURE/IMPURE VISUAL */
+.fn-machine{display:flex;align-items:center;justify-content:center;gap:20px;padding:20px;flex-wrap:wrap}
+.fn-box{background:var(--surface2);border:2px solid;border-radius:16px;padding:20px 24px;text-align:center;min-width:180px;position:relative}
+.fn-box.pure{border-color:var(--green)}
+.fn-box.impure{border-color:var(--red)}
+.fn-box .label{position:absolute;top:-12px;left:50%;transform:translateX(-50%);padding:2px 12px;border-radius:10px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+.fn-box.pure .label{background:var(--green);color:#fff}
+.fn-box.impure .label{background:var(--red);color:#fff}
+.fn-io{display:flex;align-items:center;gap:12px;margin:8px 0;font-size:.85rem}
+.fn-io .arrow{color:var(--text2)}
+.side-effect{color:var(--red);font-size:.8rem;margin-top:8px;display:flex;align-items:center;gap:4px}
+
+/* QUIZ */
+.quiz-q{background:var(--surface2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:20px;margin:16px 0}
+.quiz-q h4{margin-bottom:12px;color:var(--text)}
+.quiz-q pre{background:var(--bg);padding:12px;border-radius:8px;margin:8px 0;overflow-x:auto;font-size:.85rem;border:1px solid rgba(255,255,255,.06)}
+.quiz-q code{font-family:'Fira Code','Cascadia Code',monospace;color:var(--cyan)}
+.quiz-options{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.quiz-opt{padding:12px 16px;background:var(--surface);border:2px solid rgba(255,255,255,.08);border-radius:10px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;font-size:.9rem}
+.quiz-opt:hover{border-color:var(--cyan);background:rgba(0,212,255,.05)}
+.quiz-opt.selected{border-color:var(--cyan);background:rgba(0,212,255,.08)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(16,185,129,.1);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+.quiz-opt .marker{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;transition:all .2s}
+.quiz-opt.selected .marker{border-color:var(--cyan);background:var(--cyan);color:var(--bg)}
+.quiz-opt.correct .marker{border-color:var(--green);background:var(--green);color:#fff}
+.quiz-opt.wrong .marker{border-color:var(--red);background:var(--red);color:#fff}
+.quiz-explain{margin-top:10px;padding:12px;border-radius:8px;font-size:.85rem;line-height:1.6;display:none}
+.quiz-explain.show{display:block;animation:fadeSlide .3s ease}
+.quiz-explain.correct-ex{background:rgba(16,185,129,.1);border-left:3px solid var(--green);color:var(--green)}
+.quiz-explain.wrong-ex{background:rgba(239,68,68,.1);border-left:3px solid var(--red);color:var(--red)}
+.quiz-score{text-align:center;padding:20px;background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(124,58,237,.1));border-radius:var(--radius);margin-top:20px}
+.quiz-score .big{font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* PITFALL CARDS */
+.pitfall{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius);padding:20px;margin:16px 0;position:relative}
+.pitfall::before{content:'⚠️';position:absolute;top:-12px;left:16px;background:var(--bg);padding:0 8px;font-size:1.2rem}
+.pitfall h4{color:var(--amber);margin-bottom:8px}
+.pitfall .do-dont{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.pitfall .dont{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px}
+.pitfall .do{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:12px}
+.pitfall .dont .label,.pitfall .do .label{font-size:.75rem;font-weight:700;text-transform:uppercase;margin-bottom:6px}
+.pitfall .dont .label{color:var(--red)}
+.pitfall .do .label{color:var(--green)}
+.pitfall pre{font-size:.82rem;line-height:1.5;overflow-x:auto}
+.pitfall code{font-family:'Fira Code','Cascadia Code',monospace}
+
+/* EXERCISE FEEDBACK */
+.feedback{padding:12px 16px;border-radius:8px;margin-top:12px;font-weight:500;display:none;animation:fadeSlide .3s ease}
+.feedback.show{display:flex;align-items:center;gap:8px}
+.feedback.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--green)}
+.feedback.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.feedback.hint{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--amber)}
+
+/* CONCEPT BOXES */
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin:16px 0}
+.concept-box{background:var(--surface2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:20px;text-align:center;transition:all .3s}
+.concept-box:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.concept-box .emoji{font-size:2.5rem;margin-bottom:8px}
+.concept-box h4{color:var(--cyan);margin-bottom:6px}
+.concept-box p{font-size:.85rem;color:var(--text2);line-height:1.5}
+
+/* CHAPTER INTRO */
+.chapter-hero{text-align:center;padding:40px 20px;margin-bottom:30px;background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(124,58,237,.08));border-radius:20px;border:1px solid rgba(255,255,255,.06);position:relative;overflow:hidden}
+.chapter-hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(0,212,255,.05) 0%,transparent 50%);animation:rotate 20s linear infinite}
+@keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.chapter-hero h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;position:relative}
+.chapter-hero p{color:var(--text2);font-size:1.1rem;position:relative}
+
+/* IMMUTABILITY VISUAL */
+.imm-visual{display:flex;gap:20px;align-items:flex-start;justify-content:center;flex-wrap:wrap;padding:20px 0}
+.imm-obj{background:var(--surface2);border-radius:12px;padding:16px;min-width:160px;border:2px solid}
+.imm-obj.original{border-color:var(--cyan)}
+.imm-obj.mutated{border-color:var(--red)}
+.imm-obj.new-copy{border-color:var(--green)}
+.imm-obj .obj-title{font-size:.75rem;text-transform:uppercase;font-weight:700;margin-bottom:8px;letter-spacing:1px}
+.imm-obj.original .obj-title{color:var(--cyan)}
+.imm-obj.mutated .obj-title{color:var(--red)}
+.imm-obj.new-copy .obj-title{color:var(--green)}
+.imm-obj .prop{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:.85rem;font-family:monospace}
+.imm-obj .prop .key{color:var(--text2)}
+.imm-obj .prop .val{color:var(--text)}
+.imm-obj .prop .val.changed{color:var(--green);font-weight:700}
+.imm-obj .prop .val.destroyed{color:var(--red);text-decoration:line-through}
+
+/* MONAD BOX VISUAL */
+.monad-visual{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:20px}
+.monad-box{border:3px solid var(--purple);border-radius:16px;padding:16px 24px;text-align:center;min-width:120px;position:relative;background:rgba(124,58,237,.05)}
+.monad-box .box-label{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--purple);color:#fff;padding:1px 10px;border-radius:8px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.monad-box .value{font-size:1.3rem;font-weight:700;color:var(--text)}
+.monad-box.empty{border-style:dashed;border-color:var(--text2)}
+.monad-box.empty .value{color:var(--text2);font-style:italic}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;width:10px;height:10px;z-index:9999;pointer-events:none}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .header{padding:0 12px}
+  .menu-toggle{display:block !important}
+  .pitfall .do-dont{grid-template-columns:1fr}
+}
+.menu-toggle{display:none;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;padding:4px 8px}
+
+/* KEY RULE BOX */
+.key-rule{background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(124,58,237,.1));border:2px solid var(--cyan);border-radius:var(--radius);padding:20px;margin:16px 0;text-align:center}
+.key-rule .rule{font-size:1.15rem;font-weight:700;color:var(--cyan);line-height:1.5}
+.key-rule .sub{color:var(--text2);font-size:.9rem;margin-top:8px}
+
+/* COMPLETION */
+.chapter-complete{text-align:center;padding:40px;background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(0,212,255,.1));border:2px solid var(--green);border-radius:20px;margin:30px 0}
+.chapter-complete .big-check{font-size:4rem;margin-bottom:12px}
+.chapter-complete h2{color:var(--green);margin-bottom:8px}
+.chapter-complete p{color:var(--text2)}
+
+.section{display:none}
+.section.active{display:block}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:600;margin:2px}
+.tag-pure{background:rgba(16,185,129,.15);color:var(--green)}
+.tag-impure{background:rgba(239,68,68,.15);color:var(--red)}
+.tag-tip{background:rgba(0,212,255,.15);color:var(--cyan)}
+
+.inline-code{background:var(--surface3);padding:2px 8px;border-radius:4px;font-family:'Fira Code','Cascadia Code',monospace;font-size:.85em;color:var(--cyan)}
+
+.spacer{height:20px}
+
+.animate-in{animation:fadeSlide .5s ease}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+  <div class="logo">λ FP Mastery <span>JavaScript Edition</span></div>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <div class="xp-badge" id="xpBadge">⚡ 0 XP</div>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="nav-section">Chapters</div>
+  <div class="nav-item active" data-section="welcome" onclick="goTo('welcome')">
+    <span class="icon">🏠</span> Welcome <span class="check">✓</span>
+  </div>
+  <div class="nav-item" data-section="pure" onclick="goTo('pure')">
+    <span class="icon">💎</span> Pure Functions <span class="check">✓</span>
+  </div>
+  <div class="nav-item" data-section="immutability" onclick="goTo('immutability')">
+    <span class="icon">🧊</span> Immutability <span class="check">✓</span>
+  </div>
+  <div class="nav-item" data-section="composition" onclick="goTo('composition')">
+    <span class="icon">🔗</span> Composition <span class="check">✓</span>
+  </div>
+  <div class="nav-item" data-section="functors" onclick="goTo('functors')">
+    <span class="icon">📦</span> Functors & Monads <span class="check">✓</span>
+  </div>
+  <div class="nav-item" data-section="final" onclick="goTo('final')">
+    <span class="icon">🏆</span> Final Challenge <span class="check">✓</span>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="mainContent">
+
+<!-- ====== WELCOME ====== -->
+<div class="section active" id="sec-welcome">
+  <div class="chapter-hero">
+    <h1>Master Functional Programming</h1>
+    <p>Learn to write cleaner, safer, more predictable JavaScript</p>
+  </div>
+  <div class="concept-grid">
+    <div class="concept-box" onclick="goTo('pure')">
+      <div class="emoji">💎</div>
+      <h4>Pure Functions</h4>
+      <p>Same input → same output. No surprises, no side effects.</p>
+    </div>
+    <div class="concept-box" onclick="goTo('immutability')">
+      <div class="emoji">🧊</div>
+      <h4>Immutability</h4>
+      <p>Never mutate data. Create new copies instead.</p>
+    </div>
+    <div class="concept-box" onclick="goTo('composition')">
+      <div class="emoji">🔗</div>
+      <h4>Composition</h4>
+      <p>Combine simple functions to build complex behavior.</p>
+    </div>
+    <div class="concept-box" onclick="goTo('functors')">
+      <div class="emoji">📦</div>
+      <h4>Functors & Monads</h4>
+      <p>Containers that supercharge how you handle data.</p>
+    </div>
+  </div>
+  <div class="card" style="text-align:center;margin-top:20px">
+    <h3>🎯 Why Functional Programming?</h3>
+    <p style="max-width:600px;margin:12px auto">FP makes your code <span class="highlight">predictable</span>, <span class="highlight">testable</span>, and <span class="highlight">debuggable</span>. Top companies like Netflix, Facebook, and Airbnb use FP patterns extensively. Master these concepts and stand out in interviews.</p>
+    <div class="spacer"></div>
+    <button class="btn btn-next" onclick="goTo('pure')">Start Learning →</button>
+  </div>
+</div>
+
+<!-- ====== PURE FUNCTIONS ====== -->
+<div class="section" id="sec-pure">
+  <div class="chapter-hero">
+    <h1>💎 Pure Functions</h1>
+    <p>The foundation of functional programming</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('pure','learn')">📖 Learn</div>
+    <div class="tab" onclick="switchTab('pure','examples')">💻 Code Lab</div>
+    <div class="tab" onclick="switchTab('pure','exercise')">🏋️ Exercise</div>
+    <div class="tab" onclick="switchTab('pure','quiz')">❓ Quiz</div>
+    <div class="tab" onclick="switchTab('pure','pitfalls')">⚠️ Pitfalls</div>
+  </div>
+
+  <!-- LEARN TAB -->
+  <div class="tab-content active" id="pure-learn">
+    <div class="card">
+      <h2>What is a Pure Function?</h2>
+      <p>A pure function follows <strong>two rules</strong>:</p>
+      <div class="key-rule">
+        <div class="rule">1. Same input → Always same output</div>
+        <div class="sub">Given the same arguments, it always returns the same result</div>
+      </div>
+      <div class="key-rule">
+        <div class="rule">2. No Side Effects</div>
+        <div class="sub">It doesn't modify anything outside itself — no database calls, no DOM changes, no external variable mutations</div>
+      </div>
+    </div>
+
+    <div class="visual-demo">
+      <h4>🎨 Visual: Pure vs Impure Functions</h4>
+      <div class="fn-machine">
+        <div class="fn-box pure">
+          <div class="label">✅ Pure</div>
+          <div style="font-weight:700;color:var(--green);margin:8px 0">add(a, b)</div>
+          <div class="fn-io"><span>Input:</span> <span class="arrow">→</span> <span class="inline-code">2, 3</span></div>
+          <div class="fn-io"><span>Output:</span> <span class="arrow">→</span> <span class="inline-code">5</span></div>
+          <div style="color:var(--green);font-size:.8rem;margin-top:8px">✓ Always returns 5 for (2,3)</div>
+          <div style="color:var(--green);font-size:.8rem">✓ Changes nothing outside</div>
+        </div>
+        <div style="font-size:2rem;color:var(--text2)">vs</div>
+        <div class="fn-box impure">
+          <div class="label">❌ Impure</div>
+          <div style="font-weight:700;color:var(--red);margin:8px 0">addToTotal(x)</div>
+          <div class="fn-io"><span>Input:</span> <span class="arrow">→</span> <span class="inline-code">5</span></div>
+          <div class="fn-io"><span>Output:</span> <span class="arrow">→</span> <span class="inline-code">???</span></div>
+          <div class="side-effect">⚡ Modifies external <code>total</code></div>
+          <div class="side-effect">⚡ Result depends on state</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🧠 Think of it Like a Math Function</h3>
+      <p>In math, <span class="inline-code">f(x) = x + 1</span> always gives the same answer for the same x. It doesn't go off and change the value of y somewhere. Pure functions in JS work the same way.</p>
+
+      <h3>Common Side Effects to Avoid</h3>
+      <ul>
+        <li>Modifying external variables or object properties</li>
+        <li>Writing to a database or file</li>
+        <li>Making HTTP requests</li>
+        <li>Modifying DOM elements</li>
+        <li>Calling <span class="inline-code">console.log()</span> (yes, technically!)</li>
+        <li>Using <span class="inline-code">Date.now()</span> or <span class="inline-code">Math.random()</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>🎯 Why Pure Functions Matter in Interviews</h3>
+      <ul>
+        <li><span class="highlight">Testability:</span> No mocking, no setup — just assert input/output</li>
+        <li><span class="highlight">Predictability:</span> No hidden dependencies</li>
+        <li><span class="highlight">Cacheable:</span> Results can be memoized</li>
+        <li><span class="highlight">Parallelizable:</span> No shared state conflicts</li>
+        <li><span class="highlight">Referential transparency:</span> Can replace call with value</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- EXAMPLES TAB -->
+  <div class="tab-content" id="pure-examples">
+    <div class="card"><h2>💻 Interactive Examples</h2><p>Edit and run the code to experiment!</p></div>
+
+    <div class="card">
+      <h3>Example 1: Pure Function ✅</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">pure-add.js</div></div>
+        <textarea class="code-editor" id="pure-ex1">// PURE: Same input always gives same output
+const add = (a, b) => a + b;
+
+console.log(add(2, 3));  // Always 5
+console.log(add(2, 3));  // Still 5!
+console.log(add(10, 20)); // Always 30
+
+// Pure: depends only on its arguments
+const multiply = (a, b) => a * b;
+console.log(multiply(4, 5));</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('pure-ex1')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('pure-ex1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="pure-ex1-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 2: Impure Function ❌ → Made Pure ✅</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">impure-to-pure.js</div></div>
+        <textarea class="code-editor" id="pure-ex2">// ❌ IMPURE: Depends on external variable
+let discount = 0.1;
+const getPrice_IMPURE = (price) => price * (1 - discount);
+// If discount changes, same input gives different output!
+
+console.log("IMPURE:", getPrice_IMPURE(100)); // 90
+discount = 0.2;
+console.log("IMPURE:", getPrice_IMPURE(100)); // 80 - DIFFERENT!
+
+// ✅ PURE: Pass discount as argument
+const getPrice_PURE = (price, discount) => price * (1 - discount);
+
+console.log("PURE:", getPrice_PURE(100, 0.1)); // Always 90
+console.log("PURE:", getPrice_PURE(100, 0.1)); // Always 90!</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('pure-ex2')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('pure-ex2')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="pure-ex2-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 3: Array Operations — Pure vs Impure</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">array-pure.js</div></div>
+        <textarea class="code-editor" id="pure-ex3">// ❌ IMPURE: Mutates the input array
+const addItem_IMPURE = (arr, item) => {
+  arr.push(item);  // Mutation!
+  return arr;
+};
+
+const list1 = [1, 2, 3];
+const result1 = addItem_IMPURE(list1, 4);
+console.log("Original mutated!", list1); // [1,2,3,4] 😱
+
+// ✅ PURE: Returns new array, leaves original intact
+const addItem_PURE = (arr, item) => [...arr, item];
+
+const list2 = [1, 2, 3];
+const result2 = addItem_PURE(list2, 4);
+console.log("Original safe!", list2);    // [1,2,3] ✅
+console.log("New array:", result2);       // [1,2,3,4] ✅</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('pure-ex3')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('pure-ex3')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="pure-ex3-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 4: Real-World Pure Functions</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">real-world-pure.js</div></div>
+        <textarea class="code-editor" id="pure-ex4">// ✅ Pure: Format a user's full name
+const formatName = (first, last) => 
+  `${first.charAt(0).toUpperCase() + first.slice(1)} ${last.toUpperCase()}`;
+
+console.log(formatName('john', 'doe')); // "John DOE"
+
+// ✅ Pure: Calculate cart total
+const calcTotal = (items) => 
+  items.reduce((sum, item) => sum + item.price * item.qty, 0);
+
+const cart = [
+  { name: 'Shirt', price: 25, qty: 2 },
+  { name: 'Pants', price: 45, qty: 1 }
+];
+console.log('Total: $' + calcTotal(cart)); // $95
+
+// ✅ Pure: Filter and transform data
+const getActiveUserEmails = (users) => 
+  users
+    .filter(u => u.active)
+    .map(u => u.email.toLowerCase());
+
+const users = [
+  { name: 'Alice', email: 'ALICE@test.com', active: true },
+  { name: 'Bob', email: 'BOB@test.com', active: false },
+  { name: 'Carol', email: 'CAROL@test.com', active: true }
+];
+console.log(getActiveUserEmails(users));</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('pure-ex4')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('pure-ex4')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="pure-ex4-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXERCISE TAB -->
+  <div class="tab-content" id="pure-exercise">
+    <div class="card">
+      <h2>🏋️ Exercise: Make It Pure!</h2>
+      <p>The function below is <span class="bad">impure</span>. Refactor it to be <span class="good">pure</span>. It should take <strong>all dependencies as arguments</strong> and return a new value without modifying anything external.</p>
+    </div>
+    <div class="card">
+      <h3>Challenge: Convert to Pure Function</h3>
+      <p>Fix the <span class="inline-code">greetUser</span> function so it's pure. It should accept a greeting and user, and return the message without using external variables or mutating anything.</p>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">exercise.js</div></div>
+        <textarea class="code-editor" id="pure-exercise1">// ❌ IMPURE - uses external state, mutates object
+let greeting = "Hello";
+let messageCount = 0;
+
+function greetUser(user) {
+  messageCount++;
+  user.greeted = true;
+  return greeting + ", " + user.name + "! (#" + messageCount + ")";
+}
+
+// ✅ YOUR TASK: Rewrite greetUser as a PURE function
+// It should:
+// 1. Take greeting as a parameter (not use external variable)
+// 2. NOT modify messageCount
+// 3. NOT modify the user object
+// 4. Return the formatted string
+
+function greetUserPure(greeting, user) {
+  // Your code here - make it pure!
+  
+}
+
+// Test it:
+const user = { name: "Alice", age: 30 };
+console.log(greetUserPure("Hello", user));
+console.log(greetUserPure("Hi", user));
+console.log("User unchanged:", JSON.stringify(user));</textarea>
+        <div class="code-actions">
+          <button class="btn btn-check" onclick="checkExercise('pure1')">✓ Check Solution</button>
+          <button class="btn btn-hint" onclick="showHint('pure1')">💡 Hint</button>
+          <button class="btn btn-reset" onclick="resetCode('pure-exercise1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="pure-exercise1-output"></div>
+        <div class="feedback" id="pure1-feedback"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Challenge 2: Pure Array Transformation</h3>
+      <p>Write a <span class="good">pure function</span> called <span class="inline-code">getDiscountedPrices</span> that takes an array of products and a discount percentage, and returns a NEW array with discounted prices. Original array must NOT be modified.</p>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">exercise2.js</div></div>
+        <textarea class="code-editor" id="pure-exercise2">// Write a PURE function:
+// - Takes products array and discount (e.g., 0.1 for 10%)
+// - Returns NEW array with updated prices
+// - Does NOT modify original array
+
+function getDiscountedPrices(products, discount) {
+  // Your code here!
+  
+}
+
+// Test:
+const products = [
+  { name: "Laptop", price: 1000 },
+  { name: "Phone", price: 500 },
+  { name: "Tablet", price: 300 }
+];
+
+const discounted = getDiscountedPrices(products, 0.2);
+console.log("Discounted:", JSON.stringify(discounted));
+console.log("Original intact:", JSON.stringify(products));</textarea>
+        <div class="code-actions">
+          <button class="btn btn-check" onclick="checkExercise('pure2')">✓ Check Solution</button>
+          <button class="btn btn-hint" onclick="showHint('pure2')">💡 Hint</button>
+          <button class="btn btn-reset" onclick="resetCode('pure-exercise2')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="pure-exercise2-output"></div>
+        <div class="feedback" id="pure2-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ TAB -->
+  <div class="tab-content" id="pure-quiz">
+    <div class="card"><h2>❓ Quiz: Pure Functions</h2><p>Test your understanding! Select the best answer for each question.</p></div>
+    <div id="pure-quiz-container"></div>
+    <div class="quiz-score" id="pure-quiz-score" style="display:none"></div>
+  </div>
+
+  <!-- PITFALLS TAB -->
+  <div class="tab-content" id="pure-pitfalls">
+    <div class="card"><h2>⚠️ Common Mistakes & Pitfalls</h2><p>Avoid these traps that even experienced developers fall into!</p></div>
+
+    <div class="pitfall">
+      <h4>Pitfall 1: Hidden Mutation of Object Arguments</h4>
+      <p>Objects and arrays are passed by reference. Modifying them inside a function is a side effect!</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Don't</div>
+          <pre><code>function updateAge(user, age) {
+  user.age = age; // Mutates!
+  return user;
+}</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Do</div>
+          <pre><code>function updateAge(user, age) {
+  return { ...user, age }; // New obj
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <h4>Pitfall 2: Date.now() and Math.random() Make Functions Impure</h4>
+      <p>These return different values each call — your function's output depends on when it runs, not just its inputs.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Don't</div>
+          <pre><code>function createId() {
+  return Math.random(); // Impure!
+}
+function getTimestamp() {
+  return Date.now(); // Impure!
+}</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Do</div>
+          <pre><code>// Inject dependencies:
+function createId(randomFn) {
+  return randomFn();
+}
+function getTimestamp(now) {
+  return now;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <h4>Pitfall 3: Array.sort() Mutates In Place!</h4>
+      <p>Many developers don't realize <code>.sort()</code>, <code>.reverse()</code>, <code>.splice()</code> mutate the original array.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Don't</div>
+          <pre><code>function sortUsers(users) {
+  return users.sort((a, b) => 
+    a.name.localeCompare(b.name)
+  ); // Mutates original!
+}</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Do</div>
+          <pre><code>function sortUsers(users) {
+  return [...users].sort((a, b) => 
+    a.name.localeCompare(b.name)
+  ); // Copy first!
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <h4>Pitfall 4: Sneaky console.log</h4>
+      <p>Technically, <code>console.log()</code> is a side effect — it writes to an external output. In practice, it's acceptable for debugging, but be aware of it for interview discussions.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Strictly speaking</div>
+          <pre><code>function add(a, b) {
+  console.log('adding', a, b);
+  return a + b; // Side effect!
+}</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ For strict purity</div>
+          <pre><code>function add(a, b) {
+  return a + b; // Pure!
+}
+// Log outside the function</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== IMMUTABILITY ====== -->
+<div class="section" id="sec-immutability">
+  <div class="chapter-hero">
+    <h1>🧊 Immutability</h1>
+    <p>Never change data — create new copies instead</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('immutability','learn')">📖 Learn</div>
+    <div class="tab" onclick="switchTab('immutability','examples')">💻 Code Lab</div>
+    <div class="tab" onclick="switchTab('immutability','exercise')">🏋️ Exercise</div>
+    <div class="tab" onclick="switchTab('immutability','quiz')">❓ Quiz</div>
+    <div class="tab" onclick="switchTab('immutability','pitfalls')">⚠️ Pitfalls</div>
+  </div>
+
+  <div class="tab-content active" id="immutability-learn">
+    <div class="card">
+      <h2>What is Immutability?</h2>
+      <p><span class="highlight">Immutability</span> means once data is created, it <strong>never changes</strong>. Instead of modifying existing data, you create a <strong>new copy</strong> with the changes applied.</p>
+      <div class="key-rule">
+        <div class="rule">Don't change data. Create new data.</div>
+        <div class="sub">Every "update" produces a brand new object or array</div>
+      </div>
+    </div>
+
+    <div class="visual-demo">
+      <h4>🎨 Visual: Mutation vs Immutability</h4>
+      <div class="imm-visual">
+        <div>
+          <div style="text-align:center;color:var(--red);font-weight:700;margin-bottom:10px">❌ Mutation</div>
+          <div class="imm-obj mutated">
+            <div class="obj-title">user (MODIFIED)</div>
+            <div class="prop"><span class="key">name:</span> <span class="val destroyed">"Alice"</span></div>
+            <div class="prop"><span class="key">name:</span> <span class="val" style="color:var(--red)">"Bob" ← overwritten!</span></div>
+            <div class="prop"><span class="key">age:</span> <span class="val">25</span></div>
+          </div>
+          <div style="text-align:center;color:var(--red);font-size:.8rem;margin-top:8px">Original data is LOST 😱</div>
+        </div>
+        <div style="font-size:2rem;color:var(--text2);padding:0 20px">vs</div>
+        <div>
+          <div style="text-align:center;color:var(--green);font-weight:700;margin-bottom:10px">✅ Immutable</div>
+          <div style="display:flex;gap:12px;">
+            <div class="imm-obj original">
+              <div class="obj-title">user (PRESERVED)</div>
+              <div class="prop"><span class="key">name:</span> <span class="val">"Alice"</span></div>
+              <div class="prop"><span class="key">age:</span> <span class="val">25</span></div>
+            </div>
+            <div style="display:flex;align-items:center;color:var(--cyan);font-size:1.5rem">→</div>
+            <div class="imm-obj new-copy">
+              <div class="obj-title">newUser (COPY)</div>
+              <div class="prop"><span class="key">name:</span> <span class="val changed">"Bob"</span></div>
+              <div class="prop"><span class="key">age:</span> <span class="val">25</span></div>
+            </div>
+          </div>
+          <div style="text-align:center;color:var(--green);font-size:.8rem;margin-top:8px">Both exist safely ✅</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Immutability Toolkit in JavaScript</h3>
+      <div class="concept-grid">
+        <div class="concept-box">
+          <div class="emoji">📋</div>
+          <h4>Objects</h4>
+          <p><code>{ ...obj }</code><br>Object spread operator<br><code>Object.assign({}, obj)</code></p>
+        </div>
+        <div class="concept-box">
+          <div class="emoji">📦</div>
+          <h4>Arrays</h4>
+          <p><code>[...arr]</code><br><code>.map() .filter() .reduce()</code><br><code>.concat() .slice()</code></p>
+        </div>
+        <div class="concept-box">
+          <div class="emoji">❄️</div>
+          <h4>Freezing</h4>
+          <p><code>Object.freeze(obj)</code><br>Prevents modifications<br>(shallow only!)</p>
+        </div>
+        <div class="concept-box">
+          <div class="emoji">🏗️</div>
+          <h4>Nested Updates</h4>
+          <p>Spread at each level<br><code>{ ...obj, inner: { ...obj.inner } }</code></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⚡ <code>const</code> ≠ Immutable!</h3>
+      <p><span class="inline-code">const</span> only prevents <em>reassignment</em> of the variable binding. The value itself can still be mutated if it's an object or array!</p>
+      <pre style="background:var(--bg);padding:16px;border-radius:8px;margin-top:12px;font-size:.9rem;border:1px solid rgba(255,255,255,.06)"><code style="font-family:'Fira Code',monospace;color:var(--text2)">const arr = [1, 2, 3];
+arr.push(4);        <span style="color:var(--red)">// ✅ Works! Array is mutated</span>
+arr = [1, 2, 3, 4]; <span style="color:var(--red)">// ❌ Error! Can't reassign const</span></code></pre>
+    </div>
+  </div>
+
+  <div class="tab-content" id="immutability-examples">
+    <div class="card"><h2>💻 Immutability Code Lab</h2></div>
+
+    <div class="card">
+      <h3>Example 1: Object Immutability</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">object-immutable.js</div></div>
+        <textarea class="code-editor" id="imm-ex1">const user = { name: 'Alice', age: 25, role: 'dev' };
+
+// ✅ Update a property immutably
+const olderUser = { ...user, age: 26 };
+console.log('Original:', JSON.stringify(user));
+console.log('Updated:', JSON.stringify(olderUser));
+
+// ✅ Add a property
+const withEmail = { ...user, email: 'alice@dev.com' };
+console.log('With email:', JSON.stringify(withEmail));
+
+// ✅ Remove a property (destructure + rest)
+const { role, ...withoutRole } = user;
+console.log('Without role:', JSON.stringify(withoutRole));
+
+// Verify original is untouched
+console.log('Original still:', JSON.stringify(user));</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('imm-ex1')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('imm-ex1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="imm-ex1-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 2: Array Immutability</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">array-immutable.js</div></div>
+        <textarea class="code-editor" id="imm-ex2">const nums = [1, 2, 3, 4, 5];
+
+// ✅ Add to end (instead of push)
+const added = [...nums, 6];
+console.log('Added:', added);
+
+// ✅ Add to start (instead of unshift)
+const prepended = [0, ...nums];
+console.log('Prepended:', prepended);
+
+// ✅ Remove by index (instead of splice)
+const removed = nums.filter((_, i) => i !== 2);
+console.log('Removed index 2:', removed);
+
+// ✅ Update at index
+const updated = nums.map((n, i) => i === 1 ? 99 : n);
+console.log('Updated index 1:', updated);
+
+// ✅ Sort without mutating
+const sorted = [...nums].sort((a, b) => b - a);
+console.log('Sorted desc:', sorted);
+
+// Original is always safe!
+console.log('Original:', nums);</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('imm-ex2')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('imm-ex2')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="imm-ex2-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 3: Nested Immutability (The Hard Part!)</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">nested-immutable.js</div></div>
+        <textarea class="code-editor" id="imm-ex3">const company = {
+  name: 'TechCorp',
+  address: {
+    city: 'Austin',
+    state: 'TX',
+    zip: '78701'
+  },
+  employees: [
+    { id: 1, name: 'Alice' },
+    { id: 2, name: 'Bob' }
+  ]
+};
+
+// ✅ Update nested property - spread at each level!
+const updated = {
+  ...company,
+  address: {
+    ...company.address,
+    city: 'Dallas'  // Only change city
+  }
+};
+
+console.log('Original city:', company.address.city); // Austin
+console.log('Updated city:', updated.address.city);   // Dallas
+
+// ✅ Update an employee immutably
+const updatedEmps = {
+  ...company,
+  employees: company.employees.map(emp =>
+    emp.id === 1 ? { ...emp, name: 'Alice Smith' } : emp
+  )
+};
+
+console.log('Original emp:', company.employees[0].name);
+console.log('Updated emp:', updatedEmps.employees[0].name);</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('imm-ex3')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('imm-ex3')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="imm-ex3-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="immutability-exercise">
+    <div class="card">
+      <h2>🏋️ Exercise: Immutable State Updates</h2>
+      <p>You're building a state management system. Implement the <span class="inline-code">updateState</span> function that performs immutable updates on a nested state object.</p>
+    </div>
+    <div class="card">
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">exercise.js</div></div>
+        <textarea class="code-editor" id="imm-exercise1">const state = {
+  user: { name: 'Alice', preferences: { theme: 'dark', lang: 'en' } },
+  posts: [
+    { id: 1, title: 'Hello', likes: 5 },
+    { id: 2, title: 'World', likes: 3 }
+  ],
+  count: 0
+};
+
+// TODO: Implement these functions IMMUTABLY
+// Each should return a NEW state object
+
+// 1. Change user's theme to 'light'
+function changeTheme(state, newTheme) {
+  // Your code here
+  
+}
+
+// 2. Increment likes on post with given id
+function likePost(state, postId) {
+  // Your code here
+  
+}
+
+// Test:
+const s1 = changeTheme(state, 'light');
+console.log('New theme:', s1.user.preferences.theme); // 'light'
+console.log('Old theme:', state.user.preferences.theme); // 'dark'
+
+const s2 = likePost(state, 1);
+console.log('New likes:', s2.posts[0].likes); // 6
+console.log('Old likes:', state.posts[0].likes); // 5</textarea>
+        <div class="code-actions">
+          <button class="btn btn-check" onclick="checkExercise('imm1')">✓ Check</button>
+          <button class="btn btn-hint" onclick="showHint('imm1')">💡 Hint</button>
+          <button class="btn btn-reset" onclick="resetCode('imm-exercise1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="imm-exercise1-output"></div>
+        <div class="feedback" id="imm1-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="immutability-quiz">
+    <div class="card"><h2>❓ Quiz: Immutability</h2></div>
+    <div id="immutability-quiz-container"></div>
+    <div class="quiz-score" id="immutability-quiz-score" style="display:none"></div>
+  </div>
+
+  <div class="tab-content" id="immutability-pitfalls">
+    <div class="card"><h2>⚠️ Immutability Pitfalls</h2></div>
+    <div class="pitfall">
+      <h4>Pitfall 1: Shallow Spread Only Copies One Level Deep</h4>
+      <p>The spread operator <code>{ ...obj }</code> only creates a shallow copy. Nested objects are still shared by reference!</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Bug!</div>
+          <pre><code>const copy = { ...original };
+copy.address.city = 'NYC';
+// ALSO changes original! 😱</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Safe</div>
+          <pre><code>const copy = {
+  ...original,
+  address: { ...original.address,
+    city: 'NYC' }
+};</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="pitfall">
+      <h4>Pitfall 2: Object.freeze() is Shallow!</h4>
+      <p><code>Object.freeze()</code> only freezes the top level. Nested objects can still be mutated.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ False security</div>
+          <pre><code>const obj = Object.freeze({
+  a: 1, inner: { b: 2 }
+});
+obj.inner.b = 99; // Works! 😱</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Deep freeze</div>
+          <pre><code>function deepFreeze(obj) {
+  Object.freeze(obj);
+  Object.values(obj)
+    .filter(v => typeof v === 'object')
+    .forEach(deepFreeze);
+  return obj;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="pitfall">
+      <h4>Pitfall 3: These Array Methods MUTATE!</h4>
+      <p>Know which methods mutate and which return new arrays:</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Mutating Methods</div>
+          <pre><code>.push()    .pop()
+.shift()   .unshift()
+.splice()  .sort()
+.reverse() .fill()</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Non-Mutating Methods</div>
+          <pre><code>.map()     .filter()
+.reduce()  .concat()
+.slice()   .flat()
+.flatMap() .toSorted() (ES2023)</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== COMPOSITION ====== -->
+<div class="section" id="sec-composition">
+  <div class="chapter-hero">
+    <h1>🔗 Function Composition</h1>
+    <p>Build complex operations from simple functions</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('composition','learn')">📖 Learn</div>
+    <div class="tab" onclick="switchTab('composition','examples')">💻 Code Lab</div>
+    <div class="tab" onclick="switchTab('composition','exercise')">🏋️ Exercise</div>
+    <div class="tab" onclick="switchTab('composition','quiz')">❓ Quiz</div>
+    <div class="tab" onclick="switchTab('composition','pitfalls')">⚠️ Pitfalls</div>
+  </div>
+
+  <div class="tab-content active" id="composition-learn">
+    <div class="card">
+      <h2>What is Function Composition?</h2>
+      <p><span class="highlight">Function composition</span> is combining two or more functions to produce a new function. The output of one function becomes the input to the next.</p>
+      <div class="key-rule">
+        <div class="rule">compose(f, g)(x) = f(g(x))</div>
+        <div class="sub">Apply g first, then f — right to left</div>
+      </div>
+      <div class="key-rule">
+        <div class="rule">pipe(f, g)(x) = g(f(x))</div>
+        <div class="sub">Apply f first, then g — left to right (more intuitive!)</div>
+      </div>
+    </div>
+
+    <div class="visual-demo">
+      <h4>🎨 Visual: Data Pipeline</h4>
+      <p style="text-align:center;color:var(--text2);margin-bottom:16px">Data flows through each function like water through pipes</p>
+      <div class="pipe-demo" id="pipeAnimation">
+        <div class="data-ball" id="pipeData">" hello world "</div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-box" id="pipe1"><div class="fn-name">trim()</div><div class="fn-val">Remove spaces</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-box" id="pipe2"><div class="fn-name">toUpper()</div><div class="fn-val">Capitalize</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-box" id="pipe3"><div class="fn-name">exclaim()</div><div class="fn-val">Add !</div></div>
+        <div class="pipe-arrow">→</div>
+        <div class="data-ball" style="background:linear-gradient(135deg,var(--green),var(--cyan))">"HELLO WORLD!"</div>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <button class="btn btn-run" onclick="animatePipeline()" style="font-size:.85rem;padding:8px 24px">▶ Animate Pipeline</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Why Compose?</h3>
+      <ul>
+        <li><span class="highlight">Readability:</span> Complex operations become a sequence of named steps</li>
+        <li><span class="highlight">Reusability:</span> Small functions can be recombined in different ways</li>
+        <li><span class="highlight">Testability:</span> Each step can be tested independently</li>
+        <li><span class="highlight">Point-free style:</span> Focus on transformations, not data plumbing</li>
+      </ul>
+
+      <h3>Related Concepts</h3>
+      <ul>
+        <li><span class="highlight">Currying:</span> Converting a function with multiple args into a sequence of single-arg functions</li>
+        <li><span class="highlight">Partial Application:</span> Pre-filling some arguments of a function</li>
+        <li><span class="highlight">Point-Free Style:</span> Defining functions without mentioning their arguments</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tab-content" id="composition-examples">
+    <div class="card"><h2>💻 Composition Code Lab</h2></div>
+
+    <div class="card">
+      <h3>Example 1: Manual Composition</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">manual-compose.js</div></div>
+        <textarea class="code-editor" id="comp-ex1">// Small, focused, pure functions
+const double = x => x * 2;
+const add10 = x => x + 10;
+const negate = x => -x;
+
+// Manual composition
+const doubleThenAdd10 = x => add10(double(x));
+console.log(doubleThenAdd10(5)); // double(5)=10, add10(10)=20
+
+// Nesting gets messy quickly!
+const allThree = x => negate(add10(double(x)));
+console.log(allThree(5)); // double(5)=10, add10(10)=20, negate(20)=-20
+
+// Read inside-out: double → add10 → negate
+// This is why we need compose/pipe!</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('comp-ex1')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('comp-ex1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="comp-ex1-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 2: Compose & Pipe Utilities</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">compose-pipe.js</div></div>
+        <textarea class="code-editor" id="comp-ex2">// compose: right-to-left (math style)
+const compose = (...fns) => x => 
+  fns.reduceRight((acc, fn) => fn(acc), x);
+
+// pipe: left-to-right (reading order)
+const pipe = (...fns) => x => 
+  fns.reduce((acc, fn) => fn(acc), x);
+
+const double = x => x * 2;
+const add1 = x => x + 1;
+const square = x => x * x;
+
+// compose: square runs FIRST, then add1, then double
+const composed = compose(double, add1, square);
+console.log('compose(double, add1, square)(3):', composed(3));
+// square(3)=9, add1(9)=10, double(10)=20
+
+// pipe: double runs FIRST, then add1, then square
+const piped = pipe(double, add1, square);
+console.log('pipe(double, add1, square)(3):', piped(3));
+// double(3)=6, add1(6)=7, square(7)=49</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('comp-ex2')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('comp-ex2')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="comp-ex2-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 3: Real-World Data Pipeline</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">data-pipeline.js</div></div>
+        <textarea class="code-editor" id="comp-ex3">const pipe = (...fns) => x => fns.reduce((v, f) => f(v), x);
+
+// Small utility functions
+const filterActive = users => users.filter(u => u.active);
+const sortByName = users => [...users].sort((a,b) => a.name.localeCompare(b.name));
+const getEmails = users => users.map(u => u.email);
+const lowercase = emails => emails.map(e => e.toLowerCase());
+const joinWith = sep => items => items.join(sep);
+
+// Compose them into a pipeline!
+const getActiveEmailList = pipe(
+  filterActive,
+  sortByName,
+  getEmails,
+  lowercase,
+  joinWith(', ')
+);
+
+const users = [
+  { name: 'Charlie', email: 'CHARLIE@co.com', active: true },
+  { name: 'Alice', email: 'ALICE@co.com', active: true },
+  { name: 'Bob', email: 'BOB@co.com', active: false },
+  { name: 'Diana', email: 'DIANA@co.com', active: true }
+];
+
+console.log(getActiveEmailList(users));
+// "alice@co.com, charlie@co.com, diana@co.com"</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('comp-ex3')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('comp-ex3')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="comp-ex3-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 4: Currying for Composition</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">currying.js</div></div>
+        <textarea class="code-editor" id="comp-ex4">const pipe = (...fns) => x => fns.reduce((v, f) => f(v), x);
+
+// Curried helpers — each returns a function
+const multiply = factor => num => num * factor;
+const add = amount => num => num + amount;
+const clamp = (min, max) => num => Math.min(max, Math.max(min, num));
+const format = prefix => num => `${prefix}${num.toFixed(2)}`;
+
+// Price calculation pipeline
+const calculatePrice = pipe(
+  multiply(1.2),       // Add 20% markup
+  add(5),              // Add $5 shipping
+  multiply(0.9),       // 10% discount
+  clamp(0, 999),       // Clamp range
+  format('$')          // Format as currency
+);
+
+console.log(calculatePrice(50));   // $50 → $65 → $58.50 → "$58.50"
+console.log(calculatePrice(100));  // $100 → $125 → $112.50 → "$112.50"
+console.log(calculatePrice(0));    // $0 → $5 → $4.50 → "$4.50"</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('comp-ex4')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('comp-ex4')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="comp-ex4-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="composition-exercise">
+    <div class="card">
+      <h2>🏋️ Exercise: Build a Text Processor</h2>
+      <p>Create a text processing pipeline using <span class="inline-code">pipe</span>. Build small utility functions and compose them.</p>
+    </div>
+    <div class="card">
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">exercise.js</div></div>
+        <textarea class="code-editor" id="comp-exercise1">const pipe = (...fns) => x => fns.reduce((v, f) => f(v), x);
+
+// TODO: Implement these small functions:
+const removeExtraSpaces = str => str; // Replace multiple spaces with single space + trim
+const capitalize = str => str;        // Capitalize first letter of each word
+const truncate = max => str => str;   // Cut to max chars, add "..." if truncated
+const addHashtag = str => str;        // Prepend "# " to the string
+
+// TODO: Compose them into a pipeline using pipe()
+const processTitle = pipe(
+  // your functions here in order
+);
+
+// Tests:
+console.log(processTitle("  hello   beautiful   world  "));
+// Should output: "# Hello Beautiful Wor..."
+
+console.log(processTitle("  functional   programming  "));
+// Should output: "# Functional Programm..."</textarea>
+        <div class="code-actions">
+          <button class="btn btn-check" onclick="checkExercise('comp1')">✓ Check</button>
+          <button class="btn btn-hint" onclick="showHint('comp1')">💡 Hint</button>
+          <button class="btn btn-reset" onclick="resetCode('comp-exercise1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="comp-exercise1-output"></div>
+        <div class="feedback" id="comp1-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="composition-quiz">
+    <div class="card"><h2>❓ Quiz: Composition</h2></div>
+    <div id="composition-quiz-container"></div>
+    <div class="quiz-score" id="composition-quiz-score" style="display:none"></div>
+  </div>
+
+  <div class="tab-content" id="composition-pitfalls">
+    <div class="card"><h2>⚠️ Composition Pitfalls</h2></div>
+    <div class="pitfall">
+      <h4>Pitfall 1: compose vs pipe Direction Confusion</h4>
+      <p><code>compose</code> is right-to-left, <code>pipe</code> is left-to-right. Mixing them up is a very common bug!</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Confused direction</div>
+          <pre><code>// Think you're doing A → B → C
+// But compose does C → B → A!
+const process = compose(
+  stepA, stepB, stepC
+); // Actually runs C first!</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Use pipe for readability</div>
+          <pre><code>// Clear left-to-right order
+const process = pipe(
+  stepA,  // runs 1st
+  stepB,  // runs 2nd
+  stepC   // runs 3rd
+);</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="pitfall">
+      <h4>Pitfall 2: Multi-Argument Functions Don't Compose Easily</h4>
+      <p>Composition works best with unary functions (single argument). Use currying to convert multi-arg functions.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Won't work</div>
+          <pre><code>const add = (a, b) => a + b;
+const double = x => x * 2;
+// pipe(add, double)(2, 3)
+// add returns 5, OK
+// But add takes 2 args... awkward</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Curry first</div>
+          <pre><code>const add = a => b => a + b;
+const double = x => x * 2;
+pipe(add(2), double)(3);
+// add(2) returns fn, fn(3)=5, 
+// double(5)=10 ✅</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="pitfall">
+      <h4>Pitfall 3: Debugging Composed Functions is Hard</h4>
+      <p>When a pipeline fails, it's hard to know which step broke. Use a <code>trace</code> helper!</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ No visibility</div>
+          <pre><code>const process = pipe(
+  step1, step2, step3
+);
+// Error somewhere... where?!</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Add trace</div>
+          <pre><code>const trace = label => x => {
+  console.log(label + ':', x);
+  return x;
+};
+const process = pipe(
+  step1, trace('after step1'),
+  step2, trace('after step2'),
+  step3
+);</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== FUNCTORS & MONADS ====== -->
+<div class="section" id="sec-functors">
+  <div class="chapter-hero">
+    <h1>📦 Functors & Monads</h1>
+    <p>Containers that supercharge data handling</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('functors','learn')">📖 Learn</div>
+    <div class="tab" onclick="switchTab('functors','examples')">💻 Code Lab</div>
+    <div class="tab" onclick="switchTab('functors','exercise')">🏋️ Exercise</div>
+    <div class="tab" onclick="switchTab('functors','quiz')">❓ Quiz</div>
+    <div class="tab" onclick="switchTab('functors','pitfalls')">⚠️ Pitfalls</div>
+  </div>
+
+  <div class="tab-content active" id="functors-learn">
+    <div class="card">
+      <h2>What is a Functor?</h2>
+      <p>A <span class="highlight">functor</span> is any container/wrapper that implements a <span class="inline-code">map</span> method. The <code>map</code> method applies a function to the value inside the container and returns a <strong>new container</strong> with the result.</p>
+      <div class="key-rule">
+        <div class="rule">Functor = Container + map()</div>
+        <div class="sub">Apply a function to the value inside without unwrapping the container</div>
+      </div>
+      <p style="margin-top:12px">You already use functors every day! <span class="inline-code">Array</span> is a functor because it has <code>.map()</code>.</p>
+    </div>
+
+    <div class="visual-demo">
+      <h4>🎨 Visual: The Box Metaphor</h4>
+      <div class="monad-visual">
+        <div class="monad-box">
+          <div class="box-label">Box</div>
+          <div class="value">5</div>
+        </div>
+        <div style="color:var(--cyan);font-size:1.2rem">—<span style="font-size:.8rem">.map(x => x * 2)</span>→</div>
+        <div class="monad-box">
+          <div class="box-label">Box</div>
+          <div class="value">10</div>
+        </div>
+        <div style="color:var(--cyan);font-size:1.2rem">—<span style="font-size:.8rem">.map(x => x + 1)</span>→</div>
+        <div class="monad-box">
+          <div class="box-label">Box</div>
+          <div class="value">11</div>
+        </div>
+      </div>
+      <p style="text-align:center;color:var(--text2);font-size:.9rem;margin-top:8px">The value transforms inside the box. The box structure is preserved. That's a Functor!</p>
+    </div>
+
+    <div class="card">
+      <h2>What is a Monad?</h2>
+      <p>A <span class="highlight">monad</span> is a functor that also implements <span class="inline-code">flatMap</span> (also called <code>chain</code> or <code>bind</code>). It handles the problem of <strong>nested containers</strong>.</p>
+      <div class="key-rule">
+        <div class="rule">Monad = Functor + flatMap()</div>
+        <div class="sub">flatMap unwraps one layer of nesting: Box(Box(value)) → Box(value)</div>
+      </div>
+    </div>
+
+    <div class="visual-demo">
+      <h4>🎨 Why flatMap? The Nesting Problem</h4>
+      <div style="text-align:center;margin:16px 0">
+        <div style="display:inline-block;text-align:left">
+          <div style="color:var(--red);margin-bottom:8px"><strong>map</strong> can create nested boxes:</div>
+          <div class="monad-visual" style="padding:8px 0">
+            <div class="monad-box"><div class="box-label">Maybe</div><div class="value">5</div></div>
+            <div style="color:var(--text2);font-size:.9rem">→ .map(x → Maybe(x*2)) →</div>
+            <div class="monad-box" style="padding:20px 12px"><div class="box-label">Maybe</div><div class="monad-box" style="margin:0"><div class="box-label">Maybe</div><div class="value">10</div></div></div>
+          </div>
+          <div style="color:var(--red);font-size:.85rem">Nested! Maybe(Maybe(10)) 😰</div>
+          <div style="color:var(--green);margin:16px 0 8px"><strong>flatMap</strong> flattens the result:</div>
+          <div class="monad-visual" style="padding:8px 0">
+            <div class="monad-box"><div class="box-label">Maybe</div><div class="value">5</div></div>
+            <div style="color:var(--text2);font-size:.9rem">→ .flatMap(x → Maybe(x*2)) →</div>
+            <div class="monad-box"><div class="box-label">Maybe</div><div class="value">10</div></div>
+          </div>
+          <div style="color:var(--green);font-size:.85rem">Flat! Maybe(10) ✅</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🌟 The Two Most Useful Monads</h3>
+      <div class="concept-grid">
+        <div class="concept-box">
+          <div class="emoji">❓</div>
+          <h4>Maybe Monad</h4>
+          <p>Handles <strong>null/undefined</strong> safely. No more "Cannot read property of undefined" errors!</p>
+          <p style="margin-top:8px"><span class="tag tag-tip">Just(value)</span> or <span class="tag tag-tip">Nothing</span></p>
+        </div>
+        <div class="concept-box">
+          <div class="emoji">⚖️</div>
+          <h4>Either Monad</h4>
+          <p>Handles <strong>errors</strong> gracefully. Like try/catch but composable and pure!</p>
+          <p style="margin-top:8px"><span class="tag tag-tip">Right(value)</span> or <span class="tag tag-tip">Left(error)</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="functors-examples">
+    <div class="card"><h2>💻 Functors & Monads Code Lab</h2></div>
+
+    <div class="card">
+      <h3>Example 1: Building a Simple Functor (Box)</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">box-functor.js</div></div>
+        <textarea class="code-editor" id="fm-ex1">// The simplest functor: a Box
+const Box = value => ({
+  map: fn => Box(fn(value)),      // Apply fn, re-wrap in Box
+  fold: fn => fn(value),           // Unwrap: apply fn & return raw value
+  inspect: () => `Box(${JSON.stringify(value)})`
+});
+
+// Chain transformations without intermediate variables!
+const result = Box(2)
+  .map(x => x + 3)      // Box(5)
+  .map(x => x * 2)      // Box(10)
+  .map(x => `$${x}`)    // Box("$10")
+  .fold(x => x);        // "$10" (unwrapped)
+
+console.log(result); // "$10"
+
+// Compare with imperative:
+// let x = 2; x = x + 3; x = x * 2; x = "$" + x;
+// Messy and relies on mutation!
+
+// Real example: safely process a string
+const processName = name =>
+  Box(name)
+    .map(s => s.trim())
+    .map(s => s.toLowerCase())
+    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+    .fold(s => s);
+
+console.log(processName('  jOHN  ')); // "John"</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('fm-ex1')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('fm-ex1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="fm-ex1-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 2: Maybe Monad — Null Safety</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">maybe-monad.js</div></div>
+        <textarea class="code-editor" id="fm-ex2">// Maybe: handles null/undefined gracefully
+const Just = value => ({
+  map: fn => Just(fn(value)),
+  flatMap: fn => fn(value),
+  getOrElse: (_) => value,
+  isNothing: false,
+  inspect: () => `Just(${JSON.stringify(value)})`
+});
+
+const Nothing = () => ({
+  map: fn => Nothing(),
+  flatMap: fn => Nothing(),
+  getOrElse: (defaultVal) => defaultVal,
+  isNothing: true,
+  inspect: () => 'Nothing'
+});
+
+const Maybe = value => 
+  value === null || value === undefined ? Nothing() : Just(value);
+
+// ❌ Without Maybe - crashes on null!
+// const userName = user.profile.name.toUpperCase(); // 💥 TypeError!
+
+// ✅ With Maybe - safe chaining!
+const getNestedValue = obj =>
+  Maybe(obj)
+    .flatMap(o => Maybe(o.profile))
+    .flatMap(p => Maybe(p.name))
+    .map(name => name.toUpperCase())
+    .getOrElse('Anonymous');
+
+console.log(getNestedValue({ profile: { name: 'alice' } })); // "ALICE"
+console.log(getNestedValue({ profile: {} }));                   // "Anonymous"
+console.log(getNestedValue(null));                               // "Anonymous"
+console.log(getNestedValue({ profile: { name: null } }));       // "Anonymous"</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('fm-ex2')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('fm-ex2')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="fm-ex2-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 3: Either Monad — Error Handling</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">either-monad.js</div></div>
+        <textarea class="code-editor" id="fm-ex3">// Either: Right for success, Left for failure
+const Right = value => ({
+  map: fn => Right(fn(value)),
+  flatMap: fn => fn(value),
+  fold: (leftFn, rightFn) => rightFn(value),
+  inspect: () => `Right(${JSON.stringify(value)})`
+});
+
+const Left = value => ({
+  map: fn => Left(value),  // Don't apply fn!
+  flatMap: fn => Left(value),
+  fold: (leftFn, rightFn) => leftFn(value),
+  inspect: () => `Left(${JSON.stringify(value)})`
+});
+
+// Validation pipeline
+const validateAge = age =>
+  typeof age !== 'number' ? Left('Age must be a number')
+  : age < 0 ? Left('Age cannot be negative')
+  : age > 150 ? Left('Age seems unrealistic')
+  : Right(age);
+
+const validateName = name =>
+  typeof name !== 'string' ? Left('Name must be a string')
+  : name.trim().length === 0 ? Left('Name cannot be empty')
+  : Right(name.trim());
+
+// Using Either for safe operations
+const createUser = (name, age) =>
+  validateName(name)
+    .flatMap(validName =>
+      validateAge(age)
+        .map(validAge => ({ name: validName, age: validAge }))
+    )
+    .fold(
+      error => console.log('❌ Error:', error),
+      user => console.log('✅ User:', JSON.stringify(user))
+    );
+
+createUser('Alice', 30);    // ✅ User: {"name":"Alice","age":30}
+createUser('', 25);          // ❌ Error: Name cannot be empty
+createUser('Bob', -5);       // ❌ Error: Age cannot be negative
+createUser('Carol', 'old');  // ❌ Error: Age must be a number</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('fm-ex3')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('fm-ex3')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="fm-ex3-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Example 4: Array is a Functor (and Monad!)</h3>
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">array-functor.js</div></div>
+        <textarea class="code-editor" id="fm-ex4">// Array is the most common functor you already use!
+
+// Functor: .map() transforms values inside the container
+const nums = [1, 2, 3, 4];
+const doubled = nums.map(x => x * 2);
+console.log('map (Functor):', doubled); // [2, 4, 6, 8]
+
+// Monad: .flatMap() flattens nested arrays
+const sentences = ['Hello World', 'Foo Bar'];
+const words = sentences.flatMap(s => s.split(' '));
+console.log('flatMap (Monad):', words); // ['Hello','World','Foo','Bar']
+
+// Without flatMap, map creates nesting:
+const nested = sentences.map(s => s.split(' '));
+console.log('map creates nesting:', nested); 
+// [['Hello','World'], ['Foo','Bar']]
+
+// Real-world: get all tags from posts
+const posts = [
+  { title: 'FP', tags: ['functional', 'javascript'] },
+  { title: 'React', tags: ['react', 'javascript', 'ui'] },
+];
+const allTags = [...new Set(posts.flatMap(p => p.tags))];
+console.log('All unique tags:', allTags);</textarea>
+        <div class="code-actions">
+          <button class="btn btn-run" onclick="runCode('fm-ex4')">▶ Run</button>
+          <button class="btn btn-reset" onclick="resetCode('fm-ex4')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="fm-ex4-output"><span class="label">Output will appear here...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="functors-exercise">
+    <div class="card">
+      <h2>🏋️ Exercise: Implement a Maybe Monad</h2>
+      <p>Build a <span class="inline-code">safeGet</span> function that safely accesses deeply nested properties using the Maybe monad pattern.</p>
+    </div>
+    <div class="card">
+      <div class="code-playground">
+        <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">exercise.js</div></div>
+        <textarea class="code-editor" id="fm-exercise1">// TODO: Implement Maybe, Just, Nothing
+
+const Just = value => ({
+  map: fn => null,       // implement me
+  flatMap: fn => null,   // implement me
+  getOrElse: (_) => null,// implement me
+});
+
+const Nothing = () => ({
+  map: fn => null,       // implement me
+  flatMap: fn => null,   // implement me
+  getOrElse: (def) => null, // implement me
+});
+
+const Maybe = val => 
+  (val === null || val === undefined) ? Nothing() : Just(val);
+
+// TODO: Implement safeGet using Maybe
+// It should safely access nested properties
+const safeGet = (obj, ...keys) => {
+  // Use keys.reduce with Maybe to safely walk the path
+  // Return a Maybe
+};
+
+// Tests:
+const data = {
+  users: {
+    alice: { address: { city: 'Austin' } },
+    bob: { address: {} }
+  }
+};
+
+console.log(safeGet(data, 'users', 'alice', 'address', 'city').getOrElse('N/A'));
+// Should print: "Austin"
+
+console.log(safeGet(data, 'users', 'bob', 'address', 'city').getOrElse('N/A'));
+// Should print: "N/A"
+
+console.log(safeGet(data, 'users', 'charlie', 'address').getOrElse('N/A'));
+// Should print: "N/A"</textarea>
+        <div class="code-actions">
+          <button class="btn btn-check" onclick="checkExercise('fm1')">✓ Check</button>
+          <button class="btn btn-hint" onclick="showHint('fm1')">💡 Hint</button>
+          <button class="btn btn-reset" onclick="resetCode('fm-exercise1')">↺ Reset</button>
+        </div>
+        <div class="code-output" id="fm-exercise1-output"></div>
+        <div class="feedback" id="fm1-feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="functors-quiz">
+    <div class="card"><h2>❓ Quiz: Functors & Monads</h2></div>
+    <div id="functors-quiz-container"></div>
+    <div class="quiz-score" id="functors-quiz-score" style="display:none"></div>
+  </div>
+
+  <div class="tab-content" id="functors-pitfalls">
+    <div class="card"><h2>⚠️ Functor & Monad Pitfalls</h2></div>
+    <div class="pitfall">
+      <h4>Pitfall 1: Over-Engineering with Monads</h4>
+      <p>Don't use monads for simple cases where plain JS works fine. Use them when they genuinely simplify your code.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Overkill</div>
+          <pre><code>// Just use optional chaining!
+Maybe(user)
+  .flatMap(u => Maybe(u.name))
+  .map(n => n.toUpperCase())
+  .getOrElse('Anon');</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Simple JS</div>
+          <pre><code>// Modern JS has optional chaining
+(user?.name?.toUpperCase()) ?? 'Anon';
+
+// Use Maybe when building
+// composable pipelines</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="pitfall">
+      <h4>Pitfall 2: Forgetting to Unwrap (fold/getOrElse)</h4>
+      <p>A Maybe or Either wraps your value. You need to eventually unwrap it with <code>fold</code> or <code>getOrElse</code> at the boundary of your application.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Still wrapped</div>
+          <pre><code>const name = Maybe(user)
+  .map(u => u.name);
+// name is Maybe, not a string!
+element.textContent = name; // [object]</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Unwrapped</div>
+          <pre><code>const name = Maybe(user)
+  .map(u => u.name)
+  .getOrElse('Anonymous');
+// name is a string ✅
+element.textContent = name;</code></pre>
+        </div>
+      </div>
+    </div>
+    <div class="pitfall">
+      <h4>Pitfall 3: Using map When You Need flatMap</h4>
+      <p>If your mapping function returns a wrapped value, use <code>flatMap</code> to avoid nesting.</p>
+      <div class="do-dont">
+        <div class="dont">
+          <div class="label">❌ Nested</div>
+          <pre><code>Maybe(5)
+  .map(x => Maybe(x * 2))
+// Result: Maybe(Maybe(10)) 😱
+// Double-wrapped!</code></pre>
+        </div>
+        <div class="do">
+          <div class="label">✅ Flat</div>
+          <pre><code>Maybe(5)
+  .flatMap(x => Maybe(x * 2))
+// Result: Maybe(10) ✅
+// Properly flat!</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== FINAL CHALLENGE ====== -->
+<div class="section" id="sec-final">
+  <div class="chapter-hero">
+    <h1>🏆 Final Challenge</h1>
+    <p>Combine everything you've learned!</p>
+  </div>
+
+  <div class="card">
+    <h2>The Ultimate FP Challenge</h2>
+    <p>Build a complete data processing system using <span class="highlight">pure functions</span>, <span class="highlight">immutability</span>, <span class="highlight">composition</span>, and <span class="highlight">Maybe monads</span>. Process a list of orders and generate a summary.</p>
+  </div>
+
+  <div class="card">
+    <div class="code-playground">
+      <div class="code-header"><div class="dots"><span></span><span></span><span></span></div><div class="title">final-challenge.js</div></div>
+      <textarea class="code-editor" id="final-exercise" style="min-height:300px">const pipe = (...fns) => x => fns.reduce((v, f) => f(v), x);
+
+const Maybe = val => (val == null) 
+  ? { map: f => Maybe(null), flatMap: f => Maybe(null), getOrElse: d => d }
+  : { map: f => Maybe(f(val)), flatMap: f => f(val), getOrElse: d => val };
+
+const orders = [
+  { id: 1, customer: 'Alice', items: [{name:'Laptop',price:999,qty:1}], status:'completed', discount: 0.1 },
+  { id: 2, customer: 'Bob', items: [{name:'Phone',price:699,qty:2},{name:'Case',price:29,qty:2}], status:'completed', discount: null },
+  { id: 3, customer: 'Carol', items: [{name:'Tablet',price:499,qty:1}], status:'pending', discount: 0.05 },
+  { id: 4, customer: 'Alice', items: [{name:'Mouse',price:49,qty:3}], status:'completed', discount: 0.2 },
+  { id: 5, customer: null, items: [], status:'cancelled', discount: null }
+];
+
+// TODO: Implement these PURE functions:
+
+// 1. Filter to only completed orders
+const getCompleted = orders => orders; // fix me
+
+// 2. Calculate order total (sum of price*qty for all items)
+const calcOrderTotal = order => 0; // fix me
+
+// 3. Apply discount using Maybe (discount might be null)
+const applyDiscount = order => order; // fix me — return new order with 'total' property
+
+// 4. Get customer name safely using Maybe
+const getCustomerName = order => 'Unknown'; // fix me
+
+// 5. Build the pipeline
+const processOrders = pipe(
+  // your pipeline steps here
+);
+
+// Expected output: Array of { customer, total } for completed orders
+// with discounts applied where available
+const result = processOrders(orders);
+console.log('Processed Orders:');
+console.log(JSON.stringify(result, null, 2));</textarea>
+      <div class="code-actions">
+        <button class="btn btn-check" onclick="checkExercise('final')">✓ Check Solution</button>
+        <button class="btn btn-hint" onclick="showHint('final')">💡 Hint</button>
+        <button class="btn btn-run" onclick="runCode('final-exercise')">▶ Run</button>
+        <button class="btn btn-reset" onclick="resetCode('final-exercise')">↺ Reset</button>
+      </div>
+      <div class="code-output" id="final-exercise-output"></div>
+      <div class="feedback" id="final-feedback"></div>
+    </div>
+  </div>
+
+  <div class="chapter-complete" id="finalComplete" style="display:none">
+    <div class="big-check">🎉</div>
+    <h2>Congratulations! You've Mastered FP!</h2>
+    <p>You now understand pure functions, immutability, composition, and functors/monads. Go crush those interviews! 🚀</p>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+// ========== STATE ==========
+const state = {
+  currentSection: 'welcome',
+  xp: 0,
+  completed: new Set(),
+  quizScores: {},
+  codeOriginals: {}
+};
+
+// ========== NAVIGATION ==========
+function goTo(section) {
+  state.currentSection = section;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-' + section).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('active');
+    if (n.dataset.section === section) n.classList.add('active');
+  });
+  document.querySelector('.sidebar').classList.remove('open');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function switchTab(section, tab) {
+  const parent = document.getElementById('sec-' + section);
+  parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tabContent = document.getElementById(section + '-' + tab);
+  if (tabContent) tabContent.classList.add('active');
+  const tabs = parent.querySelectorAll('.tab');
+  const tabNames = ['learn','examples','exercise','quiz','pitfalls'];
+  const idx = tabNames.indexOf(tab);
+  if (idx >= 0 && tabs[idx]) tabs[idx].classList.add('active');
+}
+
+// ========== CODE RUNNER ==========
+function runCode(id) {
+  const editor = document.getElementById(id);
+  const outputEl = document.getElementById(id + '-output');
+  const code = editor.value;
+  const logs = [];
+
+  const customConsole = {
+    log: (...args) => logs.push(args.map(a => {
+      if (a === undefined) return 'undefined';
+      if (a === null) return 'null';
+      if (typeof a === 'object') {
+        try { return JSON.stringify(a); } catch(e) { return String(a); }
+      }
+      return String(a);
+    }).join(' ')),
+    error: (...args) => logs.push('ERROR: ' + args.join(' ')),
+    warn: (...args) => logs.push('WARN: ' + args.join(' '))
+  };
+
+  try {
+    const fn = new Function('console', code);
+    const result = fn(customConsole);
+    let output = '';
+    if (logs.length) {
+      output = logs.map(l => '<div class="log">&gt; ' + escapeHtml(l) + '</div>').join('');
+    }
+    if (result !== undefined) {
+      output += '<div class="result">← ' + escapeHtml(String(result)) + '</div>';
+    }
+    outputEl.innerHTML = output || '<div class="log" style="color:var(--text2)">(No output)</div>';
+  } catch (e) {
+    let output = logs.map(l => '<div class="log">&gt; ' + escapeHtml(l) + '</div>').join('');
+    output += '<div class="error">❌ ' + escapeHtml(e.message) + '</div>';
+    outputEl.innerHTML = output;
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function resetCode(id) {
+  const editor = document.getElementById(id);
+  if (state.codeOriginals[id]) {
+    editor.value = state.codeOriginals[id];
+  }
+  const outputEl = document.getElementById(id + '-output');
+  if (outputEl) outputEl.innerHTML = '<span class="label">Output will appear here...</span>';
+}
+
+// Save originals
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.code-editor').forEach(ed => {
+    state.codeOriginals[ed.id] = ed.value;
+  });
+  initQuizzes();
+});
+
+// Tab support in editors
+document.addEventListener('keydown', function(e) {
+  if (e.target.classList.contains('code-editor') && e.key === 'Tab') {
+    e.preventDefault();
+    const s = e.target.selectionStart;
+    e.target.value = e.target.value.substring(0, s) + '  ' + e.target.value.substring(e.target.selectionEnd);
+    e.target.selectionStart = e.target.selectionEnd = s + 2;
+  }
+});
+
+// ========== XP & PROGRESS ==========
+function addXP(amount) {
+  state.xp += amount;
+  document.getElementById('xpBadge').textContent = `⚡ ${state.xp} XP`;
+  document.getElementById('xpBadge').style.transform = 'scale(1.3)';
+  setTimeout(() => document.getElementById('xpBadge').style.transform = 'scale(1)', 300);
+  updateProgress();
+}
+
+function markComplete(section) {
+  if (state.completed.has(section)) return;
+  state.completed.add(section);
+  const nav = document.querySelector(`.nav-item[data-section="${section}"]`);
+  if (nav) nav.classList.add('completed');
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = 5;
+  const done = state.completed.size;
+  const pct = (done / total) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// ========== EXERCISES ==========
+function checkExercise(id) {
+  const checks = {
+    pure1: () => {
+      const code = document.getElementById('pure-exercise1').value;
+      const logs = [];
+      const cc = { log: (...a) => logs.push(a.join(' ')), error: () => {}, warn: () => {} };
+      try {
+        const fn = new Function('console', code);
+        fn(cc);
+        const hasReturn = /return\s/.test(code.split('function greetUserPure')[1] || '');
+        const noMutation = !/user\.\w+\s*=/.test(code.split('function greetUserPure')[1] || '') || /\.\.\.user/.test(code);
+        const hasParams = /greetUserPure\s*\(\s*greeting\s*,\s*user\s*\)/.test(code);
+        const output = logs.join('|');
+        const correct = output.includes('Hello') && output.includes('Alice') && !output.includes('messageCount') && hasReturn;
+        return correct;
+      } catch(e) { return false; }
+    },
+    pure2: () => {
+      const code = document.getElementById('pure-exercise2').value;
+      const logs = [];
+      const cc = { log: (...a) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ')), error: () => {}, warn: () => {} };
+      try {
+        new Function('console', code)(cc);
+        const output = logs.join('|');
+        const hasDiscounted = output.includes('800') || output.includes('400') || output.includes('240');
+        const hasOriginal = output.includes('1000') && output.includes('500') && output.includes('300');
+        return hasDiscounted && hasOriginal;
+      } catch(e) { return false; }
+    },
+    imm1: () => {
+      const code = document.getElementById('imm-exercise1').value;
+      const logs = [];
+      const cc = { log: (...a) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ')), error: () => {}, warn: () => {} };
+      try {
+        new Function('console', code)(cc);
+        const output = logs.join('|');
+        return output.includes('light') && output.includes('dark') && output.includes('6') && output.includes('5');
+      } catch(e) { return false; }
+    },
+    comp1: () => {
+      const code = document.getElementById('comp-exercise1').value;
+      const logs = [];
+      const cc = { log: (...a) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ')), error: () => {}, warn: () => {} };
+      try {
+        new Function('console', code)(cc);
+        const output = logs.join('|');
+        return output.includes('#') && (output.includes('Hello') || output.includes('hello')) && output.includes('...');
+      } catch(e) { return false; }
+    },
+    fm1: () => {
+      const code = document.getElementById('fm-exercise1').value;
+      const logs = [];
+      const cc = { log: (...a) => logs.push(a.join(' ')), error: () => {}, warn: () => {} };
+      try {
+        new Function('console', code)(cc);
+        const output = logs.join('|');
+        return output.includes('Austin') && output.includes('N/A');
+      } catch(e) { return false; }
+    },
+    final: () => {
+      const code = document.getElementById('final-exercise').value;
+      const logs = [];
+      const cc = { log: (...a) => logs.push(a.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ')), error: () => {}, warn: () => {} };
+      try {
+        new Function('console', code)(cc);
+        const output = logs.join(' ');
+        return output.includes('Alice') && (output.includes('899') || output.includes('total'));
+      } catch(e) { return false; }
+    }
+  };
+
+  const feedbackEl = document.getElementById(id + '-feedback');
+  const edId = {
+    pure1: 'pure-exercise1', pure2: 'pure-exercise2',
+    imm1: 'imm-exercise1', comp1: 'comp-exercise1',
+    fm1: 'fm-exercise1', final: 'final-exercise'
+  }[id];
+
+  runCode(edId);
+
+  if (checks[id] && checks[id]()) {
+    feedbackEl.className = 'feedback show success';
+    feedbackEl.innerHTML = '🎉 Correct! Great job!';
+    addXP(25);
+    const sectionMap = { pure1:'pure', pure2:'pure', imm1:'immutability', comp1:'composition', fm1:'functors', final:'final' };
+    markComplete(sectionMap[id]);
+    if (id === 'final') {
+      document.getElementById('finalComplete').style.display = 'block';
+      launchConfetti();
+    }
+  } else {
+    feedbackEl.className = 'feedback show error';
+    feedbackEl.innerHTML = '❌ Not quite right. Check the output and try again!';
+  }
+}
+
+function showHint(id) {
+  const hints = {
+    pure1: '💡 Hint: greetUserPure should take (greeting, user) and return `${greeting}, ${user.name}!` — don\'t modify user or use external variables!',
+    pure2: '💡 Hint: Use .map() to create new product objects with { ...product, price: product.price * (1 - discount) }',
+    imm1: '💡 Hint: Spread at every level! { ...state, user: { ...state.user, preferences: { ...state.user.preferences, theme: newTheme } } }',
+    comp1: '💡 Hint: removeExtraSpaces: use .replace(/\\s+/g, " ").trim(). capitalize: split by space, map each word. truncate: use .slice(0, max) + (str.length > max ? "..." : "")',
+    fm1: '💡 Hint: Use keys.reduce((maybe, key) => maybe.flatMap(obj => Maybe(obj[key])), Maybe(obj))',
+    final: '💡 Hint: Pipeline: filter completed → map to add total (using calcOrderTotal + applyDiscount) → map to { customer, total } format'
+  };
+  const feedbackEl = document.getElementById(id + '-feedback');
+  feedbackEl.className = 'feedback show hint';
+  feedbackEl.innerHTML = hints[id] || '💡 Think about the core FP concepts!';
+}
+
+// ========== QUIZZES ==========
+const quizData = {
+  pure: [
+    {
+      q: 'Which function is pure?',
+      code: `A: const fn = (x) => x * 2
+B: const fn = (x) => { console.log(x); return x * 2; }
+C: const fn = () => Math.random()
+D: const fn = (x) => { arr.push(x); return arr; }`,
+      options: ['A: Doubles input', 'B: Logs then doubles', 'C: Returns random', 'D: Pushes to array'],
+      correct: 0,
+      explain: 'A is pure — same input always gives same output with no side effects. B has a side effect (console.log), C depends on external state (random), D mutates an external array.'
+    },
+    {
+      q: 'What makes this function impure?',
+      code: `let total = 0;
+const addToTotal = (x) => {
+  total += x;
+  return total;
+};`,
+      options: ['It uses let', 'It has a parameter', 'It reads and modifies external state', 'It returns a number'],
+      correct: 2,
+      explain: 'The function reads and modifies the external variable `total`. This is a side effect, and calling it with the same input gives different results each time.'
+    },
+    {
+      q: 'Which is a benefit of pure functions?',
+      options: ['They run faster than impure functions', 'They can be memoized (cached) safely', 'They don\'t need return statements', 'They can\'t throw errors'],
+      correct: 1,
+      explain: 'Since pure functions always return the same output for the same input, their results can be safely cached (memoized). They\'re not inherently faster and they can still throw errors.'
+    },
+    {
+      q: 'Is this function pure?',
+      code: `const getFullName = (user) => {
+  return user.firstName + ' ' + user.lastName;
+};`,
+      options: ['Yes — it only depends on its input', 'No — it accesses object properties', 'No — it concatenates strings', 'No — it doesn\'t modify the input'],
+      correct: 0,
+      explain: 'Yes! It only depends on its input (user) and always returns the same result for the same user object. Accessing properties is not a side effect.'
+    },
+    {
+      q: 'How would you make this function pure?',
+      code: `const formatDate = () => {
+  return new Date().toISOString();
+};`,
+      options: [
+        'Pass the date as an argument: formatDate(date)',
+        'Use const instead of let',
+        'Add a return statement',
+        'Move it inside a class'
+      ],
+      correct: 0,
+      explain: 'By passing the Date object as a parameter, the function no longer depends on when it\'s called. Same input date → same output string.'
+    }
+  ],
+  immutability: [
+    {
+      q: 'What does `const` prevent?',
+      options: ['Mutating the value', 'Reassigning the variable binding', 'Changing object properties', 'All of the above'],
+      correct: 1,
+      explain: '`const` only prevents reassigning the variable to a different value. You can still mutate objects and arrays declared with const (e.g., arr.push()).'
+    },
+    {
+      q: 'Which approach immutably removes an item from an array?',
+      code: `const arr = [1, 2, 3, 4, 5];
+// Remove item at index 2`,
+      options: [
+        'arr.splice(2, 1)',
+        'arr.filter((_, i) => i !== 2)',
+        'delete arr[2]',
+        'arr[2] = undefined'
+      ],
+      correct: 1,
+      explain: 'filter() returns a NEW array without the item at index 2. splice() mutates the original, delete leaves a hole, and direct assignment mutates.'
+    },
+    {
+      q: 'What\'s wrong with this "immutable" update?',
+      code: `const user = { name: 'Alice', address: { city: 'Austin' } };
+const updated = { ...user };
+updated.address.city = 'Dallas';`,
+      options: [
+        'Nothing — it\'s correctly immutable',
+        'Spread is shallow — address is shared by reference',
+        'You can\'t spread objects',
+        'You need Object.assign instead'
+      ],
+      correct: 1,
+      explain: 'Spread only does a shallow copy! `updated.address` and `user.address` point to the SAME object. Changing one changes both. You need to spread nested objects too.'
+    },
+    {
+      q: 'Which array methods MUTATE the original array?',
+      options: [
+        'map, filter, reduce',
+        'push, sort, reverse',
+        'slice, concat, flat',
+        'map, flatMap, find'
+      ],
+      correct: 1,
+      explain: 'push(), sort(), and reverse() all mutate the original array. map/filter/reduce/slice/concat/flat all return new arrays.'
+    }
+  ],
+  composition: [
+    {
+      q: 'What does compose(f, g)(x) equal?',
+      options: ['f(x) + g(x)', 'g(f(x))', 'f(g(x))', 'f(x)(g(x))'],
+      correct: 2,
+      explain: 'compose applies right-to-left: first g, then f. So compose(f, g)(x) = f(g(x)).'
+    },
+    {
+      q: 'What does pipe(double, add1)(3) return?',
+      code: `const double = x => x * 2;
+const add1 = x => x + 1;`,
+      options: ['6', '7', '8', '4'],
+      correct: 1,
+      explain: 'pipe applies left-to-right: double(3) = 6, then add1(6) = 7.'
+    },
+    {
+      q: 'What is the correct implementation of pipe?',
+      options: [
+        'const pipe = (...fns) => x => fns.reduceRight((v, f) => f(v), x)',
+        'const pipe = (...fns) => x => fns.reduce((v, f) => f(v), x)',
+        'const pipe = (...fns) => fns.reduce((v, f) => f(v))',
+        'const pipe = (f, g) => x => f(g(x))'
+      ],
+      correct: 1,
+      explain: 'pipe uses reduce (left-to-right). compose uses reduceRight (right-to-left). The initial value is x (the input).'
+    },
+    {
+      q: 'What is "point-free" style?',
+      options: [
+        'Functions that take no arguments',
+        'Defining functions without explicitly mentioning arguments',
+        'Functions that return undefined',
+        'Using arrow functions without braces'
+      ],
+      correct: 1,
+      explain: 'Point-free (or tacit) programming defines functions without explicitly mentioning their arguments. E.g., `const shout = pipe(toUpper, addExclaim)` instead of `const shout = str => addExclaim(toUpper(str))`.'
+    }
+  ],
+  functors: [
+    {
+      q: 'What makes something a Functor?',
+      options: [
+        'It has a reduce method',
+        'It has a map method that preserves structure',
+        'It can be iterated with for...of',
+        'It implements Symbol.iterator'
+      ],
+      correct: 1,
+      explain: 'A Functor is any type that implements a map method which applies a function to its contained value(s) while preserving the container\'s structure.'
+    },
+    {
+      q: 'What does a Monad add on top of a Functor?',
+      options: [
+        'A filter method',
+        'A reduce method',
+        'A flatMap (chain/bind) method',
+        'A forEach method'
+      ],
+      correct: 2,
+      explain: 'A Monad adds flatMap (also called chain or bind) which applies a function that returns a wrapped value and flattens the result — avoiding nested wrappers.'
+    },
+    {
+      q: 'What problem does the Maybe monad solve?',
+      options: [
+        'Async operations',
+        'Null/undefined safety',
+        'Type checking',
+        'Memory management'
+      ],
+      correct: 1,
+      explain: 'Maybe handles null/undefined safely by short-circuiting operations when a value is Nothing, preventing "Cannot read property of null/undefined" errors.'
+    },
+    {
+      q: 'When should you use flatMap instead of map?',
+      options: [
+        'When you want to filter results',
+        'When your mapping function returns a wrapped/container value',
+        'When working with strings',
+        'When you need better performance'
+      ],
+      correct: 1,
+      explain: 'Use flatMap when your mapping function itself returns a container (Maybe, Array, etc.) to avoid nested containers. map(fn) → Box(Box(val)), flatMap(fn) → Box(val).'
+    },
+    {
+      q: 'Which of these is a Functor you use daily in JavaScript?',
+      options: ['Object', 'Number', 'Array', 'String'],
+      correct: 2,
+      explain: 'Array is a functor because it has a map method that transforms values inside while preserving the Array structure. [1,2,3].map(x => x*2) → [2,4,6].'
+    }
+  ]
+};
+
+function initQuizzes() {
+  Object.keys(quizData).forEach(section => {
+    const container = document.getElementById(section + '-quiz-container');
+    if (!container) return;
+    const questions = quizData[section];
+    let html = '';
+    questions.forEach((q, qi) => {
+      html += `<div class="quiz-q" id="${section}-q${qi}">
+        <h4>Question ${qi + 1}: ${q.q}</h4>
+        ${q.code ? `<pre><code>${escapeHtml(q.code)}</code></pre>` : ''}
+        <div class="quiz-options">
+          ${q.options.map((opt, oi) => `
+            <div class="quiz-opt" onclick="answerQuiz('${section}',${qi},${oi})" id="${section}-q${qi}-o${oi}">
+              <span class="marker">${String.fromCharCode(65 + oi)}</span>
+              <span>${escapeHtml(opt)}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="quiz-explain" id="${section}-q${qi}-explain"></div>
+      </div>`;
+    });
+    html += `<div style="text-align:center;margin-top:20px">
+      <button class="btn btn-check" onclick="scoreQuiz('${section}')">📊 Show Score</button>
+    </div>`;
+    container.innerHTML = html;
+  });
+}
+
+function answerQuiz(section, qi, oi) {
+  const qKey = `${section}-q${qi}`;
+  if (document.getElementById(qKey).dataset.answered) return;
+  document.getElementById(qKey).dataset.answered = 'true';
+
+  const correct = quizData[section][qi].correct;
+  const explain = quizData[section][qi].explain;
+
+  const opts = document.querySelectorAll(`#${qKey} .quiz-opt`);
+  opts.forEach((opt, i) => {
+    if (i === correct) opt.classList.add('correct');
+    if (i === oi && i !== correct) opt.classList.add('wrong');
+    opt.style.pointerEvents = 'none';
+  });
+
+  const explainEl = document.getElementById(qKey + '-explain');
+  explainEl.textContent = explain;
+  if (oi === correct) {
+    explainEl.className = 'quiz-explain show correct-ex';
+    addXP(10);
+  } else {
+    explainEl.className = 'quiz-explain show wrong-ex';
+  }
+}
+
+function scoreQuiz(section) {
+  const questions = quizData[section];
+  let correct = 0;
+  questions.forEach((q, qi) => {
+    const el = document.getElementById(`${section}-q${qi}`);
+    if (el.dataset.answered) {
+      const correctOpt = document.getElementById(`${section}-q${qi}-o${q.correct}`);
+      if (correctOpt.classList.contains('correct') && !document.querySelector(`#${section}-q${qi} .quiz-opt.wrong`)) {
+        correct++;
+      }
+    }
+  });
+  const scoreEl = document.getElementById(section + '-quiz-score');
+  const pct = Math.round((correct / questions.length) * 100);
+  scoreEl.style.display = 'block';
+  scoreEl.innerHTML = `
+    <div class="big">${correct}/${questions.length}</div>
+    <p style="color:var(--text2);margin-top:8px">${pct}% — ${pct >= 80 ? '🌟 Excellent!' : pct >= 60 ? '👍 Good job!' : '📚 Keep studying!'}</p>
+  `;
+  if (pct >= 60) markComplete(section);
+  scoreEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ========== PIPELINE ANIMATION ==========
+function animatePipeline() {
+  const boxes = [document.getElementById('pipe1'), document.getElementById('pipe2'), document.getElementById('pipe3')];
+  const data = document.getElementById('pipeData');
+  const values = ['" hello world "', '"hello world"', '"HELLO WORLD"', '"HELLO WORLD!"'];
+
+  boxes.forEach(b => b.classList.remove('active'));
+  data.textContent = values[0];
+
+  let step = 0;
+  const interval = setInterval(() => {
+    if (step < 3) {
+      boxes[step].classList.add('active');
+      data.textContent = values[step + 1];
+      step++;
+    } else {
+      clearInterval(interval);
+      setTimeout(() => boxes.forEach(b => b.classList.remove('active')), 2000);
+    }
+  }, 800);
+}
+
+// ========== CONFETTI ==========
+function launchConfetti() {
+  const colors = ['#00d4ff', '#7c3aed', '#10b981', '#f59e0b', '#ec4899', '#ef4444'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.top = '-10px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.width = Math.random() * 10 + 5 + 'px';
+    piece.style.height = Math.random() * 10 + 5 + 'px';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+    document.body.appendChild(piece);
+
+    const duration = Math.random() * 2 + 1.5;
+    const xDrift = (Math.random() - 0.5) * 200;
+    piece.animate([
+      { transform: `translateY(0) translateX(0) rotate(0deg)`, opacity: 1 },
+      { transform: `translateY(100vh) translateX(${xDrift}px) rotate(${Math.random()*720}deg)`, opacity: 0 }
+    ], { duration: duration * 1000, easing: 'cubic-bezier(.25,.46,.45,.94)' })
+    .onfinish = () => piece.remove();
+  }
+}
+
+// ========== INIT ==========
+document.querySelectorAll('.code-editor').forEach(ed => {
+  state.codeOriginals[ed.id] = ed.value;
+});
+initQuizzes();
+</script>
+</body>
+</html>

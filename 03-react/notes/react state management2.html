@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Mastery: Advanced Patterns Bootcamp</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Animations */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8); }
+        }
+        
+        @keyframes slide-in {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes re-render {
+            0% { background-color: rgba(239, 68, 68, 0.2); }
+            100% { background-color: transparent; }
+        }
+        
+        .animate-re-render { animation: re-render 0.5s ease-out; }
+        .animate-slide-in { animation: slide-in 0.3s ease-out; }
+        
+        .code-editor {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            caret-color: #fff;
+        }
+        
+        .syntax-keyword { color: #c586c0; }
+        .syntax-string { color: #ce9178; }
+        .syntax-function { color: #dcdcaa; }
+        .syntax-comment { color: #6a9955; }
+        .syntax-variable { color: #9cdcfe; }
+        
+        /* Component Tree Visualization */
+        .tree-node {
+            transition: all 0.3s ease;
+        }
+        .tree-node:hover {
+            transform: scale(1.05);
+        }
+        .tree-connector {
+            stroke-dasharray: 5,5;
+            animation: dash 20s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 100; }
+        }
+        
+        /* Interactive Badge */
+        .badge-unlock {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: transform 0.2s;
+        }
+        .badge-unlock:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useContext, useReducer, useMemo, useCallback, createContext, memo } = React;
+        
+        // --- Icons Component ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                Book: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+                Play: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+                Alert: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+                Check: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>,
+                X: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+                Zap: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+                Layers: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
+                Cpu: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>,
+                Trophy: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            };
+            return icons[name] || null;
+        };
+
+        // --- Data & Content ---
+        const courseModules = [
+            {
+                id: 'context',
+                title: 'Context API Mastery',
+                icon: 'Layers',
+                description: 'Escape prop drilling hell with React Context',
+                color: 'blue',
+                sections: ['theory', 'demo', 'mistakes', 'exercise']
+            },
+            {
+                id: 'reducer',
+                title: 'useReducer + Context',
+                icon: 'Cpu',
+                description: 'Scale state management without Redux',
+                color: 'purple',
+                sections: ['theory', 'demo', 'mistakes', 'quiz']
+            },
+            {
+                id: 'performance',
+                title: 'Performance Optimization',
+                icon: 'Zap',
+                description: 'useMemo, useCallback & React.memo deep dive',
+                color: 'yellow',
+                sections: ['theory', 'demo', 'mistakes', 'challenge']
+            },
+            {
+                id: 'hooks',
+                title: 'Custom Hooks',
+                icon: 'Layers',
+                description: 'Extract logic, reuse everywhere',
+                color: 'green',
+                sections: ['theory', 'demo', 'mistakes', 'build']
+            }
+        ];
+
+        // --- Components ---
+
+        // 1. Context API Visualizer
+        const ContextVisualizer = () => {
+            const [useContextEnabled, setUseContextEnabled] = useState(false);
+            const [highlightedNode, setHighlightedNode] = useState(null);
+            
+            return (
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-blue-400">Prop Drilling vs Context</h3>
+                        <button 
+                            onClick={() => setUseContextEnabled(!useContextEnabled)}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                                useContextEnabled 
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                        >
+                            {useContextEnabled ? '🔥 Using Context' : '⚠️ Prop Drilling'}
+                        </button>
+                    </div>
+
+                    <div className="relative h-96 bg-gray-900 rounded-lg overflow-hidden">
+                        {/* SVG Connectors */}
+                        <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                            {!useContextEnabled ? (
+                                // Prop drilling lines (long)
+                                <>
+                                    <line x1="50%" y1="15%" x2="25%" y2="40%" stroke="#4b5563" strokeWidth="2" className="tree-connector" />
+                                    <line x1="50%" y1="15%" x2="75%" y2="40%" stroke="#4b5563" strokeWidth="2" className="tree-connector" />
+                                    <line x1="25%" y1="40%" x2="25%" y2="65%" stroke="#4b5563" strokeWidth="2" />
+                                    <line x1="75%" y1="40%" x2="75%" y2="65%" stroke="#4b5563" strokeWidth="2" />
+                                    <line x1="25%" y1="65%" x2="25%" y2="90%" stroke="#ef4444" strokeWidth="2" strokeDasharray="4" />
+                                    <line x1="75%" y1="65%" x2="75%" y2="90%" stroke="#ef4444" strokeWidth="2" strokeDasharray="4" />
+                                </>
+                            ) : (
+                                // Context lines (direct)
+                                <>
+                                    <line x1="50%" y1="15%" x2="25%" y2="40%" stroke="#4b5563" strokeWidth="2" />
+                                    <line x1="50%" y1="15%" x2="75%" y2="40%" stroke="#4b5563" strokeWidth="2" />
+                                    <line x1="50%" y1="15%" x2="25%" y2="90%" stroke="#3b82f6" strokeWidth="3" className="animate-pulse" />
+                                    <line x1="50%" y1="15%" x2="75%" y2="90%" stroke="#3b82f6" strokeWidth="3" className="animate-pulse" />
+                                </>
+                            )}
+                        </svg>
+
+                        {/* Nodes */}
+                        <div className="absolute top-[10%] left-1/2 transform -translate-x-1/2">
+                            <div className={`tree-node bg-gray-800 border-2 ${useContextEnabled ? 'border-blue-500 shadow-lg shadow-blue-500/20' : 'border-gray-600'} rounded-lg p-3 w-32 text-center cursor-pointer hover:border-blue-400`}
+                                 onMouseEnter={() => setHighlightedNode('app')}
+                                 onMouseLeave={() => setHighlightedNode(null)}>
+                                <div className="text-xs text-gray-400 mb-1">App Component</div>
+                                <div className="font-mono text-sm text-blue-300">Provider</div>
+                                {useContextEnabled && <div className="text-xs text-green-400 mt-1">value={'{theme}'}</div>}
+                            </div>
+                        </div>
+
+                        {/* Middle Layer */}
+                        <div className="absolute top-[35%] left-[20%]">
+                            <div className="tree-node bg-gray-800 border border-gray-600 rounded-lg p-2 w-28 text-center opacity-50">
+                                <div className="text-xs text-gray-500">Header</div>
+                                {!useContextEnabled && <div className="text-[10px] text-red-400">props.theme →</div>}
+                            </div>
+                        </div>
+                        <div className="absolute top-[35%] right-[20%]">
+                            <div className="tree-node bg-gray-800 border border-gray-600 rounded-lg p-2 w-28 text-center opacity-50">
+                                <div className="text-xs text-gray-500">Sidebar</div>
+                                {!useContextEnabled && <div className="text-[10px] text-red-400">props.theme →</div>}
+                            </div>
+                        </div>
+
+                        {/* Deep Components */}
+                        <div className="absolute bottom-[5%] left-[20%]">
+                            <div className={`tree-node bg-gray-800 border-2 ${highlightedNode === 'app' && useContextEnabled ? 'border-blue-400 shadow-lg shadow-blue-400/30' : 'border-gray-600'} rounded-lg p-3 w-32 text-center transition-all`}>
+                                <div className="text-xs text-gray-400 mb-1">UserProfile</div>
+                                <div className="font-mono text-sm text-purple-300">useContext</div>
+                                {useContextEnabled ? (
+                                    <div className="text-xs text-green-400 mt-1">✓ Direct access</div>
+                                ) : (
+                                    <div className="text-xs text-red-400 mt-1">× Props passed</div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="absolute bottom-[5%] right-[20%]">
+                            <div className={`tree-node bg-gray-800 border-2 ${highlightedNode === 'app' && useContextEnabled ? 'border-blue-400 shadow-lg shadow-blue-400/30' : 'border-gray-600'} rounded-lg p-3 w-32 text-center transition-all`}>
+                                <div className="text-xs text-gray-400 mb-1">ThemeToggle</div>
+                                <div className="font-mono text-sm text-purple-300">useContext</div>
+                                {useContextEnabled ? (
+                                    <div className="text-xs text-green-400 mt-1">✓ Direct access</div>
+                                ) : (
+                                    <div className="text-xs text-red-400 mt-1">× Props passed</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-gray-900 rounded-lg border border-gray-700">
+                        <div className="flex items-start gap-3">
+                            <Icon name="Alert" size={20} className="text-yellow-500 mt-1" />
+                            <div>
+                                <h4 className="font-semibold text-yellow-500 mb-1">Common Pitfall: Context Splitting</h4>
+                                <p className="text-sm text-gray-400">
+                                    Don't put everything in one context! Split into <code className="bg-gray-800 px-1 rounded">ThemeContext</code>, 
+                                    <code className="bg-gray-800 px-1 rounded">UserContext</code>, etc. to prevent unnecessary re-renders.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. useReducer Flow
+        const ReducerDemo = () => {
+            const [state, dispatch] = useReducer((state, action) => {
+                switch(action.type) {
+                    case 'increment': return { count: state.count + 1, history: [...state.history, '+1'] };
+                    case 'decrement': return { count: state.count - 1, history: [...state.history, '-1'] };
+                    case 'reset': return { count: 0, history: [] };
+                    default: return state;
+                }
+            }, { count: 0, history: [] });
+
+            const [lastAction, setLastAction] = useState(null);
+
+            const handleDispatch = (type) => {
+                setLastAction(type);
+                dispatch({ type });
+                setTimeout(() => setLastAction(null), 500);
+            };
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h3 className="text-lg font-bold text-purple-400 mb-4">State Machine Visualization</h3>
+                        
+                        <div className="bg-gray-900 rounded-lg p-4 mb-4 font-mono text-sm">
+                            <div className="text-gray-500 mb-2">// Current State</div>
+                            <div className="text-blue-300">
+                                {'{'}
+                                <div className="pl-4">count: <span className="text-green-400 text-lg font-bold">{state.count}</span>,</div>
+                                <div className="pl-4">history: {JSON.stringify(state.history)}</div>
+                                {'}'}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 mb-6">
+                            <button onClick={() => handleDispatch('decrement')} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-medium transition-colors">-</button>
+                            <button onClick={() => handleDispatch('reset')} className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg font-medium transition-colors">Reset</button>
+                            <button onClick={() => handleDispatch('increment')} className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition-colors">+</button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="text-xs text-gray-500 uppercase tracking-wider">Action Log</div>
+                            <div className="h-32 bg-gray-900 rounded-lg p-3 overflow-y-auto font-mono text-sm">
+                                {state.history.length === 0 && <span className="text-gray-600 italic">No actions yet...</span>}
+                                {state.history.map((h, i) => (
+                                    <div key={i} className="text-gray-400 mb-1 flex items-center gap-2">
+                                        <span className="text-xs text-gray-600">{i + 1}.</span>
+                                        <span className={h === '+1' ? 'text-green-400' : 'text-red-400'}>{h}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h3 className="text-lg font-bold text-purple-400 mb-4">Reducer Logic</h3>
+                        <div className="code-editor rounded-lg p-4 text-sm overflow-x-auto">
+                            <pre>{`function reducer(state, action) {
+  switch(action.type) {
+    case 'increment':
+      return { 
+        count: state.count + 1,
+        history: [...state.history, '+1']
+      };
+    case 'decrement':
+      return { 
+        count: state.count - 1,
+        history: [...state.history, '-1']
+      };
+    case 'reset':
+      return { count: 0, history: [] };
+    default:
+      throw new Error('Unknown action');
+  }
+}`}</pre>
+                        </div>
+
+                        <div className="mt-4 p-4 bg-red-900/20 border border-red-800 rounded-lg">
+                            <div className="flex items-center gap-2 text-red-400 font-semibold mb-2">
+                                <Icon name="X" size={16} />
+                                <span>Never do this!</span>
+                            </div>
+                            <p className="text-sm text-gray-300">
+                                Mutating state directly: <code className="bg-gray-900 px-1 rounded text-red-300">state.count++</code> or 
+                                <code className="bg-gray-900 px-1 rounded text-red-300">state.history.push('+1')</code>
+                            </p>
+                            <p className="text-sm text-gray-400 mt-2">
+                                Always return new objects. React uses referential equality to detect changes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 3. Performance Optimization Visualizer
+        const PerformanceDemo = () => {
+            const [count, setCount] = useState(0);
+            const [text, setText] = useState('');
+            const [useOptimization, setUseOptimization] = useState(false);
+            const [renderLog, setRenderLog] = useState([]);
+
+            const addLog = (component) => {
+                setRenderLog(prev => [{ component, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 5));
+            };
+
+            // Expensive calculation
+            const expensiveValue = useMemo(() => {
+                addLog('ExpensiveComponent (calculating...)');
+                let result = 0;
+                for (let i = 0; i < 1000000; i++) result += i;
+                return result + count;
+            }, useOptimization ? [count] : [count, text]); // Intentionally broken when not optimized
+
+            const handleClick = useCallback(() => {
+                setCount(c => c + 1);
+            }, []); // Empty deps - stable reference
+
+            // Child component that re-renders unnecessarily without memo
+            const ChildComponent = ({ onClick, label }) => {
+                useEffect(() => addLog(`${label} (re-rendered)`));
+                return (
+                    <button onClick={onClick} className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors">
+                        {label}: {count}
+                    </button>
+                );
+            };
+
+            const MemoizedChild = memo(ChildComponent);
+
+            return (
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <div>
+                            <h3 className="text-lg font-bold text-yellow-400">Optimization Toggle</h3>
+                            <p className="text-sm text-gray-400">Watch how components re-render</p>
+                        </div>
+                        <button 
+                            onClick={() => setUseOptimization(!useOptimization)}
+                            className={`px-6 py-3 rounded-lg font-bold transition-all ${
+                                useOptimization 
+                                    ? 'bg-green-600 text-white shadow-lg shadow-green-500/30' 
+                                    : 'bg-red-600 text-white shadow-lg shadow-red-500/30'
+                            }`}
+                        >
+                            {useOptimization ? '✅ Optimized' : '❌ Unoptimized'}
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                            <h4 className="font-semibold mb-3 text-gray-300">Parent Controls</h4>
+                            <input 
+                                type="text" 
+                                value={text}
+                                onChange={(e) => setText(e.target.value)}
+                                placeholder="Type to trigger re-render..."
+                                className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm mb-3 text-white placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                            />
+                            <div className="text-xs text-gray-500">Typing triggers parent re-render</div>
+                        </div>
+
+                        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                            <h4 className="font-semibold mb-3 text-gray-300">Child Components</h4>
+                            <div className="space-y-2">
+                                <div className="p-2 bg-gray-900 rounded border border-red-800/30">
+                                    <div className="text-xs text-red-400 mb-1">Without memo</div>
+                                    <ChildComponent onClick={handleClick} label="Regular Child" />
+                                </div>
+                                {useOptimization && (
+                                    <div className="p-2 bg-gray-900 rounded border border-green-800/30 animate-slide-in">
+                                        <div className="text-xs text-green-400 mb-1">With React.memo</div>
+                                        <MemoizedChild onClick={handleClick} label="Memoized Child" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                            <h4 className="font-semibold mb-3 text-gray-300">Render Log</h4>
+                            <div className="space-y-1 text-xs font-mono">
+                                {renderLog.map((log, i) => (
+                                    <div key={i} className="flex justify-between text-gray-400">
+                                        <span className={log.component.includes('Expensive') ? 'text-yellow-400' : 'text-blue-400'}>
+                                            {log.component}
+                                        </span>
+                                        <span className="text-gray-600">{log.time}</span>
+                                    </div>
+                                ))}
+                                {renderLog.length === 0 && <span className="text-gray-600 italic">No renders yet...</span>}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-700">
+                        <h4 className="font-semibold text-yellow-400 mb-4">useMemo & useCallback Rules</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div className="space-y-2">
+                                <div className="flex items-start gap-2">
+                                    <Icon name="Check" size={16} className="text-green-500 mt-1" />
+                                    <span className="text-gray-300">Use for expensive calculations (filtering large arrays)</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <Icon name="Check" size={16} className="text-green-500 mt-1" />
+                                    <span className="text-gray-300">Use when object identity matters (dependency arrays)</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="flex items-start gap-2">
+                                    <Icon name="X" size={16} className="text-red-500 mt-1" />
+                                    <span className="text-gray-300">Don't use for simple calculations (overhead {'>'} benefit)</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <Icon name="X" size={16} className="text-red-500 mt-1" />
+                                    <span className="text-gray-300">Don't forget dependency arrays! (stale closures)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. Custom Hooks Builder
+        const CustomHooksDemo = () => {
+            const [activeHook, setActiveHook] = useState('useLocalStorage');
+
+            const hooks = {
+                useLocalStorage: {
+                    name: 'useLocalStorage',
+                    description: 'Persist state to localStorage',
+                    code: `function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      return initialValue;
+    }
+  });
+
+  const setValue = (value) => {
+    try {
+      setStoredValue(value);
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue];
+}`,
+                    demo: () => {
+                        const [name, setName] = useState('React Developer');
+                        const [saved, setSaved] = useState(false);
+                        
+                        useEffect(() => {
+                            const saved = localStorage.getItem('demo-name');
+                            if (saved) setName(saved);
+                        }, []);
+
+                        const handleSave = () => {
+                            localStorage.setItem('demo-name', name);
+                            setSaved(true);
+                            setTimeout(() => setSaved(false), 2000);
+                        };
+
+                        return (
+                            <div className="space-y-4">
+                                <input 
+                                    type="text" 
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                                />
+                                <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                    {saved ? 'Saved to localStorage!' : 'Save to localStorage'}
+                                </button>
+                                <div className="text-xs text-gray-500 font-mono">Key: "demo-name"</div>
+                            </div>
+                        );
+                    }
+                },
+                useFetch: {
+                    name: 'useFetch',
+                    description: 'Data fetching with loading & error states',
+                    code: `function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(url);
+        const json = await response.json();
+        setData(json);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+}`,
+                    demo: () => {
+                        const [loading, setLoading] = useState(false);
+                        const [data, setData] = useState(null);
+                        
+                        const fetchData = () => {
+                            setLoading(true);
+                            setTimeout(() => {
+                                setData({ id: 1, title: "React Patterns", author: "Dev Master" });
+                                setLoading(false);
+                            }, 1500);
+                        };
+
+                        return (
+                            <div className="space-y-4">
+                                <button onClick={fetchData} disabled={loading} className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                                    {loading ? 'Loading...' : 'Fetch Data'}
+                                </button>
+                                {data && (
+                                    <div className="bg-gray-900 p-3 rounded-lg font-mono text-sm text-green-400">
+                                        {JSON.stringify(data, null, 2)}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+                }
+            };
+
+            const CurrentDemo = hooks[activeHook].demo;
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <div className="flex gap-2 mb-4">
+                            {Object.keys(hooks).map(hook => (
+                                <button
+                                    key={hook}
+                                    onClick={() => setActiveHook(hook)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        activeHook === hook 
+                                            ? 'bg-green-600 text-white' 
+                                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                                >
+                                    {hooks[hook].name}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 className="text-lg font-bold text-green-400 mb-2">{hooks[activeHook].name}</h3>
+                            <p className="text-gray-400 mb-4">{hooks[activeHook].description}</p>
+                            <div className="code-editor rounded-lg p-4 text-xs overflow-x-auto">
+                                <pre>{hooks[activeHook].code}</pre>
+                            </div>
+                        </div>
+
+                        <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
+                            <div className="flex items-center gap-2 text-yellow-500 font-semibold mb-2">
+                                <Icon name="Alert" size={16} />
+                                <span>Naming Convention</span>
+                            </div>
+                            <p className="text-sm text-gray-300">
+                                Always start with <code className="bg-gray-800 px-1 rounded">use</code>. This tells React it's a hook 
+                                and enforces the Rules of Hooks (only call at top level, only from React functions).
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h3 className="text-lg font-bold text-gray-300 mb-4">Live Demo</h3>
+                        <div className="bg-gray-900 rounded-lg p-6 min-h-[200px]">
+                            <CurrentDemo />
+                        </div>
+                        
+                        <div className="mt-6 space-y-3">
+                            <h4 className="font-semibold text-gray-400">Exercise: Build useToggle</h4>
+                            <p className="text-sm text-gray-500 mb-3">Create a hook that manages boolean state with toggle functionality:</p>
+                            <div className="code-editor rounded-lg p-3 text-sm">
+                                <div className="text-gray-500">// Your implementation here</div>
+                                <div className="text-purple-400">function <span className="text-yellow-300">useToggle</span>(initialValue = false) {'{'}</div>
+                                <div className="pl-4 text-gray-400">// Hint: Return [value, toggle]</div>
+                                <div>{'}'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Quiz Component
+        const Quiz = ({ questions, onComplete }) => {
+            const [current, setCurrent] = useState(0);
+            const [selected, setSelected] = useState(null);
+            const [score, setScore] = useState(0);
+            const [showExplanation, setShowExplanation] = useState(false);
+
+            const handleAnswer = (index) => {
+                setSelected(index);
+                setShowExplanation(true);
+                if (index === questions[current].correct) {
+                    setScore(s => s + 1);
+                }
+            };
+
+            const next = () => {
+                if (current < questions.length - 1) {
+                    setCurrent(c => c + 1);
+                    setSelected(null);
+                    setShowExplanation(false);
+                } else {
+                    onComplete(score + (selected === questions[current].correct ? 1 : 0));
+                }
+            };
+
+            const q = questions[current];
+
+            return (
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 max-w-2xl mx-auto">
+                    <div className="flex justify-between items-center mb-6">
+                        <span className="text-sm text-gray-400">Question {current + 1} of {questions.length}</span>
+                        <span className="text-sm font-mono text-blue-400">Score: {score}</span>
+                    </div>
+
+                    <h3 className="text-xl font-bold mb-6 text-gray-100">{q.question}</h3>
+
+                    <div className="space-y-3 mb-6">
+                        {q.options.map((opt, i) => (
+                            <button
+                                key={i}
+                                onClick={() => !showExplanation && handleAnswer(i)}
+                                disabled={showExplanation}
+                                className={`w-full text-left p-4 rounded-lg border transition-all ${
+                                    selected === i 
+                                        ? i === q.correct 
+                                            ? 'bg-green-900/30 border-green-600 text-green-300' 
+                                            : 'bg-red-900/30 border-red-600 text-red-300'
+                                        : showExplanation && i === q.correct
+                                            ? 'bg-green-900/30 border-green-600 text-green-300'
+                                            : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600'
+                                }`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span>{opt}</span>
+                                    {selected === i && (
+                                        i === q.correct 
+                                            ? <Icon name="Check" size={20} className="text-green-500" />
+                                            : <Icon name="X" size={20} className="text-red-500" />
+                                    )}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+
+                    {showExplanation && (
+                        <div className="mb-6 p-4 bg-blue-900/20 border border-blue-800 rounded-lg animate-slide-in">
+                            <h4 className="font-semibold text-blue-400 mb-2">Explanation</h4>
+                            <p className="text-sm text-gray-300">{q.explanation}</p>
+                        </div>
+                    )}
+
+                    {showExplanation && (
+                        <button 
+                            onClick={next}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
+                        >
+                            {current < questions.length - 1 ? 'Next Question' : 'See Results'}
+                        </button>
+                    )}
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [activeModule, setActiveModule] = useState('context');
+            const [activeTab, setActiveTab] = useState('theory');
+            const [completedQuizzes, setCompletedQuizzes] = useState([]);
+            const [showConfetti, setShowConfetti] = useState(false);
+
+            const quizQuestions = {
+                context: [
+                    {
+                        question: "When should you NOT use Context?",
+                        options: [
+                            "Passing data to deeply nested components",
+                            "Managing global theme settings",
+                            "Passing props only 2-3 levels down",
+                            "User authentication state"
+                        ],
+                        correct: 2,
+                        explanation: "Context adds complexity. For shallow prop drilling (2-3 levels), regular props are simpler and more performant."
+                    },
+                    {
+                        question: "What happens when Context value changes?",
+                        options: [
+                            "Only the consuming component re-renders",
+                            "All components in the tree re-render",
+                            "All components using useContext re-render",
+                            "Nothing happens until forceUpdate"
+                        ],
+                        correct: 2,
+                        explanation: "All components subscribed to that context via useContext will re-render, even if they don't use the specific changed part of the value."
+                    }
+                ],
+                reducer: [
+                    {
+                        question: "Why use useReducer over useState for complex logic?",
+                        options: [
+                            "It's faster",
+                            "Centralizes state logic and easier to test",
+                            "Required by React team",
+                            "useState is deprecated"
+                        ],
+                        correct: 1,
+                        explanation: "useReducer centralizes state transitions in a pure function (reducer), making complex logic predictable and testable."
+                    }
+                ],
+                performance: [
+                    {
+                        question: "What's wrong with this code: const x = useMemo(() => 2+2, [])?",
+                        options: [
+                            "Missing dependency",
+                            "2+2 is not expensive enough to memoize",
+                            "useMemo can't return numbers",
+                            "Empty deps array is invalid"
+                        ],
+                        correct: 1,
+                        explanation: "useMemo has overhead. Only use it for expensive calculations. Simple operations like 2+2 are faster without memoization."
+                    }
+                ]
+            };
+
+            const handleQuizComplete = (score) => {
+                if (!completedQuizzes.includes(activeModule)) {
+                    setCompletedQuizzes([...completedQuizzes, activeModule]);
+                    setShowConfetti(true);
+                    setTimeout(() => setShowConfetti(false), 3000);
+                }
+            };
+
+            const renderContent = () => {
+                const module = courseModules.find(m => m.id === activeModule);
+                
+                switch(activeTab) {
+                    case 'theory':
+                        return (
+                            <div className="space-y-6 animate-slide-in">
+                                {activeModule === 'context' && (
+                                    <>
+                                        <ContextVisualizer />
+                                        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                                            <h3 className="text-xl font-bold text-blue-400 mb-4">Context API Pattern</h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                                <div className="bg-gray-900 p-4 rounded-lg">
+                                                    <div className="font-mono text-purple-400 mb-2">1. Create</div>
+                                                    <code className="text-xs text-gray-300">const Ctx = createContext(defaultValue)</code>
+                                                </div>
+                                                <div className="bg-gray-900 p-4 rounded-lg">
+                                                    <div className="font-mono text-purple-400 mb-2">2. Provide</div>
+                                                    <code className="text-xs text-gray-300">{'<Ctx.Provider value={val}>'}</code>
+                                                </div>
+                                                <div className="bg-gray-900 p-4 rounded-lg">
+                                                    <div className="font-mono text-purple-400 mb-2">3. Consume</div>
+                                                    <code className="text-xs text-gray-300">const val = useContext(Ctx)</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                {activeModule === 'reducer' && <ReducerDemo />}
+                                {activeModule === 'performance' && <PerformanceDemo />}
+                                {activeModule === 'hooks' && <CustomHooksDemo />}
+                            </div>
+                        );
+                    case 'demo':
+                        return (
+                            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
+                                <Icon name="Play" size={48} className="mx-auto text-blue-500 mb-4" />
+                                <h3 className="text-xl font-bold mb-2">Interactive Playground</h3>
+                                <p className="text-gray-400 mb-6">Switch to the Theory tab to see interactive demos for each module!</p>
+                                <button 
+                                    onClick={() => setActiveTab('theory')}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                                >
+                                    Go to Interactive Demo
+                                </button>
+                            </div>
+                        );
+                    case 'mistakes':
+                        const mistakes = {
+                            context: [
+                                { title: "Context Default Value Trap", desc: "createContext() default value only applies when there's no Provider above. Don't rely on it for 'initial' data." },
+                                { title: "Object Identity Hell", desc: "Passing object literals as value causes re-renders: value={{theme, setTheme}}. Use useMemo!" },
+                                { title: "Splitting Context Wrong", desc: "Putting frequently changing state (count) with static state (theme) in one context causes unnecessary renders." }
+                            ],
+                            reducer: [
+                                { title: "Mutating State", desc: "state.items.push(newItem) // Wrong! Return new object." },
+                                { title: "Async in Reducer", desc: "Reducers must be pure. No API calls inside! Use useEffect + dispatch." },
+                                { title: "Complex State Shape", desc: "Deeply nested state makes updates hard. Keep state flat/normalized." }
+                            ],
+                            performance: [
+                                { title: "Premature Optimization", desc: "Don't wrap everything in useMemo. Measure first with React DevTools Profiler." },
+                                { title: "Missing Dependencies", desc: "useCallback(() => {...}, []) with values from props causes stale closures." },
+                                { title: "React.memo with Props", desc: "Passing objects/arrays as props breaks memo unless you use useMemo for them too." }
+                            ],
+                            hooks: [
+                                { title: "Conditional Hooks", desc: "if (condition) useHook() // Crash! Hooks must be called in same order every render." },
+                                { title: "Infinite Loops", desc: "useEffect(() => setState(...), [state]) // Dependency causes loop." },
+                                { title: "Missing Cleanup", desc: "Forgot return () => cleanup in useEffect causes memory leaks." }
+                            ]
+                        };
+                        return (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-slide-in">
+                                {mistakes[activeModule].map((m, i) => (
+                                    <div key={i} className="bg-red-900/20 border border-red-800 rounded-xl p-6">
+                                        <div className="flex items-center gap-2 text-red-400 font-bold mb-2">
+                                            <Icon name="X" size={20} />
+                                            {m.title}
+                                        </div>
+                                        <p className="text-gray-300 text-sm">{m.desc}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    case 'exercise':
+                    case 'quiz':
+                    case 'challenge':
+                    case 'build':
+                        if (quizQuestions[activeModule]) {
+                            return (
+                                <div className="animate-slide-in">
+                                    <Quiz 
+                                        questions={quizQuestions[activeModule]} 
+                                        onComplete={handleQuizComplete}
+                                    />
+                                </div>
+                            );
+                        }
+                        return (
+                            <div className="bg-gray-800 rounded-xl p-8 border border-gray-700 text-center">
+                                <h3 className="text-xl font-bold mb-4">Coding Challenge</h3>
+                                <p className="text-gray-400 mb-6">Build a {activeModule === 'hooks' ? 'custom useForm hook' : 'optimized component'} in your local IDE!</p>
+                                <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-left text-gray-400">
+                                    // TODO: Implement the pattern<br/>
+                                    // Test cases provided in comments<br/>
+                                    // Good luck! 🚀
+                                </div>
+                            </div>
+                        );
+                    default:
+                        return null;
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-900 text-gray-100">
+                    {/* Header */}
+                    <header className="bg-gray-800 border-b border-gray-700 sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-blue-600 p-2 rounded-lg">
+                                    <Icon name="Zap" size={24} className="text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="font-bold text-xl text-white">React Mastery</h1>
+                                    <p className="text-xs text-gray-400">Advanced Patterns Bootcamp</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="hidden md:flex items-center gap-2 text-sm text-gray-400">
+                                    <span>Progress:</span>
+                                    <div className="w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-blue-500 transition-all duration-500"
+                                            style={{ width: `${(completedQuizzes.length / courseModules.length) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-blue-400">{completedQuizzes.length}/{courseModules.length}</span>
+                                </div>
+                                {showConfetti && (
+                                    <div className="animate-bounce text-2xl">🎉</div>
+                                )}
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                            {/* Sidebar */}
+                            <div className="lg:col-span-1 space-y-2">
+                                {courseModules.map(module => {
+                                    const isActive = activeModule === module.id;
+                                    const isCompleted = completedQuizzes.includes(module.id);
+                                    const IconName = module.icon;
+                                    
+                                    return (
+                                        <button
+                                            key={module.id}
+                                            onClick={() => {
+                                                setActiveModule(module.id);
+                                                setActiveTab('theory');
+                                            }}
+                                            className={`w-full text-left p-4 rounded-xl border transition-all ${
+                                                isActive 
+                                                    ? `bg-${module.color}-900/20 border-${module.color}-600 shadow-lg` 
+                                                    : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className={`p-2 rounded-lg ${isActive ? `bg-${module.color}-600` : 'bg-gray-700'}`}>
+                                                    <Icon name={IconName} size={20} className="text-white" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <h3 className={`font-semibold ${isActive ? `text-${module.color}-400` : 'text-gray-300'}`}>
+                                                            {module.title}
+                                                        </h3>
+                                                        {isCompleted && <span className="text-green-500 text-lg">✓</span>}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 line-clamp-2">{module.description}</p>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+
+                                <div className="mt-8 p-4 bg-gradient-to-br from-blue-900/40 to-purple-900/40 rounded-xl border border-blue-800">
+                                    <h4 className="font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                                        <Icon name="Trophy" size={16} />
+                                        Job Ready?
+                                    </h4>
+                                    <p className="text-xs text-gray-400 mb-3">
+                                        Master these patterns to ace technical interviews at top companies.
+                                    </p>
+                                    <div className="text-xs text-blue-400 font-mono">
+                                        {completedQuizzes.length === courseModules.length 
+                                            ? "🏆 All modules complete!" 
+                                            : `Complete ${courseModules.length - completedQuizzes.length} more quizzes`}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Main Content */}
+                            <div className="lg:col-span-3">
+                                {/* Tabs */}
+                                <div className="flex gap-1 mb-6 bg-gray-800 p-1 rounded-xl border border-gray-700 overflow-x-auto">
+                                    {courseModules.find(m => m.id === activeModule).sections.map(section => (
+                                        <button
+                                            key={section}
+                                            onClick={() => setActiveTab(section)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors whitespace-nowrap ${
+                                                activeTab === section
+                                                    ? 'bg-blue-600 text-white shadow-lg'
+                                                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
+                                            }`}
+                                        >
+                                            {section}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Content Area */}
+                                <div className="min-h-[600px]">
+                                    {renderContent()}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

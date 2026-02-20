@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scope Master: Advanced Closures & Modules Bootcamp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-code: #0d1117;
+            --accent: #38bdf8;
+            --accent-2: #818cf8;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 2rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+            border-color: var(--accent);
+        }
+
+        .nav-item.active {
+            background: rgba(56, 189, 248, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            background: var(--bg-dark);
+            margin-left: auto;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .section {
+            display: none;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            color: var(--accent);
+            margin: 2rem 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        .concept-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .concept-box::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+        }
+
+        /* Visual Scope Explorer */
+        .scope-visualizer {
+            background: var(--bg-code);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            min-height: 400px;
+            border: 1px solid var(--border);
+        }
+
+        .scope-box {
+            position: absolute;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem;
+            background: rgba(56, 189, 248, 0.1);
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .scope-box:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+
+        .scope-box.global {
+            width: 90%;
+            height: 90%;
+            border-color: var(--success);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .scope-box.outer {
+            width: 70%;
+            height: 70%;
+            left: 10%;
+            top: 15%;
+            border-color: var(--warning);
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        .scope-box.inner {
+            width: 50%;
+            height: 50%;
+            left: 20%;
+            top: 25%;
+            border-color: var(--accent-2);
+            background: rgba(129, 140, 248, 0.15);
+        }
+
+        .scope-label {
+            position: absolute;
+            top: -12px;
+            left: 10px;
+            background: var(--bg-code);
+            padding: 0 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .variable {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            margin: 0.25rem;
+            background: var(--bg-card);
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border: 1px solid var(--border);
+        }
+
+        .variable.closed {
+            background: rgba(129, 140, 248, 0.3);
+            border-color: var(--accent-2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px var(--accent-2); }
+            50% { box-shadow: 0 0 20px var(--accent-2); }
+        }
+
+        /* Code Editor */
+        .code-container {
+            background: var(--bg-code);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+
+        .code-header {
+            background: rgba(255,255,255,0.05);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot.red { background: var(--danger); }
+        .dot.yellow { background: var(--warning); }
+        .dot.green { background: var(--success); }
+
+        textarea.code-input {
+            width: 100%;
+            min-height: 200px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 1rem;
+            resize: vertical;
+            outline: none;
+        }
+
+        .output-panel {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            font-family: 'Courier New', monospace;
+            min-height: 60px;
+        }
+
+        .console-line {
+            margin: 0.25rem 0;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .console-line::before {
+            content: '>';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        .error { color: var(--danger); }
+        .success { color: var(--success); }
+
+        /* Interactive Elements */
+        .btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px var(--accent);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        /* Quiz Styles */
+        .quiz-option {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent);
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success);
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--danger);
+            background: rgba(248, 113, 113, 0.1);
+        }
+
+        .quiz-option input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+        }
+
+        /* Pitfall Cards */
+        .pitfall-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .pitfall-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .pitfall-header {
+            padding: 1rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pitfall-card.danger .pitfall-header {
+            background: rgba(248, 113, 113, 0.2);
+            color: var(--danger);
+        }
+
+        .pitfall-card.success .pitfall-header {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--success);
+        }
+
+        .pitfall-body {
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Module Builder */
+        .module-builder {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .builder-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .draggable-item {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 6px;
+            cursor: move;
+            font-family: monospace;
+            transition: all 0.3s;
+        }
+
+        .draggable-item:hover {
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .drop-zone {
+            min-height: 200px;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(56, 189, 248, 0.05) 10px,
+                rgba(56, 189, 248, 0.05) 20px
+            );
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Memory Visualization */
+        .memory-heap {
+            background: var(--bg-code);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            min-height: 300px;
+        }
+
+        .memory-object {
+            position: absolute;
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 150px;
+            transition: all 0.5s;
+        }
+
+        .memory-object.gc {
+            opacity: 0.3;
+            border-color: var(--text-muted);
+            transform: scale(0.9);
+        }
+
+        .reference-arrow {
+            position: absolute;
+            height: 2px;
+            background: var(--accent-2);
+            transform-origin: left center;
+            pointer-events: none;
+        }
+
+        /* Challenge Mode */
+        .challenge-banner {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+            font-family: monospace;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-content { margin-left: 0; }
+            .pitfall-grid, .module-builder { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <div class="logo">🎯 Scope Master</div>
+    <div style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Master Closures & Modules</div>
+    
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="nav-item active" onclick="showSection('intro')">
+        <span>🚀</span> Mission Brief
+    </div>
+    <div class="nav-item" onclick="showSection('scope-basics')">
+        <span>🔍</span> Lexical Scoping
+    </div>
+    <div class="nav-item" onclick="showSection('closures')">
+        <span>🎒</span> Closure Backpacks
+    </div>
+    <div class="nav-item" onclick="showSection('iife')">
+        <span>💥</span> IIFE Pattern
+    </div>
+    <div class="nav-item" onclick="showSection('module')">
+        <span>📦</span> Module Pattern
+    </div>
+    <div class="nav-item" onclick="showSection('namespace')">
+        <span>🏷️</span> Namespaces
+    </div>
+    <div class="nav-item" onclick="showSection('pitfalls')">
+        <span>⚠️</span> Danger Zone
+    </div>
+    <div class="nav-item" onclick="showSection('challenges')">
+        <span>🏆</span> The Gauntlet
+    </div>
+</aside>
+
+<main class="main-content">
+
+    <!-- INTRO SECTION -->
+    <section id="intro" class="section active">
+        <h1>Welcome to Scope Mastery</h1>
+        <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2rem;">
+            You're about to master the most misunderstood yet powerful concepts in JavaScript. 
+            These patterns separate junior developers from seniors.
+        </p>
+
+        <div class="concept-box">
+            <h3>🎯 Your Mission</h3>
+            <p>By the end of this bootcamp, you will:</p>
+            <ul style="margin-left: 2rem; margin-top: 1rem; line-height: 2;">
+                <li>Visualize scope chains and closure backpacks</li>
+                <li>Build bulletproof module architectures</li>
+                <li>Avoid memory leaks and common closure traps</li>
+                <li>Implement the Module, Revealing Module, and Namespace patterns</li>
+            </ul>
+        </div>
+
+        <div class="challenge-banner">
+            <h2>Ready to begin?</h2>
+            <p style="margin: 1rem 0;">Start with Lexical Scoping or jump to your weakest area.</p>
+            <button class="btn" onclick="showSection('scope-basics')">Start Learning →</button>
+        </div>
+    </section>
+
+    <!-- SCOPE BASICS -->
+    <section id="scope-basics" class="section">
+        <h1>Lexical Scoping Visualized</h1>
+        
+        <div class="concept-box">
+            <strong>Key Insight:</strong> JavaScript uses <em>lexical scoping</em>—a function's scope is determined by where it's written, not where it's called. Think of scopes as nested boxes.
+        </div>
+
+        <div class="scope-visualizer" id="scopeViz">
+            <div class="scope-box global" onclick="highlightScope('global')">
+                <span class="scope-label">Global Scope</span>
+                <div style="margin-top: 2rem;">
+                    <span class="variable">const app = 'ScopeMaster'</span>
+                    <span class="variable">function outer()</span>
+                </div>
+            </div>
+            
+            <div class="scope-box outer" onclick="highlightScope('outer')">
+                <span class="scope-label">Outer Function</span>
+                <div style="margin-top: 1.5rem;">
+                    <span class="variable">let count = 0</span>
+                    <span class="variable">function inner()</span>
+                </div>
+            </div>
+            
+            <div class="scope-box inner" onclick="highlightScope('inner')">
+                <span class="scope-label">Inner Function (Closure)</span>
+                <div style="margin-top: 1rem;">
+                    <span class="variable closed">return count++</span>
+                    <span class="variable">console.log(app)</span>
+                </div>
+            </div>
+        </div>
+
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">
+            Click the boxes above to see what each scope can access
+        </p>
+
+        <div class="code-container">
+            <div class="code-header">
+                <div class="code-dots">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                </div>
+                <span style="color: var(--text-muted); font-size: 0.9rem;">Lexical Scope Chain</span>
+            </div>
+            <pre style="padding: 1rem; overflow-x: auto; font-family: monospace; line-height: 1.6;">
+<span style="color: var(--accent)">const</span> globalVar = <span style="color: var(--success)">'I am everywhere'</span>;
+
+<span style="color: var(--accent)">function</span> <span style="color: var(--warning)">outer</span>() {
+    <span style="color: var(--accent)">const</span> outerVar = <span style="color: var(--success)">'I am outer'</span>;
+    
+    <span style="color: var(--accent)">function</span> <span style="color: var(--warning)">inner</span>() {
+        <span style="color: var(--accent)">const</span> innerVar = <span style="color: var(--success)">'I am inner'</span>;
+        
+        <span style="color: var(--text-muted)">// Can access: innerVar, outerVar, globalVar</span>
+        console.log(innerVar, outerVar, globalVar);
+    }
+    
+    <span style="color: var(--text-muted)">// Can access: outerVar, globalVar (NOT innerVar)</span>
+    inner();
+}
+
+outer();</pre>
+        </div>
+
+        <h2>Quick Quiz: Scope Lookup</h2>
+        <div class="quiz-container">
+            <p style="margin-bottom: 1rem;">What will the following code output?</p>
+            <div class="code-container" style="margin-bottom: 1rem;">
+                <pre style="padding: 1rem; font-family: monospace;">
+let x = 10;
+function foo() {
+    console.log(x);
+    let x = 20;
+}
+foo();</pre>
+            </div>
+            
+            <div class="quiz-option" onclick="checkAnswer(this, false)">
+                <input type="radio" name="q1"> <span>10</span>
+            </div>
+            <div class="quiz-option" onclick="checkAnswer(this, true)">
+                <input type="radio" name="q1"> <span>ReferenceError: Cannot access 'x' before initialization</span>
+            </div>
+            <div class="quiz-option" onclick="checkAnswer(this, false)">
+                <input type="radio" name="q1"> <span>20</span>
+            </div>
+            <div class="quiz-option" onclick="checkAnswer(this, false)">
+                <input type="radio" name="q1"> <span>undefined</span>
+            </div>
+            
+            <div id="q1-feedback" style="margin-top: 1rem; display: none;"></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="showSection('intro')">← Back</button>
+            <button class="btn" onclick="showSection('closures')">Next: Closures →</button>
+        </div>
+    </section>
+
+    <!-- CLOSURES -->
+    <section id="closures" class="section">
+        <h1>The Closure Backpack 🎒</h1>
+        
+        <div class="concept-box">
+            <strong>Definition:</strong> A closure is a function that "remembers" its lexical scope even when executed outside that scope. It carries a <em>backpack</em> of variables.
+        </div>
+
+        <div class="memory-heap" id="memoryViz">
+            <div style="margin-bottom: 1rem; color: var(--accent); font-weight: bold;">Memory Visualization</div>
+            
+            <div class="memory-object" style="top: 60px; left: 20px;" id="outerFn">
+                <div style="color: var(--warning); font-weight: bold;">outer() Execution</div>
+                <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+                    <span class="variable">count: 0</span>
+                    <span class="variable">secret: "hidden"</span>
+                </div>
+            </div>
+
+            <div class="memory-object gc" style="top: 60px; left: 300px;" id="garbage">
+                <div style="color: var(--text-muted); font-weight: bold;">Global Context</div>
+                <div style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.5;">
+                    (finished executing)
+                </div>
+            </div>
+
+            <div class="memory-object" style="top: 200px; left: 20px;" id="closureObj">
+                <div style="color: var(--accent-2); font-weight: bold;">increment() Closure</div>
+                <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+                    <span style="color: var(--accent);">[[Scope]] →</span>
+                </div>
+                <div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(129,140,248,0.2); border-radius: 4px;">
+                    <small>Backpack:</small><br>
+                    count: 0<br>
+                    secret: "hidden"
+                </div>
+            </div>
+
+            <div style="position: absolute; top: 240px; left: 200px; color: var(--text-muted); font-size: 0.8rem;">
+                ← The closure keeps these variables alive in memory!
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="animateClosure()">🔁 Animate Closure Creation</button>
+        </div>
+
+        <h2>Practical Closure: Counter Factory</h2>
+        
+        <div class="code-container">
+            <div class="code-header">
+                <span style="color: var(--text-muted);">Interactive Editor</span>
+                <button class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" onclick="runClosureCode()">▶ Run Code</button>
+            </div>
+            <textarea class="code-input" id="closureCode">function createCounter() {
+    let count = 0;  // Private variable
+    
+    return {
+        increment: function() {
+            count++;
+            return count;
+        },
+        decrement: function() {
+            count--;
+            return count;
+        },
+        getCount: function() {
+            return count;
+        }
+    };
+}
+
+const counter1 = createCounter();
+const counter2 = createCounter();
+
+console.log('Counter 1:', counter1.increment());
+console.log('Counter 1:', counter1.increment());
+console.log('Counter 2:', counter2.increment());
+console.log('Counter 1 get:', counter1.getCount());
+console.log('Can we access count directly?', typeof count);</textarea>
+            <div class="output-panel" id="closureOutput">
+                <span style="color: var(--text-muted);">// Output will appear here...</span>
+            </div>
+        </div>
+
+        <h2>Exercise: Fix the Loop</h2>
+        <div class="concept-box" style="border-color: var(--danger);">
+            <strong>⚠️ Classic Interview Question</strong>
+            <p>What's wrong with this code? The expected output is 0, 1, 2 but it prints 3, 3, 3.</p>
+        </div>
+
+        <div class="code-container">
+            <textarea class="code-input" id="loopFix">for (var i = 0; i < 3; i++) {
+    setTimeout(() => {
+        console.log(i);
+    }, 100);
+}</textarea>
+            <div class="output-panel" id="loopOutput"></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="runLoopCode('broken')">Run Broken</button>
+            <button class="btn" onclick="showLoopSolution()">Show Solution</button>
+            <button class="btn" onclick="runLoopCode('fixed')" style="display:none" id="runFixed">Run Fixed</button>
+        </div>
+
+        <div id="loopSolution" style="display:none; margin-top: 1rem;">
+            <div class="code-container">
+                <pre style="padding: 1rem;">for (let i = 0; i < 3; i++) {  // 'let' creates block scope
+    setTimeout(() => {
+        console.log(i);  // Each closure captures different 'i'
+    }, 100);
+}
+
+// OR using IIFE:
+for (var i = 0; i < 3; i++) {
+    ((capturedI) => {
+        setTimeout(() => {
+            console.log(capturedI);
+        }, 100);
+    })(i);
+}</pre>
+            </div>
+        </div>
+
+        <div class="btn-group" style="margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick="showSection('scope-basics')">← Back</button>
+            <button class="btn" onclick="showSection('iife')">Next: IIFE →</button>
+        </div>
+    </section>
+
+    <!-- IIFE -->
+    <section id="iife" class="section">
+        <h1>IIFE: The Self-Destructing Container 💥</h1>
+
+        <div class="concept-box">
+            <strong>Immediately Invoked Function Expression</strong> creates a private scope that executes immediately and doesn't pollute the global namespace.
+        </div>
+
+        <div class="pitfall-grid">
+            <div class="pitfall-card danger">
+                <div class="pitfall-header">❌ The Problem</div>
+                <div class="pitfall-body">
+var count = 0;  // Danger! Global scope pollution
+function increment() {
+    count++;
+}
+// Anyone can modify count!
+window.count = 999; // Broken!</pre>
+                </div>
+            </div>
+            
+            <div class="pitfall-card success">
+                <div class="pitfall-header">✅ IIFE Solution</div>
+                <div class="pitfall-body">
+const counter = (function() {
+    var count = 0;  // Private!
+    return {
+        inc: () => ++count
+    };
+})();
+
+counter.inc(); // 1
+// count is protected</pre>
+                </div>
+            </div>
+        </div>
+
+        <h2>IIFE Syntax Deconstruction</h2>
+        
+        <div class="code-container">
+            <div class="code-header">Click each part to understand</div>
+            <pre style="padding: 1.5rem; font-size: 1.1rem; line-height: 2;">
+<span style="cursor: pointer; padding: 0.2rem; border-radius: 4px;" onclick="highlightIIFE('grouping')" title="Grouping operator makes it an expression">(</span>
+    <span style="cursor: pointer; padding: 0.2rem; border-radius: 4px;" onclick="highlightIIFE('function')" title="Function declaration becomes expression">function()</span> 
+    <span style="color: var(--text-muted)">/* Private scope */</span>
+    {
+        <span style="color: var(--accent)">var</span> private = <span style="color: var(--success)">'secret'</span>;
+        console.log(<span style="color: var(--success)">'I run immediately!'</span>);
+    }
+<span style="cursor: pointer; padding: 0.2rem; border-radius: 4px;" onclick="highlightIIFE('invoke')" title="Immediate invocation">)()</span>;</pre>
+        </div>
+
+        <div id="iife-explanation" style="min-height: 60px; padding: 1rem; background: var(--bg-card); border-radius: 8px; margin: 1rem 0; color: var(--text-muted);">
+            👆 Click the highlighted parts above to understand the syntax
+        </div>
+
+        <h2>Exercise: Create a Private Bank Account</h2>
+        <p>Create an IIFE that returns a bank account object with deposit, withdraw, and getBalance methods. The balance should be completely private.</p>
+
+        <div class="code-container">
+            <textarea class="code-input" id="bankCode">const bankAccount = (function() {
+    // Your code here
+    let balance = 1000;
+    
+    return {
+        // Implement methods
+    };
+})();
+
+// Test:
+console.log(bankAccount.getBalance()); // 1000
+bankAccount.deposit(500);
+console.log(bankAccount.getBalance()); // 1500
+console.log(typeof balance); // undefined (private!)</textarea>
+            <div class="output-panel" id="bankOutput"></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="runBankCode()">▶ Test Your Code</button>
+            <button class="btn" onclick="showBankSolution()">Show Solution</button>
+        </div>
+
+        <div class="btn-group" style="margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick="showSection('closures')">← Back</button>
+            <button class="btn" onclick="showSection('module')">Next: Module Pattern →</button>
+        </div>
+    </section>
+
+    <!-- MODULE PATTERN -->
+    <section id="module" class="section">
+        <h1>The Module Pattern 📦</h1>
+
+        <div class="concept-box">
+            <strong>Blueprint:</strong> The Module Pattern combines closures and IIFEs to create encapsulated objects with public and private members.
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+            <div class="builder-panel">
+                <h3 style="color: var(--accent); margin-bottom: 1rem;">🔒 Private Members</h3>
+                <div class="draggable-item" draggable="true">let _balance = 0;</div>
+                <div class="draggable-item" draggable="true">function validate() { ... }</div>
+                <div class="draggable-item" draggable="true">const apiKey = 'secret';</div>
+                <div class="draggable-item" draggable="true">function calculateTax() { ... }</div>
+            </div>
+            
+            <div class="builder-panel">
+                <h3 style="color: var(--success); margin-bottom: 1rem;">🌍 Public API</h3>
+                <div class="draggable-item" style="border-color: var(--success);">return { ... }</div>
+                <div class="draggable-item" style="border-color: var(--success);">deposit: function() { ... }</div>
+                <div class="draggable-item" style="border-color: var(--success);">getBalance: function() { ... }</div>
+                <div class="draggable-item" style="border-color: var(--success);">withdraw: function() { ... }</div>
+            </div>
+        </div>
+
+        <h2>Standard vs Revealing Module Pattern</h2>
+
+        <div class="code-container">
+            <div class="code-header">
+                <span>Standard Module Pattern</span>
+            </div>
+            <pre style="padding: 1rem; font-family: monospace;">
+const DataModule = (function() {
+    let data = [];
+    
+    function validate(item) {
+        return item !== null;
+    }
+    
+    return {
+        add: function(item) {
+            if (validate(item)) {
+                data.push(item);
+            }
+        },
+        getAll: function() {
+            return [...data]; // Return copy
+        }
+    };
+})();</pre>
+        </div>
+
+        <div class="code-container">
+            <div class="code-header">
+                <span>Revealing Module Pattern (Cleaner!)</span>
+            </div>
+            <pre style="padding: 1rem; font-family: monospace;">
+const DataModule = (function() {
+    let data = [];
+    
+    function validate(item) {
+        return item !== null;
+    }
+    
+    function add(item) {
+        if (validate(item)) data.push(item);
+    }
+    
+    function getAll() {
+        return [...data];
+    }
+    
+    // Reveal only what you want public:
+    return {
+        add,
+        getAll
+        // validate stays private!
+    };
+})();</pre>
+        </div>
+
+        <h2>Quiz: Module Pattern Benefits</h2>
+        <div class="quiz-option" onclick="toggleQuiz(this)">
+            <input type="checkbox"> Encapsulation - Hide implementation details
+        </div>
+        <div class="quiz-option" onclick="toggleQuiz(this)">
+            <input type="checkbox"> Namespace protection - No global variables
+        </div>
+        <div class="quiz-option" onclick="toggleQuiz(this)">
+            <input type="checkbox"> Reusability - Create multiple instances with factory pattern
+        </div>
+        <div class="quiz-option" onclick="toggleQuiz(this)">
+            <input type="checkbox"> Automatic AJAX handling (False - modules don't handle AJAX automatically)
+        </div>
+
+        <div class="btn-group" style="margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick="showSection('iife')">← Back</button>
+            <button class="btn" onclick="showSection('namespace')">Next: Namespaces →</button>
+        </div>
+    </section>
+
+    <!-- NAMESPACE PATTERN -->
+    <section id="namespace" class="section">
+        <h1>Namespace Pattern 🏷️</h1>
+
+        <div class="concept-box">
+            <strong>Problem:</strong> Even with modules, if you have 20 modules, you might have 20 global variables (if not using ES6 modules).
+            <br><br>
+            <strong>Solution:</strong> Use a single global object as your "namespace" to hold all your application code.
+        </div>
+
+        <div class="scope-visualizer" style="min-height: 300px;">
+            <div style="text-align: center; color: var(--danger); font-size: 1.2rem; margin-bottom: 2rem;">
+                ❌ Global Scope Pollution
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; opacity: 0.5;">
+                <span class="variable">var Utils = {}</span>
+                <span class="variable">var Helpers = {}</span>
+                <span class="variable">var API = {}</span>
+                <span class="variable">var Config = {}</span>
+                <span class="variable">var App = {}</span>
+                <span class="variable">... 20 more!</span>
+            </div>
+            
+            <div style="text-align: center; margin: 3rem 0; color: var(--success); font-size: 1.2rem;">
+                ✅ Single Namespace
+            </div>
+            <div style="background: var(--bg-card); border: 2px solid var(--success); border-radius: 12px; padding: 2rem; max-width: 600px; margin: 0 auto;">
+                <div style="color: var(--success); font-weight: bold; margin-bottom: 1rem;">window.MyApp</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <span class="variable" style="background: rgba(74,222,128,0.2);">Utils</span>
+                    <span class="variable" style="background: rgba(74,222,128,0.2);">Helpers</span>
+                    <span class="variable" style="background: rgba(74,222,128,0.2);">API</span>
+                    <span class="variable" style="background: rgba(74,222,128,0.2);">Config</span>
+                </div>
+            </div>
+        </div>
+
+        <h2>Implementation: Safe Namespace Creation</h2>
+
+        <div class="code-container">
+            <pre style="padding: 1.5rem; font-family: monospace;">
+<span style="color: var(--text-muted)">// Safe way to create or extend namespace</span>
+<span style="color: var(--accent)">var</span> MyApp = MyApp || {};
+
+<span style="color: color: var(--text-muted)">// Using IIFE with namespace injection</span>
+MyApp.Module1 = (<span style="color: var(--accent)">function</span>(namespace) {
+    <span style="color: var(--text-muted)">// Private</span>
+    <span style="color: var(--accent)">var</span> secret = <span style="color: var(--success)">'hidden'</span>;
+    
+    <span style="color: var(--accent)">function</span> privateMethod() {
+        console.log(<span style="color: var(--success)">'Accessing:'</span>, secret);
+    }
+    
+    <span style="color: var(--text-muted)">// Public</span>
+    namespace.publicMethod = <span style="color: var(--accent)">function</span>() {
+        privateMethod();
+        <span style="color: var(--accent)">return</span> <span style="color: var(--success)">'Done!'</span>;
+    };
+    
+    <span style="color: var(--accent)">return</span> namespace;
+})(MyApp.Module1 || {});
+
+<span style="color: var(--text-muted)">// Usage:</span>
+MyApp.Module1.publicMethod();</pre>
+        </div>
+
+        <div class="concept-box" style="border-color: var(--warning);">
+            <strong>💡 Pro Tip:</strong> This pattern is called "Loose Augmentation" - it allows you to split your module across multiple files safely, loading order doesn't matter!
+        </div>
+
+        <h2>Exercise: Refactor to Namespace</h2>
+        <p>Refactor this code to use a single <code>MyApp</code> namespace with sub-modules for UI and Data:</p>
+
+        <div class="code-container">
+            <textarea class="code-input" id="namespaceCode">// Current: Polluting global scope
+var utils = { format: x => x.toFixed(2) };
+var dataService = { get: () => [1,2,3] };
+var uiController = { render: d => console.log(d) };
+
+// Refactor to:
+// MyApp.utils, MyApp.data, MyApp.ui</textarea>
+            <div class="output-panel" id="namespaceOutput"></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" onclick="checkNamespace()">Check Solution</button>
+        </div>
+
+        <div class="btn-group" style="margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick="showSection('module')">← Back</button>
+            <button class="btn" onclick="showSection('pitfalls')">Next: Danger Zone →</button>
+        </div>
+    </section>
+
+    <!-- PITFALLS -->
+    <section id="pitfalls" class="section">
+        <h1>Danger Zone: Common Pitfalls ⚠️</h1>
+
+        <div class="concept-box" style="border-color: var(--danger);">
+            <h3>1. Memory Leaks with Closures</h3>
+            <p>Closures keep variables alive. If you capture a large DOM element in a closure but never use it, it can't be garbage collected!</p>
+        </div>
+
+        <div class="code-container">
+            <div class="code-header">❌ Memory Leak</div>
+            <pre style="padding: 1rem; color: var(--danger);">
+function setup() {
+    const hugeData = new Array(1000000).fill('x');
+    const element = document.getElementById('button');
+    
+    element.addEventListener('click', function() {
+        // Closure captures hugeData even though we don't use it!
+        console.log('clicked');
+    });
+}</pre>
+        </div>
+
+        <div class="code-container">
+            <div class="code-header">✅ Fixed</div>
+            <pre style="padding: 1rem; color: var(--success);">
+function setup() {
+    const element = document.getElementById('button');
+    
+    element.addEventListener('click', function() {
+        console.log('clicked');
+        // hugeData not captured, can be garbage collected
+    });
+}</pre>
+        </div>
+
+        <div class="concept-box" style="border-color: var(--warning); margin-top: 2rem;">
+            <h3>2. "this" Context Confusion</h3>
+            <p>Closures don't capture <code>this</code>! Arrow functions solve this.</p>
+        </div>
+
+        <div class="pitfall-grid">
+            <div class="pitfall-card danger">
+                <div class="pitfall-header">❌ Broken Context</div>
+                <div class="pitfall-body">
+const obj = {
+    name: 'Module',
+    init: function() {
+        setTimeout(function() {
+            console.log(this.name); // undefined!
+        }, 100);
+    }
+};</pre>
+                </div>
+            </div>
+            
+            <div class="pitfall-card success">
+                <div class="pitfall-header">✅ Arrow Function</div>
+                <div class="pitfall-body">
+const obj = {
+    name: 'Module',
+    init: function() {
+        setTimeout(() => {
+            console.log(this.name); // 'Module'
+        }, 100);
+    }
+};</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="concept-box" style="border-color: var(--warning); margin-top: 2rem;">
+            <h3>3. Overwriting Namespaces</h3>
+            <p>Always check if namespace exists before assignment!</p>
+        </div>
+
+        <div class="code-container">
+            <pre style="padding: 1rem;">
+<span style="color: var(--danger)">// Dangerous:</span>
+var MyApp = {};  // If another file already defined MyApp, you wiped it!
+
+<span style="color: var(--success)">// Safe:</span>
+var MyApp = MyApp || {};
+<span style="color: var(--text-muted)">// or</span>
+window.MyApp = window.MyApp || {};</pre>
+        </div>
+
+        <div class="btn-group" style="margin-top: 2rem;">
+            <button class="btn btn-secondary" onclick="showSection('namespace')">← Back</button>
+            <button class="btn" onclick="showSection('challenges')">Enter The Gauntlet →</button>
+        </div>
+    </section>
+
+    <!-- CHALLENGES -->
+    <section id="challenges" class="section">
+        <h1>The Gauntlet 🏆</h1>
+        <p>Complete these challenges to earn your Scope Master certification!</p>
+
+        <div class="challenge-banner">
+            <h2>Challenge 1: Private Counter with Step</h2>
+            <p>Create a counter that accepts a "step" parameter and has reset functionality.</p>
+            <div style="margin-top: 1rem;">
+                <button class="btn" onclick="loadChallenge(1)">Start Challenge</button>
+            </div>
+        </div>
+
+        <div id="challenge1" style="display: none;">
+            <div class="code-container">
+                <textarea class="code-input" id="c1-code">// Requirements:
+// createCounter(step) should return { increment, decrement, reset, getValue }
+// All state must be private
+// reset() sets value back to 0
+
+const counter = createCounter(5);
+console.log(counter.increment()); // 5
+console.log(counter.increment()); // 10
+console.log(counter.decrement()); // 5
+console.log(counter.reset());     // 0
+console.log(counter.getValue());  // 0</textarea>
+                <div class="output-panel" id="c1-output"></div>
+            </div>
+            <button class="btn" onclick="runChallenge(1)">▶ Run Tests</button>
+        </div>
+
+        <div class="challenge-banner" style="margin-top: 2rem;">
+            <h2>Challenge 2: Module Augmentation</h2>
+            <p>Create a Namespaced Module that can be safely augmented across multiple files.</p>
+            <button class="btn" onclick="loadChallenge(2)">Start Challenge</button>
+        </div>
+
+        <div id="challenge2" style="display: none;">
+            <div class="code-container">
+                <textarea class="code-input" id="c2-code">// File 1: Create MyApp.Calculator with add method
+// File 2: Augment MyApp.Calculator with multiply method
+// Must use loose augmentation pattern (check if exists first)
+
+// Test:
+console.log(MyApp.Calculator.add(2,3));      // 5
+console.log(MyApp.Calculator.multiply(2,3)); // 6</textarea>
+                <div class="output-panel" id="c2-output"></div>
+            </div>
+            <button class="btn" onclick="runChallenge(2)">▶ Run Tests</button>
+        </div>
+
+        <div class="challenge-banner" style="margin-top: 2rem;">
+            <h2>Challenge 3: Singleton Pattern</h2>
+            <p>Create a Database Connection module that ensures only one instance exists (Singleton).</p>
+            <button class="btn" onclick="loadChallenge(3)">Start Challenge</button>
+        </div>
+
+        <div id="challenge3" style="display: none;">
+            <div class="code-container">
+                <textarea class="code-input" id="c3-code">// Create DBModule using IIFE
+// Should return { getInstance } 
+// First call creates instance, subsequent calls return same instance
+// Track instance privately
+
+const db1 = DBModule.getInstance();
+const db2 = DBModule.getInstance();
+console.log(db1 === db2); // Must be true</textarea>
+                <div class="output-panel" id="c3-output"></div>
+            </div>
+            <button class="btn" onclick="runChallenge(3)">▶ Run Tests</button>
+        </div>
+
+        <div id="victory" style="display: none; text-align: center; margin-top: 3rem; padding: 3rem; background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(56,189,248,0.2)); border-radius: 16px; border: 2px solid var(--success);">
+            <div style="font-size: 4rem;">🎓</div>
+            <h2 style="color: var(--success); margin: 1rem 0;">Scope Master Certified!</h2>
+            <p>You've mastered closures, IIFEs, modules, and namespaces.</p>
+            <p style="margin-top: 1rem; color: var(--text-muted);">You are now ready for technical interviews at competitive companies.</p>
+        </div>
+    </section>
+
+</main>
+
+<script>
+// State Management
+let progress = 0;
+const sections = ['intro', 'scope-basics', 'closures', 'iife', 'module', 'namespace', 'pitfalls', 'challenges'];
+let completedSections = new Set();
+
+function showSection(sectionId) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(sec => {
+        sec.classList.remove('active');
+    });
+    
+    // Show target
+    document.getElementById(sectionId).classList.add('active');
+    
+    // Update nav
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const navItems = document.querySelectorAll('.nav-item');
+    const index = sections.indexOf(sectionId);
+    if (navItems[index]) navItems[index].classList.add('active');
+    
+    // Mark complete and update progress
+    if (sectionId !== 'intro') {
+        completedSections.add(sectionId);
+        updateProgress();
+    }
+    
+    // Special animations
+    if (sectionId === 'closures') {
+        setTimeout(animateClosure, 500);
+    }
+}
+
+function updateProgress() {
+    const percent = (completedSections.size / (sections.length - 1)) * 100;
+    document.getElementById('progressFill').style.width = percent + '%';
+}
+
+// Scope Visualizer
+function highlightScope(level) {
+    const boxes = document.querySelectorAll('.scope-box');
+    boxes.forEach(box => box.style.opacity = '0.3');
+    
+    const target = document.querySelector(`.scope-box.${level}`);
+    if (target) {
+        target.style.opacity = '1';
+        target.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+            target.style.transform = 'scale(1)';
+        }, 300);
+    }
+    
+    let msg = '';
+    switch(level) {
+        case 'global':
+            msg = 'Global Scope: Can access app variable only';
+            break;
+        case 'outer':
+            msg = 'Outer Function: Can access count, outer vars, and global';
+            break;
+        case 'inner':
+            msg = 'Inner Function (Closure): Can access ALL scopes! This is the closure backpack.';
+            break;
+    }
+    
+    // Show message
+    const viz = document.getElementById('scopeViz');
+    let msgDiv = document.getElementById('scope-msg');
+    if (!msgDiv) {
+        msgDiv = document.createElement('div');
+        msgDiv.id = 'scope-msg';
+        msgDiv.style.cssText = 'position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--accent);';
+        viz.appendChild(msgDiv);
+    }
+    msgDiv.textContent = msg;
+}
+
+// Quiz Logic
+function checkAnswer(element, isCorrect) {
+    const parent = element.parentElement;
+    parent.querySelectorAll('.quiz-option').forEach(opt => {
+        opt.classList.remove('correct', 'wrong');
+        opt.style.pointerEvents = 'none';
+    });
+    
+    if (isCorrect) {
+        element.classList.add('correct');
+        const feedback = parent.querySelector('#q1-feedback');
+        feedback.innerHTML = '<span style="color: var(--success);">✅ Correct! Variables declared with let are hoisted but not initialized (TDZ - Temporal Dead Zone).</span>';
+        feedback.style.display = 'block';
+    } else {
+        element.classList.add('wrong');
+        element.parentElement.querySelector('.quiz-option:nth-child(3)').classList.add('correct');
+    }
+}
+
+function toggleQuiz(element) {
+    element.classList.toggle('correct');
+}
+
+// Code Execution Sandbox
+function safeExecute(code, outputId) {
+    const output = document.getElementById(outputId);
+    output.innerHTML = '';
+    
+    const originalLog = console.log;
+    const logs = [];
+    
+    console.log = (...args) => {
+        logs.push(args.join(' '));
+        originalLog(...args);
+    };
+    
+    try {
+        // Safe timeout to prevent infinite loops
+        const timeout = setTimeout(() => {
+            throw new Error('Code execution timeout - possible infinite loop');
+        }, 5000);
+        
+        eval(code);
+        clearTimeout(timeout);
+        
+        logs.forEach(log => {
+            output.innerHTML += `<div class="console-line">${log}</div>`;
+        });
+        
+        if (logs.length === 0) {
+            output.innerHTML = '<span style="color: var(--text-muted);">// No output</span>';
+        }
+    } catch (err) {
+        output.innerHTML = `<div class="console-line error">❌ ${err.message}</div>`;
+    } finally {
+        console.log = originalLog;
+    }
+}
+
+// Closure Section
+function animateClosure() {
+    const outer = document.getElementById('outerFn');
+    const closure = document.getElementById('closureObj');
+    const garbage = document.getElementById('garbage');
+    
+    // Reset
+    outer.style.opacity = '1';
+    outer.style.transform = 'scale(1)';
+    closure.style.transform = 'translateX(0)';
+    
+    // Animate
+    setTimeout(() => {
+        outer.classList.add('gc');
+        garbage.classList.remove('gc');
+        closure.style.transform = 'translateX(50px) scale(1.1)';
+    }, 1000);
+    
+    setTimeout(() => {
+        outer.classList.remove('gc');
+        garbage.classList.add('gc');
+        closure.style.transform = 'translateX(0) scale(1)';
+    }, 3000);
+}
+
+function runClosureCode() {
+    const code = document.getElementById('closureCode').value;
+    safeExecute(code, 'closureOutput');
+}
+
+// Loop Fix Exercise
+function runLoopCode(type) {
+    if (type === 'broken') {
+        const code = document.getElementById('loopFix').value;
+        safeExecute(code, 'loopOutput');
+    } else {
+        const fixedCode = `for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+        console.log(i);
+    }, 100);
+}`;
+        safeExecute(fixedCode, 'loopOutput');
+    }
+}
+
+function showLoopSolution() {
+    document.getElementById('loopSolution').style.display = 'block';
+    document.getElementById('runFixed').style.display = 'inline-block';
+}
+
+// IIFE Section
+function highlightIIFE(part) {
+    const explanation = document.getElementById('iife-explanation');
+    const texts = {
+        'grouping': 'The grouping operator () turns the function declaration into an expression, allowing immediate invocation.',
+        'function': 'This is a named or anonymous function expression (not declaration).',
+        'invoke': 'The final () immediately invokes the function expression.'
+    };
+    explanation.textContent = texts[part] || '';
+    explanation.style.color = 'var(--accent)';
+}
+
+function runBankCode() {
+    const code = document.getElementById('bankCode').value;
+    safeExecute(code, 'bankOutput');
+}
+
+function showBankSolution() {
+    const solution = `const bankAccount = (function() {
+    let balance = 1000;
+    
+    return {
+        deposit: function(amount) {
+            balance += amount;
+            return balance;
+        },
+        withdraw: function(amount) {
+            if (amount > balance) return 'Insufficient funds';
+            balance -= amount;
+            return balance;
+        },
+        getBalance: function() {
+            return balance;
+        }
+    };
+})();`;
+    document.getElementById('bankCode').value = solution;
+    runBankCode();
+}
+
+// Namespace Section
+function checkNamespace() {
+    const code = document.getElementById('namespaceCode').value;
+    const hasNamespace = code.includes('MyApp') || code.includes('window.MyApp');
+    const hasAssignment = code.includes('=');
+    const output = document.getElementById('namespaceOutput');
+    
+    if (hasNamespace && hasAssignment) {
+        output.innerHTML = '<div class="console-line success">✅ Good! Using namespace pattern.</div>';
+        safeExecute(code, 'namespaceOutput');
+    } else {
+        output.innerHTML = '<div class="console-line error">❌ Make sure to use MyApp as the namespace object!</div>';
+    }
+}
+
+// Challenges
+function loadChallenge(num) {
+    document.getElementById(`challenge${num}`).style.display = 'block';
+}
+
+function runChallenge(num) {
+    const code = document.getElementById(`c${num}-code`).value;
+    const output = document.getElementById(`c${num}-output`);
+    
+    let passed = true;
+    const logs = [];
+    
+    const originalLog = console.log;
+    console.log = (...args) => logs.push(args[0]);
+    
+    try {
+        eval(code);
+        
+        // Test logic
+        if (num === 1) {
+            if (typeof createCounter !== 'function') throw new Error('createCounter function not found');
+            const c = createCounter(5);
+            if (c.increment() !== 5) throw new Error('increment should add step value');
+            if (c.increment() !== 10) throw new Error('second increment failed');
+            if (c.reset() !== 0 && c.getValue() !== 0) throw new Error('reset failed');
+        } else if (num === 2) {
+            if (!window.MyApp || !MyApp.Calculator) throw new Error('MyApp.Calculator namespace not found');
+            if (MyApp.Calculator.add(2,3) !== 5) throw new Error('add method failed');
+            if (MyApp.Calculator.multiply(2,3) !== 6) throw new Error('multiply method failed');
+        } else if (num === 3) {
+            if (typeof DBModule === 'undefined') throw new Error('DBModule not found');
+            const d1 = DBModule.getInstance();
+            const d2 = DBModule.getInstance();
+            if (d1 !== d2) throw new Error('Singleton failed - instances not identical');
+        }
+        
+        output.innerHTML = `<div class="console-line success">✅ All tests passed! Challenge ${num} complete.</div>`;
+        
+        // Check if all challenges complete
+        if (num === 3) {
+            document.getElementById('victory').style.display = 'block';
+            confetti();
+        }
+        
+    } catch (err) {
+        output.innerHTML = `<div class="console-line error">❌ ${err.message}</div>`;
+    } finally {
+        console.log = originalLog;
+    }
+}
+
+// Simple confetti effect
+function confetti() {
+    for (let i = 0; i < 50; i++) {
+        const div = document.createElement('div');
+        div.style.cssText = `position: fixed; top: -10px; left: ${Math.random() * 100}vw; 
+            width: 10px; height: 10px; background: hsl(${Math.random() * 360}, 100%, 50%);
+            animation: fall ${2 + Math.random() * 3}s linear; pointer-events: none; z-index: 9999;`;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 5000);
+    }
+}
+
+const style = document.createElement('style');
+style.textContent = `@keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }`;
+document.head.appendChild(style);
+
+// Initialize
+updateProgress();
+</script>
+
+</body>
+</html>

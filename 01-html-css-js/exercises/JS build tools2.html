@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BundleMaster: The Ultimate Build Tools Dojo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(30, 41, 59, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+        }
+
+        .progress-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            height: 8px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .xp-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+            color: var(--warning);
+            font-weight: bold;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .nav-item.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 999px;
+            background: var(--success);
+            color: white;
+            margin-left: auto;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+        }
+
+        /* Module Styles */
+        .module-header {
+            margin-bottom: 2rem;
+        }
+
+        .module-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .module-subtitle {
+            color: var(--gray);
+            font-size: 1.125rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Interactive Elements */
+        .code-block {
+            background: #0f172a;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            border-left: 4px solid var(--primary);
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .code-block.editable {
+            border-left-color: var(--warning);
+            background: #1e293b;
+        }
+
+        .code-block textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #e2e8f0;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+            outline: none;
+        }
+
+        .keyword { color: #c678dd; }
+        .string { color: #98c379; }
+        .function { color: #61afef; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Visualizations */
+        .dependency-graph {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 1rem;
+            margin: 1rem 0;
+        }
+
+        .bundle-node {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(99, 102, 241, 0.2);
+            border: 2px solid var(--primary);
+            border-radius: 0.5rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .bundle-node:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .bundle-node::after {
+            content: '↓';
+            position: absolute;
+            bottom: -1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--gray);
+        }
+
+        .bundle-node:last-child::after {
+            display: none;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+
+        .js-file { background: #f7df1e; color: #000; }
+        .css-file { background: #264de4; color: #fff; }
+        .json-file { background: #000; color: #fff; }
+
+        .bundle-size {
+            margin-left: auto;
+            font-family: monospace;
+            color: var(--success);
+        }
+
+        /* Quiz Styles */
+        .quiz-option {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+            color: inherit;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* Pitfall Cards */
+        .pitfall {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border-left: 4px solid var(--danger);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .pitfall-title {
+            color: var(--danger);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Split Animation */
+        .split-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .chunk {
+            padding: 2rem;
+            border: 2px dashed var(--gray);
+            border-radius: 0.5rem;
+            text-align: center;
+            transition: all 0.5s;
+        }
+
+        .chunk.loaded {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            border-style: solid;
+        }
+
+        .chunk.spinner {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--primary);
+            cursor: help;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+            font-size: 0.875rem;
+            z-index: 1000;
+            border: 1px solid var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .split-demo {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            position: absolute;
+            animation: fall linear forwards;
+            z-index: 9999;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--dark);
+            border: 2px solid var(--success);
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            display: none;
+            animation: slideInRight 0.5s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comparison-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .terminal {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .terminal-line {
+            margin: 0.25rem 0;
+        }
+
+        .terminal-prompt {
+            color: #0f0;
+        }
+
+        .terminal-output {
+            color: #fff;
+        }
+
+        .terminal-error {
+            color: #f00;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            position: relative;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">⚡ BundleMaster</div>
+            <div class="tagline">Master the Art of JavaScript Build Tools</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div class="xp-display">
+                <span>🏆 Level <span id="userLevel">1</span></span>
+                <span><span id="userXP">0</span> XP</span>
+            </div>
+
+            <nav>
+                <ul class="nav-menu" id="navMenu">
+                    <li class="nav-item active" data-module="intro" onclick="loadModule('intro')">
+                        <span>🎯</span> Mission Brief
+                    </li>
+                    <li class="nav-item" data-module="bundler-battle" onclick="loadModule('bundler-battle')">
+                        <span>⚔️</span> Bundler Battle
+                    </li>
+                    <li class="nav-item" data-module="webpack-deep" onclick="loadModule('webpack-deep')">
+                        <span>🔧</span> Webpack Deep Dive
+                    </li>
+                    <li class="nav-item" data-module="loaders" onclick="loadModule('loaders')">
+                        <span>🔄</span> Loader Laboratory
+                    </li>
+                    <li class="nav-item" data-module="plugins" onclick="loadModule('plugins')">
+                        <span>🔌</span> Plugin Power
+                    </li>
+                    <li class="nav-item" data-module="splitting" onclick="loadModule('splitting')">
+                        <span>✂️</span> Code Splitting
+                    </li>
+                    <li class="nav-item" data-module="optimization" onclick="loadModule('optimization')">
+                        <span>🚀</span> Optimization Dojo
+                    </li>
+                    <li class="nav-item" data-module="pitfalls" onclick="loadModule('pitfalls')">
+                        <span>⚠️</span> Pitfall Prevention
+                    </li>
+                    <li class="nav-item" data-module="final-boss" onclick="loadModule('final-boss')">
+                        <span>👹</span> Final Boss
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content" id="mainContent">
+            <!-- Dynamic content loaded here -->
+        </main>
+    </div>
+
+    <div class="achievement" id="achievement">
+        <h3>🏆 Achievement Unlocked!</h3>
+        <p id="achievementText"></p>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            currentModule: 'intro',
+            xp: 0,
+            level: 1,
+            completedModules: [],
+            achievements: []
+        };
+
+        const modules = {
+            intro: {
+                title: "Mission Brief: The Build Tool Revolution",
+                content: `
+                    <div class="card">
+                        <h2>Welcome, JavaScript Architect! 🏗️</h2>
+                        <p style="margin: 1rem 0; font-size: 1.125rem; color: var(--gray);">
+                            You've mastered the language. Now it's time to master the delivery. 
+                            Modern web applications are complex beasts that need sophisticated tooling to tame them.
+                        </p>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+                            <div style="padding: 1.5rem; background: rgba(99, 102, 241, 0.1); border-radius: 1rem; border: 1px solid rgba(99, 102, 241, 0.3);">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📦</div>
+                                <h3>Module Bundling</h3>
+                                <p style="color: var(--gray); font-size: 0.875rem;">Combine hundreds of files into optimized bundles</p>
+                            </div>
+                            <div style="padding: 1.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 1rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚡</div>
+                                <h3>Performance</h3>
+                                <p style="color: var(--gray); font-size: 0.875rem;">Tree shaking, code splitting, and lazy loading</p>
+                            </div>
+                            <div style="padding: 1.5rem; background: rgba(236, 72, 153, 0.1); border-radius: 1rem; border: 1px solid rgba(236, 72, 153, 0.3);">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🛠️</div>
+                                <h3>Developer Experience</h3>
+                                <p style="color: var(--gray); font-size: 0.875rem;">Hot reloading, source maps, and error overlays</p>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+<span class="comment">// The Problem: Without a bundler</span>
+&lt;script src="node_modules/lodash/index.js"&gt;&lt;/script&gt;
+&lt;script src="src/utils/helpers.js"&gt;&lt;/script&gt;
+&lt;script src="src/components/Button.js"&gt;&lt;/script&gt;
+&lt;script src="src/components/Modal.js"&gt;&lt;/script&gt;
+<span class="comment">// ... 50 more scripts later ... Global scope pollution, waterfall loading, HTTP/1.1 limits</span>
+
+<span class="comment">// The Solution: Modern Bundler</span>
+<span class="keyword">import</span> { debounce } <span class="keyword">from</span> <span class="string">'lodash-es'</span>;
+<span class="keyword">import</span> Button <span class="keyword">from</span> <span class="string">'./components/Button'</span>;
+<span class="comment">// Single optimized bundle with dead code elimination</span>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="loadModule('bundler-battle')">
+                            Start Your Journey →
+                        </button>
+                    </div>
+                `
+            },
+
+            'bundler-battle': {
+                title: "⚔️ The Great Bundler Battle",
+                content: `
+                    <div class="card">
+                        <h2>Choose Your Weapon</h2>
+                        <p style="margin-bottom: 1.5rem;">Each bundler has its strengths and ideal use cases. Hover over the table below to see details.</p>
+                        
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>Webpack</th>
+                                    <th>Vite</th>
+                                    <th>Rollup</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Dev Server Start</strong></td>
+                                    <td>⚠️ Slow (needs to bundle)</td>
+                                    <td>⚡ Instant (native ESM)</td>
+                                    <td>⚡ Fast</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>HMR Speed</strong></td>
+                                    <td>⚠️ Slower</td>
+                                    <td>⚡ Lightning fast</td>
+                                    <td>✅ Fast</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Bundle Size</strong></td>
+                                    <td>⚠️ Larger runtime</td>
+                                    <td>✅ Small</td>
+                                    <td>⚡ Smallest (ESM focus)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Config Complexity</strong></td>
+                                    <td>⚠️ Steep learning curve</td>
+                                    <td>✅ Minimal config</td>
+                                    <td>✅ Moderate</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Best For</strong></td>
+                                    <td>Large apps, legacy support</td>
+                                    <td>Modern development</td>
+                                    <td>Libraries, packages</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top: 2rem;">
+                            <h3>Interactive: The Bundler Simulator</h3>
+                            <p>Click "Build" to see how each bundler handles the same project:</p>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0;">
+                                <div style="text-align: center;">
+                                    <button class="btn btn-primary" onclick="simulateBuild('webpack')">Build Webpack</button>
+                                    <div id="webpack-result" style="margin-top: 1rem; font-family: monospace;"></div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <button class="btn btn-success" onclick="simulateBuild('vite')">Build Vite</button>
+                                    <div id="vite-result" style="margin-top: 1rem; font-family: monospace;"></div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <button class="btn btn-danger" onclick="simulateBuild('rollup')">Build Rollup</button>
+                                    <div id="rollup-result" style="margin-top: 1rem; font-family: monospace;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">⚠️ Common Mistake: Using Webpack for Libraries</div>
+                            <p>Many developers use Webpack to build npm libraries. This is usually wrong! Libraries should use Rollup for cleaner ESM/CJS outputs. Webpack is for applications.</p>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <h3>Quick Quiz</h3>
+                            <p>Which bundler uses Native ESM in development for instant server starts?</p>
+                            <button class="quiz-option" onclick="checkAnswer(this, false)">Webpack 5</button>
+                            <button class="quiz-option" onclick="checkAnswer(this, true)">Vite</button>
+                            <button class="quiz-option" onclick="checkAnswer(this, false)">Parcel</button>
+                        </div>
+                    </div>
+                `
+            },
+
+            'webpack-deep': {
+                title: "🔧 Webpack Deep Dive",
+                content: `
+                    <div class="card">
+                        <h2>The Webpack Mental Model</h2>
+                        <p>Webpack is not just a bundler; it's a <span class="tooltip" data-tip="A system that builds a dependency graph">static module bundler</span> that builds a dependency graph.</p>
+                        
+                        <div class="dependency-graph">
+                            <div class="bundle-node">
+                                <div class="file-icon js-file">entry</div>
+                                <div>
+                                    <strong>Entry Point</strong>
+                                    <div style="font-size: 0.875rem; color: var(--gray);">./src/index.js</div>
+                                </div>
+                                <div class="bundle-size">1 file</div>
+                            </div>
+                            <div class="bundle-node">
+                                <div class="file-icon js-file">dep</div>
+                                <div>
+                                    <strong>Dependencies</strong>
+                                    <div style="font-size: 0.875rem; color: var(--gray);">import → resolve → load</div>
+                                </div>
+                                <div class="bundle-size">N files</div>
+                            </div>
+                            <div class="bundle-node">
+                                <div class="file-icon json-file">output</div>
+                                <div>
+                                    <strong>Output</strong>
+                                    <div style="font-size: 0.875rem; color: var(--gray);">./dist/bundle.js</div>
+                                </div>
+                                <div class="bundle-size">1-3 chunks</div>
+                            </div>
+                        </div>
+
+                        <h3>Core Concepts</h3>
+                        <div class="tabs">
+                            <button class="tab active" onclick="switchTab('entry')">Entry</button>
+                            <button class="tab" onclick="switchTab('output')">Output</button>
+                            <button class="tab" onclick="switchTab('mode')">Mode</button>
+                            <button class="tab" onclick="switchTab('devtool')">Devtool</button>
+                        </div>
+
+                        <div id="tab-entry" class="tab-content active">
+                            <div class="code-block">
+<span class="keyword">module</span>.exports = {
+  <span class="comment">// Single entry</span>
+  entry: <span class="string">'./src/index.js'</span>,
+  
+  <span class="comment">// Multi-page application</span>
+  entry: {
+    main: <span class="string">'./src/index.js'</span>,
+    admin: <span class="string">'./src/admin.js'</span>
+  }
+};
+                            </div>
+                            <p style="margin-top: 1rem;">Multi-entry creates separate bundles for different pages. Essential for MPAs!</p>
+                        </div>
+
+                        <div id="tab-output" class="tab-content">
+                            <div class="code-block">
+<span class="keyword">module</span>.exports = {
+  output: {
+    path: path.resolve(__dirname, <span class="string">'dist'</span>),
+    filename: <span class="string">'[name].[contenthash:8].js'</span>, <span class="comment">// Cache busting!</span>
+    clean: <span class="keyword">true</span>, <span class="comment">// Clean dist before build</span>
+    publicPath: <span class="string">'/'</span> <span class="comment">// Base path for assets</span>
+  }
+};
+                            </div>
+                            <div class="pitfall">
+                                <div class="pitfall-title">⚠️ The Hash Trap</div>
+                                <p>Never use [hash] for long-term caching in a multi-entry setup. Use [contenthash] instead. [hash] changes for every build, invalidating ALL files. [contenthash] only changes when content changes.</p>
+                            </div>
+                        </div>
+
+                        <div id="tab-mode" class="tab-content">
+                            <div class="code-block">
+<span class="keyword">module</span>.exports = {
+  mode: process.env.NODE_ENV === <span class="string">'production'</span> 
+    ? <span class="string">'production'</span> 
+    : <span class="string">'development'</span>,
+    
+  <span class="comment">// Production enables:</span>
+  <span class="comment">// - Tree shaking (dead code elimination)</span>
+  <span class="comment">// - Terser minification</span>
+  <span class="comment">// - Module concatenation (scope hoisting)</span>
+  <span class="comment">// - No source maps (unless configured)</span>
+};
+                            </div>
+                        </div>
+
+                        <div id="tab-devtool" class="tab-content">
+                            <div class="code-block">
+<span class="keyword">module</span>.exports = {
+  <span class="comment">// Development: Fast rebuilds, original source</span>
+  devtool: <span class="string">'eval-cheap-module-source-map'</span>,
+  
+  <span class="comment">// Production: Separate source map files</span>
+  devtool: <span class="string">'source-map'</span>,
+  
+  <span class="comment">// Production (no maps): false</span>
+  devtool: <span class="keyword">false</span>
+};
+                            </div>
+                            <p>Choosing the right source map strategy impacts build speed and debugging experience significantly.</p>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <h3>Exercise: Fix the Config</h3>
+                            <p>This config has 3 bugs. Find and fix them:</p>
+                            <div class="code-block editable">
+                                <textarea id="webpack-exercise" spellcheck="false">module.exports = {
+  entry: './src/index.js',
+  output: {
+    filename: 'bundle.js',
+    path: './dist'
+  },
+  mode: 'production',
+  devtool: 'eval-source-map'
+}</textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="validateWebpackConfig()">Validate Config</button>
+                            <div id="webpack-feedback" style="margin-top: 1rem;"></div>
+                        </div>
+                    </div>
+                `
+            },
+
+            'loaders': {
+                title: "🔄 Loader Laboratory",
+                content: `
+                    <div class="card">
+                        <h2>Loaders: The Transformation Pipeline</h2>
+                        <p>Loaders transform files into modules. They work <strong>right-to-left</strong> (or bottom-to-top in array form).</p>
+                        
+                        <div style="background: rgba(0,0,0,0.3); padding: 2rem; border-radius: 1rem; margin: 2rem 0; text-align: center;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                                <div style="padding: 1rem; background: #264de4; border-radius: 0.5rem;">styles.css</div>
+                                <span style="font-size: 2rem;">→</span>
+                                <div style="padding: 1rem; background: var(--primary); border-radius: 0.5rem;">css-loader</div>
+                                <span style="font-size: 2rem;">→</span>
+                                <div style="padding: 1rem; background: var(--secondary); border-radius: 0.5rem;">postcss-loader</div>
+                                <span style="font-size: 2rem;">→</span>
+                                <div style="padding: 1rem; background: var(--success); border-radius: 0.5rem;">style-loader</div>
+                                <span style="font-size: 2rem;">→</span>
+                                <div style="padding: 1rem; background: #f7df1e; color: #000; border-radius: 0.5rem;">&lt;style&gt; in DOM</div>
+                            </div>
+                        </div>
+
+                        <h3>Common Loader Patterns</h3>
+                        <div class="code-block">
+<span class="comment">// JavaScript Transformation</span>
+{
+  test: <span class="string">/\\.js$/</span>,
+  exclude: <span class="string">/node_modules/</span>, <span class="comment">// Critical! Don't transpile node_modules</span>
+  use: {
+    loader: <span class="string">'babel-loader'</span>,
+    options: {
+      presets: [<span class="string">'@babel/preset-env'</span>, <span class="string">'@babel/preset-react'</span>]
+    }
+  }
+}
+
+<span class="comment">// Asset Handling</span>
+{
+  test: <span class="string">/\\.(png|jpg|gif)$/i</span>,
+  type: <span class="string">'asset/resource'</span>, <span class="comment">// Webpack 5 native asset modules</span>
+  parser: {
+    dataUrlCondition: {
+      maxSize: 8 * 1024 <span class="comment">// Inline images < 8kb as base64</span>
+    }
+  }
+}
+
+<span class="comment">// CSS with MiniCssExtractPlugin (Production)</span>
+{
+  test: <span class="string">/\\.css$/i</span>,
+  use: [
+    MiniCssExtractPlugin.loader, <span class="comment">// Extract CSS into files</span>
+    <span class="string">'css-loader'</span>,
+    <span class="string">'postcss-loader'</span> <span class="comment">// Autoprefixer, Tailwind, etc.</span>
+  ]
+}
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">⚠️ The node_modules Trap</div>
+                            <p>Always exclude node_modules from babel-loader! Transpiling node_modules significantly slows builds and can break packages that are already compiled.</p>
+                            <div class="code-block">
+<span class="comment">// WRONG - Build takes 5 minutes</span>
+{ test: <span class="string">/\\.js$/</span>, use: <span class="string">'babel-loader'</span> }
+
+<span class="comment">// RIGHT - Build takes 30 seconds</span>
+{ 
+  test: <span class="string">/\\.js$/</span>, 
+  exclude: <span class="string">/node_modules/</span>,
+  use: <span class="string">'babel-loader'</span> 
+}
+                            </div>
+                        </div>
+
+                        <h3>Interactive: Build the Loader Chain</h3>
+                        <p>Drag and order the loaders for processing SCSS files:</p>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0;" id="loader-chain">
+                            <div class="quiz-option" draggable="true" data-order="3" ondragstart="dragStart(event)" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                sass-loader (Compile SCSS to CSS)
+                            </div>
+                            <div class="quiz-option" draggable="true" data-order="2" ondragstart="dragStart(event)" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                css-loader (Resolve imports)
+                            </div>
+                            <div class="quiz-option" draggable="true" data-order="1" ondragstart="dragStart(event)" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                style-loader (Inject to DOM)
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="checkLoaderOrder()">Check Order</button>
+                        <div id="loader-feedback"></div>
+                    </div>
+                `
+            },
+
+            'plugins': {
+                title: "🔌 Plugin Power",
+                content: `
+                    <div class="card">
+                        <h2>Plugins: The Build Orchestrators</h2>
+                        <p>While loaders transform individual files, plugins perform <strong>broader tasks</strong> like bundle optimization, asset management, and environment injection.</p>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+                            <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border-left: 4px solid var(--success);">
+                                <h4>HtmlWebpackPlugin</h4>
+                                <p style="font-size: 0.875rem; color: var(--gray); margin: 0.5rem 0;">Auto-generates HTML files with injected script tags</p>
+                                <code style="font-size: 0.75rem;">new HtmlWebpackPlugin()</code>
+                            </div>
+                            
+                            <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                                <h4>CleanWebpackPlugin</h4>
+                                <p style="font-size: 0.875rem; color: var(--gray); margin: 0.5rem 0;">Removes old build files before new build</p>
+                                <code style="font-size: 0.75rem;">new CleanWebpackPlugin()</code>
+                            </div>
+                            
+                            <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border-left: 4px solid var(--warning);">
+                                <h4>DefinePlugin</h4>
+                                <p style="font-size: 0.875rem; color: var(--gray); margin: 0.5rem 0;">Create global constants configurable at compile time</p>
+                                <code style="font-size: 0.75rem;">new DefinePlugin({ API_URL: '...' })</code>
+                            </div>
+                            
+                            <div style="padding: 1.5rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem; border-left: 4px solid var(--secondary);">
+                                <h4>MiniCssExtractPlugin</h4>
+                                <p style="font-size: 0.875rem; color: var(--gray); margin: 0.5rem 0;">Extract CSS into separate files (production)</p>
+                                <code style="font-size: 0.75rem;">new MiniCssExtractPlugin()</code>
+                            </div>
+                        </div>
+
+                        <div class="code-block">
+<span class="keyword">const</span> HtmlWebpackPlugin = <span class="keyword">require</span>(<span class="string">'html-webpack-plugin'</span>);
+<span class="keyword">const</span> MiniCssExtractPlugin = <span class="keyword">require</span>(<span class="string">'mini-css-extract-plugin'</span>);
+<span class="keyword">const</span> { DefinePlugin } = <span class="keyword">require</span>(<span class="string">'webpack'</span>);
+
+<span class="keyword">module</span>.exports = {
+  plugins: [
+    <span class="comment">// Generates HTML automatically</span>
+    <span class="keyword">new</span> HtmlWebpackPlugin({
+      template: <span class="string">'./public/index.html'</span>,
+      favicon: <span class="string">'./public/favicon.ico'</span>
+    }),
+    
+    <span class="comment">// Extract CSS (use instead of style-loader in prod)</span>
+    <span class="keyword">new</span> MiniCssExtractPlugin({
+      filename: <span class="string">'[name].[contenthash:8].css'</span>
+    }),
+    
+    <span class="comment">// Environment variables (NOT process.env!)</span>
+    <span class="keyword">new</span> DefinePlugin({
+      <span class="string">'process.env.API_URL'</span>: JSON.stringify(process.env.API_URL),
+      <span class="string">'__VERSION__'</span>: JSON.stringify(<span class="string">'1.0.0'</span>)
+    })
+  ]
+};
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">⚠️ DefinePlugin String Gotcha</div>
+                            <p>DefinePlugin does a direct text replacement! If you want a string, you must JSON.stringify it, or the quotes won't be in the final code.</p>
+                            <div class="code-block">
+<span class="comment">// WRONG - Results in: const url = https://api.example.com</span>
+<span class="keyword">new</span> DefinePlugin({ API_URL: <span class="string">'https://api.example.com'</span> })
+
+<span class="comment">// RIGHT - Results in: const url = "https://api.example.com"</span>
+<span class="keyword">new</span> DefinePlugin({ API_URL: JSON.stringify(<span class="string">'https://api.example.com'</span>) })
+                            </div>
+                        </div>
+
+                        <h3>Quiz: Plugin vs Loader</h3>
+                        <p>Should you use a Plugin or Loader for each task?</p>
+                        <div id="plugin-quiz">
+                            <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem;">
+                                <p>1. Transform TypeScript to JavaScript</p>
+                                <button class="btn" onclick="checkPluginAnswer(this, 'loader')" style="margin-right: 0.5rem;">Plugin</button>
+                                <button class="btn" onclick="checkPluginAnswer(this, 'loader')">Loader</button>
+                            </div>
+                            <div style="margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem;">
+                                <p>2. Generate an HTML file with script tags injected</p>
+                                <button class="btn" onclick="checkPluginAnswer(this, 'plugin')" style="margin-right: 0.5rem;">Plugin</button>
+                                <button class="btn" onclick="checkPluginAnswer(this, 'plugin')">Loader</button>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+
+            'splitting': {
+                title: "✂️ Code Splitting Mastery",
+                content: `
+                    <div class="card">
+                        <h2>Strategic Code Splitting</h2>
+                        <p>Don't ship code the user doesn't need immediately. Split your bundle!</p>
+                        
+                        <div class="split-demo">
+                            <div class="chunk" id="main-chunk">
+                                <h3>main.js</h3>
+                                <p>Core app logic</p>
+                                <div style="font-size: 2rem; margin-top: 1rem;">⚡</div>
+                                <small>Loaded immediately</small>
+                            </div>
+                            <div class="chunk" id="lazy-chunk">
+                                <h3>dashboard.js</h3>
+                                <p>Heavy dashboard component</p>
+                                <div style="font-size: 2rem; margin-top: 1rem;">💤</div>
+                                <small>Lazy loaded on route</small>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="simulateLazyLoad()">Simulate Navigation to Dashboard</button>
+
+                        <h3 style="margin-top: 2rem;">Three Strategies</h3>
+                        
+                        <div class="code-block">
+<span class="comment">// 1. Route-based Splitting (React Router example)</span>
+<span class="keyword">import</span> { lazy, Suspense } <span class="keyword">from</span> <span class="string">'react'</span>;
+
+<span class="keyword">const</span> Dashboard = lazy(() => <span class="keyword">import</span>(<span class="string">'./Dashboard'</span>));
+<span class="keyword">const</span> Settings = lazy(() => <span class="keyword">import</span>(<span class="string">'./Settings'</span>));
+
+<span class="comment">// 2. Vendor Splitting (Webpack optimization)</span>
+<span class="keyword">module</span>.exports = {
+  optimization: {
+    splitChunks: {
+      chunks: <span class="string">'all'</span>,
+      cacheGroups: {
+        vendor: {
+          test: <span class="string">/[\\\\/]node_modules[\\\\/]/</span>,
+          name: <span class="string">'vendors'</span>,
+          chunks: <span class="string">'all'</span>
+        }
+      }
+    }
+  }
+};
+
+<span class="comment">// 3. Dynamic Imports (Any JS)</span>
+button.addEventListener(<span class="string">'click'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">const</span> { heavyFunction } = <span class="keyword">await</span> <span class="keyword">import</span>(<span class="string">'./heavy-module.js'</span>);
+  heavyFunction();
+});
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">⚠️ The Waterfall Problem</div>
+                            <p>Don't create chains of dynamic imports. If A imports B dynamically, and B imports C dynamically, you create a waterfall request chain.</p>
+                            <div class="code-block">
+<span class="comment">// BAD: Waterfall loading</span>
+<span class="comment">// Page loads → fetch A → parse A → fetch B → parse B → fetch C</span>
+<span class="keyword">const</span> A = <span class="keyword">await</span> <span class="keyword">import</span>(<span class="string">'./A'</span>);
+<span class="keyword">const</span> B = <span class="keyword">await</span> <span class="keyword">import</span>(<span class="string">'./B'</span>); <span class="comment">// Inside A</span>
+
+<span class="comment">// GOOD: Preload hints or parallel imports</span>
+<span class="keyword">const</span> [A, B] = <span class="keyword">await</span> Promise.all([
+  <span class="keyword">import</span>(<span class="string">'./A'</span>),
+  <span class="keyword">import</span>(<span class="string">'./B'</span>)
+]);
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <h3>SplitChunks Visualizer</h3>
+                            <p>Configure splitChunks to separate vendors:</p>
+                            <div class="code-block editable">
+                                <textarea id="splitting-exercise" spellcheck="false">module.exports = {
+  optimization: {
+    splitChunks: {
+      // Your config here
+    }
+  }
+}</textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="validateSplitting()">Validate</button>
+                            <div id="splitting-feedback"></div>
+                        </div>
+                    </div>
+                `
+            },
+
+            'optimization': {
+                title: "🚀 Optimization Dojo",
+                content: `
+                    <div class="card">
+                        <h2>Production Optimization Checklist</h2>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 2rem 0;">
+                            <div style="padding: 1rem; border: 2px solid var(--success); border-radius: 0.5rem;">
+                                <input type="checkbox" checked disabled> Tree Shaking
+                                <p style="font-size: 0.875rem; color: var(--gray);">Eliminate dead code</p>
+                            </div>
+                            <div style="padding: 1rem; border: 2px solid var(--success); border-radius: 0.5rem;">
+                                <input type="checkbox" checked disabled> Minification (Terser)
+                                <p style="font-size: 0.875rem; color: var(--gray);">Remove whitespace, shorten names</p>
+                            </div>
+                            <div style="padding: 1rem; border: 2px solid var(--success); border-radius: 0.5rem;">
+                                <input type="checkbox" checked disabled> Gzip/Brotli
+                                <p style="font-size: 0.875rem; color: var(--gray);">Compression over the wire</p>
+                            </div>
+                            <div style="padding: 1rem; border: 2px solid var(--warning); border-radius: 0.5rem;">
+                                <input type="checkbox"> Image Optimization
+                                <p style="font-size: 0.875rem; color: var(--gray);">WebP, responsive images</p>
+                            </div>
+                        </div>
+
+                        <h3>Tree Shaking Requirements</h3>
+                        <p>For tree shaking to work, you need:</p>
+                        <ul style="margin: 1rem 0; padding-left: 2rem; color: var(--gray);">
+                            <li>Use ES Modules (import/export, not require/module.exports)</li>
+                            <li>Mark your package as <code>"sideEffects": false</code> in package.json</li>
+                            <li>Use mode: 'production' in Webpack</li>
+                            <li>Import specific functions, not entire libraries</li>
+                        </ul>
+
+                        <div class="code-block">
+<span class="comment">// GOOD - Tree shakeable</span>
+<span class="keyword">import</span> { pick, omit } <span class="keyword">from</span> <span class="string">'lodash-es'</span>;
+
+<span class="comment">// BAD - Imports entire library</span>
+<span class="keyword">import</span> _ <span class="keyword">from</span> <span class="string">'lodash'</span>;
+
+<span class="comment">// package.json</span>
+{
+  <span class="string">"name"</span>: <span class="string">"my-lib"</span>,
+  <span class="string">"sideEffects"</span>: <span class="keyword">false</span>, <span class="comment">// Webpack can safely remove unused exports</span>
+  <span class="string">"main"</span>: <span class="string">"dist/index.js"</span>,
+  <span class="string">"module"</span>: <span class="string">"dist/index.esm.js"</span>
+}
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">⚠️ The sideEffects Trap</div>
+                            <p>If you set <code>sideEffects: false</code> but your code DOES have side effects (like polyfills or global CSS imports), they will be removed!</p>
+                            <div class="code-block">
+<span class="comment">// If sideEffects: false, this CSS import might be removed!</span>
+<span class="keyword">import</span> <span class="string">'./global.css'</span>; <span class="comment">// No exports = appears unused</span>
+
+<span class="comment">// Fix: Mark CSS as side effect in package.json</span>
+<span class="string">"sideEffects"</span>: [<span class="string">"*.css"</span>, <span class="string">"*.scss"</span>]
+                            </div>
+                        </div>
+
+                        <h3>Babel Configuration for Modern Browsers</h3>
+                        <p>Don't transpile ES6 to ES5 if you don't support IE11. It bloats your bundle.</p>
+                        <div class="code-block">
+<span class="comment">// .babelrc - Target modern browsers only</span>
+{
+  <span class="string">"presets"</span>: [
+    [<span class="string">"@babel/preset-env"</span>, {
+      <span class="string">"targets"</span>: {
+        <span class="string">"browsers"</span>: [<span class="string">"last 2 versions"</span>, <span class="string">"not dead"</span>, <span class="string">"not IE 11"</span>]
+      },
+      <span class="string">"modules"</span>: <span class="keyword">false</span> <span class="comment">// Preserve ES modules for tree shaking</span>
+    }]
+  ]
+}
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <h3>Performance Budget Simulator</h3>
+                            <p>Your bundle budget is 200KB. Optimize this config:</p>
+                            <div class="terminal" id="bundle-analyzer">
+                                <div class="terminal-line"><span class="terminal-prompt">$</span> <span class="terminal-output">npm run build</span></div>
+                                <div class="terminal-line"><span class="terminal-output">main.js: 450KB (WARNING: Exceeds budget!)</span></div>
+                                <div class="terminal-line"><span class="terminal-output">vendors.js: 320KB</span></div>
+                                <div class="terminal-line"><span class="terminal-error">Total: 770KB ⚠️</span></div>
+                            </div>
+                            <button class="btn btn-primary" onclick="optimizeBundle()">Apply Optimizations</button>
+                        </div>
+                    </div>
+                `
+            },
+
+            'pitfalls': {
+                title: "⚠️ Pitfall Prevention",
+                content: `
+                    <div class="card">
+                        <h2>Common Production Disasters</h2>
+                        
+                        <div class="pitfall">
+                            <div class="pitfall-title">🚨 #1: Building for Production in Development Mode</div>
+                            <p>I've seen 5MB bundles in production because NODE_ENV wasn't set correctly.</p>
+                            <div class="code-block">
+<span class="comment">// webpack.config.js</span>
+<span class="keyword">const</span> isProd = process.env.NODE_ENV === <span class="string">'production'</span>;
+
+<span class="keyword">module</span>.exports = {
+  mode: isProd ? <span class="string">'production'</span> : <span class="string">'development'</span>,
+  devtool: isProd ? <span class="string">'source-map'</span> : <span class="string">'eval-cheap-module-source-map'</span>
+};
+
+<span class="comment">// package.json scripts</span>
+<span class="string">"build"</span>: <span class="string">"NODE_ENV=production webpack"</span>, <span class="comment">// Unix</span>
+<span class="string">"build:win"</span>: <span class="string">"set NODE_ENV=production&& webpack"</span> <span class="comment">// Windows</span>
+                            </div>
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">🚨 #2: Importing All of Lodash/Moment</div>
+                            <p>Moment.js is 232KB. date-fns is 10KB for the same features.</p>
+                            <div class="code-block">
+<span class="comment">// ❌ 500KB+</span>
+<span class="keyword">import</span> _ <span class="keyword">from</span> <span class="string">'lodash'</span>;
+<span class="keyword">import</span> moment <span class="keyword">from</span> <span class="string">'moment'</span>;
+
+<span class="comment">// ✅ 20KB</span>
+<span class="keyword">import</span> debounce <span class="keyword">from</span> <span class="string">'lodash/debounce'</span>;
+<span class="comment">// or</span>
+<span class="keyword">import</span> { format } <span class="keyword">from</span> <span class="string">'date-fns'</span>;
+                            </div>
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">🚨 #3: Not Using Content Hash</div>
+                            <p>Without [contenthash], browsers can't cache your assets properly.</p>
+                            <div class="code-block">
+<span class="comment">// BAD - Users get old cached versions</span>
+filename: <span class="string">'bundle.js'</span>
+
+<span class="comment">// GOOD - Cache busting + long-term caching</span>
+filename: <span class="string">'[name].[contenthash:8].js'</span>, <span class="comment">// main.a1b2c3d4.js</span>
+
+<span class="comment">// CloudFlare/NGINX config for hashed assets:</span>
+Cache-Control: public, max-age=31536000, immutable
+                            </div>
+                        </div>
+
+                        <div class="pitfall">
+                            <div class="pitfall-title">🚨 #4: Analyzing Bundle Size Blindly</div>
+                            <p>Always use webpack-bundle-analyzer before optimizing.</p>
+                            <div class="code-block">
+npm install --save-dev webpack-bundle-analyzer
+
+<span class="comment">// webpack.config.js</span>
+<span class="keyword">const</span> { BundleAnalyzerPlugin } = <span class="keyword">require</span>(<span class="string">'webpack-bundle-analyzer'</span>);
+
+<span class="keyword">module</span>.exports = {
+  plugins: [
+    <span class="keyword">new</span> BundleAnalyzerPlugin({
+      analyzerMode: process.env.ANALYZE ? <span class="string">'server'</span> : <span class="string">'disabled'</span>
+    })
+  ]
+}
+
+<span class="comment">// Usage:</span>
+ANALYZE=<span class="keyword">true</span> npm run build
+                            </div>
+                        </div>
+
+                        <h3 style="margin-top: 2rem;">Debugging Techniques</h3>
+                        <div class="code-block">
+<span class="comment">// Profile build performance</span>
+<span class="string">"scripts"</span>: {
+  <span class="string">"build:profile"</span>: <span class="string">"webpack --profile --json > stats.json"</span>
+}
+
+<span class="comment">// Then use:</span>
+<span class="comment">// 1. webpack.github.io/analyse/ - Analyze why modules are included</span>
+<span class="comment">// 2. statoscope.dev - Modern alternative with better UX</span>
+                        </div>
+                    </div>
+                `
+            },
+
+            'final-boss': {
+                title: "👹 The Final Boss: Senior Config Challenge",
+                content: `
+                    <div class="card">
+                        <h2>Build the Ultimate Config</h2>
+                        <p>You've learned the concepts. Now apply them to create a production-ready webpack configuration that satisfies ALL requirements:</p>
+                        
+                        <div style="background: rgba(99, 102, 241, 0.1); border: 2px solid var(--primary); padding: 1.5rem; border-radius: 0.5rem; margin: 1.5rem 0;">
+                            <h4>Requirements:</h4>
+                            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                                <li>React TypeScript support</li>
+                                <li>CSS Modules with SCSS</li>
+                                <li>Code splitting (vendors separate)</li>
+                                <li>Long-term caching (contenthash)</li>
+                                <li>Production optimizations (minify, no source maps in prod)</li>
+                                <li>Environment variables injected</li>
+                                <li>Asset optimization (images < 8kb inline)</li>
+                            </ul>
+                        </div>
+
+                        <div class="code-block editable" style="min-height: 400px;">
+                            <textarea id="final-config" spellcheck="false" style="min-height: 380px;">const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  // TODO: Complete this configuration
+  
+  module: {
+    rules: [
+      // Add your loaders here
+    ]
+  },
+  
+  plugins: [
+    // Add your plugins here
+  ],
+  
+  optimization: {
+    // Add splitting strategy
+  }
+};</textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="validateFinalBoss()">Submit Configuration</button>
+                            <button class="btn" onclick="showHint()">Get Hint (-50 XP)</button>
+                        </div>
+
+                        <div id="final-feedback" style="margin-top: 1.5rem;"></div>
+                    </div>
+                `
+            }
+        };
+
+        // Utility Functions
+        function loadModule(moduleId) {
+            state.currentModule = moduleId;
+            
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if(item.dataset.module === moduleId) item.classList.add('active');
+            });
+
+            // Load content with animation
+            const content = document.getElementById('mainContent');
+            content.innerHTML = `
+                <div class="module-header">
+                    <h1 class="module-title">${modules[moduleId].title}</h1>
+                    <p class="module-subtitle">Master advanced concepts through practice</p>
+                </div>
+                ${modules[moduleId].content}
+            `;
+
+            // Mark as completed if not already
+            if (!state.completedModules.includes(moduleId)) {
+                state.completedModules.push(moduleId);
+                updateProgress();
+            }
+
+            window.scrollTo(0, 0);
+        }
+
+        function updateProgress() {
+            const total = Object.keys(modules).length;
+            const current = state.completedModules.length;
+            const percentage = (current / total) * 100;
+            
+            document.getElementById('progressBar').style.width = percentage + '%';
+            
+            // Level up logic
+            const newLevel = Math.floor(state.xp / 500) + 1;
+            if (newLevel > state.level) {
+                state.level = newLevel;
+                showAchievement(`Level Up! You are now level ${newLevel}`);
+            }
+            
+            document.getElementById('userLevel').textContent = state.level;
+            document.getElementById('userXP').textContent = state.xp;
+        }
+
+        function addXP(amount) {
+            state.xp += amount;
+            updateProgress();
+            
+            // Visual feedback
+            const xpDisplay = document.querySelector('.xp-display');
+            xpDisplay.style.transform = 'scale(1.2)';
+            setTimeout(() => xpDisplay.style.transform = 'scale(1)', 300);
+        }
+
+        function showAchievement(text) {
+            const ach = document.getElementById('achievement');
+            document.getElementById('achievementText').textContent = text;
+            ach.style.display = 'block';
+            
+            // Confetti effect
+            for (let i = 0; i < 20; i++) {
+                setTimeout(createConfetti, i * 50);
+            }
+            
+            setTimeout(() => {
+                ach.style.display = 'none';
+            }, 3000);
+        }
+
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.background = ['#6366f1', '#ec4899', '#10b981', '#f59e0b'][Math.floor(Math.random() * 4)];
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 4000);
+        }
+
+        // Interactive Functions
+        function simulateBuild(type) {
+            const results = {
+                webpack: { time: '4.2s', size: '245KB', chunks: 3 },
+                vite: { time: '0.3s', size: '198KB', chunks: 5 },
+                rollup: { time: '1.1s', size: '185KB', chunks: 2 }
+            };
+            
+            const result = results[type];
+            const div = document.getElementById(type + '-result');
+            
+            div.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border: 3px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>';
+            
+            setTimeout(() => {
+                div.innerHTML = `
+                    <div style="color: var(--success);">✓ Build Complete</div>
+                    <div>Time: ${result.time}</div>
+                    <div>Size: ${result.size}</div>
+                    <div>Chunks: ${result.chunks}</div>
+                `;
+                addXP(50);
+            }, 1000);
+        }
+
+        function checkAnswer(btn, isCorrect) {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.quiz-option').forEach(opt => opt.disabled = true);
+            
+            if (isCorrect) {
+                btn.classList.add('correct');
+                addXP(100);
+                showAchievement('Quiz Master!');
+            } else {
+                btn.classList.add('wrong');
+                setTimeout(() => {
+                    btn.classList.remove('wrong');
+                    parent.querySelectorAll('.quiz-option').forEach(opt => opt.disabled = false);
+                }, 1000);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        function validateWebpackConfig() {
+            const code = document.getElementById('webpack-exercise').value;
+            const feedback = document.getElementById('webpack-feedback');
+            let errors = [];
+            
+            if (!code.includes('path.resolve')) errors.push("Use path.resolve for cross-platform compatibility");
+            if (!code.includes('contenthash')) errors.push("Add [contenthash] for caching");
+            if (!code.includes('clean')) errors.push("Add clean: true to clean dist folder");
+            if (code.includes('eval') && code.includes('production')) errors.push("Don't use eval source maps in production");
+            
+            if (errors.length === 0) {
+                feedback.innerHTML = '<div style="color: var(--success);">✓ Perfect! All issues fixed.</div>';
+                addXP(150);
+                showAchievement('Webpack Warrior!');
+            } else {
+                feedback.innerHTML = errors.map(e => `<div style="color: var(--danger); margin: 0.25rem 0;">⚠ ${e}</div>`).join('');
+            }
+        }
+
+        // Drag and Drop for Loaders
+        let draggedElement = null;
+
+        function dragStart(e) {
+            draggedElement = e.target;
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            if (e.target.classList.contains('quiz-option') && e.target !== draggedElement) {
+                const parent = e.target.parentElement;
+                const allItems = [...parent.children];
+                const draggedIdx = allItems.indexOf(draggedElement);
+                const targetIdx = allItems.indexOf(e.target);
+                
+                if (draggedIdx < targetIdx) {
+                    e.target.after(draggedElement);
+                } else {
+                    e.target.before(draggedElement);
+                }
+            }
+        }
+
+        function checkLoaderOrder() {
+            const items = document.querySelectorAll('#loader-chain .quiz-option');
+            const order = [...items].map(item => parseInt(item.dataset.order));
+            const isCorrect = order[0] === 1 && order[1] === 2 && order[2] === 3;
+            
+            const feedback = document.getElementById('loader-feedback');
+            if (isCorrect) {
+                feedback.innerHTML = '<div style="color: var(--success); margin-top: 1rem;">✓ Correct! Loaders execute right-to-left (or bottom-to-top).</div>';
+                addXP(100);
+            } else {
+                feedback.innerHTML = '<div style="color: var(--danger); margin-top: 1rem;">✗ Incorrect. Remember: Use ➡️ Array order is execution order (right to left)</div>';
+            }
+        }
+
+        function simulateLazyLoad() {
+            const chunk = document.getElementById('lazy-chunk');
+            chunk.classList.add('spinner');
+            
+            setTimeout(() => {
+                chunk.classList.remove('spinner');
+                chunk.classList.add('loaded');
+                chunk.innerHTML = `
+                    <h3>dashboard.js</h3>
+                    <p>Loaded on demand!</p>
+                    <div style="font-size: 2rem; margin-top: 1rem;">✅</div>
+                    <small style="color: var(--success);">180KB loaded in 120ms</small>
+                `;
+                addXP(75);
+            }, 1500);
+        }
+
+        function checkPluginAnswer(btn, type) {
+            const isPlugin = type === 'plugin';
+            const question = btn.parentElement;
+            const buttons = question.querySelectorAll('button');
+            
+            buttons.forEach(b => b.disabled = true);
+            
+            if ((question.textContent.includes('Transform') && !isPlugin) || 
+                (question.textContent.includes('HTML') && isPlugin)) {
+                btn.style.background = 'var(--success)';
+                addXP(50);
+            } else {
+                btn.style.background = 'var(--danger)';
+                setTimeout(() => {
+                    buttons.forEach(b => {
+                        b.disabled = false;
+                        b.style.background = '';
+                    });
+                }, 1000);
+            }
+        }
+
+        function optimizeBundle() {
+            const terminal = document.getElementById('bundle-analyzer');
+            terminal.innerHTML = `
+                <div class="terminal-line"><span class="terminal-prompt">$</span> <span class="terminal-output">npm run build:optimized</span></div>
+                <div class="terminal-line"><span class="terminal-output">main.js: 85KB ✓</span></div>
+                <div class="terminal-line"><span class="terminal-output">vendors.js: 95KB ✓</span></div>
+                <div class="terminal-line"><span class="terminal-output">dashboard.lazy.js: 45KB (lazy)</span></div>
+                <div class="terminal-line"><span class="terminal-success" style="color: var(--success);">Total initial: 180KB ✓ (Budget met)</span></div>
+                <div class="terminal-line"><span class="terminal-output">Optimizations applied:</span></div>
+                <div class="terminal-line"><span class="terminal-output">- Tree shaking enabled</span></div>
+                <div class="terminal-line"><span class="terminal-output">- Lodash replaced with lodash-es</span></div>
+                <div class="terminal-line"><span class="terminal-output">- Moment.js replaced with date-fns</span></div>
+            `;
+            addXP(100);
+            showAchievement('Optimization Expert!');
+        }
+
+        function validateFinalBoss() {
+            const code = document.getElementById('final-config').value;
+            const feedback = document.getElementById('final-feedback');
+            let score = 0;
+            let checks = [];
+            
+            // Check requirements
+            if (code.includes('ts-loader') || code.includes('@babel/preset-typescript')) {
+                score += 1; checks.push("✓ TypeScript support");
+            }
+            if (code.includes('sass-loader') || code.includes('scss')) {
+                score += 1; checks.push("✓ SCSS support");
+            }
+            if (code.includes('modules: true') || code.includes('css-loader') && code.includes('modules')) {
+                score += 1; checks.push("✓ CSS Modules");
+            }
+            if (code.includes('splitChunks')) {
+                score += 1; checks.push("✓ Code splitting");
+            }
+            if (code.includes('contenthash')) {
+                score += 1; checks.push("✓ Long-term caching");
+            }
+            if (code.includes('MiniCssExtractPlugin')) {
+                score += 1; checks.push("✓ CSS extraction");
+            }
+            if (code.includes('DefinePlugin') || code.includes('EnvironmentPlugin')) {
+                score += 1; checks.push("✓ Environment variables");
+            }
+            
+            const percentage = (score / 7) * 100;
+            
+            if (percentage === 100) {
+                feedback.innerHTML = `
+                    <div style="padding: 2rem; background: rgba(16, 185, 129, 0.2); border-radius: 1rem; border: 2px solid var(--success);">
+                        <h3 style="color: var(--success); margin-bottom: 1rem;">🎉 SENIOR LEVEL ACHIEVED!</h3>
+                        <p>You've mastered build tools! All requirements met.</p>
+                        <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                            ${checks.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                        <p style="margin-top: 1rem; font-weight: bold;">Final Score: 100%</p>
+                    </div>
+                `;
+                addXP(1000);
+                showAchievement('Build Tool Master! Job Ready! 🚀');
+                createConfetti();
+                createConfetti();
+            } else {
+                feedback.innerHTML = `
+                    <div style="padding: 2rem; background: rgba(239, 68, 68, 0.1); border-radius: 1rem; border: 2px solid var(--danger);">
+                        <h3 style="color: var(--danger); margin-bottom: 1rem;">Incomplete Configuration</h3>
+                        <p>Progress: ${score}/7 requirements met (${Math.round(percentage)}%)</p>
+                        <ul style="margin-top: 1rem; padding-left: 1.5rem;">
+                            ${checks.map(c => `<li style="color: var(--success);">${c}</li>`).join('')}
+                        </ul>
+                        <p style="margin-top: 1rem;">Review previous modules and try again!</p>
+                    </div>
+                `;
+            }
+        }
+
+        function showHint() {
+            alert("Hint: You'll need ts-loader for TypeScript, sass-loader -> css-loader -> MiniCssExtractPlugin for CSS, and optimization.splitChunks for vendors. Don't forget HtmlWebpackPlugin!");
+            state.xp = Math.max(0, state.xp - 50);
+            updateProgress();
+        }
+
+        // Initialize
+        loadModule('intro');
+    </script>
+</body>
+</html>

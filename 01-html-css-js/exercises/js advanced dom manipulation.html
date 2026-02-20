@@ -1,0 +1,2438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥 Advanced DOM Manipulation Mastery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0e1a;--surface:#131833;--surface2:#1a2040;--surface3:#222850;
+--primary:#6c5ce7;--primary-light:#a29bfe;--secondary:#00cec9;
+--accent:#fd79a8;--success:#00b894;--warning:#fdcb6e;--danger:#e17055;
+--text:#dfe6e9;--text-dim:#636e72;--text-bright:#fff;
+--glow:0 0 20px rgba(108,92,231,0.3);
+--radius:12px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+h1,h2,h3,h4{color:var(--text-bright);font-weight:700}
+
+/* NAVIGATION */
+.top-bar{position:fixed;top:0;left:0;right:0;z-index:1000;background:rgba(10,14,26,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(108,92,231,0.2);padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+.top-bar h1{font-size:1.2rem;background:linear-gradient(135deg,var(--primary-light),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.progress-container{display:flex;align-items:center;gap:10px}
+.progress-bar{width:200px;height:8px;background:var(--surface2);border-radius:10px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:10px;transition:width 0.5s ease;width:0%}
+.progress-text{color:var(--text-dim);font-size:0.85rem}
+.xp-badge{background:linear-gradient(135deg,var(--warning),var(--accent));color:#000;padding:4px 12px;border-radius:20px;font-weight:700;font-size:0.85rem}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:56px;bottom:0;width:280px;background:var(--surface);border-right:1px solid rgba(108,92,231,0.15);overflow-y:auto;padding:20px 0;z-index:100;transition:transform 0.3s}
+.sidebar-section{padding:8px 20px;font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;color:var(--primary-light);margin-top:10px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:all 0.2s;border-left:3px solid transparent;color:var(--text-dim);font-size:0.95rem}
+.nav-item:hover{background:rgba(108,92,231,0.1);color:var(--text)}
+.nav-item.active{border-left-color:var(--primary);background:rgba(108,92,231,0.15);color:var(--primary-light)}
+.nav-item.completed .nav-icon{background:var(--success);color:#fff}
+.nav-icon{width:28px;height:28px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0}
+.nav-item.active .nav-icon{background:var(--primary);color:#fff}
+
+/* MAIN */
+.main{margin-left:280px;margin-top:56px;padding:40px;max-width:960px}
+.section{display:none}
+.section.active{display:block;animation:fadeSlide 0.4s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid rgba(108,92,231,0.15);border-radius:var(--radius);padding:30px;margin:20px 0;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--secondary))}
+.card.warning{border-color:rgba(253,203,110,0.3)}
+.card.warning::before{background:linear-gradient(90deg,var(--warning),var(--danger))}
+.card.success{border-color:rgba(0,184,148,0.3)}
+.card.success::before{background:linear-gradient(90deg,var(--success),var(--secondary))}
+.card.danger{border-color:rgba(225,112,85,0.3)}
+.card.danger::before{background:linear-gradient(90deg,var(--danger),var(--accent))}
+
+/* CODE */
+.code-block{background:#0d1117;border:1px solid rgba(108,92,231,0.2);border-radius:10px;padding:20px;margin:15px 0;font-family:'Fira Code','Cascadia Code',monospace;font-size:0.88rem;overflow-x:auto;position:relative;line-height:1.8}
+.code-block .line-num{color:var(--text-dim);user-select:none;margin-right:15px;min-width:25px;display:inline-block;text-align:right}
+.code-block .keyword{color:#ff7b72}
+.code-block .string{color:#a5d6ff}
+.code-block .func{color:#d2a8ff}
+.code-block .comment{color:#8b949e;font-style:italic}
+.code-block .const{color:#79c0ff}
+.code-block .tag{color:#7ee787}
+.code-block .attr{color:#ffa657}
+.code-block .num{color:#79c0ff}
+.code-block .oper{color:#ff7b72}
+.copy-btn{position:absolute;top:10px;right:10px;background:var(--surface2);border:1px solid rgba(108,92,231,0.3);color:var(--text-dim);padding:5px 12px;border-radius:6px;cursor:pointer;font-size:0.8rem;transition:all 0.2s}
+.copy-btn:hover{background:var(--primary);color:#fff}
+
+/* INTERACTIVE PLAYGROUND */
+.playground{background:var(--surface);border:1px solid rgba(108,92,231,0.2);border-radius:var(--radius);overflow:hidden;margin:20px 0}
+.playground-header{background:var(--surface2);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(108,92,231,0.15)}
+.playground-header h4{font-size:0.9rem;display:flex;align-items:center;gap:8px}
+.playground-body{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.playground-code{padding:15px;border-right:1px solid rgba(108,92,231,0.15)}
+.playground-code textarea{width:100%;height:100%;min-height:200px;background:transparent;border:none;color:var(--text);font-family:'Fira Code',monospace;font-size:0.85rem;resize:vertical;outline:none;line-height:1.7}
+.playground-preview{padding:15px;background:#0d1117;position:relative}
+.run-btn{background:linear-gradient(135deg,var(--success),var(--secondary));color:#000;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.85rem;transition:transform 0.2s}
+.run-btn:hover{transform:scale(1.05)}
+.run-btn:active{transform:scale(0.95)}
+
+/* VISUAL DEMOS */
+.visual-demo{background:var(--surface2);border-radius:var(--radius);padding:25px;margin:15px 0;min-height:150px;position:relative}
+.demo-controls{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+.demo-btn{background:var(--primary);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:0.85rem;transition:all 0.2s;font-weight:500}
+.demo-btn:hover{background:var(--primary-light);transform:translateY(-1px)}
+.demo-btn:active{transform:translateY(0)}
+.demo-btn.secondary{background:var(--surface3);border:1px solid rgba(108,92,231,0.3)}
+.demo-btn.danger{background:var(--danger)}
+.demo-btn.success{background:var(--success);color:#000}
+.demo-btn.warning{background:var(--warning);color:#000}
+.demo-output{background:#0d1117;border-radius:8px;padding:15px;min-height:80px;font-family:monospace;font-size:0.85rem;color:var(--secondary);border:1px solid rgba(0,206,201,0.2)}
+.demo-result{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.demo-box{flex:1;min-width:200px}
+
+/* COMPARISON */
+.comparison{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}
+.comparison-side{background:var(--surface2);border-radius:var(--radius);padding:20px;position:relative}
+.comparison-side.bad{border:1px solid rgba(225,112,85,0.3)}
+.comparison-side.good{border:1px solid rgba(0,184,148,0.3)}
+.comparison-label{position:absolute;top:-10px;left:15px;padding:2px 12px;border-radius:4px;font-size:0.75rem;font-weight:700;text-transform:uppercase}
+.comparison-side.bad .comparison-label{background:var(--danger);color:#fff}
+.comparison-side.good .comparison-label{background:var(--success);color:#000}
+
+/* QUIZ */
+.quiz-card{background:var(--surface);border:1px solid rgba(108,92,231,0.2);border-radius:var(--radius);padding:30px;margin:20px 0}
+.quiz-question{font-size:1.1rem;margin-bottom:20px;color:var(--text-bright)}
+.quiz-options{display:flex;flex-direction:column;gap:10px}
+.quiz-option{padding:14px 20px;background:var(--surface2);border:2px solid transparent;border-radius:10px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:12px}
+.quiz-option:hover{border-color:var(--primary);background:rgba(108,92,231,0.1)}
+.quiz-option.selected{border-color:var(--primary);background:rgba(108,92,231,0.15)}
+.quiz-option.correct{border-color:var(--success);background:rgba(0,184,148,0.15)}
+.quiz-option.incorrect{border-color:var(--danger);background:rgba(225,112,85,0.15)}
+.quiz-option .opt-letter{width:30px;height:30px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0}
+.quiz-feedback{margin-top:15px;padding:15px;border-radius:10px;display:none}
+.quiz-feedback.show{display:block;animation:fadeSlide 0.3s ease}
+.quiz-feedback.correct{background:rgba(0,184,148,0.15);border:1px solid rgba(0,184,148,0.3);color:var(--success)}
+.quiz-feedback.incorrect{background:rgba(225,112,85,0.15);border:1px solid rgba(225,112,85,0.3);color:var(--danger)}
+.quiz-submit{background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-weight:600;margin-top:15px;font-size:0.95rem;transition:all 0.2s}
+.quiz-submit:hover{background:var(--primary-light)}
+.quiz-submit:disabled{opacity:0.5;cursor:not-allowed}
+
+/* EXERCISE */
+.exercise{background:var(--surface);border:2px solid rgba(108,92,231,0.3);border-radius:var(--radius);padding:30px;margin:20px 0}
+.exercise-header{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.exercise-badge{background:linear-gradient(135deg,var(--accent),var(--primary));color:#fff;padding:4px 12px;border-radius:6px;font-size:0.8rem;font-weight:600}
+.exercise textarea{width:100%;min-height:150px;background:#0d1117;border:1px solid rgba(108,92,231,0.2);border-radius:8px;color:var(--text);font-family:'Fira Code',monospace;font-size:0.85rem;padding:15px;outline:none;resize:vertical;line-height:1.7}
+.exercise textarea:focus{border-color:var(--primary)}
+.exercise-result{margin-top:10px;padding:15px;border-radius:8px;display:none;font-family:monospace;font-size:0.9rem}
+.exercise-result.show{display:block}
+.exercise-result.pass{background:rgba(0,184,148,0.1);border:1px solid rgba(0,184,148,0.3);color:var(--success)}
+.exercise-result.fail{background:rgba(225,112,85,0.1);border:1px solid rgba(225,112,85,0.3);color:var(--danger)}
+
+/* TOOLTIP */
+.tooltip{position:relative;display:inline-block;border-bottom:1px dashed var(--primary-light);color:var(--primary-light);cursor:help}
+.tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surface3);color:var(--text);padding:8px 14px;border-radius:8px;font-size:0.8rem;white-space:nowrap;z-index:10;border:1px solid rgba(108,92,231,0.3);box-shadow:var(--glow)}
+
+/* ANIMATION ELEMENTS */
+.dom-tree{display:flex;flex-direction:column;align-items:center;gap:5px;padding:20px}
+.dom-node{background:var(--primary);color:#fff;padding:8px 18px;border-radius:8px;font-size:0.85rem;font-weight:600;position:relative;transition:all 0.3s}
+.dom-node.fragment{background:transparent;border:2px dashed var(--warning);color:var(--warning)}
+.dom-node.observer{background:var(--secondary);color:#000}
+.dom-node.custom{background:var(--accent);color:#fff}
+.dom-children{display:flex;gap:15px;margin-top:5px}
+.dom-connector{width:2px;height:20px;background:var(--text-dim);margin:0 auto}
+.dom-branch{display:flex;flex-direction:column;align-items:center}
+
+/* PERF METER */
+.perf-meter{display:flex;align-items:center;gap:10px;margin:10px 0}
+.perf-bar{flex:1;height:24px;background:var(--surface3);border-radius:12px;overflow:hidden;position:relative}
+.perf-fill{height:100%;border-radius:12px;transition:width 1s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-size:0.75rem;font-weight:700}
+.perf-fill.slow{background:linear-gradient(90deg,var(--danger),var(--accent))}
+.perf-fill.fast{background:linear-gradient(90deg,var(--success),var(--secondary))}
+.perf-label{min-width:120px;font-size:0.85rem}
+
+/* TABS */
+.tabs{display:flex;gap:5px;margin-bottom:15px;background:var(--surface2);padding:5px;border-radius:10px;flex-wrap:wrap}
+.tab{padding:8px 18px;border-radius:8px;cursor:pointer;font-size:0.85rem;transition:all 0.2s;color:var(--text-dim);font-weight:500}
+.tab.active{background:var(--primary);color:#fff}
+.tab:hover:not(.active){background:var(--surface3);color:var(--text)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeSlide 0.3s ease}
+
+/* BADGES & TAGS */
+.tag{display:inline-block;padding:3px 10px;border-radius:5px;font-size:0.75rem;font-weight:600;margin:2px}
+.tag.api{background:rgba(108,92,231,0.2);color:var(--primary-light)}
+.tag.perf{background:rgba(0,206,201,0.2);color:var(--secondary)}
+.tag.new{background:rgba(253,203,110,0.2);color:var(--warning)}
+
+/* SECTION HEADER */
+.section-header{text-align:center;padding:40px 0 30px;position:relative}
+.section-header h2{font-size:2rem;margin-bottom:10px;background:linear-gradient(135deg,var(--primary-light),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-header p{color:var(--text-dim);max-width:600px;margin:0 auto;font-size:1.05rem}
+.section-icon{font-size:3rem;margin-bottom:15px;display:block}
+
+/* STEP INDICATOR */
+.steps{display:flex;align-items:center;gap:5px;margin:20px 0}
+.step-dot{width:10px;height:10px;border-radius:50%;background:var(--surface3);transition:all 0.3s}
+.step-dot.active{background:var(--primary);box-shadow:0 0 10px rgba(108,92,231,0.5)}
+.step-dot.done{background:var(--success)}
+.step-line{flex:1;height:2px;background:var(--surface3)}
+.step-line.done{background:var(--success)}
+
+/* LIST */
+.feature-list{list-style:none;padding:0}
+.feature-list li{padding:10px 0;display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid rgba(108,92,231,0.1)}
+.feature-list li:last-child{border-bottom:none}
+.feature-list .icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+
+/* HIGHLIGHT */
+.highlight{background:rgba(108,92,231,0.15);color:var(--primary-light);padding:2px 8px;border-radius:4px;font-family:monospace;font-size:0.9em}
+
+/* SCROLL INDICATOR */
+.scroll-demo-container{height:300px;overflow-y:auto;background:#0d1117;border-radius:10px;padding:15px;border:1px solid rgba(0,206,201,0.2)}
+.scroll-item{padding:15px;margin:10px 0;background:var(--surface2);border-radius:8px;transition:all 0.5s;opacity:0.3;transform:translateX(-30px)}
+.scroll-item.visible{opacity:1;transform:translateX(0);border-left:3px solid var(--secondary)}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;padding:20px}
+  .comparison{grid-template-columns:1fr}
+  .playground-body{grid-template-columns:1fr}
+  .top-bar h1{font-size:1rem}
+}
+
+/* BURGER */
+.burger{display:none;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer}
+@media(max-width:768px){.burger{display:block}}
+
+/* CONFETTI */
+.confetti-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+.confetti{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiFall 3s ease-out forwards}
+@keyframes confettiFall{0%{transform:translateY(-100vh) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* ANIMATE */
+.animate-in{animation:fadeSlide 0.5s ease forwards}
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+/* Chapter nav */
+.chapter-nav{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid rgba(108,92,231,0.15)}
+.chapter-nav-btn{background:var(--surface2);border:1px solid rgba(108,92,231,0.2);color:var(--text);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:0.95rem;transition:all 0.2s;display:flex;align-items:center;gap:8px}
+.chapter-nav-btn:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--primary)}
+
+/* Timer visual */
+.timer-display{font-size:2rem;font-weight:700;color:var(--secondary);font-family:monospace;text-align:center;padding:15px}
+
+/* Observer visual */
+.observer-visual{position:relative;min-height:100px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;padding:20px}
+.observed-box{width:60px;height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all 0.4s;cursor:pointer}
+
+/* Custom element preview */
+.custom-el-preview{padding:20px;background:#0d1117;border-radius:10px;border:1px solid rgba(253,121,168,0.3)}
+
+/* Glow text */
+.glow{text-shadow:0 0 10px rgba(108,92,231,0.5)}
+
+.inline-code{background:rgba(108,92,231,0.15);color:var(--primary-light);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.88em}
+
+/* Log output */
+.log-output{background:#0d1117;border:1px solid rgba(0,206,201,0.2);border-radius:8px;padding:12px;margin-top:10px;font-family:monospace;font-size:0.82rem;max-height:200px;overflow-y:auto;color:var(--secondary);min-height:40px}
+.log-entry{padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.log-entry.warn{color:var(--warning)}
+.log-entry.error{color:var(--danger)}
+.log-entry.info{color:var(--secondary)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div style="display:flex;align-items:center;gap:15px">
+    <button class="burger" onclick="toggleSidebar()">☰</button>
+    <h1>🔥 Advanced DOM Mastery</h1>
+  </div>
+  <div class="progress-container">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-text" id="progressText">0%</span>
+    <span class="xp-badge" id="xpBadge">⚡ 0 XP</span>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-section">📖 Chapters</div>
+  
+  <div class="nav-item active" onclick="goToSection(0)">
+    <div class="nav-icon">🏠</div>
+    <span>Welcome & Overview</span>
+  </div>
+  
+  <div class="sidebar-section">Core Concepts</div>
+  
+  <div class="nav-item" onclick="goToSection(1)">
+    <div class="nav-icon">📦</div>
+    <span>DocumentFragment</span>
+  </div>
+  <div class="nav-item" onclick="goToSection(2)">
+    <div class="nav-icon">⚡</div>
+    <span>Virtual DOM Concepts</span>
+  </div>
+  <div class="nav-item" onclick="goToSection(3)">
+    <div class="nav-icon">🚀</div>
+    <span>Efficient DOM Updates</span>
+  </div>
+  
+  <div class="sidebar-section">Observers</div>
+  
+  <div class="nav-item" onclick="goToSection(4)">
+    <div class="nav-icon">👁️</div>
+    <span>IntersectionObserver</span>
+  </div>
+  <div class="nav-item" onclick="goToSection(5)">
+    <div class="nav-icon">🔬</div>
+    <span>MutationObserver</span>
+  </div>
+  
+  <div class="sidebar-section">Web Components</div>
+  
+  <div class="nav-item" onclick="goToSection(6)">
+    <div class="nav-icon">🧩</div>
+    <span>Custom Elements</span>
+  </div>
+  
+  <div class="sidebar-section">Assessment</div>
+  
+  <div class="nav-item" onclick="goToSection(7)">
+    <div class="nav-icon">🎯</div>
+    <span>Final Challenge</span>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="mainContent">
+
+<!-- ============ SECTION 0: WELCOME ============ -->
+<div class="section active" id="section-0">
+  <div class="section-header">
+    <span class="section-icon">🔥</span>
+    <h2>Advanced DOM Manipulation</h2>
+    <p>Master the techniques that separate junior developers from senior engineers. Build faster, smarter UIs.</p>
+  </div>
+
+  <div class="card">
+    <h3>🗺️ What You'll Learn</h3>
+    <ul class="feature-list" style="margin-top:15px">
+      <li><span class="icon">📦</span><div><strong>DocumentFragment</strong> — Batch DOM operations for peak performance</div></li>
+      <li><span class="icon">⚡</span><div><strong>Virtual DOM Concepts</strong> — Understand diffing & reconciliation without React</div></li>
+      <li><span class="icon">🚀</span><div><strong>Efficient Updates</strong> — Minimize reflows, repaints, and layout thrashing</div></li>
+      <li><span class="icon">👁️</span><div><strong>IntersectionObserver</strong> — Lazy loading, infinite scroll, animations on scroll</div></li>
+      <li><span class="icon">🔬</span><div><strong>MutationObserver</strong> — React to DOM changes in real-time</div></li>
+      <li><span class="icon">🧩</span><div><strong>Custom Elements</strong> — Build your own HTML elements from scratch</div></li>
+    </ul>
+  </div>
+
+  <div class="card success">
+    <h3>🎮 How This App Works</h3>
+    <p style="margin-top:10px">Each chapter includes:</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:15px">
+      <div style="text-align:center;padding:15px;background:var(--surface2);border-radius:10px">
+        <div style="font-size:2rem">📖</div>
+        <strong>Visual Explanations</strong>
+        <p style="font-size:0.85rem;color:var(--text-dim)">Animated, interactive diagrams</p>
+      </div>
+      <div style="text-align:center;padding:15px;background:var(--surface2);border-radius:10px">
+        <div style="font-size:2rem">💻</div>
+        <strong>Live Playgrounds</strong>
+        <p style="font-size:0.85rem;color:var(--text-dim)">Edit & run code instantly</p>
+      </div>
+      <div style="text-align:center;padding:15px;background:var(--surface2);border-radius:10px">
+        <div style="font-size:2rem">🧠</div>
+        <strong>Quizzes</strong>
+        <p style="font-size:0.85rem;color:var(--text-dim)">Test your understanding</p>
+      </div>
+      <div style="text-align:center;padding:15px;background:var(--surface2);border-radius:10px">
+        <div style="font-size:2rem">⚠️</div>
+        <strong>Pitfall Alerts</strong>
+        <p style="font-size:0.85rem;color:var(--text-dim)">Mistakes to avoid</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:30px">
+    <button class="demo-btn" style="font-size:1.1rem;padding:14px 40px" onclick="goToSection(1)">🚀 Start Learning →</button>
+  </div>
+</div>
+
+<!-- ============ SECTION 1: DOCUMENT FRAGMENT ============ -->
+<div class="section" id="section-1">
+  <div class="section-header">
+    <span class="section-icon">📦</span>
+    <h2>DocumentFragment</h2>
+    <p>The invisible container that supercharges your DOM operations</p>
+  </div>
+
+  <div class="card">
+    <h3>🤔 What is a DocumentFragment?</h3>
+    <p style="margin-top:10px">A <span class="inline-code">DocumentFragment</span> is a lightweight, "empty" document object that acts as a staging area for DOM nodes. It exists only in memory — <strong>it has no parent, so changes to it don't trigger page reflows or repaints</strong>.</p>
+    
+    <div class="visual-demo" style="margin-top:20px">
+      <h4>🎨 Visual: How DocumentFragment Works</h4>
+      <div id="fragmentVisual" style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:15px">
+        <div style="text-align:center">
+          <div class="dom-node fragment" style="margin-bottom:8px">📦 Fragment (in memory)</div>
+          <div id="fragItems" style="display:flex;gap:5px;justify-content:center;min-height:35px;flex-wrap:wrap"></div>
+        </div>
+        <div style="font-size:2rem" id="fragArrow">→</div>
+        <div style="text-align:center">
+          <div class="dom-node" style="margin-bottom:8px">🌳 Real DOM</div>
+          <div id="domItems" style="display:flex;gap:5px;justify-content:center;min-height:35px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+      <div class="demo-controls" style="margin-top:15px;justify-content:center">
+        <button class="demo-btn" onclick="demoFragAdd()">Add to Fragment</button>
+        <button class="demo-btn success" onclick="demoFragAppend()">Append to DOM (1 reflow!)</button>
+        <button class="demo-btn secondary" onclick="demoFragReset()">Reset</button>
+      </div>
+      <div class="log-output" id="fragLog"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>💻 Basic Syntax</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="comment">// Create a fragment</span><br>
+      <span class="keyword">const</span> <span class="const">fragment</span> = <span class="const">document</span>.<span class="func">createDocumentFragment</span>();<br><br>
+      <span class="comment">// Add elements to fragment (NO reflows!)</span><br>
+      <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="num">0</span>; i &lt; <span class="num">1000</span>; i++) {<br>
+      &nbsp;&nbsp;<span class="keyword">const</span> <span class="const">li</span> = <span class="const">document</span>.<span class="func">createElement</span>(<span class="string">'li'</span>);<br>
+      &nbsp;&nbsp;<span class="const">li</span>.<span class="attr">textContent</span> = <span class="string">`Item ${i}`</span>;<br>
+      &nbsp;&nbsp;<span class="const">fragment</span>.<span class="func">appendChild</span>(<span class="const">li</span>);<br>
+      }<br><br>
+      <span class="comment">// Single DOM operation (1 reflow!)</span><br>
+      <span class="const">document</span>.<span class="func">getElementById</span>(<span class="string">'list'</span>).<span class="func">appendChild</span>(<span class="const">fragment</span>);
+    </div>
+  </div>
+
+  <!-- Performance Comparison Demo -->
+  <div class="card">
+    <h3>⚡ Performance Showdown: Fragment vs Direct DOM</h3>
+    <p style="margin-top:10px">Click to add 2000 items both ways and see the difference!</p>
+    
+    <div class="visual-demo" style="margin-top:15px">
+      <div class="demo-controls">
+        <button class="demo-btn danger" onclick="perfTestDirect()">❌ Direct DOM (Slow)</button>
+        <button class="demo-btn success" onclick="perfTestFragment()">✅ With Fragment (Fast)</button>
+        <button class="demo-btn secondary" onclick="clearPerfTest()">Clear</button>
+      </div>
+      
+      <div class="perf-meter">
+        <span class="perf-label">Direct DOM:</span>
+        <div class="perf-bar"><div class="perf-fill slow" id="perfDirect" style="width:0%"></div></div>
+        <span id="perfDirectTime">— ms</span>
+      </div>
+      <div class="perf-meter">
+        <span class="perf-label">Fragment:</span>
+        <div class="perf-bar"><div class="perf-fill fast" id="perfFragment" style="width:0%"></div></div>
+        <span id="perfFragTime">— ms</span>
+      </div>
+      
+      <div id="perfTestArea" style="max-height:100px;overflow:hidden;margin-top:10px;background:#0d1117;border-radius:8px"></div>
+    </div>
+  </div>
+
+  <!-- Comparison: Bad vs Good -->
+  <div class="comparison">
+    <div class="comparison-side bad">
+      <span class="comparison-label">❌ Don't Do This</span>
+      <div class="code-block" style="margin-top:15px;font-size:0.8rem">
+        <span class="comment">// 1000 reflows! 😱</span><br>
+        <span class="keyword">const</span> <span class="const">list</span> = <span class="const">document</span>.<span class="func">getElementById</span>(<span class="string">'list'</span>);<br><br>
+        <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="num">0</span>; i &lt; <span class="num">1000</span>; i++) {<br>
+        &nbsp;&nbsp;<span class="keyword">const</span> <span class="const">li</span> = <span class="const">document</span>.<span class="func">createElement</span>(<span class="string">'li'</span>);<br>
+        &nbsp;&nbsp;<span class="const">li</span>.<span class="attr">textContent</span> = <span class="string">`Item ${i}`</span>;<br>
+        &nbsp;&nbsp;<span class="const">list</span>.<span class="func">appendChild</span>(<span class="const">li</span>);<br>
+        &nbsp;&nbsp;<span class="comment">// ↑ Each append = reflow!</span><br>
+        }
+      </div>
+    </div>
+    <div class="comparison-side good">
+      <span class="comparison-label">✅ Do This</span>
+      <div class="code-block" style="margin-top:15px;font-size:0.8rem">
+        <span class="comment">// 1 reflow! 🚀</span><br>
+        <span class="keyword">const</span> <span class="const">fragment</span> = <span class="const">document</span>.<span class="func">createDocumentFragment</span>();<br><br>
+        <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="num">0</span>; i &lt; <span class="num">1000</span>; i++) {<br>
+        &nbsp;&nbsp;<span class="keyword">const</span> <span class="const">li</span> = <span class="const">document</span>.<span class="func">createElement</span>(<span class="string">'li'</span>);<br>
+        &nbsp;&nbsp;<span class="const">li</span>.<span class="attr">textContent</span> = <span class="string">`Item ${i}`</span>;<br>
+        &nbsp;&nbsp;<span class="const">fragment</span>.<span class="func">appendChild</span>(<span class="const">li</span>);<br>
+        }<br>
+        <span class="const">list</span>.<span class="func">appendChild</span>(<span class="const">fragment</span>);
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Facts -->
+  <div class="card">
+    <h3>🔑 Key Facts About DocumentFragment</h3>
+    <ul class="feature-list" style="margin-top:10px">
+      <li><span class="icon">1️⃣</span><div>Fragment itself is <strong>never added</strong> to the DOM — only its children are transferred</div></li>
+      <li><span class="icon">2️⃣</span><div>After appending, the fragment becomes <strong>empty</strong> — children are moved, not copied</div></li>
+      <li><span class="icon">3️⃣</span><div>Fragments can contain <strong>any type</strong> of node: elements, text, comments</div></li>
+      <li><span class="icon">4️⃣</span><div>You can use <span class="inline-code">querySelector</span> on fragments before appending</div></li>
+      <li><span class="icon">5️⃣</span><div><span class="inline-code">template.content</span> returns a DocumentFragment!</div></li>
+    </ul>
+  </div>
+
+  <!-- Template + Fragment -->
+  <div class="card">
+    <h3>🎨 Real-World: Using &lt;template&gt; + Fragment</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="comment">// HTML: &lt;template id="card-template"&gt;</span><br>
+      <span class="comment">//   &lt;div class="card"&gt;&lt;h3&gt;&lt;/h3&gt;&lt;p&gt;&lt;/p&gt;&lt;/div&gt;</span><br>
+      <span class="comment">// &lt;/template&gt;</span><br><br>
+      <span class="keyword">const</span> <span class="const">template</span> = <span class="const">document</span>.<span class="func">getElementById</span>(<span class="string">'card-template'</span>);<br>
+      <span class="keyword">const</span> <span class="const">fragment</span> = <span class="const">document</span>.<span class="func">createDocumentFragment</span>();<br><br>
+      <span class="const">data</span>.<span class="func">forEach</span>(<span class="const">item</span> => {<br>
+      &nbsp;&nbsp;<span class="keyword">const</span> <span class="const">clone</span> = <span class="const">template</span>.<span class="attr">content</span>.<span class="func">cloneNode</span>(<span class="keyword">true</span>);<br>
+      &nbsp;&nbsp;<span class="const">clone</span>.<span class="func">querySelector</span>(<span class="string">'h3'</span>).<span class="attr">textContent</span> = <span class="const">item</span>.<span class="attr">title</span>;<br>
+      &nbsp;&nbsp;<span class="const">clone</span>.<span class="func">querySelector</span>(<span class="string">'p'</span>).<span class="attr">textContent</span> = <span class="const">item</span>.<span class="attr">desc</span>;<br>
+      &nbsp;&nbsp;<span class="const">fragment</span>.<span class="func">appendChild</span>(<span class="const">clone</span>);<br>
+      });<br><br>
+      <span class="const">container</span>.<span class="func">appendChild</span>(<span class="const">fragment</span>);
+    </div>
+  </div>
+
+  <!-- PITFALL -->
+  <div class="card danger">
+    <h3>⚠️ Pitfall: Fragment Gets Emptied!</h3>
+    <p style="margin-top:10px">A very common mistake — trying to reuse a fragment after appending it:</p>
+    <div class="code-block" style="font-size:0.82rem">
+      <span class="keyword">const</span> <span class="const">frag</span> = <span class="const">document</span>.<span class="func">createDocumentFragment</span>();<br>
+      <span class="const">frag</span>.<span class="func">appendChild</span>(<span class="const">someDiv</span>);<br><br>
+      <span class="const">container</span>.<span class="func">appendChild</span>(<span class="const">frag</span>);<br>
+      <span class="const">console</span>.<span class="func">log</span>(<span class="const">frag</span>.<span class="attr">childNodes</span>.<span class="attr">length</span>); <span class="comment">// 0! Fragment is empty now!</span><br><br>
+      <span class="comment">// If you need to reuse, clone it first:</span><br>
+      <span class="keyword">const</span> <span class="const">clone</span> = <span class="const">frag</span>.<span class="func">cloneNode</span>(<span class="keyword">true</span>);<br>
+      <span class="const">container1</span>.<span class="func">appendChild</span>(<span class="const">clone</span>);<br>
+      <span class="const">container2</span>.<span class="func">appendChild</span>(<span class="const">frag</span>); <span class="comment">// Original still has nodes</span>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="quiz-card" id="quiz-frag">
+    <h3>🧠 Quick Quiz</h3>
+    <div class="quiz-question">What happens to a DocumentFragment after you append it to the DOM?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">A</span>
+        <span>It remains in the DOM as a wrapper element</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">B</span>
+        <span>It gets converted to a &lt;div&gt; element</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="true">
+        <span class="opt-letter">C</span>
+        <span>Its children are moved to the DOM; the fragment becomes empty</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">D</span>
+        <span>It creates a copy of all children in the DOM</span>
+      </div>
+    </div>
+    <div class="quiz-feedback" id="quiz-frag-feedback"></div>
+    <button class="quiz-submit" onclick="submitQuiz('quiz-frag')">Check Answer</button>
+  </div>
+
+  <!-- EXERCISE -->
+  <div class="exercise">
+    <div class="exercise-header">
+      <span class="exercise-badge">💪 Exercise</span>
+      <h3>Build a User List with Fragment</h3>
+    </div>
+    <p style="margin-bottom:15px">Create a DocumentFragment, add 5 list items with names from the array, then append to the list. The variable <span class="inline-code">userList</span> (a &lt;ul&gt; element) is already available.</p>
+    <textarea id="exercise-frag" spellcheck="false">const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'];
+
+// Your code here:
+// 1. Create a DocumentFragment
+// 2. Loop through names, create <li> for each
+// 3. Append all to userList in one operation
+</textarea>
+    <div style="margin-top:10px;display:flex;gap:10px">
+      <button class="demo-btn success" onclick="checkExerciseFrag()">▶ Run & Check</button>
+      <button class="demo-btn secondary" onclick="showHintFrag()">💡 Hint</button>
+    </div>
+    <div class="exercise-result" id="exercise-frag-result"></div>
+  </div>
+
+  <div class="chapter-nav">
+    <button class="chapter-nav-btn" onclick="goToSection(0)">← Welcome</button>
+    <button class="chapter-nav-btn" onclick="goToSection(2)">Virtual DOM →</button>
+  </div>
+</div>
+
+<!-- ============ SECTION 2: VIRTUAL DOM CONCEPTS ============ -->
+<div class="section" id="section-2">
+  <div class="section-header">
+    <span class="section-icon">⚡</span>
+    <h2>Virtual DOM Concepts</h2>
+    <p>Understand how React-style rendering works under the hood</p>
+  </div>
+
+  <div class="card">
+    <h3>🤔 What Is the Virtual DOM?</h3>
+    <p style="margin-top:10px">The Virtual DOM is a <strong>JavaScript object representation</strong> of the real DOM. Instead of manipulating the browser DOM directly, frameworks create a virtual copy, make changes there, then <strong>diff and patch</strong> only what changed.</p>
+    
+    <div class="visual-demo" style="margin-top:20px">
+      <h4>🎨 The Virtual DOM Lifecycle</h4>
+      <div style="display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap;margin-top:15px">
+        <div style="text-align:center;padding:15px 20px;background:var(--surface);border-radius:10px;border:2px solid var(--primary)">
+          <div style="font-size:1.5rem">📝</div>
+          <strong style="font-size:0.85rem">1. State Change</strong>
+        </div>
+        <span style="font-size:1.5rem">→</span>
+        <div style="text-align:center;padding:15px 20px;background:var(--surface);border-radius:10px;border:2px solid var(--warning)">
+          <div style="font-size:1.5rem">🌲</div>
+          <strong style="font-size:0.85rem">2. New V-DOM</strong>
+        </div>
+        <span style="font-size:1.5rem">→</span>
+        <div style="text-align:center;padding:15px 20px;background:var(--surface);border-radius:10px;border:2px solid var(--accent)">
+          <div style="font-size:1.5rem">🔍</div>
+          <strong style="font-size:0.85rem">3. Diff</strong>
+        </div>
+        <span style="font-size:1.5rem">→</span>
+        <div style="text-align:center;padding:15px 20px;background:var(--surface);border-radius:10px;border:2px solid var(--success)">
+          <div style="font-size:1.5rem">🎯</div>
+          <strong style="font-size:0.85rem">4. Patch DOM</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🛠️ Build a Mini Virtual DOM!</h3>
+    <p style="margin-top:10px">Let's build one from scratch to understand the concept:</p>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'vdom')">Step 1: Create VNode</div>
+      <div class="tab" onclick="switchTab(this,'vdom')">Step 2: Render</div>
+      <div class="tab" onclick="switchTab(this,'vdom')">Step 3: Diff</div>
+      <div class="tab" onclick="switchTab(this,'vdom')">Step 4: Patch</div>
+    </div>
+
+    <div class="tab-content active" data-tab-group="vdom">
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+        <span class="comment">// A VNode is just a plain JS object!</span><br>
+        <span class="keyword">function</span> <span class="func">h</span>(<span class="const">tag</span>, <span class="const">props</span>, ...<span class="const">children</span>) {<br>
+        &nbsp;&nbsp;<span class="keyword">return</span> { <span class="attr">tag</span>, <span class="attr">props</span>: <span class="const">props</span> || {}, <span class="attr">children</span> };<br>
+        }<br><br>
+        <span class="comment">// Usage - looks like a DOM tree but it's just objects!</span><br>
+        <span class="keyword">const</span> <span class="const">vdom</span> = <span class="func">h</span>(<span class="string">'div'</span>, { <span class="attr">class</span>: <span class="string">'app'</span> },<br>
+        &nbsp;&nbsp;<span class="func">h</span>(<span class="string">'h1'</span>, <span class="keyword">null</span>, <span class="string">'Hello!'</span>),<br>
+        &nbsp;&nbsp;<span class="func">h</span>(<span class="string">'p'</span>, { <span class="attr">class</span>: <span class="string">'text'</span> }, <span class="string">'Virtual DOM is cool'</span>)<br>
+        );<br><br>
+        <span class="comment">// Result:</span><br>
+        <span class="comment">// { tag: 'div', props: { class: 'app' }, children: [</span><br>
+        <span class="comment">//   { tag: 'h1', props: {}, children: ['Hello!'] },</span><br>
+        <span class="comment">//   { tag: 'p', props: { class: 'text' }, children: ['Virtual DOM is cool'] }</span><br>
+        <span class="comment">// ]}</span>
+      </div>
+    </div>
+
+    <div class="tab-content" data-tab-group="vdom">
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+        <span class="comment">// Convert VNode → Real DOM element</span><br>
+        <span class="keyword">function</span> <span class="func">render</span>(<span class="const">vnode</span>) {<br>
+        &nbsp;&nbsp;<span class="comment">// Text nodes</span><br>
+        &nbsp;&nbsp;<span class="keyword">if</span> (<span class="keyword">typeof</span> <span class="const">vnode</span> === <span class="string">'string'</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="const">document</span>.<span class="func">createTextNode</span>(<span class="const">vnode</span>);<br>
+        &nbsp;&nbsp;}<br><br>
+        &nbsp;&nbsp;<span class="keyword">const</span> <span class="const">el</span> = <span class="const">document</span>.<span class="func">createElement</span>(<span class="const">vnode</span>.<span class="attr">tag</span>);<br><br>
+        &nbsp;&nbsp;<span class="comment">// Set properties</span><br>
+        &nbsp;&nbsp;<span class="keyword">for</span> (<span class="keyword">const</span> [<span class="const">key</span>, <span class="const">val</span>] <span class="keyword">of</span> Object.<span class="func">entries</span>(<span class="const">vnode</span>.<span class="attr">props</span>)) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">el</span>.<span class="func">setAttribute</span>(<span class="const">key</span>, <span class="const">val</span>);<br>
+        &nbsp;&nbsp;}<br><br>
+        &nbsp;&nbsp;<span class="comment">// Recursively render children</span><br>
+        &nbsp;&nbsp;<span class="const">vnode</span>.<span class="attr">children</span>.<span class="func">forEach</span>(<span class="const">child</span> => {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">el</span>.<span class="func">appendChild</span>(<span class="func">render</span>(<span class="const">child</span>));<br>
+        &nbsp;&nbsp;});<br><br>
+        &nbsp;&nbsp;<span class="keyword">return</span> <span class="const">el</span>;<br>
+        }
+      </div>
+    </div>
+
+    <div class="tab-content" data-tab-group="vdom">
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+        <span class="comment">// Compare old vs new VNode trees</span><br>
+        <span class="keyword">function</span> <span class="func">diff</span>(<span class="const">oldVNode</span>, <span class="const">newVNode</span>) {<br>
+        &nbsp;&nbsp;<span class="comment">// Node removed</span><br>
+        &nbsp;&nbsp;<span class="keyword">if</span> (!<span class="const">newVNode</span>) <span class="keyword">return</span> { <span class="attr">type</span>: <span class="string">'REMOVE'</span> };<br><br>
+        &nbsp;&nbsp;<span class="comment">// Text changed</span><br>
+        &nbsp;&nbsp;<span class="keyword">if</span> (<span class="keyword">typeof</span> <span class="const">oldVNode</span> === <span class="string">'string'</span> ||<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">typeof</span> <span class="const">newVNode</span> === <span class="string">'string'</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (<span class="const">oldVNode</span> !== <span class="const">newVNode</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> { <span class="attr">type</span>: <span class="string">'REPLACE'</span>, <span class="attr">newVNode</span> };<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="keyword">null</span>; <span class="comment">// No change</span><br>
+        &nbsp;&nbsp;}<br><br>
+        &nbsp;&nbsp;<span class="comment">// Tag changed → replace entirely</span><br>
+        &nbsp;&nbsp;<span class="keyword">if</span> (<span class="const">oldVNode</span>.<span class="attr">tag</span> !== <span class="const">newVNode</span>.<span class="attr">tag</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> { <span class="attr">type</span>: <span class="string">'REPLACE'</span>, <span class="attr">newVNode</span> };<br>
+        &nbsp;&nbsp;}<br><br>
+        &nbsp;&nbsp;<span class="comment">// Same tag → check props & children</span><br>
+        &nbsp;&nbsp;<span class="keyword">return</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">type</span>: <span class="string">'UPDATE'</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">props</span>: <span class="func">diffProps</span>(<span class="const">oldVNode</span>.<span class="attr">props</span>, <span class="const">newVNode</span>.<span class="attr">props</span>),<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">children</span>: <span class="func">diffChildren</span>(<span class="const">oldVNode</span>.<span class="attr">children</span>, <span class="const">newVNode</span>.<span class="attr">children</span>)<br>
+        &nbsp;&nbsp;};<br>
+        }
+      </div>
+    </div>
+
+    <div class="tab-content" data-tab-group="vdom">
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+        <span class="comment">// Apply only the differences to real DOM</span><br>
+        <span class="keyword">function</span> <span class="func">patch</span>(<span class="const">parent</span>, <span class="const">patches</span>, <span class="const">index</span> = <span class="num">0</span>) {<br>
+        &nbsp;&nbsp;<span class="keyword">if</span> (!<span class="const">patches</span>) <span class="keyword">return</span>;<br><br>
+        &nbsp;&nbsp;<span class="keyword">const</span> <span class="const">el</span> = <span class="const">parent</span>.<span class="attr">childNodes</span>[<span class="const">index</span>];<br><br>
+        &nbsp;&nbsp;<span class="keyword">switch</span> (<span class="const">patches</span>.<span class="attr">type</span>) {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">case</span> <span class="string">'REMOVE'</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">parent</span>.<span class="func">removeChild</span>(<span class="const">el</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">break</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">case</span> <span class="string">'REPLACE'</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">parent</span>.<span class="func">replaceChild</span>(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">render</span>(<span class="const">patches</span>.<span class="attr">newVNode</span>), <span class="const">el</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">break</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">case</span> <span class="string">'UPDATE'</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">patchProps</span>(<span class="const">el</span>, <span class="const">patches</span>.<span class="attr">props</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Recursively patch children</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">patches</span>.<span class="attr">children</span>.<span class="func">forEach</span>((<span class="const">p</span>, <span class="const">i</span>) => {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">patch</span>(<span class="const">el</span>, <span class="const">p</span>, <span class="const">i</span>);<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">break</span>;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive VDOM Demo -->
+  <div class="card">
+    <h3>🎮 Interactive: See the Diff in Action!</h3>
+    <div class="visual-demo">
+      <div class="demo-result">
+        <div class="demo-box">
+          <h4 style="margin-bottom:10px">Old Virtual DOM</h4>
+          <div id="vdom-old" style="background:#0d1117;padding:15px;border-radius:8px;font-family:monospace;font-size:0.82rem;min-height:100px"></div>
+        </div>
+        <div class="demo-box">
+          <h4 style="margin-bottom:10px">New Virtual DOM</h4>
+          <div id="vdom-new" style="background:#0d1117;padding:15px;border-radius:8px;font-family:monospace;font-size:0.82rem;min-height:100px"></div>
+        </div>
+      </div>
+      <div class="demo-controls" style="margin-top:15px">
+        <button class="demo-btn" onclick="vdomDemo('text')">Change Text</button>
+        <button class="demo-btn warning" onclick="vdomDemo('prop')">Change Prop</button>
+        <button class="demo-btn danger" onclick="vdomDemo('tag')">Change Tag</button>
+        <button class="demo-btn success" onclick="vdomDemo('add')">Add Child</button>
+      </div>
+      <div class="log-output" id="vdom-log" style="margin-top:10px"></div>
+      <div id="vdom-render-target" style="background:#0d1117;padding:15px;border-radius:8px;margin-top:10px;border:1px solid rgba(0,184,148,0.3)"></div>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div class="quiz-card" id="quiz-vdom">
+    <h3>🧠 Quiz: Virtual DOM</h3>
+    <div class="quiz-question">Why is the Virtual DOM faster than directly manipulating the real DOM?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">A</span>
+        <span>JavaScript objects are always faster than DOM operations</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="true">
+        <span class="opt-letter">B</span>
+        <span>It batches changes and applies only the minimal necessary DOM updates</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">C</span>
+        <span>It uses Web Workers to avoid the main thread</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">D</span>
+        <span>It skips the browser's rendering pipeline entirely</span>
+      </div>
+    </div>
+    <div class="quiz-feedback" id="quiz-vdom-feedback"></div>
+    <button class="quiz-submit" onclick="submitQuiz('quiz-vdom')">Check Answer</button>
+  </div>
+
+  <div class="chapter-nav">
+    <button class="chapter-nav-btn" onclick="goToSection(1)">← Fragment</button>
+    <button class="chapter-nav-btn" onclick="goToSection(3)">Efficient Updates →</button>
+  </div>
+</div>
+
+<!-- ============ SECTION 3: EFFICIENT DOM UPDATES ============ -->
+<div class="section" id="section-3">
+  <div class="section-header">
+    <span class="section-icon">🚀</span>
+    <h2>Efficient DOM Updates</h2>
+    <p>Minimize reflows & repaints like a performance wizard</p>
+  </div>
+
+  <div class="card">
+    <h3>🔄 Understanding Reflows & Repaints</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:15px">
+      <div style="background:rgba(225,112,85,0.1);padding:20px;border-radius:10px;border:1px solid rgba(225,112,85,0.3)">
+        <h4 style="color:var(--danger)">🔴 Reflow (Layout)</h4>
+        <p style="font-size:0.9rem;margin-top:8px">Browser recalculates positions and sizes of elements. <strong>EXPENSIVE!</strong></p>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-top:8px">Triggers: changing width, height, margin, padding, font-size, adding/removing elements</p>
+      </div>
+      <div style="background:rgba(253,203,110,0.1);padding:20px;border-radius:10px;border:1px solid rgba(253,203,110,0.3)">
+        <h4 style="color:var(--warning)">🟡 Repaint</h4>
+        <p style="font-size:0.9rem;margin-top:8px">Browser redraws visual changes. Cheaper than reflow but still costs.</p>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-top:8px">Triggers: changing color, background, visibility, box-shadow</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout Thrashing Demo -->
+  <div class="card danger">
+    <h3>⚠️ Layout Thrashing — The Performance Killer</h3>
+    <p style="margin-top:10px">Reading then writing DOM properties in a loop forces the browser to recalculate layout on every iteration!</p>
+    
+    <div class="comparison" style="margin-top:15px">
+      <div class="comparison-side bad">
+        <span class="comparison-label">❌ Layout Thrashing</span>
+        <div class="code-block" style="margin-top:15px;font-size:0.78rem">
+          <span class="comment">// Forces reflow on EVERY read!</span><br>
+          <span class="const">elements</span>.<span class="func">forEach</span>(<span class="const">el</span> => {<br>
+          &nbsp;&nbsp;<span class="keyword">const</span> <span class="const">h</span> = <span class="const">el</span>.<span class="attr">offsetHeight</span>; <span class="comment">// READ → reflow</span><br>
+          &nbsp;&nbsp;<span class="const">el</span>.<span class="attr">style</span>.<span class="attr">height</span> = <span class="const">h</span> * <span class="num">2</span> + <span class="string">'px'</span>; <span class="comment">// WRITE</span><br>
+          &nbsp;&nbsp;<span class="comment">// ↑ Next read will force reflow again!</span><br>
+          });
+        </div>
+      </div>
+      <div class="comparison-side good">
+        <span class="comparison-label">✅ Batch Reads, Then Writes</span>
+        <div class="code-block" style="margin-top:15px;font-size:0.78rem">
+          <span class="comment">// Read ALL first</span><br>
+          <span class="keyword">const</span> <span class="const">heights</span> = <span class="const">elements</span>.<span class="func">map</span>(<br>
+          &nbsp;&nbsp;<span class="const">el</span> => <span class="const">el</span>.<span class="attr">offsetHeight</span><br>
+          );<br><br>
+          <span class="comment">// Then write ALL</span><br>
+          <span class="const">elements</span>.<span class="func">forEach</span>((<span class="const">el</span>, <span class="const">i</span>) => {<br>
+          &nbsp;&nbsp;<span class="const">el</span>.<span class="attr">style</span>.<span class="attr">height</span> = <span class="const">heights</span>[<span class="const">i</span>] * <span class="num">2</span> + <span class="string">'px'</span>;<br>
+          });
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Techniques -->
+  <div class="card success">
+    <h3>🏆 Pro Techniques for Efficient Updates</h3>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'techniques')">requestAnimationFrame</div>
+      <div class="tab" onclick="switchTab(this,'techniques')">CSS Classes</div>
+      <div class="tab" onclick="switchTab(this,'techniques')">cssText</div>
+      <div class="tab" onclick="switchTab(this,'techniques')">Display Trick</div>
+    </div>
+
+    <div class="tab-content active" data-tab-group="techniques">
+      <h4 style="margin-bottom:10px">Use requestAnimationFrame for visual updates</h4>
+      <div class="code-block" style="font-size:0.82rem">
+        <span class="comment">// Sync with browser's paint cycle</span><br>
+        <span class="keyword">function</span> <span class="func">animate</span>() {<br>
+        &nbsp;&nbsp;<span class="const">element</span>.<span class="attr">style</span>.<span class="attr">transform</span> = <span class="string">`translateX(${<span class="const">x</span>}px)`</span>;<br>
+        &nbsp;&nbsp;<span class="const">x</span> += <span class="num">2</span>;<br>
+        &nbsp;&nbsp;<span class="keyword">if</span> (<span class="const">x</span> &lt; <span class="num">500</span>) <span class="func">requestAnimationFrame</span>(<span class="func">animate</span>);<br>
+        }<br>
+        <span class="func">requestAnimationFrame</span>(<span class="func">animate</span>);
+      </div>
+      <p style="margin-top:10px;font-size:0.9rem;color:var(--text-dim)">💡 <strong>transform</strong> and <strong>opacity</strong> don't trigger reflow — use them for animations!</p>
+    </div>
+
+    <div class="tab-content" data-tab-group="techniques">
+      <h4 style="margin-bottom:10px">Toggle CSS classes instead of inline styles</h4>
+      <div class="code-block" style="font-size:0.82rem">
+        <span class="comment">// ❌ Multiple style changes = multiple reflows</span><br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">width</span> = <span class="string">'100px'</span>;<br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">height</span> = <span class="string">'100px'</span>;<br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">background</span> = <span class="string">'red'</span>;<br><br>
+        <span class="comment">// ✅ One class toggle = one reflow</span><br>
+        <span class="const">el</span>.<span class="attr">classList</span>.<span class="func">add</span>(<span class="string">'active-state'</span>);
+      </div>
+    </div>
+
+    <div class="tab-content" data-tab-group="techniques">
+      <h4 style="margin-bottom:10px">Batch styles with cssText</h4>
+      <div class="code-block" style="font-size:0.82rem">
+        <span class="comment">// Batches all style changes into one reflow</span><br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">cssText</span> = <span class="string">`<br>
+        &nbsp;&nbsp;width: 100px;<br>
+        &nbsp;&nbsp;height: 100px;<br>
+        &nbsp;&nbsp;background: red;<br>
+        &nbsp;&nbsp;border-radius: 10px;<br>
+        `</span>;
+      </div>
+    </div>
+
+    <div class="tab-content" data-tab-group="techniques">
+      <h4 style="margin-bottom:10px">Hide, modify, show</h4>
+      <div class="code-block" style="font-size:0.82rem">
+        <span class="comment">// Remove from flow, make changes, put back</span><br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">display</span> = <span class="string">'none'</span>; <span class="comment">// 1 reflow</span><br><br>
+        <span class="comment">// All these changes are free!</span><br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">width</span> = <span class="string">'200px'</span>;<br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">height</span> = <span class="string">'200px'</span>;<br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">padding</span> = <span class="string">'20px'</span>;<br>
+        <span class="const">el</span>.<span class="func">appendChild</span>(<span class="const">newChild</span>);<br><br>
+        <span class="const">el</span>.<span class="attr">style</span>.<span class="attr">display</span> = <span class="string">'block'</span>; <span class="comment">// 1 reflow</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Perf Demo -->
+  <div class="card">
+    <h3>🎮 Live Performance Demo</h3>
+    <div class="visual-demo">
+      <p>Watch 200 boxes animate — compare techniques:</p>
+      <div class="demo-controls" style="margin-top:10px">
+        <button class="demo-btn danger" onclick="perfAnimBad()">❌ Forced Reflow</button>
+        <button class="demo-btn success" onclick="perfAnimGood()">✅ Transform</button>
+        <button class="demo-btn secondary" onclick="perfAnimReset()">Reset</button>
+      </div>
+      <div id="perfAnimArea" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:15px;min-height:60px"></div>
+      <div class="log-output" id="perfAnimLog"></div>
+    </div>
+  </div>
+
+  <div class="quiz-card" id="quiz-perf">
+    <h3>🧠 Quiz: Performance</h3>
+    <div class="quiz-question">Which CSS property triggers ONLY a repaint (no reflow)?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">A</span>
+        <span>width</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">B</span>
+        <span>padding</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="true">
+        <span class="opt-letter">C</span>
+        <span>background-color</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">D</span>
+        <span>font-size</span>
+      </div>
+    </div>
+    <div class="quiz-feedback" id="quiz-perf-feedback"></div>
+    <button class="quiz-submit" onclick="submitQuiz('quiz-perf')">Check Answer</button>
+  </div>
+
+  <div class="chapter-nav">
+    <button class="chapter-nav-btn" onclick="goToSection(2)">← Virtual DOM</button>
+    <button class="chapter-nav-btn" onclick="goToSection(4)">IntersectionObserver →</button>
+  </div>
+</div>
+
+<!-- ============ SECTION 4: INTERSECTION OBSERVER ============ -->
+<div class="section" id="section-4">
+  <div class="section-header">
+    <span class="section-icon">👁️</span>
+    <h2>IntersectionObserver</h2>
+    <p>Efficiently detect when elements enter or leave the viewport</p>
+  </div>
+
+  <div class="card">
+    <h3>🤔 What Is IntersectionObserver?</h3>
+    <p style="margin-top:10px">IntersectionObserver asynchronously watches for elements crossing a threshold within a root element (usually the viewport). It replaces scroll event listeners for:</p>
+    <ul class="feature-list" style="margin-top:10px">
+      <li><span class="icon">📷</span><div><strong>Lazy loading</strong> images & content</div></li>
+      <li><span class="icon">♾️</span><div><strong>Infinite scrolling</strong> feeds</div></li>
+      <li><span class="icon">✨</span><div><strong>Scroll-triggered</strong> animations</div></li>
+      <li><span class="icon">📊</span><div><strong>Analytics</strong> — track which content users actually see</div></li>
+      <li><span class="icon">📌</span><div><strong>Sticky headers</strong> — detect when elements become fixed</div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>💻 Basic API</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="keyword">const</span> <span class="const">observer</span> = <span class="keyword">new</span> <span class="func">IntersectionObserver</span>((<span class="const">entries</span>) => {<br>
+      &nbsp;&nbsp;<span class="const">entries</span>.<span class="func">forEach</span>(<span class="const">entry</span> => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (<span class="const">entry</span>.<span class="attr">isIntersecting</span>) {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">console</span>.<span class="func">log</span>(<span class="string">'Element is visible!'</span>, <span class="const">entry</span>.<span class="attr">target</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">entry</span>.<span class="attr">target</span>.<span class="attr">classList</span>.<span class="func">add</span>(<span class="string">'animate-in'</span>);<br><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Optional: stop observing after first trigger</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">observer</span>.<span class="func">unobserve</span>(<span class="const">entry</span>.<span class="attr">target</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;});<br>
+      }, {<br>
+      &nbsp;&nbsp;<span class="attr">root</span>: <span class="keyword">null</span>,       <span class="comment">// viewport (default)</span><br>
+      &nbsp;&nbsp;<span class="attr">rootMargin</span>: <span class="string">'0px'</span>, <span class="comment">// margin around root</span><br>
+      &nbsp;&nbsp;<span class="attr">threshold</span>: <span class="num">0.1</span>     <span class="comment">// 10% visible triggers callback</span><br>
+      });<br><br>
+      <span class="comment">// Start observing elements</span><br>
+      <span class="const">document</span>.<span class="func">querySelectorAll</span>(<span class="string">'.lazy'</span>).<span class="func">forEach</span>(<span class="const">el</span> => {<br>
+      &nbsp;&nbsp;<span class="const">observer</span>.<span class="func">observe</span>(<span class="const">el</span>);<br>
+      });
+    </div>
+  </div>
+
+  <!-- LIVE DEMO: Scroll Observer -->
+  <div class="card">
+    <h3>🎮 Live Demo: Scroll to Reveal</h3>
+    <p>Scroll down inside the box and watch elements animate in when they become visible!</p>
+    
+    <div class="visual-demo" style="margin-top:15px">
+      <div class="demo-controls">
+        <button class="demo-btn" onclick="initScrollDemo()">▶ Start Observer</button>
+        <button class="demo-btn secondary" onclick="resetScrollDemo()">Reset</button>
+      </div>
+      <div class="scroll-demo-container" id="scrollDemoContainer">
+        <div style="padding:15px;text-align:center;color:var(--text-dim)">⬇️ Scroll down to see items appear ⬇️</div>
+        <div class="scroll-item" data-index="1">📦 Item 1 - I animate when visible!</div>
+        <div class="scroll-item" data-index="2">🎨 Item 2 - IntersectionObserver is watching me</div>
+        <div class="scroll-item" data-index="3">⚡ Item 3 - No scroll events needed!</div>
+        <div class="scroll-item" data-index="4">🚀 Item 4 - This is so efficient!</div>
+        <div class="scroll-item" data-index="5">🎯 Item 5 - Almost there...</div>
+        <div class="scroll-item" data-index="6">🏆 Item 6 - Zero performance impact!</div>
+        <div class="scroll-item" data-index="7">✨ Item 7 - The browser handles timing</div>
+        <div class="scroll-item" data-index="8">🔥 Item 8 - You made it to the bottom!</div>
+      </div>
+      <div class="log-output" id="scrollLog"></div>
+    </div>
+  </div>
+
+  <!-- Threshold Visual -->
+  <div class="card">
+    <h3>🎚️ Understanding Threshold</h3>
+    <div class="visual-demo">
+      <p>Adjust the threshold and see when the callback fires:</p>
+      <div style="margin:15px 0;display:flex;align-items:center;gap:15px">
+        <label style="font-size:0.9rem">Threshold:</label>
+        <input type="range" id="thresholdSlider" min="0" max="100" value="50" 
+               oninput="updateThresholdDemo(this.value)" style="flex:1">
+        <span id="thresholdValue" style="font-family:monospace;min-width:40px;color:var(--secondary)">0.5</span>
+      </div>
+      <div style="display:flex;gap:20px;align-items:center;justify-content:center">
+        <div style="width:150px;height:100px;background:var(--surface);border:2px solid var(--text-dim);border-radius:8px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:0.7rem;color:var(--text-dim)">Viewport</div>
+          <div id="thresholdBox" style="width:60px;height:40px;background:var(--primary);border-radius:6px;position:absolute;left:50%;transform:translateX(-50%);bottom:-40px;transition:bottom 0.3s;display:flex;align-items:center;justify-content:center;font-size:0.7rem">Target</div>
+        </div>
+        <div id="thresholdFired" style="font-size:1.5rem;min-width:50px;text-align:center">💤</div>
+      </div>
+      <div class="demo-controls" style="margin-top:15px;justify-content:center">
+        <button class="demo-btn" onclick="animateThresholdDemo()">▶ Simulate Scroll</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lazy Loading Example -->
+  <div class="card">
+    <h3>📷 Real-World: Lazy Loading Images</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="comment">// HTML: &lt;img data-src="photo.jpg" class="lazy" /&gt;</span><br><br>
+      <span class="keyword">const</span> <span class="const">imgObserver</span> = <span class="keyword">new</span> <span class="func">IntersectionObserver</span>((<span class="const">entries</span>) => {<br>
+      &nbsp;&nbsp;<span class="const">entries</span>.<span class="func">forEach</span>(<span class="const">entry</span> => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (<span class="const">entry</span>.<span class="attr">isIntersecting</span>) {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> <span class="const">img</span> = <span class="const">entry</span>.<span class="attr">target</span>;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">img</span>.<span class="attr">src</span> = <span class="const">img</span>.<span class="attr">dataset</span>.<span class="attr">src</span>; <span class="comment">// Load image</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">img</span>.<span class="attr">classList</span>.<span class="func">remove</span>(<span class="string">'lazy'</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">imgObserver</span>.<span class="func">unobserve</span>(<span class="const">img</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;});<br>
+      }, {<br>
+      &nbsp;&nbsp;<span class="attr">rootMargin</span>: <span class="string">'200px'</span> <span class="comment">// Start loading 200px before visible</span><br>
+      });<br><br>
+      <span class="const">document</span>.<span class="func">querySelectorAll</span>(<span class="string">'img.lazy'</span>).<span class="func">forEach</span>(<span class="const">img</span> => {<br>
+      &nbsp;&nbsp;<span class="const">imgObserver</span>.<span class="func">observe</span>(<span class="const">img</span>);<br>
+      });
+    </div>
+  </div>
+
+  <!-- Pitfalls -->
+  <div class="card danger">
+    <h3>⚠️ Common Pitfalls</h3>
+    <ul class="feature-list" style="margin-top:10px">
+      <li><span class="icon">🚫</span><div><strong>Forgetting to unobserve:</strong> Memory leak! Always <span class="inline-code">observer.unobserve(target)</span> for one-time triggers, or <span class="inline-code">observer.disconnect()</span> when done.</div></li>
+      <li><span class="icon">🚫</span><div><strong>Threshold confusion:</strong> <span class="inline-code">threshold: 1.0</span> means 100% must be visible — won't fire if element is larger than viewport!</div></li>
+      <li><span class="icon">🚫</span><div><strong>Using scroll events instead:</strong> Scroll listeners fire on every pixel — IntersectionObserver is throttled by the browser for free.</div></li>
+      <li><span class="icon">🚫</span><div><strong>Not checking isIntersecting:</strong> Callback fires on both enter AND exit. Always check <span class="inline-code">entry.isIntersecting</span>.</div></li>
+    </ul>
+  </div>
+
+  <div class="quiz-card" id="quiz-io">
+    <h3>🧠 Quiz: IntersectionObserver</h3>
+    <div class="quiz-question">What does <code>rootMargin: '100px'</code> do in IntersectionObserver options?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">A</span>
+        <span>Adds 100px margin to the observed element</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="true">
+        <span class="opt-letter">B</span>
+        <span>Expands the detection area, triggering callback 100px before element enters viewport</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">C</span>
+        <span>Delays the callback by 100 pixels of scrolling</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">D</span>
+        <span>Sets the minimum size for intersection to count</span>
+      </div>
+    </div>
+    <div class="quiz-feedback" id="quiz-io-feedback"></div>
+    <button class="quiz-submit" onclick="submitQuiz('quiz-io')">Check Answer</button>
+  </div>
+
+  <!-- Exercise -->
+  <div class="exercise">
+    <div class="exercise-header">
+      <span class="exercise-badge">💪 Exercise</span>
+      <h3>Build an Infinite Scroll Trigger</h3>
+    </div>
+    <p style="margin-bottom:15px">Create an IntersectionObserver that watches a sentinel element. When the sentinel becomes visible, call <span class="inline-code">loadMore()</span> (it's already defined). Use rootMargin to pre-load before the user reaches the bottom.</p>
+    <textarea id="exercise-io" spellcheck="false">// sentinel element is already in the DOM
+const sentinel = document.getElementById('sentinel');
+
+// loadMore() function is already defined
+// It adds more items to the list
+
+// Your code here:
+// 1. Create an IntersectionObserver
+// 2. When sentinel is intersecting, call loadMore()
+// 3. Use rootMargin: '200px' for pre-loading
+// 4. Start observing the sentinel
+</textarea>
+    <div style="margin-top:10px;display:flex;gap:10px">
+      <button class="demo-btn success" onclick="checkExerciseIO()">▶ Run & Check</button>
+      <button class="demo-btn secondary" onclick="showHintIO()">💡 Hint</button>
+    </div>
+    <div class="exercise-result" id="exercise-io-result"></div>
+  </div>
+
+  <div class="chapter-nav">
+    <button class="chapter-nav-btn" onclick="goToSection(3)">← Efficient Updates</button>
+    <button class="chapter-nav-btn" onclick="goToSection(5)">MutationObserver →</button>
+  </div>
+</div>
+
+<!-- ============ SECTION 5: MUTATION OBSERVER ============ -->
+<div class="section" id="section-5">
+  <div class="section-header">
+    <span class="section-icon">🔬</span>
+    <h2>MutationObserver</h2>
+    <p>React to DOM changes in real-time without polling</p>
+  </div>
+
+  <div class="card">
+    <h3>🤔 What Is MutationObserver?</h3>
+    <p style="margin-top:10px">MutationObserver watches for changes to the DOM tree. It replaces the deprecated <span class="inline-code">Mutation Events</span> with an efficient, batched API. Use cases:</p>
+    <ul class="feature-list" style="margin-top:10px">
+      <li><span class="icon">🔌</span><div><strong>Third-party integration</strong> — react when external scripts modify your DOM</div></li>
+      <li><span class="icon">📝</span><div><strong>WYSIWYG editors</strong> — track content changes</div></li>
+      <li><span class="icon">🎨</span><div><strong>Theme switching</strong> — watch for attribute changes</div></li>
+      <li><span class="icon">🔒</span><div><strong>Security</strong> — detect unauthorized DOM modifications</div></li>
+      <li><span class="icon">📐</span><div><strong>Framework internals</strong> — Angular uses it for change detection!</div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>💻 API Overview</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="keyword">const</span> <span class="const">observer</span> = <span class="keyword">new</span> <span class="func">MutationObserver</span>((<span class="const">mutations</span>) => {<br>
+      &nbsp;&nbsp;<span class="const">mutations</span>.<span class="func">forEach</span>(<span class="const">mutation</span> => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">console</span>.<span class="func">log</span>(<span class="string">'Type:'</span>, <span class="const">mutation</span>.<span class="attr">type</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">console</span>.<span class="func">log</span>(<span class="string">'Target:'</span>, <span class="const">mutation</span>.<span class="attr">target</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">console</span>.<span class="func">log</span>(<span class="string">'Added:'</span>, <span class="const">mutation</span>.<span class="attr">addedNodes</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">console</span>.<span class="func">log</span>(<span class="string">'Removed:'</span>, <span class="const">mutation</span>.<span class="attr">removedNodes</span>);<br>
+      &nbsp;&nbsp;});<br>
+      });<br><br>
+      <span class="const">observer</span>.<span class="func">observe</span>(<span class="const">targetNode</span>, {<br>
+      &nbsp;&nbsp;<span class="attr">childList</span>: <span class="keyword">true</span>,      <span class="comment">// Watch for added/removed children</span><br>
+      &nbsp;&nbsp;<span class="attr">attributes</span>: <span class="keyword">true</span>,     <span class="comment">// Watch for attribute changes</span><br>
+      &nbsp;&nbsp;<span class="attr">characterData</span>: <span class="keyword">true</span>,  <span class="comment">// Watch for text content changes</span><br>
+      &nbsp;&nbsp;<span class="attr">subtree</span>: <span class="keyword">true</span>,        <span class="comment">// Watch all descendants too</span><br>
+      &nbsp;&nbsp;<span class="attr">attributeOldValue</span>: <span class="keyword">true</span>, <span class="comment">// Record old attribute values</span><br>
+      &nbsp;&nbsp;<span class="attr">attributeFilter</span>: [<span class="string">'class'</span>, <span class="string">'style'</span>] <span class="comment">// Only these attributes</span><br>
+      });<br><br>
+      <span class="comment">// Stop observing</span><br>
+      <span class="const">observer</span>.<span class="func">disconnect</span>();
+    </div>
+  </div>
+
+  <!-- Interactive MutationObserver Demo -->
+  <div class="card">
+    <h3>🎮 Live Demo: Watch the DOM Change!</h3>
+    <div class="visual-demo">
+      <p>The MutationObserver is watching the box below. Try modifying it!</p>
+      <div class="demo-controls" style="margin-top:10px">
+        <button class="demo-btn" onclick="mutationAddChild()">➕ Add Child</button>
+        <button class="demo-btn warning" onclick="mutationChangeAttr()">🎨 Change Color</button>
+        <button class="demo-btn danger" onclick="mutationRemoveChild()">🗑️ Remove Last</button>
+        <button class="demo-btn secondary" onclick="mutationChangeText()">📝 Change Text</button>
+      </div>
+      <div id="mutationTarget" style="background:#0d1117;border:2px dashed var(--secondary);border-radius:10px;padding:15px;margin-top:15px;min-height:60px;transition:all 0.3s">
+        <div style="padding:8px;background:var(--surface2);border-radius:6px;margin:4px 0">Original child element</div>
+      </div>
+      <h4 style="margin-top:15px;color:var(--secondary)">📋 Observer Log:</h4>
+      <div class="log-output" id="mutationLog"></div>
+    </div>
+  </div>
+
+  <!-- Mutation Types -->
+  <div class="card">
+    <h3>📊 Mutation Types Explained</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;margin-top:15px">
+      <div style="background:var(--surface2);padding:20px;border-radius:10px;border-left:3px solid var(--primary)">
+        <h4 style="font-size:0.95rem;color:var(--primary-light)">childList</h4>
+        <p style="font-size:0.85rem;margin-top:5px">Fires when children are added or removed</p>
+        <div style="font-family:monospace;font-size:0.8rem;background:#0d1117;padding:8px;border-radius:6px;margin-top:8px">
+          <span style="color:var(--secondary)">addedNodes</span>, <span style="color:var(--danger)">removedNodes</span>
+        </div>
+      </div>
+      <div style="background:var(--surface2);padding:20px;border-radius:10px;border-left:3px solid var(--warning)">
+        <h4 style="font-size:0.95rem;color:var(--warning)">attributes</h4>
+        <p style="font-size:0.85rem;margin-top:5px">Fires when attributes change</p>
+        <div style="font-family:monospace;font-size:0.8rem;background:#0d1117;padding:8px;border-radius:6px;margin-top:8px">
+          <span style="color:var(--secondary)">attributeName</span>, <span style="color:var(--text-dim)">oldValue</span>
+        </div>
+      </div>
+      <div style="background:var(--surface2);padding:20px;border-radius:10px;border-left:3px solid var(--success)">
+        <h4 style="font-size:0.95rem;color:var(--success)">characterData</h4>
+        <p style="font-size:0.85rem;margin-top:5px">Fires when text content changes</p>
+        <div style="font-family:monospace;font-size:0.8rem;background:#0d1117;padding:8px;border-radius:6px;margin-top:8px">
+          <span style="color:var(--secondary)">oldValue</span> of text node
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real World Example -->
+  <div class="card">
+    <h3>🌍 Real-World: Auto-highlight Code Blocks</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="comment">// Watch for new code blocks added by CMS/AJAX</span><br>
+      <span class="keyword">const</span> <span class="const">codeObserver</span> = <span class="keyword">new</span> <span class="func">MutationObserver</span>((<span class="const">mutations</span>) => {<br>
+      &nbsp;&nbsp;<span class="const">mutations</span>.<span class="func">forEach</span>(<span class="const">mutation</span> => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">mutation</span>.<span class="attr">addedNodes</span>.<span class="func">forEach</span>(<span class="const">node</span> => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (<span class="const">node</span>.<span class="attr">nodeType</span> === <span class="num">1</span>) { <span class="comment">// Element node</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> <span class="const">codeBlocks</span> = <span class="const">node</span>.<span class="func">querySelectorAll</span>(<span class="string">'pre code'</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">codeBlocks</span>.<span class="func">forEach</span>(<span class="const">block</span> => {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="const">hljs</span>.<span class="func">highlightElement</span>(<span class="const">block</span>);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+      &nbsp;&nbsp;});<br>
+      });<br><br>
+      <span class="const">codeObserver</span>.<span class="func">observe</span>(<span class="const">document</span>.<span class="attr">body</span>, {<br>
+      &nbsp;&nbsp;<span class="attr">childList</span>: <span class="keyword">true</span>,<br>
+      &nbsp;&nbsp;<span class="attr">subtree</span>: <span class="keyword">true</span><br>
+      });
+    </div>
+  </div>
+
+  <!-- Pitfalls -->
+  <div class="card danger">
+    <h3>⚠️ Pitfalls to Avoid</h3>
+    <ul class="feature-list" style="margin-top:10px">
+      <li><span class="icon">💀</span><div><strong>Infinite loops!</strong> If your callback modifies the observed element, it triggers another mutation → infinite loop. Guard against this!</div></li>
+      <li><span class="icon">⚡</span><div><strong>Performance with subtree:</strong> Watching <span class="inline-code">document.body</span> with <span class="inline-code">subtree: true</span> catches EVERYTHING. Be specific!</div></li>
+      <li><span class="icon">🔌</span><div><strong>Forgetting disconnect():</strong> Always call <span class="inline-code">observer.disconnect()</span> when done, especially in SPAs.</div></li>
+      <li><span class="icon">📦</span><div><strong>Mutations are batched:</strong> The callback receives ALL mutations since last call, not one at a time.</div></li>
+    </ul>
+    
+    <div class="code-block" style="margin-top:15px;font-size:0.82rem">
+      <span class="comment">// ⚠️ INFINITE LOOP DANGER!</span><br>
+      <span class="keyword">const</span> <span class="const">observer</span> = <span class="keyword">new</span> <span class="func">MutationObserver</span>(() => {<br>
+      &nbsp;&nbsp;<span class="comment">// This modifies the target → triggers another mutation!</span><br>
+      &nbsp;&nbsp;<span class="const">target</span>.<span class="attr">textContent</span> = <span class="string">'Modified!'</span>; <span class="comment">// 💀 DON'T!</span><br>
+      });<br><br>
+      <span class="comment">// ✅ FIX: Disconnect, modify, reconnect</span><br>
+      <span class="keyword">const</span> <span class="const">safeObserver</span> = <span class="keyword">new</span> <span class="func">MutationObserver</span>(() => {<br>
+      &nbsp;&nbsp;<span class="const">safeObserver</span>.<span class="func">disconnect</span>();<br>
+      &nbsp;&nbsp;<span class="const">target</span>.<span class="attr">textContent</span> = <span class="string">'Modified safely!'</span>;<br>
+      &nbsp;&nbsp;<span class="const">safeObserver</span>.<span class="func">observe</span>(<span class="const">target</span>, config);<br>
+      });
+    </div>
+  </div>
+
+  <div class="quiz-card" id="quiz-mo">
+    <h3>🧠 Quiz: MutationObserver</h3>
+    <div class="quiz-question">What configuration option should you set to watch for changes to an element's CSS classes?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">A</span>
+        <span>childList: true</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="true">
+        <span class="opt-letter">B</span>
+        <span>attributes: true (class is an attribute)</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">C</span>
+        <span>characterData: true</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">D</span>
+        <span>classList: true</span>
+      </div>
+    </div>
+    <div class="quiz-feedback" id="quiz-mo-feedback"></div>
+    <button class="quiz-submit" onclick="submitQuiz('quiz-mo')">Check Answer</button>
+  </div>
+
+  <div class="chapter-nav">
+    <button class="chapter-nav-btn" onclick="goToSection(4)">← IntersectionObserver</button>
+    <button class="chapter-nav-btn" onclick="goToSection(6)">Custom Elements →</button>
+  </div>
+</div>
+
+<!-- ============ SECTION 6: CUSTOM ELEMENTS ============ -->
+<div class="section" id="section-6">
+  <div class="section-header">
+    <span class="section-icon">🧩</span>
+    <h2>Custom Elements</h2>
+    <p>Build your own HTML elements with native browser APIs</p>
+  </div>
+
+  <div class="card">
+    <h3>🤔 What Are Custom Elements?</h3>
+    <p style="margin-top:10px">Custom Elements let you define <strong>your own HTML tags</strong> with custom behavior. They're part of the <span class="inline-code">Web Components</span> standard — built into every browser, no framework needed!</p>
+    
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:15px">
+      <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:10px;border:2px solid var(--accent)">
+        <div style="font-size:2rem">🏗️</div>
+        <strong>Custom Elements</strong>
+        <p style="font-size:0.8rem;color:var(--text-dim)">Define new HTML tags</p>
+      </div>
+      <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:10px">
+        <div style="font-size:2rem">🌑</div>
+        <strong>Shadow DOM</strong>
+        <p style="font-size:0.8rem;color:var(--text-dim)">Encapsulated styling</p>
+      </div>
+      <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:10px">
+        <div style="font-size:2rem">📄</div>
+        <strong>HTML Templates</strong>
+        <p style="font-size:0.8rem;color:var(--text-dim)">Reusable markup</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Basic Custom Element -->
+  <div class="card">
+    <h3>💻 Your First Custom Element</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="comment">// Rule #1: Name MUST contain a hyphen!</span><br>
+      <span class="keyword">class</span> <span class="func">UserCard</span> <span class="keyword">extends</span> <span class="func">HTMLElement</span> {<br><br>
+      &nbsp;&nbsp;<span class="comment">// Called when element is created</span><br>
+      &nbsp;&nbsp;<span class="func">constructor</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">super</span>(); <span class="comment">// MUST call super() first!</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">this</span>.<span class="attr">_name</span> = <span class="string">''</span>;<br>
+      &nbsp;&nbsp;}<br><br>
+      &nbsp;&nbsp;<span class="comment">// Called when added to DOM</span><br>
+      &nbsp;&nbsp;<span class="func">connectedCallback</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">this</span>.<span class="func">render</span>();<br>
+      &nbsp;&nbsp;}<br><br>
+      &nbsp;&nbsp;<span class="comment">// Watch these attributes for changes</span><br>
+      &nbsp;&nbsp;<span class="keyword">static</span> <span class="keyword">get</span> <span class="func">observedAttributes</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> [<span class="string">'name'</span>, <span class="string">'avatar'</span>];<br>
+      &nbsp;&nbsp;}<br><br>
+      &nbsp;&nbsp;<span class="comment">// Called when observed attributes change</span><br>
+      &nbsp;&nbsp;<span class="func">attributeChangedCallback</span>(<span class="const">attr</span>, <span class="const">oldVal</span>, <span class="const">newVal</span>) {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span> (<span class="const">oldVal</span> !== <span class="const">newVal</span>) <span class="keyword">this</span>.<span class="func">render</span>();<br>
+      &nbsp;&nbsp;}<br><br>
+      &nbsp;&nbsp;<span class="func">render</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">this</span>.<span class="attr">innerHTML</span> = <span class="string">`<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;div class="user-card"&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;h3&gt;${this.getAttribute('name')}&lt;/h3&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;img src="${this.getAttribute('avatar')}"&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;`</span>;<br>
+      &nbsp;&nbsp;}<br>
+      }<br><br>
+      <span class="comment">// Register it!</span><br>
+      <span class="const">customElements</span>.<span class="func">define</span>(<span class="string">'user-card'</span>, <span class="func">UserCard</span>);<br><br>
+      <span class="comment">// Now use it in HTML!</span><br>
+      <span class="comment">// &lt;user-card name="Alice" avatar="alice.jpg"&gt;&lt;/user-card&gt;</span>
+    </div>
+  </div>
+
+  <!-- Lifecycle -->
+  <div class="card">
+    <h3>🔄 Lifecycle Callbacks</h3>
+    <div class="visual-demo">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:15px 0">
+        <div style="background:var(--primary);color:#fff;padding:12px 20px;border-radius:10px;text-align:center">
+          <div style="font-size:1.2rem">🏗️</div>
+          <strong style="font-size:0.8rem">constructor()</strong>
+          <p style="font-size:0.7rem;margin-top:4px">Element created</p>
+        </div>
+        <span style="color:var(--text-dim)">→</span>
+        <div style="background:var(--success);color:#000;padding:12px 20px;border-radius:10px;text-align:center">
+          <div style="font-size:1.2rem">🔌</div>
+          <strong style="font-size:0.8rem">connectedCallback()</strong>
+          <p style="font-size:0.7rem;margin-top:4px">Added to DOM</p>
+        </div>
+        <span style="color:var(--text-dim)">→</span>
+        <div style="background:var(--warning);color:#000;padding:12px 20px;border-radius:10px;text-align:center">
+          <div style="font-size:1.2rem">🔄</div>
+          <strong style="font-size:0.8rem">attributeChanged()</strong>
+          <p style="font-size:0.7rem;margin-top:4px">Attr modified</p>
+        </div>
+        <span style="color:var(--text-dim)">→</span>
+        <div style="background:var(--danger);color:#fff;padding:12px 20px;border-radius:10px;text-align:center">
+          <div style="font-size:1.2rem">🔌</div>
+          <strong style="font-size:0.8rem">disconnectedCallback()</strong>
+          <p style="font-size:0.7rem;margin-top:4px">Removed from DOM</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Custom Element Demo -->
+  <div class="card">
+    <h3>🎮 Live Demo: Custom Counter Element</h3>
+    <div class="visual-demo">
+      <p>This is a real custom element running in the page!</p>
+      <div class="custom-el-preview" id="customElPreview" style="margin-top:15px;text-align:center">
+        <div id="liveCounterArea"></div>
+      </div>
+      <div class="demo-controls" style="margin-top:15px">
+        <button class="demo-btn" onclick="createCustomCounter()">Create &lt;my-counter&gt;</button>
+        <button class="demo-btn warning" onclick="changeCounterAttr()">Change Color Attr</button>
+        <button class="demo-btn danger" onclick="removeCustomCounter()">Remove Element</button>
+      </div>
+      <div class="log-output" id="customElLog"></div>
+    </div>
+  </div>
+
+  <!-- Shadow DOM -->
+  <div class="card">
+    <h3>🌑 Adding Shadow DOM (Encapsulation)</h3>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+      <span class="keyword">class</span> <span class="func">FancyButton</span> <span class="keyword">extends</span> <span class="func">HTMLElement</span> {<br>
+      &nbsp;&nbsp;<span class="func">constructor</span>() {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">super</span>();<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">// Create shadow root — styles won't leak!</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">const</span> <span class="const">shadow</span> = <span class="keyword">this</span>.<span class="func">attachShadow</span>({ <span class="attr">mode</span>: <span class="string">'open'</span> });<br><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="const">shadow</span>.<span class="attr">innerHTML</span> = <span class="string">`<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;style&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;button {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;background: linear-gradient(135deg, #6c5ce7, #a29bfe);<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;color: white; border: none; padding: 12px 24px;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;border-radius: 8px; cursor: pointer; font-size: 1rem;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;button:hover { opacity: 0.9; }<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/style&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;button&gt;&lt;slot&gt;Default Text&lt;/slot&gt;&lt;/button&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;`</span>;<br>
+      &nbsp;&nbsp;}<br>
+      }<br><br>
+      <span class="const">customElements</span>.<span class="func">define</span>(<span class="string">'fancy-button'</span>, <span class="func">FancyButton</span>);<br><br>
+      <span class="comment">// Usage: &lt;fancy-button&gt;Click Me!&lt;/fancy-button&gt;</span>
+    </div>
+  </div>
+
+  <!-- Pitfalls -->
+  <div class="card danger">
+    <h3>⚠️ Custom Elements Pitfalls</h3>
+    <ul class="feature-list" style="margin-top:10px">
+      <li><span class="icon">🚫</span><div><strong>Name must have a hyphen:</strong> <span class="inline-code">my-element</span> ✅ &nbsp; <span class="inline-code">myelement</span> ❌ (prevents conflicts with future HTML tags)</div></li>
+      <li><span class="icon">🚫</span><div><strong>Must call super() first in constructor:</strong> Forgetting this throws an error immediately</div></li>
+      <li><span class="icon">🚫</span><div><strong>Don't access attributes in constructor:</strong> They might not be set yet! Use <span class="inline-code">connectedCallback()</span> instead</div></li>
+      <li><span class="icon">🚫</span><div><strong>Don't add children in constructor:</strong> The element might be created by parser before being connected to DOM</div></li>
+      <li><span class="icon">🚫</span><div><strong>observedAttributes must be static:</strong> It's a static getter, not an instance method!</div></li>
+    </ul>
+  </div>
+
+  <div class="quiz-card" id="quiz-ce">
+    <h3>🧠 Quiz: Custom Elements</h3>
+    <div class="quiz-question">Which lifecycle callback is the best place to set up event listeners and render initial content?</div>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">A</span>
+        <span>constructor()</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="true">
+        <span class="opt-letter">B</span>
+        <span>connectedCallback()</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">C</span>
+        <span>attributeChangedCallback()</span>
+      </div>
+      <div class="quiz-option" onclick="selectQuizOption(this)" data-correct="false">
+        <span class="opt-letter">D</span>
+        <span>disconnectedCallback()</span>
+      </div>
+    </div>
+    <div class="quiz-feedback" id="quiz-ce-feedback"></div>
+    <button class="quiz-submit" onclick="submitQuiz('quiz-ce')">Check Answer</button>
+  </div>
+
+  <!-- Exercise -->
+  <div class="exercise">
+    <div class="exercise-header">
+      <span class="exercise-badge">💪 Exercise</span>
+      <h3>Create a &lt;star-rating&gt; Custom Element</h3>
+    </div>
+    <p style="margin-bottom:15px">Create a custom element that displays stars based on a "value" attribute (1-5). It should observe the "value" attribute and re-render when it changes.</p>
+    <textarea id="exercise-ce" spellcheck="false">class StarRating extends HTMLElement {
+  constructor() {
+    super();
+    // Your code here
+  }
+
+  // Which attributes to observe?
+  static get observedAttributes() {
+    // Your code here
+  }
+
+  connectedCallback() {
+    // Your code here
+  }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    // Your code here
+  }
+
+  render() {
+    const value = parseInt(this.getAttribute('value')) || 0;
+    // Display ★ for filled, ☆ for empty (total 5 stars)
+    // Your code here
+  }
+}
+
+// Don't forget to register!
+</textarea>
+    <div style="margin-top:10px;display:flex;gap:10px">
+      <button class="demo-btn success" onclick="checkExerciseCE()">▶ Run & Check</button>
+      <button class="demo-btn secondary" onclick="showHintCE()">💡 Hint</button>
+    </div>
+    <div class="exercise-result" id="exercise-ce-result"></div>
+  </div>
+
+  <div class="chapter-nav">
+    <button class="chapter-nav-btn" onclick="goToSection(5)">← MutationObserver</button>
+    <button class="chapter-nav-btn" onclick="goToSection(7)">Final Challenge →</button>
+  </div>
+</div>
+
+<!-- ============ SECTION 7: FINAL CHALLENGE ============ -->
+<div class="section" id="section-7">
+  <div class="section-header">
+    <span class="section-icon">🎯</span>
+    <h2>Final Challenge</h2>
+    <p>Prove your mastery of Advanced DOM Manipulation!</p>
+  </div>
+
+  <div class="card">
+    <h3>🏆 Comprehensive Quiz — 10 Questions</h3>
+    <p style="margin-top:10px">Answer all questions to earn your completion badge!</p>
+    <div id="finalQuizArea"></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="demo-btn" style="font-size:1.1rem;padding:14px 40px" onclick="startFinalQuiz()" id="startFinalBtn">🎮 Start Final Quiz</button>
+    </div>
+    <div id="finalQuizResults" style="display:none;margin-top:20px;text-align:center">
+      <div id="finalScore" style="font-size:3rem;font-weight:700;margin:20px 0"></div>
+      <div id="finalMessage" style="font-size:1.1rem;color:var(--text-dim)"></div>
+    </div>
+  </div>
+
+  <div class="card" id="completionCard" style="display:none">
+    <div style="text-align:center;padding:30px">
+      <div style="font-size:4rem">🎉</div>
+      <h2 style="margin:15px 0">Congratulations!</h2>
+      <p style="font-size:1.1rem;color:var(--text-dim)">You've completed the Advanced DOM Manipulation course!</p>
+      <div style="margin-top:20px;display:flex;justify-content:center;gap:20px;flex-wrap:wrap">
+        <div style="background:var(--surface2);padding:15px 25px;border-radius:10px">
+          <div style="font-size:1.5rem">📦</div>
+          <strong>DocumentFragment</strong>
+          <div style="color:var(--success)">✅ Mastered</div>
+        </div>
+        <div style="background:var(--surface2);padding:15px 25px;border-radius:10px">
+          <div style="font-size:1.5rem">⚡</div>
+          <strong>Virtual DOM</strong>
+          <div style="color:var(--success)">✅ Mastered</div>
+        </div>
+        <div style="background:var(--surface2);padding:15px 25px;border-radius:10px">
+          <div style="font-size:1.5rem">👁️</div>
+          <strong>IntersectionObserver</strong>
+          <div style="color:var(--success)">✅ Mastered</div>
+        </div>
+        <div style="background:var(--surface2);padding:15px 25px;border-radius:10px">
+          <div style="font-size:1.5rem">🔬</div>
+          <strong>MutationObserver</strong>
+          <div style="color:var(--success)">✅ Mastered</div>
+        </div>
+        <div style="background:var(--surface2);padding:15px 25px;border-radius:10px">
+          <div style="font-size:1.5rem">🧩</div>
+          <strong>Custom Elements</strong>
+          <div style="color:var(--success)">✅ Mastered</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+// ==================== STATE ====================
+let currentSection = 0;
+let xp = 0;
+const totalSections = 8;
+const completedSections = new Set();
+const answeredQuizzes = new Set();
+
+// ==================== NAVIGATION ====================
+function goToSection(index) {
+  currentSection = index;
+  document.querySelectorAll('.section').forEach((s,i) => {
+    s.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.nav-item').forEach((n,i) => {
+    n.classList.toggle('active', i === index);
+  });
+  completedSections.add(index);
+  updateProgress();
+  window.scrollTo(0,0);
+  if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function updateProgress() {
+  const pct = Math.round((completedSections.size / totalSections) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '%';
+  document.getElementById('xpBadge').textContent = '⚡ ' + xp + ' XP';
+  
+  document.querySelectorAll('.nav-item').forEach((n,i) => {
+    if(completedSections.has(i) && i !== currentSection) {
+      n.classList.add('completed');
+    }
+  });
+}
+
+function addXP(amount) {
+  xp += amount;
+  updateProgress();
+  const badge = document.getElementById('xpBadge');
+  badge.style.transform = 'scale(1.3)';
+  setTimeout(() => badge.style.transform = 'scale(1)', 300);
+}
+
+// ==================== COPY CODE ====================
+function copyCode(btn) {
+  const block = btn.parentElement;
+  const text = block.textContent.replace('📋 Copy','').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+  });
+}
+
+// ==================== TAB SYSTEM ====================
+function switchTab(tabEl, group) {
+  const tabs = tabEl.parentElement.querySelectorAll('.tab');
+  const index = Array.from(tabs).indexOf(tabEl);
+  tabs.forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  
+  const contents = tabEl.parentElement.parentElement.querySelectorAll(`.tab-content[data-tab-group="${group}"]`);
+  if (contents.length === 0) {
+    // fallback: just get all tab-contents within same parent
+    const allContents = tabEl.parentElement.parentElement.querySelectorAll('.tab-content');
+    allContents.forEach((c,i) => c.classList.toggle('active', i === index));
+  } else {
+    contents.forEach((c,i) => c.classList.toggle('active', i === index));
+  }
+}
+
+// ==================== QUIZ SYSTEM ====================
+function selectQuizOption(opt) {
+  const parent = opt.closest('.quiz-options');
+  parent.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+}
+
+function submitQuiz(quizId) {
+  if(answeredQuizzes.has(quizId)) return;
+  const quiz = document.getElementById(quizId);
+  const selected = quiz.querySelector('.quiz-option.selected');
+  if(!selected) return;
+  
+  const isCorrect = selected.dataset.correct === 'true';
+  const feedback = document.getElementById(quizId + '-feedback');
+  
+  quiz.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.style.pointerEvents = 'none';
+    if(opt.dataset.correct === 'true') opt.classList.add('correct');
+    if(opt === selected && !isCorrect) opt.classList.add('incorrect');
+  });
+  
+  if(isCorrect) {
+    feedback.className = 'quiz-feedback show correct';
+    feedback.innerHTML = '🎉 Correct! Great understanding!';
+    addXP(20);
+  } else {
+    feedback.className = 'quiz-feedback show incorrect';
+    feedback.innerHTML = '❌ Not quite. The correct answer is highlighted in green.';
+  }
+  
+  answeredQuizzes.add(quizId);
+  quiz.querySelector('.quiz-submit').disabled = true;
+}
+
+// ==================== DOCUMENT FRAGMENT DEMO ====================
+let fragCount = 0;
+function demoFragAdd() {
+  fragCount++;
+  const container = document.getElementById('fragItems');
+  const item = document.createElement('div');
+  item.style.cssText = 'background:var(--warning);color:#000;padding:4px 10px;border-radius:5px;font-size:0.8rem;font-weight:600;animation:fadeSlide 0.3s ease';
+  item.textContent = '📄' + fragCount;
+  container.appendChild(item);
+  logTo('fragLog', `📦 Added item ${fragCount} to fragment (0 reflows)`, 'info');
+}
+
+function demoFragAppend() {
+  const fragItems = document.getElementById('fragItems');
+  const domItems = document.getElementById('domItems');
+  const children = Array.from(fragItems.children);
+  if(children.length === 0) {
+    logTo('fragLog', '⚠️ Fragment is empty! Add items first.', 'warn');
+    return;
+  }
+  children.forEach(c => {
+    const clone = c.cloneNode(true);
+    clone.style.background = 'var(--success)';
+    domItems.appendChild(clone);
+  });
+  fragItems.innerHTML = '';
+  logTo('fragLog', `🚀 Appended ${children.length} items to DOM in 1 operation (1 reflow!)`, 'info');
+  addXP(5);
+}
+
+function demoFragReset() {
+  document.getElementById('fragItems').innerHTML = '';
+  document.getElementById('domItems').innerHTML = '';
+  document.getElementById('fragLog').innerHTML = '';
+  fragCount = 0;
+}
+
+// ==================== PERFORMANCE TEST ====================
+function perfTestDirect() {
+  const area = document.getElementById('perfTestArea');
+  area.innerHTML = '';
+  const start = performance.now();
+  for(let i = 0; i < 2000; i++) {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:inline-block;width:4px;height:4px;background:#e17055;margin:1px;border-radius:1px;';
+    area.appendChild(div); // Each one = reflow!
+  }
+  const time = (performance.now() - start).toFixed(2);
+  document.getElementById('perfDirectTime').textContent = time + ' ms';
+  document.getElementById('perfDirect').style.width = Math.min(100, time/2) + '%';
+  document.getElementById('perfDirect').textContent = time + 'ms';
+}
+
+function perfTestFragment() {
+  const area = document.getElementById('perfTestArea');
+  area.innerHTML = '';
+  const start = performance.now();
+  const frag = document.createDocumentFragment();
+  for(let i = 0; i < 2000; i++) {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:inline-block;width:4px;height:4px;background:#00b894;margin:1px;border-radius:1px;';
+    frag.appendChild(div);
+  }
+  area.appendChild(frag); // Single reflow!
+  const time = (performance.now() - start).toFixed(2);
+  document.getElementById('perfFragTime').textContent = time + ' ms';
+  document.getElementById('perfFragment').style.width = Math.min(100, time/2) + '%';
+  document.getElementById('perfFragment').textContent = time + 'ms';
+  addXP(5);
+}
+
+function clearPerfTest() {
+  document.getElementById('perfTestArea').innerHTML = '';
+  document.getElementById('perfDirect').style.width = '0%';
+  document.getElementById('perfFragment').style.width = '0%';
+  document.getElementById('perfDirect').textContent = '';
+  document.getElementById('perfFragment').textContent = '';
+  document.getElementById('perfDirectTime').textContent = '— ms';
+  document.getElementById('perfFragTime').textContent = '— ms';
+}
+
+// ==================== VDOM DEMO ====================
+function vdomDemo(action) {
+  const oldTree = { tag: 'div', props: { class: 'container' }, children: [
+    { tag: 'h2', props: {}, children: ['Hello World'] },
+    { tag: 'p', props: { class: 'text' }, children: ['Welcome!'] }
+  ]};
+  
+  let newTree, log = '';
+  
+  switch(action) {
+    case 'text':
+      newTree = JSON.parse(JSON.stringify(oldTree));
+      newTree.children[0].children[0] = 'Hello Universe!';
+      log = '📝 DIFF: Text changed in h2: "Hello World" → "Hello Universe!"<br>🎯 PATCH: Only update text node (no element recreation!)';
+      break;
+    case 'prop':
+      newTree = JSON.parse(JSON.stringify(oldTree));
+      newTree.children[1].props.class = 'text highlighted';
+      log = '🎨 DIFF: Attribute changed on p: class "text" → "text highlighted"<br>🎯 PATCH: Only update attribute (setAttribute)';
+      break;
+    case 'tag':
+      newTree = JSON.parse(JSON.stringify(oldTree));
+      newTree.children[0].tag = 'h3';
+      log = '🔄 DIFF: Tag changed: h2 → h3<br>🎯 PATCH: Replace entire element (can\'t change tag in-place)';
+      break;
+    case 'add':
+      newTree = JSON.parse(JSON.stringify(oldTree));
+      newTree.children.push({ tag: 'span', props: { class: 'badge' }, children: ['New!'] });
+      log = '➕ DIFF: New child detected at index 2<br>🎯 PATCH: appendChild only — existing elements untouched!';
+      break;
+  }
+  
+  document.getElementById('vdom-old').innerHTML = formatVDOM(oldTree);
+  document.getElementById('vdom-new').innerHTML = formatVDOM(newTree, action);
+  document.getElementById('vdom-log').innerHTML = log;
+  
+  // Render to real DOM
+  const target = document.getElementById('vdom-render-target');
+  target.innerHTML = '<span style="color:var(--text-dim);font-size:0.8rem">Rendered output:</span><br>';
+  target.appendChild(renderVDOM(newTree));
+  addXP(5);
+}
+
+function formatVDOM(node, highlight) {
+  if(typeof node === 'string') return `<span style="color:var(--string)">"${node}"</span>`;
+  let html = `{ <span style="color:#ff7b72">tag</span>: <span style="color:#a5d6ff">"${node.tag}"</span>`;
+  if(Object.keys(node.props).length) {
+    html += `, <span style="color:#ff7b72">props</span>: { ${Object.entries(node.props).map(([k,v]) => `<span style="color:#ffa657">${k}</span>: <span style="color:#a5d6ff">"${v}"</span>`).join(', ')} }`;
+  }
+  if(node.children.length) {
+    html += `,<br>&nbsp;&nbsp;<span style="color:#ff7b72">children</span>: [<br>${node.children.map(c => '&nbsp;&nbsp;&nbsp;&nbsp;' + formatVDOM(c)).join(',<br>')}<br>&nbsp;&nbsp;]`;
+  }
+  html += ' }';
+  return html;
+}
+
+function renderVDOM(vnode) {
+  if(typeof vnode === 'string') return document.createTextNode(vnode);
+  const el = document.createElement(vnode.tag);
+  Object.entries(vnode.props).forEach(([k,v]) => el.setAttribute(k, v));
+  vnode.children.forEach(c => el.appendChild(renderVDOM(c)));
+  el.style.color = 'var(--text)';
+  return el;
+}
+
+// ==================== PERF ANIMATION DEMO ====================
+function perfAnimBad() {
+  const area = document.getElementById('perfAnimArea');
+  area.innerHTML = '';
+  const boxes = [];
+  for(let i = 0; i < 200; i++) {
+    const box = document.createElement('div');
+    box.style.cssText = 'width:12px;height:12px;background:var(--danger);border-radius:2px;transition:none';
+    area.appendChild(box);
+    boxes.push(box);
+  }
+  const start = performance.now();
+  // Layout thrashing - read + write in loop
+  boxes.forEach(box => {
+    const h = box.offsetHeight; // force read
+    box.style.width = (h + 10) + 'px'; // write
+    box.style.height = (h + 10) + 'px'; // write
+    box.style.background = `hsl(${Math.random()*360},70%,50%)`;
+  });
+  const time = (performance.now() - start).toFixed(2);
+  logTo('perfAnimLog', `❌ Layout thrashing: ${time}ms (read+write in loop)`, 'error');
+}
+
+function perfAnimGood() {
+  const area = document.getElementById('perfAnimArea');
+  area.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  const boxes = [];
+  for(let i = 0; i < 200; i++) {
+    const box = document.createElement('div');
+    box.style.cssText = 'width:12px;height:12px;background:var(--success);border-radius:2px';
+    frag.appendChild(box);
+    boxes.push(box);
+  }
+  area.appendChild(frag);
+  
+  const start = performance.now();
+  // Read all first
+  const heights = boxes.map(b => b.offsetHeight);
+  // Write all after
+  requestAnimationFrame(() => {
+    boxes.forEach((box, i) => {
+      box.style.transform = `scale(${1 + Math.random()})`;
+      box.style.background = `hsl(${i*1.8},70%,50%)`;
+    });
+    const time = (performance.now() - start).toFixed(2);
+    logTo('perfAnimLog', `✅ Batched + rAF: ${time}ms (transform, no reflow!)`, 'info');
+  });
+  addXP(5);
+}
+
+function perfAnimReset() {
+  document.getElementById('perfAnimArea').innerHTML = '';
+  document.getElementById('perfAnimLog').innerHTML = '';
+}
+
+// ==================== INTERSECTION OBSERVER DEMO ====================
+let scrollObserver = null;
+
+function initScrollDemo() {
+  const container = document.getElementById('scrollDemoContainer');
+  const items = container.querySelectorAll('.scroll-item');
+  
+  // Reset
+  items.forEach(item => {
+    item.classList.remove('visible');
+    item.style.opacity = '0.3';
+    item.style.transform = 'translateX(-30px)';
+  });
+  
+  if(scrollObserver) scrollObserver.disconnect();
+  
+  scrollObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        logTo('scrollLog', `👁️ Item ${entry.target.dataset.index} is now visible! (ratio: ${entry.intersectionRatio.toFixed(2)})`, 'info');
+        scrollObserver.unobserve(entry.target);
+      }
+    });
+  }, {
+    root: container,
+    threshold: 0.3
+  });
+  
+  items.forEach(item => scrollObserver.observe(item));
+  logTo('scrollLog', '🔍 Observer started! Scroll down to see items appear...', 'info');
+  addXP(10);
+}
+
+function resetScrollDemo() {
+  if(scrollObserver) scrollObserver.disconnect();
+  const items = document.querySelectorAll('.scroll-item');
+  items.forEach(item => {
+    item.classList.remove('visible');
+    item.style.opacity = '0.3';
+    item.style.transform = 'translateX(-30px)';
+  });
+  document.getElementById('scrollLog').innerHTML = '';
+  document.getElementById('scrollDemoContainer').scrollTop = 0;
+}
+
+// ==================== THRESHOLD DEMO ====================
+function updateThresholdDemo(val) {
+  document.getElementById('thresholdValue').textContent = (val/100).toFixed(2);
+}
+
+function animateThresholdDemo() {
+  const box = document.getElementById('thresholdBox');
+  const fired = document.getElementById('thresholdFired');
+  const threshold = parseInt(document.getElementById('thresholdSlider').value) / 100;
+  
+  fired.textContent = '💤';
+  box.style.bottom = '-40px';
+  
+  let pos = -40;
+  const interval = setInterval(() => {
+    pos += 2;
+    box.style.bottom = pos + 'px';
+    
+    // Calculate visibility ratio
+    const boxHeight = 40;
+    const containerHeight = 100;
+    const visiblePart = Math.min(Math.max(pos, 0), boxHeight);
+    const ratio = visiblePart / boxHeight;
+    
+    if(ratio >= threshold && fired.textContent === '💤') {
+      fired.textContent = '🔔';
+      box.style.background = 'var(--success)';
+      box.style.boxShadow = '0 0 15px rgba(0,184,148,0.5)';
+    }
+    
+    if(pos > containerHeight) {
+      clearInterval(interval);
+      setTimeout(() => {
+        box.style.bottom = '-40px';
+        box.style.background = 'var(--primary)';
+        box.style.boxShadow = 'none';
+        fired.textContent = '💤';
+      }, 1500);
+    }
+  }, 30);
+}
+
+// ==================== MUTATION OBSERVER DEMO ====================
+let mutObserver = null;
+const mutColors = ['#6c5ce7','#00cec9','#fd79a8','#fdcb6e','#00b894','#e17055'];
+let mutColorIndex = 0;
+
+function initMutationObserver() {
+  const target = document.getElementById('mutationTarget');
+  if(mutObserver) mutObserver.disconnect();
+  
+  mutObserver = new MutationObserver((mutations) => {
+    mutations.forEach(m => {
+      switch(m.type) {
+        case 'childList':
+          if(m.addedNodes.length) logTo('mutationLog', `➕ childList: ${m.addedNodes.length} node(s) added`, 'info');
+          if(m.removedNodes.length) logTo('mutationLog', `🗑️ childList: ${m.removedNodes.length} node(s) removed`, 'warn');
+          break;
+        case 'attributes':
+          logTo('mutationLog', `🎨 attributes: "${m.attributeName}" changed`, 'info');
+          break;
+        case 'characterData':
+          logTo('mutationLog', `📝 characterData: text content changed`, 'info');
+          break;
+      }
+    });
+  });
+  
+  mutObserver.observe(target, {
+    childList: true,
+    attributes: true,
+    characterData: true,
+    subtree: true,
+    attributeOldValue: true
+  });
+}
+
+// Auto-init when section becomes visible
+function mutationAddChild() {
+  initMutationObserver();
+  const target = document.getElementById('mutationTarget');
+  const child = document.createElement('div');
+  child.style.cssText = `padding:8px;background:${mutColors[Math.floor(Math.random()*mutColors.length)]};border-radius:6px;margin:4px 0;color:#fff;font-size:0.9rem;animation:fadeSlide 0.3s ease`;
+  child.textContent = `New child (${new Date().toLocaleTimeString()})`;
+  target.appendChild(child);
+  addXP(3);
+}
+
+function mutationChangeAttr() {
+  initMutationObserver();
+  const target = document.getElementById('mutationTarget');
+  mutColorIndex = (mutColorIndex + 1) % mutColors.length;
+  target.style.borderColor = mutColors[mutColorIndex];
+  target.setAttribute('data-theme', 'color-' + mutColorIndex);
+}
+
+function mutationRemoveChild() {
+  initMutationObserver();
+  const target = document.getElementById('mutationTarget');
+  if(target.lastElementChild) {
+    target.removeChild(target.lastElementChild);
+  } else {
+    logTo('mutationLog', '⚠️ No children to remove!', 'warn');
+  }
+}
+
+function mutationChangeText() {
+  initMutationObserver();
+  const target = document.getElementById('mutationTarget');
+  const firstChild = target.querySelector('div');
+  if(firstChild) {
+    firstChild.textContent = `Modified at ${new Date().toLocaleTimeString()}`;
+  }
+}
+
+// ==================== CUSTOM ELEMENTS DEMO ====================
+// Register a real custom element
+class MyCounter extends HTMLElement {
+  constructor() {
+    super();
+    this._count = 0;
+    this.attachShadow({ mode: 'open' });
+  }
+  
+  static get observedAttributes() { return ['color']; }
+  
+  connectedCallback() {
+    logTo('customElLog', '🔌 connectedCallback() fired — element added to DOM', 'info');
+    this.render();
+  }
+  
+  disconnectedCallback() {
+    logTo('customElLog', '🔌 disconnectedCallback() fired — element removed from DOM', 'warn');
+  }
+  
+  attributeChangedCallback(name, oldVal, newVal) {
+    logTo('customElLog', `🔄 attributeChangedCallback("${name}", "${oldVal}", "${newVal}")`, 'info');
+    this.render();
+  }
+  
+  render() {
+    const color = this.getAttribute('color') || '#6c5ce7';
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host { display: inline-block; }
+        .counter { 
+          display: flex; align-items: center; gap: 15px;
+          background: #131833; padding: 20px 30px; border-radius: 12px;
+          border: 2px solid ${color}; font-family: system-ui;
+        }
+        button {
+          background: ${color}; color: white; border: none;
+          width: 40px; height: 40px; border-radius: 50%;
+          font-size: 1.3rem; cursor: pointer; transition: transform 0.2s;
+        }
+        button:hover { transform: scale(1.1); }
+        button:active { transform: scale(0.95); }
+        .count { font-size: 2rem; font-weight: 700; color: ${color}; min-width: 60px; text-align: center; }
+        .label { color: #636e72; font-size: 0.85rem; }
+      </style>
+      <div class="counter">
+        <button id="dec">−</button>
+        <div>
+          <div class="count">${this._count}</div>
+          <div class="label">&lt;my-counter&gt;</div>
+        </div>
+        <button id="inc">+</button>
+      </div>
+    `;
+    
+    this.shadowRoot.getElementById('inc').addEventListener('click', () => {
+      this._count++;
+      this.render();
+    });
+    this.shadowRoot.getElementById('dec').addEventListener('click', () => {
+      this._count--;
+      this.render();
+    });
+  }
+}
+
+if(!customElements.get('my-counter')) {
+  customElements.define('my-counter', MyCounter);
+}
+
+function createCustomCounter() {
+  const area = document.getElementById('liveCounterArea');
+  area.innerHTML = '';
+  const counter = document.createElement('my-counter');
+  counter.setAttribute('color', '#6c5ce7');
+  counter.id = 'theCounter';
+  area.appendChild(counter);
+  logTo('customElLog', '🏗️ constructor() fired — element created', 'info');
+  addXP(10);
+}
+
+function changeCounterAttr() {
+  const counter = document.getElementById('theCounter');
+  if(!counter) {
+    logTo('customElLog', '⚠️ Create the counter first!', 'warn');
+    return;
+  }
+  const colors = ['#e17055','#00cec9','#fd79a8','#fdcb6e','#00b894','#6c5ce7'];
+  const current = counter.getAttribute('color');
+  const next = colors[(colors.indexOf(current) + 1) % colors.length];
+  counter.setAttribute('color', next);
+}
+
+function removeCustomCounter() {
+  const area = document.getElementById('liveCounterArea');
+  const counter = area.querySelector('my-counter');
+  if(counter) {
+    area.removeChild(counter);
+  } else {
+    logTo('customElLog', '⚠️ No counter to remove!', 'warn');
+  }
+}
+
+// ==================== EXERCISES ====================
+function checkExerciseFrag() {
+  const code = document.getElementById('exercise-frag').value;
+  const result = document.getElementById('exercise-frag-result');
+  
+  try {
+    const userList = document.createElement('ul');
+    const fn = new Function('userList', code + '\nreturn userList;');
+    fn(userList);
+    
+    const items = userList.querySelectorAll('li');
+    if(items.length === 5 && 
+       code.includes('createDocumentFragment') &&
+       code.includes('appendChild')) {
+      result.className = 'exercise-result show pass';
+      result.innerHTML = '✅ Perfect! You used DocumentFragment correctly with 5 items!';
+      addXP(25);
+    } else if(items.length === 5) {
+      result.className = 'exercise-result show fail';
+      result.innerHTML = '⚠️ Items created, but did you use DocumentFragment? Check your code.';
+    } else {
+      result.className = 'exercise-result show fail';
+      result.innerHTML = `❌ Expected 5 <li> elements, found ${items.length}. Keep trying!`;
+    }
+  } catch(e) {
+    result.className = 'exercise-result show fail';
+    result.innerHTML = '❌ Error: ' + e.message;
+  }
+}
+
+function showHintFrag() {
+  const result = document.getElementById('exercise-frag-result');
+  result.className = 'exercise-result show pass';
+  result.innerHTML = '💡 Hint: Create fragment with document.createDocumentFragment(), loop with forEach, create li with document.createElement("li"), set textContent, appendChild to fragment, then appendChild fragment to userList.';
+}
+
+function checkExerciseIO() {
+  const code = document.getElementById('exercise-io').value;
+  const result = document.getElementById('exercise-io-result');
+  
+  if(code.includes('IntersectionObserver') && 
+     code.includes('isIntersecting') && 
+     code.includes('loadMore') &&
+     code.includes('observe')) {
+    result.className = 'exercise-result show pass';
+    result.innerHTML = '✅ Great job! Your IntersectionObserver setup looks correct!';
+    addXP(25);
+  } else {
+    result.className = 'exercise-result show fail';
+    let missing = [];
+    if(!code.includes('IntersectionObserver')) missing.push('new IntersectionObserver()');
+    if(!code.includes('isIntersecting')) missing.push('entry.isIntersecting check');
+    if(!code.includes('loadMore')) missing.push('loadMore() call');
+    if(!code.includes('observe')) missing.push('.observe(sentinel)');
+    result.innerHTML = '❌ Missing: ' + missing.join(', ');
+  }
+}
+
+function showHintIO() {
+  const result = document.getElementById('exercise-io-result');
+  result.className = 'exercise-result show pass';
+  result.innerHTML = '💡 Create new IntersectionObserver with callback checking entry.isIntersecting, call loadMore() inside. Set rootMargin: "200px" in options. Then call observer.observe(sentinel).';
+}
+
+function checkExerciseCE() {
+  const code = document.getElementById('exercise-ce').value;
+  const result = document.getElementById('exercise-ce-result');
+  
+  if(code.includes('extends HTMLElement') && 
+     code.includes('observedAttributes') &&
+     code.includes('connectedCallback') &&
+     code.includes('render') &&
+     (code.includes('define') || code.includes('customElements'))) {
+    
+    if(code.includes('super()') && code.includes('value')) {
+      result.className = 'exercise-result show pass';
+      result.innerHTML = '✅ Excellent! Your StarRating custom element looks great! ⭐⭐⭐⭐⭐';
+      addXP(30);
+    } else {
+      result.className = 'exercise-result show fail';
+      let missing = [];
+      if(!code.includes('super()')) missing.push('super() call in constructor');
+      if(!code.includes('value')) missing.push('"value" in observedAttributes');
+      result.innerHTML = '⚠️ Almost! Missing: ' + missing.join(', ');
+    }
+  } else {
+    result.className = 'exercise-result show fail';
+    result.innerHTML = '❌ Make sure you have: extends HTMLElement, observedAttributes, connectedCallback, render method, and customElements.define()';
+  }
+}
+
+function showHintCE() {
+  const result = document.getElementById('exercise-ce-result');
+  result.className = 'exercise-result show pass';
+  result.innerHTML = `💡 In constructor: call super(). observedAttributes returns ['value']. connectedCallback calls this.render(). attributeChangedCallback calls this.render(). In render: get value, build string of ★ and ☆, set this.innerHTML. Register with customElements.define('star-rating', StarRating).`;
+}
+
+// ==================== FINAL QUIZ ====================
+const finalQuestions = [
+  { q: 'What does DocumentFragment help avoid?', options: ['Syntax errors','Multiple reflows when adding many elements','Memory leaks','CSS conflicts'], correct: 1 },
+  { q: 'After appending a DocumentFragment to the DOM, what happens to the fragment?', options: ['It becomes a div','It stays in the DOM as a wrapper','It becomes empty — children are moved','It gets garbage collected'], correct: 2 },
+  { q: 'In a Virtual DOM, what is "diffing"?', options: ['Comparing old and new virtual trees to find changes','Removing unused DOM nodes','Sorting elements by priority','Converting HTML to JavaScript'], correct: 0 },
+  { q: 'Which CSS properties can be animated without triggering reflow?', options: ['width and height','margin and padding','transform and opacity','font-size and line-height'], correct: 2 },
+  { q: 'What is "layout thrashing"?', options: ['Using too many CSS animations','Reading and writing DOM properties alternately in a loop','Having too many DOM nodes','Using deprecated APIs'], correct: 1 },
+  { q: 'IntersectionObserver is better than scroll events because:', options: ['It uses less memory','It\'s newer','The browser handles timing/throttling for you','It works on all elements'], correct: 2 },
+  { q: 'What does rootMargin: "100px" do in IntersectionObserver?', options: ['Adds margin to observed elements','Expands detection area by 100px','Delays callback by 100ms','Limits to elements within 100px'], correct: 1 },
+  { q: 'MutationObserver with subtree: true watches:', options: ['Only direct children','The element and ALL descendants','Only text content','Only attributes'], correct: 1 },
+  { q: 'Custom element names MUST contain:', options: ['An underscore','At least 3 characters','A hyphen (-)','A number'], correct: 2 },
+  { q: 'Where should you set up event listeners in a custom element?', options: ['constructor()','connectedCallback()','attributeChangedCallback()','The global scope'], correct: 1 },
+];
+
+let finalQuizState = { current: 0, score: 0, answers: [] };
+
+function startFinalQuiz() {
+  finalQuizState = { current: 0, score: 0, answers: [] };
+  document.getElementById('startFinalBtn').style.display = 'none';
+  document.getElementById('finalQuizResults').style.display = 'none';
+  showFinalQuestion();
+}
+
+function showFinalQuestion() {
+  const area = document.getElementById('finalQuizArea');
+  const q = finalQuestions[finalQuizState.current];
+  const num = finalQuizState.current + 1;
+  
+  area.innerHTML = `
+    <div style="margin:20px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+        <span style="color:var(--text-dim)">Question ${num}/${finalQuestions.length}</span>
+        <span class="xp-badge">Score: ${finalQuizState.score}/${finalQuizState.current}</span>
+      </div>
+      <div style="background:var(--surface2);height:6px;border-radius:3px;overflow:hidden;margin-bottom:20px">
+        <div style="background:linear-gradient(90deg,var(--primary),var(--secondary));height:100%;width:${(num/finalQuestions.length)*100}%;transition:width 0.3s;border-radius:3px"></div>
+      </div>
+      <h3 style="margin-bottom:20px;font-size:1.1rem">${q.q}</h3>
+      <div class="quiz-options">
+        ${q.options.map((opt, i) => `
+          <div class="quiz-option" onclick="selectFinalOption(this, ${i})" data-index="${i}">
+            <span class="opt-letter">${String.fromCharCode(65+i)}</span>
+            <span>${opt}</span>
+          </div>
+        `).join('')}
+      </div>
+      <button class="quiz-submit" onclick="submitFinalAnswer()" style="margin-top:15px">Next →</button>
+    </div>
+  `;
+}
+
+function selectFinalOption(el, index) {
+  el.parentElement.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  el.dataset.selected = 'true';
+}
+
+function submitFinalAnswer() {
+  const selected = document.querySelector('#finalQuizArea .quiz-option.selected');
+  if(!selected) return;
+  
+  const selectedIndex = parseInt(selected.dataset.index);
+  const correct = finalQuestions[finalQuizState.current].correct;
+  
+  if(selectedIndex === correct) finalQuizState.score++;
+  finalQuizState.answers.push(selectedIndex);
+  finalQuizState.current++;
+  
+  if(finalQuizState.current < finalQuestions.length) {
+    showFinalQuestion();
+  } else {
+    showFinalResults();
+  }
+}
+
+function showFinalResults() {
+  const area = document.getElementById('finalQuizArea');
+  area.innerHTML = '';
+  
+  const results = document.getElementById('finalQuizResults');
+  results.style.display = 'block';
+  
+  const score = finalQuizState.score;
+  const total = finalQuestions.length;
+  const pct = Math.round((score/total)*100);
+  
+  const scoreEl = document.getElementById('finalScore');
+  const msgEl = document.getElementById('finalMessage');
+  
+  scoreEl.textContent = `${score}/${total}`;
+  
+  if(pct >= 80) {
+    scoreEl.style.color = 'var(--success)';
+    msgEl.innerHTML = '🏆 Outstanding! You\'ve mastered Advanced DOM Manipulation!';
+    document.getElementById('completionCard').style.display = 'block';
+    addXP(100);
+    launchConfetti();
+  } else if(pct >= 60) {
+    scoreEl.style.color = 'var(--warning)';
+    msgEl.innerHTML = '👍 Good job! Review the sections you missed and try again.';
+    addXP(50);
+  } else {
+    scoreEl.style.color = 'var(--danger)';
+    msgEl.innerHTML = '📚 Keep studying! Review the chapters and retake the quiz.';
+    addXP(20);
+  }
+  
+  document.getElementById('startFinalBtn').style.display = 'inline-block';
+  document.getElementById('startFinalBtn').textContent = '🔄 Retake Quiz';
+}
+
+// ==================== CONFETTI ====================
+function launchConfetti() {
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+  
+  const colors = ['#6c5ce7','#00cec9','#fd79a8','#fdcb6e','#00b894','#e17055','#a29bfe'];
+  
+  for(let i = 0; i < 100; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animationDelay = Math.random() * 2 + 's';
+    confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
+    confetti.style.width = (5 + Math.random() * 10) + 'px';
+    confetti.style.height = (5 + Math.random() * 10) + 'px';
+    container.appendChild(confetti);
+  }
+  
+  setTimeout(() => container.remove(), 5000);
+}
+
+// ==================== UTILITY ====================
+function logTo(id, msg, type = 'info') {
+  const log = document.getElementById(id);
+  const entry = document.createElement('div');
+  entry.className = 'log-entry ' + type;
+  entry.innerHTML = msg;
+  log.appendChild(entry);
+  log.scrollTop = log.scrollHeight;
+  
+  // Keep max 20 entries
+  while(log.children.length > 20) log.removeChild(log.firstChild);
+}
+
+// Initialize VDOM demo
+document.addEventListener('DOMContentLoaded', () => {
+  vdomDemo('text');
+  updateProgress();
+});
+</script>
+</body>
+</html>
