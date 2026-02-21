@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB Mastery Dojo | JavaScript Database Integration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --mongo: #00ed64;
+            --postgres: #336791;
+            --code-bg: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--darker);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background Animation */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .progress-track {
+            width: 200px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Layout */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            padding: 2rem 0;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .module-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .module-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            border-left: 3px solid transparent;
+        }
+
+        .module-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .module-item.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .module-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .module-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .content-header {
+            padding: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-mongo { background: rgba(0, 237, 100, 0.2); color: var(--mongo); }
+        .badge-postgres { background: rgba(51, 103, 145, 0.2); color: #5b9bd5; }
+        .badge-advanced { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+
+        .content-body {
+            padding: 2rem;
+        }
+
+        /* Interactive Cards */
+        .interactive-card {
+            background: var(--code-bg);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Code Editor Simulation */
+        .code-editor {
+            background: var(--darker);
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .editor-header {
+            background: rgba(255,255,255,0.05);
+            padding: 0.5rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-red { background: var(--danger); }
+        .dot-yellow { background: var(--warning); }
+        .dot-green { background: var(--success); }
+
+        .editor-content {
+            padding: 1rem;
+            overflow-x: auto;
+            line-height: 1.8;
+        }
+
+        .code-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--light);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 150px;
+            outline: none;
+            line-height: 1.8;
+        }
+
+        /* Syntax Highlighting Simulation */
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+        .operator { color: #56b6c2; }
+
+        /* Terminal Simulation */
+        .terminal {
+            background: #000;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .terminal-prompt { color: var(--success); }
+        .terminal-error { color: var(--danger); }
+        .terminal-success { color: var(--mongo); }
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: var(--primary);
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--light);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        /* Quiz Styles */
+        .quiz-option {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--primary);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        .quiz-option input[type="radio"] {
+            display: none;
+        }
+
+        /* Schema Builder */
+        .schema-workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .schema-canvas {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-height: 400px;
+            border: 2px dashed rgba(255,255,255,0.2);
+        }
+
+        .field-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        .field-input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--light);
+            padding: 0.5rem;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .field-type {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--light);
+            padding: 0.5rem;
+            border-radius: 4px;
+            width: 120px;
+        }
+
+        /* Performance Visualizer */
+        .perf-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            height: 200px;
+            padding: 2rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--danger), var(--warning));
+            border-radius: 4px 4px 0 0;
+            transition: height 1s ease;
+            position: relative;
+            min-height: 20px;
+        }
+
+        .bar.optimal {
+            background: linear-gradient(to top, var(--success), #34d399);
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            white-space: nowrap;
+            color: var(--gray);
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        /* Pitfall Cards */
+        .pitfall-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.1));
+            border-left: 4px solid var(--danger);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pitfall-card::before {
+            content: '⚠️';
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 2rem;
+            opacity: 0.2;
+        }
+
+        .pitfall-title {
+            color: var(--danger);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .solution-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(99, 102, 241, 0.1));
+            border-left: 4px solid var(--success);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+            display: none;
+        }
+
+        .solution-card.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: static;
+            }
+            .schema-workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted var(--primary);
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: var(--light);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+
+        /* Achievement Badge */
+        .achievement {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.875rem;
+            margin: 0.5rem;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .hidden { display: none; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <i class="fas fa-database"></i>
+                <span>DB Mastery Dojo</span>
+            </div>
+            <div class="progress-bar">
+                <span>Progress</span>
+                <div class="progress-track">
+                    <div class="progress-fill" id="globalProgress"></div>
+                </div>
+                <span id="progressText">0%</span>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="app-layout">
+            <aside class="sidebar">
+                <h3>Modules</h3>
+                <ul class="module-list">
+                    <li class="module-item active" onclick="loadModule('intro')">
+                        <i class="fas fa-play-circle"></i>
+                        <span>1. Fundamentals</span>
+                    </li>
+                    <li class="module-item" onclick="loadModule('connection')">
+                        <i class="fas fa-plug"></i>
+                        <span>2. Connection Mastery</span>
+                    </li>
+                    <li class="module-item" onclick="loadModule('crud')">
+                        <i class="fas fa-edit"></i>
+                        <span>3. CRUD Operations</span>
+                    </li>
+                    <li class="module-item" onclick="loadModule('schema')">
+                        <i class="fas fa-sitemap"></i>
+                        <span>4. Schema Design</span>
+                    </li>
+                    <li class="module-item" onclick="loadModule('optimization')">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>5. Query Optimization</span>
+                    </li>
+                    <li class="module-item" onclick="loadModule('pitfalls')">
+                        <i class="fas fa-bug"></i>
+                        <span>6. Pitfalls & Security</span>
+                    </li>
+                    <li class="module-item" onclick="loadModule('final')">
+                        <i class="fas fa-trophy"></i>
+                        <span>7. Final Challenge</span>
+                    </li>
+                </ul>
+
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <h4 style="font-size: 0.875rem; color: var(--gray); margin-bottom: 0.5rem;">Your Achievements</h4>
+                    <div id="achievementsContainer"></div>
+                </div>
+            </aside>
+
+            <main class="main-content" id="mainContent">
+                <!-- Content dynamically loaded here -->
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            currentModule: 'intro',
+            completedModules: [],
+            achievements: [],
+            score: 0,
+            simulatedDB: {
+                users: [
+                    { _id: 1, name: 'Alice', email: 'alice@example.com', age: 28, role: 'admin' },
+                    { _id: 2, name: 'Bob', email: 'bob@example.com', age: 32, role: 'user' },
+                    { _id: 3, name: 'Charlie', email: 'charlie@example.com', age: 24, role: 'user' }
+                ],
+                posts: [
+                    { _id: 1, title: 'MongoDB Tips', userId: 1, views: 150 },
+                    { _id: 2, title: 'PostgreSQL Guide', userId: 2, views: 89 }
+                ]
+            }
+        };
+
+        // Module Content Templates
+        const modules = {
+            intro: {
+                title: 'Database Integration Fundamentals',
+                badge: 'Getting Started',
+                badgeClass: 'badge-postgres',
+                content: `
+                    <div class="content-header">
+                        <span class="badge badge-postgres">Foundation</span>
+                        <h1>Why Database Mastery Matters</h1>
+                        <p style="color: var(--gray); margin-top: 0.5rem;">
+                            Master the art of connecting JavaScript to databases. From connection pools to query optimization, 
+                            this dojo prepares you for FAANG-level technical interviews.
+                        </p>
+                    </div>
+                    <div class="content-body">
+                        <div class="interactive-card">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-bullseye"></i> Learning Objectives</span>
+                            </div>
+                            <div class="card-body">
+                                <ul style="list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                                    <li style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                        <span>Handle 10k+ concurrent connections</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                        <span>Prevent NoSQL/SQL injection attacks</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                        <span>Design schemas for scale (1M+ docs)</span>
+                                    </li>
+                                    <li style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                        <span>Optimize queries from 5s to 50ms</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h2 style="margin: 2rem 0 1rem;">The Modern JS Database Stack</h2>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                            <div class="interactive-card">
+                                <div class="card-header" style="background: rgba(0, 237, 100, 0.1);">
+                                    <span class="card-title" style="color: var(--mongo);">
+                                        <i class="fas fa-leaf"></i> MongoDB (Document)
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--gray);">
+                                        Best for: Rapid prototyping, unstructured data, horizontal scaling
+                                    </p>
+                                    <div class="code-editor">
+                                        <div class="editor-header">
+                                            <div class="dot dot-red"></div>
+                                            <div class="dot dot-yellow"></div>
+                                            <div class="dot dot-green"></div>
+                                            <span style="margin-left: 1rem; color: var(--gray); font-size: 0.8rem;">mongoose-example.js</span>
+                                        </div>
+                                        <div class="editor-content">
+<pre><span class="keyword">import</span> mongoose <span class="keyword">from</span> <span class="string">'mongoose'</span>;
+
+<span class="comment">// Anti-pattern: Creating new connection per request</span>
+<span class="comment">// Pattern: Connection pooling with singleton</span>
+<span class="keyword">const</span> <span class="function">connectDB</span> = <span class="keyword">async</span> () => {
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> conn = <span class="keyword">await</span> mongoose.<span class="function">connect</span>(process.env.MONGO_URI, {
+      maxPoolSize: <span class="number">10</span>, <span class="comment">// Competitive default: 10-50</span>
+      serverSelectionTimeoutMS: <span class="number">5000</span>,
+      socketTimeoutMS: <span class="number">45000</span>,
+    });
+    console.<span class="function">log</span>(<span class="string">\`MongoDB Connected: \${conn.connection.host}\`</span>);
+  } <span class="keyword">catch</span> (error) {
+    console.<span class="function">error</span>(<span class="string">'Error:'</span>, error);
+    process.<span class="function">exit</span>(<span class="number">1</span>);
+  }
+};</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="interactive-card">
+                                <div class="card-header" style="background: rgba(51, 103, 145, 0.2);">
+                                    <span class="card-title" style="color: #5b9bd5;">
+                                        <i class="fas fa-database"></i> PostgreSQL (Relational)
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--gray);">
+                                        Best for: ACID compliance, complex queries, strict schemas
+                                    </p>
+                                    <div class="code-editor">
+                                        <div class="editor-header">
+                                            <div class="dot dot-red"></div>
+                                            <div class="dot dot-yellow"></div>
+                                            <div class="dot dot-green"></div>
+                                            <span style="margin-left: 1rem; color: var(--gray); font-size: 0.8rem;">pg-pool-example.js</span>
+                                        </div>
+                                        <div class="editor-content">
+<pre><span class="keyword">import</span> pg <span class="keyword">from</span> <span class="string">'pg'</span>;
+<span class="keyword">const</span> { Pool } = pg;
+
+<span class="comment">// Production-ready pool configuration</span>
+<span class="keyword">const</span> pool = <span class="keyword">new</span> <span class="function">Pool</span>({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: <span class="number">5432</span>,
+  max: <span class="number">20</span>, <span class="comment">// Maximum pool size</span>
+  idleTimeoutMillis: <span class="number">30000</span>,
+  connectionTimeoutMillis: <span class="number">2000</span>,
+  <span class="comment">// SSL for production</span>
+  ssl: process.env.NODE_ENV === <span class="string">'production'</span> 
+    ? { rejectUnauthorized: <span class="keyword">false</span> } 
+    : <span class="keyword">false</span>
+});</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; text-align: center;">
+                            <button class="btn btn-primary" onclick="loadModule('connection')">
+                                Start Connection Mastery <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `
+            },
+
+            connection: {
+                title: 'Connection Management & Pooling',
+                badge: 'Architecture',
+                badgeClass: 'badge-advanced',
+                content: `
+                    <div class="content-header">
+                        <span class="badge badge-advanced">Critical</span>
+                        <h1>The Connection Pool Pattern</h1>
+                        <p style="color: var(--gray); margin-top: 0.5rem;">
+                            90% of junior developers get this wrong in interviews. Master connection lifecycle management.
+                        </p>
+                    </div>
+                    <div class="content-body">
+                        <div class="pitfall-card">
+                            <div class="pitfall-title">The "Connection Per Request" Anti-Pattern</div>
+                            <p>Creating a new connection for every API request will crash your server under load. 
+                            MongoDB connections take 5-50ms to establish. At 1000 req/s, you'll exhaust file descriptors.</p>
+                            <button class="btn btn-secondary" onclick="this.nextElementSibling.classList.toggle('show')" style="margin-top: 1rem;">
+                                Show Solution
+                            </button>
+                            <div class="solution-card">
+                                <strong>Singleton Pattern with Pooling:</strong> Create one connection when app starts, reuse across requests. 
+                                Use <code>mongoose.connect()</code> once, or <code>pg.Pool</code> for PostgreSQL.
+                            </div>
+                        </div>
+
+                        <h2 style="margin: 2rem 0 1rem;">Interactive: Fix the Connection Leak</h2>
+                        
+                        <div class="interactive-card">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-code"></i> Debug This Code</span>
+                                <span style="color: var(--danger); font-size: 0.875rem;">3 bugs found</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 1rem; color: var(--gray);">Find and fix the connection management issues:</p>
+                                <div class="code-editor">
+                                    <div class="editor-content">
+                                        <textarea class="code-input" id="connectionCode" spellcheck="false">
+// server.js - Can you spot the issues?
+import mongoose from 'mongoose';
+import express from 'express';
+
+app.get('/users', async (req, res) => {
+  // Bug 1: Where is the error handling?
+  await mongoose.connect('mongodb://localhost:27017/myapp');
+  
+  const users = await User.find();
+  
+  // Bug 2: What happens to the connection?
+  res.json(users);
+});
+
+// Bug 3: What happens if DB is down on startup?
+app.listen(3000);</textarea>
+                                    </div>
+                                </div>
+                                
+                                <div id="connectionFeedback" style="margin-top: 1rem;"></div>
+                                
+                                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                                    <button class="btn btn-primary" onclick="checkConnectionCode()">
+                                        <i class="fas fa-play"></i> Analyze Code
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="showConnectionSolution()">
+                                        <i class="fas fa-lightbulb"></i> Show Solution
+                                    </button>
+                                </div>
+
+                                <div id="connectionSolution" style="display: none; margin-top: 1.5rem;">
+                                    <div class="code-editor">
+                                        <div class="editor-content">
+<pre><span class="comment">// Solution: Proper Connection Management</span>
+<span class="keyword">import</span> mongoose <span class="keyword">from</span> <span class="string">'mongoose'</span>;
+<span class="keyword">import</span> express <span class="keyword">from</span> <span class="string">'express'</span>;
+
+<span class="comment">// Connect ONCE when server starts</span>
+<span class="keyword">const</span> <span class="function">connectDB</span> = <span class="keyword">async</span> () => {
+  <span class="keyword">try</span> {
+    <span class="keyword">await</span> mongoose.<span class="function">connect</span>(process.env.MONGO_URI);
+    console.<span class="function">log</span>(<span class="string">'DB Connected'</span>);
+  } <span class="keyword">catch</span> (err) {
+    console.<span class="function">error</span>(<span class="string">'Failed to connect:'</span>, err);
+    process.<span class="function">exit</span>(<span class="number">1</span>); <span class="comment">// Fail fast</span>
+  }
+};
+
+<span class="comment">// Graceful shutdown</span>
+process.<span class="function">on</span>(<span class="string">'SIGINT'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">await</span> mongoose.connection.<span class="function">close</span>();
+  process.<span class="function">exit</span>(<span class="number">0</span>);
+});
+
+<span class="comment">// Then use existing connection in routes</span>
+app.<span class="function">get</span>(<span class="string">'/users'</span>, <span class="keyword">async</span> (req, res) => {
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> users = <span class="keyword">await</span> User.<span class="function">find</span>().<span class="function">limit</span>(<span class="number">100</span>); <span class="comment">// Always limit!</span>
+    res.<span class="function">json</span>(users);
+  } <span class="keyword">catch</span> (error) {
+    res.<span class="function">status</span>(<span class="number">500</span>).<span class="function">json</span>({ error: error.message });
+  }
+});
+
+<span class="function">connectDB</span>();
+app.<span class="function">listen</span>(<span class="number">3000</span>);</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="interactive-card" style="margin-top: 2rem;">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-terminal"></i> Connection Pool Simulator</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 1rem; font-size: 0.9rem;">
+                                    Simulate what happens with different pool sizes under load:
+                                </p>
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                                    <button class="btn btn-secondary" onclick="simulatePool(1)">
+                                        Pool Size: 1
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="simulatePool(5)">
+                                        Pool Size: 5
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="simulatePool(20)">
+                                        Pool Size: 20 (Optimal)
+                                    </button>
+                                </div>
+                                <div class="terminal" id="poolTerminal">
+                                    <div class="terminal-line">
+                                        <span class="terminal-prompt">$</span> Ready to simulate connection pooling...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+                            <button class="btn btn-secondary" onclick="loadModule('intro')">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </button>
+                            <button class="btn btn-primary" onclick="completeModule('connection'); loadModule('crud')">
+                                Complete & Continue <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `
+            },
+
+            crud: {
+                title: 'CRUD Operations Mastery',
+                badge: 'Practical',
+                badgeClass: 'badge-mongo',
+                content: `
+                    <div class="content-header">
+                        <span class="badge badge-mongo">Hands-on</span>
+                        <h1>Advanced CRUD Patterns</h1>
+                        <p style="color: var(--gray); margin-top: 0.5rem;">
+                            Beyond basic find() and insert(). Learn bulk operations, transactions, and atomic updates.
+                        </p>
+                    </div>
+                    <div class="content-body">
+                        <div class="interactive-card">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-terminal"></i> MongoDB Playground</span>
+                                <span style="font-size: 0.875rem; color: var(--gray);">Try queries against simulated dataset</span>
+                            </div>
+                            <div class="card-body">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--gray);">Collection: Users (3 docs)</label>
+                                        <div class="code-editor" style="font-size: 0.8rem;">
+                                            <div class="editor-content" style="max-height: 150px; overflow-y: auto;">
+<pre>[
+  { _id: 1, name: "Alice", age: 28, role: "admin" },
+  { _id: 2, name: "Bob", age: 32, role: "user" },
+  { _id: 3, name: "Charlie", age: 24, role: "user" }
+]</pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--gray);">Write your query:</label>
+                                        <textarea class="code-input" id="crudQuery" style="min-height: 150px; font-size: 0.8rem;" placeholder="// Example: db.users.find({ age: { $gte: 25 } })">db.users.find({ role: "user" })</textarea>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="executeCRUD()">
+                                    <i class="fas fa-play"></i> Execute Query
+                                </button>
+                                <div class="terminal" id="crudTerminal" style="margin-top: 1rem;">
+                                    <div class="terminal-line">Ready to execute...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h2 style="margin: 2rem 0 1rem;">Common CRUD Pitfalls</h2>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                            <div class="pitfall-card">
+                                <div class="pitfall-title">The N+1 Query Problem</div>
+                                <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+                                    Fetching users then looping to fetch each user's posts = N+1 queries.
+                                    <br><br>
+                                    <strong>Fix:</strong> Use aggregation with $lookup (MongoDB) or JOINs (SQL)
+                                </p>
+                                <div class="code-editor" style="font-size: 0.8rem;">
+                                    <div class="editor-content">
+<pre><span class="comment">// BAD: N+1 queries</span>
+<span class="keyword">const</span> users = <span class="keyword">await</span> User.<span class="function">find</span>();
+<span class="keyword">for</span> (<span class="keyword">let</span> user <span class="keyword">of</span> users) {
+  <span class="comment">// This runs N times!</span>
+  user.posts = <span class="keyword">await</span> Post.<span class="function">find</span>({ userId: user._id });
+}
+
+<span class="comment">// GOOD: Single aggregation</span>
+<span class="keyword">const</span> users = <span class="keyword">await</span> User.<span class="function">aggregate</span>([
+  { $<span class="function">lookup</span>: {
+      <span class="keyword">from</span>: <span class="string">"posts"</span>,
+      localField: <span class="string">"_id"</span>,
+      foreignField: <span class="string">"userId"</span>,
+      as: <span class="string">"posts"</span>
+  }}
+]);</pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pitfall-card">
+                                <div class="pitfall-title">Missing Pagination</div>
+                                <p style="font-size: 0.9rem; margin-bottom: 1rem;">
+                                    <code>.find()</code> without limit() will crash when collection grows to millions of docs.
+                                </p>
+                                <div class="code-editor" style="font-size: 0.8rem;">
+                                    <div class="editor-content">
+<pre><span class="comment">// DANGEROUS: Loads all into memory</span>
+<span class="keyword">const</span> users = <span class="keyword">await</span> User.<span class="function">find</span>(); 
+
+<span class="comment">// SAFE: Cursor-based pagination</span>
+<span class="keyword">const</span> users = <span class="keyword">await</span> User.<span class="function">find</span>()
+  .<span class="function">limit</span>(<span class="number">20</span>)
+  .<span class="function">skip</span>((page - <span class="number">1</span>) * <span class="number">20</span>)
+  .<span class="function">sort</span>({ createdAt: -<span class="number">1</span> });
+
+<span class="comment">// BETTER: Cursor pagination (scale)</span>
+<span class="keyword">const</span> users = <span class="keyword">await</span> User.<span class="function">find</span>({ 
+  _id: { $<span class="function">gt</span>: lastId } 
+}).<span class="function">limit</span>(<span class="number">20</span>);</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="interactive-card" style="margin-top: 2rem;">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-shield-alt"></i> Security Quiz: Injection Prevention</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 1rem;">Which code is vulnerable to NoSQL injection?</p>
+                                
+                                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                                    <input type="radio" name="injection" value="a">
+                                    <div>
+                                        <strong>Option A:</strong>
+                                        <div class="code-editor" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                                            <div class="editor-content">
+                                                User.findOne({ email: req.body.email, password: req.body.password })
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="quiz-option" onclick="checkAnswer(this, true)">
+                                    <input type="radio" name="injection" value="b">
+                                    <div>
+                                        <strong>Option B:</strong>
+                                        <div class="code-editor" style="margin-top: 0.5rem; font-size: 0.8rem;">
+                                            <div class="editor-content">
+                                                User.findOne({ email: req.body.email }).select('+password')
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="quizFeedback" style="margin-top: 1rem;"></div>
+                                
+                                <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; display: none;" id="injectionExplanation">
+                                    <strong style="color: var(--danger);">Vulnerability Explanation:</strong>
+                                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                                        Option A is vulnerable! If req.body = <code>{ "email": { "$ne": null }, "password": { "$ne": null } }</code>, 
+                                        it will return the first user in the database. Always validate inputs with Joi/Zod and use 
+                                        parameterized queries or ORM methods that sanitize inputs.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+                            <button class="btn btn-secondary" onclick="loadModule('connection')">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </button>
+                            <button class="btn btn-primary" onclick="completeModule('crud'); loadModule('schema')">
+                                Complete & Continue <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `
+            },
+
+            schema: {
+                title: 'Schema Design Workshop',
+                badge: 'Architecture',
+                badgeClass: 'badge-advanced',
+                content: `
+                    <div class="content-header">
+                        <span class="badge badge-advanced">System Design</span>
+                        <h1>Database Schema Design</h1>
+                        <p style="color: var(--gray); margin-top: 0.5rem;">
+                            Embedding vs Referencing. The most critical decision for scalability. Learn the rules that prevent refactoring later.
+                        </p>
+                    </div>
+                    <div class="content-body">
+                        <div class="interactive-card">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-hammer"></i> Schema Builder: E-Commerce System</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 1rem;">Design a schema for an e-commerce system. Should Order items be embedded or referenced?</p>
+                                
+                                <div class="schema-workspace">
+                                    <div>
+                                        <h4 style="margin-bottom: 1rem; color: var(--primary);">Build Your Schema</h4>
+                                        <div id="schemaFields">
+                                            <div class="field-row">
+                                                <input type="text" class="field-input" placeholder="Field name (e.g. userId)" value="userId">
+                                                <select class="field-type">
+                                                    <option>ObjectId</option>
+                                                    <option>String</option>
+                                                    <option>Number</option>
+                                                    <option>Array</option>
+                                                    <option>Embedded</option>
+                                                </select>
+                                                <button class="btn btn-danger" style="padding: 0.5rem;" onclick="this.parentElement.remove()">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="addSchemaField()">
+                                            <i class="fas fa-plus"></i> Add Field
+                                        </button>
+                                        <button class="btn btn-primary" style="margin-top: 1rem; margin-left: 0.5rem;" onclick="validateSchema()">
+                                            <i class="fas fa-check"></i> Validate Design
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="schema-canvas" id="schemaCanvas">
+                                        <div style="text-align: center; color: var(--gray); margin-top: 150px;">
+                                            <i class="fas fa-sitemap" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                            <p>Schema validation results will appear here</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="schemaFeedback" style="margin-top: 1.5rem;"></div>
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                            <div class="interactive-card">
+                                <div class="card-header" style="background: rgba(0, 237, 100, 0.1);">
+                                    <span class="card-title">When to Embed (Denormalize)</span>
+                                </div>
+                                <div class="card-body">
+                                    <ul style="list-style: none; font-size: 0.9rem;">
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> "Contains" relationship (User -> Address)</li>
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Data read together (Blog Post -> Comments)</li>
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Limited growth (&lt;100 items)</li>
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> No need for independent access</li>
+                                    </ul>
+                                    <div class="code-editor" style="margin-top: 1rem; font-size: 0.8rem;">
+                                        <div class="editor-content">
+<pre>{
+  _id: ObjectId,
+  title: "Post",
+  comments: [ <span class="comment">// Embedded - limited growth</span>
+    { userId: 1, text: "Great!" },
+    { userId: 2, text: "Thanks" }
+  ]
+}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="interactive-card">
+                                <div class="card-header" style="background: rgba(51, 103, 145, 0.2);">
+                                    <span class="card-title">When to Reference (Normalize)</span>
+                                </div>
+                                <div class="card-body">
+                                    <ul style="list-style: none; font-size: 0.9rem;">
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Many-to-Many (Students -> Courses)</li>
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Large/Unbounded arrays (User -> Posts)</li>
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Data changes frequently (Prices)</li>
+                                        <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary); margin-right: 0.5rem;"></i> Need independent queries</li>
+                                    </ul>
+                                    <div class="code-editor" style="margin-top: 1rem; font-size: 0.8rem;">
+                                        <div class="editor-content">
+<pre>{
+  _id: ObjectId,
+  userId: ObjectId, <span class="comment">// Reference to Users</span>
+  productId: ObjectId, <span class="comment">// Reference to Products</span>
+  quantity: 2
+}</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+                            <button class="btn btn-secondary" onclick="loadModule('crud')">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </button>
+                            <button class="btn btn-primary" onclick="completeModule('schema'); loadModule('optimization')">
+                                Complete & Continue <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `
+            },
+
+            optimization: {
+                title: 'Query Optimization Deep Dive',
+                badge: 'Performance',
+                badgeClass: 'badge-advanced',
+                content: `
+                    <div class="content-header">
+                        <span class="badge badge-advanced">FAANG Level</span>
+                        <h1>Query Optimization & Indexing</h1>
+                        <p style="color: var(--gray); margin-top: 0.5rem;">
+                            Reduce query time from seconds to milliseconds. Understand explain() plans, compound indexes, and the aggregation pipeline.
+                        </p>
+                    </div>
+                    <div class="content-body">
+                        <h2 style="margin-bottom: 1rem;">Performance Visualization</h2>
+                        <div class="interactive-card">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-chart-bar"></i> Query Execution Time Comparison</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 1rem; font-size: 0.9rem;">Simulating 1,000,000 documents:</p>
+                                <div class="perf-chart">
+                                    <div class="bar" style="height: 90%;">
+                                        <span class="bar-value">4500ms</span>
+                                        <span class="bar-label">No Index</span>
+                                    </div>
+                                    <div class="bar" style="height: 60%;">
+                                        <span class="bar-value">1200ms</span>
+                                        <span class="bar-label">Single Index</span>
+                                    </div>
+                                    <div class="bar optimal" style="height: 10%;">
+                                        <span class="bar-value">12ms</span>
+                                        <span class="bar-label">Compound Index</span>
+                                    </div>
+                                    <div class="bar optimal" style="height: 5%;">
+                                        <span class="bar-value">3ms</span>
+                                        <span class="bar-label">Covered Query</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                                    <button class="btn btn-secondary" onclick="runExplainSimulation('collscan')">
+                                        <i class="fas fa-search"></i> Run COLLSCAN
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="runExplainSimulation('ixscan')">
+                                        <i class="fas fa-bolt"></i> Run IXSCAN
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="runExplainSimulation('covered')">
+                                        <i class="fas fa-trophy"></i> Covered Query
+                                    </button>
+                                </div>
+                                <div class="terminal" id="explainTerminal" style="margin-top: 1rem; font-size: 0.8rem;">
+                                    <div class="terminal-line">Click above to see execution plans...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="interactive-card" style="margin-top: 2rem;">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-puzzle-piece"></i> Index Strategy Game</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 1rem;">Given this query pattern, which index is optimal?</p>
+                                <div class="code-editor" style="margin-bottom: 1rem;">
+                                    <div class="editor-content">
+<pre><span class="comment">// Query Pattern (in order of frequency):</span>
+<span class="comment">// 1. Find by status + createdAt (most frequent)</span>
+<span class="comment">// 2. Find by status + userId + createdAt</span>
+<span class="comment">// 3. Find by userId only</span>
+
+db.orders.find({ 
+  status: <span class="string">"shipped"</span>, 
+  createdAt: { $<span class="function">gte</span>: ISODate(<span class="string">"2024-01-01"</span>) }
+}).<span class="function">sort</span>({ createdAt: -<span class="number">1</span> })</pre>
+                                    </div>
+                                </div>
+                                
+                                <div class="quiz-option" onclick="checkIndexAnswer(this, false)">
+                                    <input type="radio" name="index" value="1">
+                                    <code>{ userId: 1, status: 1, createdAt: -1 }</code>
+                                </div>
+                                <div class="quiz-option" onclick="checkIndexAnswer(this, false)">
+                                    <input type="radio" name="index" value="2">
+                                    <code>{ status: 1, userId: 1, createdAt: -1 }</code>
+                                </div>
+                                <div class="quiz-option" onclick="checkIndexAnswer(this, true)">
+                                    <input type="radio" name="index" value="3">
+                                    <code>{ status: 1, createdAt: -1, userId: 1 }</code>
+                                </div>
+
+                                <div id="indexExplanation" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; font-size: 0.9rem;">
+                                    <strong>Correct!</strong> The ESR (Equality, Sort, Range) rule:
+                                    <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                                        <li>Equality fields first (status)</li>
+                                        <li>Sort fields next (createdAt: -1)</li>
+                                        <li>Range fields last (implicit in query)</li>
+                                    </ul>
+                                    This supports all three query patterns through index prefixing!
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pitfall-card" style="margin-top: 2rem;">
+                            <div class="pitfall-title">The "Super Index" Anti-Pattern</div>
+                            <p>Creating indexes for every possible query combination. Each index:</p>
+                            <ul style="margin: 0.5rem 0; margin-left: 1.5rem;">
+                                <li>Consumes RAM (working set)</li>
+                                <li>Slows down writes (inserts/updates)</li>
+                                <li>Increases storage by 20-30%</li>
+                            </ul>
+                            <p style="margin-top: 0.5rem;"><strong>Rule:</strong> Max 5-10 indexes per collection. Use compound indexes smartly.</p>
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+                            <button class="btn btn-secondary" onclick="loadModule('schema')">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </button>
+                            <button class="btn btn-primary" onclick="completeModule('optimization'); loadModule('pitfalls')">
+                                Complete & Continue <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `
+            },
+
+            pitfalls: {
+                title: 'Production Pitfalls & Security',
+                badge: 'Critical',
+                badgeClass: 'badge-advanced',
+                content: `
+                    <div class="content-header">
+                        <span class="badge badge-advanced">Survival Guide</span>
+                        <h1>Mistakes That Take Down Production</h1>
+                        <p style="color: var(--gray); margin-top: 0.5rem;">
+                            Learn from catastrophic failures. Race conditions, memory leaks, and security breaches.
+                        </p>
+                    </div>
+                    <div class="content-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+                            <div class="pitfall-card">
+                                <div class="pitfall-title">1. Blocking the Event Loop</div>
+                                <p>Processing millions of docs in memory:</p>
+                                <div class="code-editor" style="margin: 1rem 0; font-size: 0.8rem;">
+                                    <div class="editor-content">
+<pre><span class="comment">// CRASH: Loads 10M docs into RAM</span>
+<span class="keyword">const</span> users = <span class="keyword">await</span> User.<span class="function">find</span>(); 
+users.<span class="function">forEach</span>(process); <span class="comment">// Blocks for seconds</span>
+
+<span class="comment">// SOLUTION: Use streams/cursors</span>
+<span class="keyword">const</span> cursor = User.<span class="function">find</span>().<span class="function">cursor</span>();
+<span class="keyword">for</span> (<span class="keyword">let</span> doc = <span class="keyword">await</span> cursor.<span class="function">next</span>(); 
+     doc != <span class="keyword">null</span>; 
+     doc = <span class="keyword">await</span> cursor.<span class="function">next</span>()) {
+  <span class="keyword">await</span> <span class="function">process</span>(doc); <span class="comment">// Yield to event loop</span>
+}</pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pitfall-card">
+                                <div class="pitfall-title">2. Race Conditions</div>
+                                <p>Double-spending in e-commerce:</p>
+                                <div class="code-editor" style="margin: 1rem 0; font-size: 0.8rem;">
+                                    <div class="editor-content">
+<pre><span class="comment">// RACE CONDITION: Two requests read stock=1</span>
+<span class="keyword">const</span> product = <span class="keyword">await</span> Product.<span class="function">findById</span>(id);
+<span class="keyword">if</span> (product.stock > <span class="number">0</span>) {
+  <span class="keyword">await</span> Product.<span class="function">updateOne</span>({ _id: id }, 
+    { $<span class="function">inc</span>: { stock: -<span class="number">1</span> } });
+}
+
+<span class="comment">// ATOMIC: Use transactions or atomic operators</span>
+<span class="keyword">const</span> result = <span class="keyword">await</span> Product.<span class="function">updateOne</span>(
+  { _id: id, stock: { $<span class="function">gt</span>: <span class="number">0</span> } }, <span class="comment">// Check in query</span>
+  { $<span class="function">inc</span>: { stock: -<span class="number">1</span> } }
+);
+<span class="keyword">if</span> (result.modifiedCount === <span class="number">0</span>) <span class="keyword">throw</span> <span class="keyword">new</span> <span class="function">Error</span>(<span class="string">'Out of stock'</span>);</pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pitfall-card">
+                                <div class="pitfall-title">3. Connection String Exposure</div>
+                                <p>Hardcoded credentials in repos:</p>
+                                <div class="code-editor" style="margin: 1rem 0; font-size: 0.8rem;">
+                                    <div class="editor-content">
+<pre><span class="comment">// WRONG: Committed to Git</span>
+mongoose.<span class="function">connect</span>(
+  <span class="string">'mongodb+srv://admin:password123@cluster...'</span>
+);
+
+<span class="comment">// CORRECT: Environment variables + IP whitelist</span>
+mongoose.<span class="function">connect</span>(process.env.MONGO_URI);
+<span class="comment">// Use AWS Parameter Store or Vault in production</span></pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pitfall-card">
+                                <div class="pitfall-title">4. Missing Error Handling</div>
+                                <p>Unhandled promise rejections crash Node:</p>
+                                <div class="code-editor" style="margin: 1rem 0; font-size: 0.8rem;">
+                                    <div class="editor-content">
+<pre>app.<span class="function">get</span>(<span class="string">'/data'</span>, <span class="keyword">async</span> (req, res) => {
+  <span class="comment">// DANGER: If DB is down, server crashes</span>
+  <span class="keyword">const</span> data = <span class="keyword">await</span> db.<span class="function">collection</span>(<span class="string">'big'</span>).<span class="function">find</span>();
+  res.<span class="function">json</span>(data);
+});
+
+<span class="comment">// SAFE: Always wrap in try-catch + global handler</span>
+process.<span class="function">on</span>(<span class="string">'unhandledRejection'</span>, (err) => {
+  console.<span class="function">error</span>(<span class="string">'Unhandled:'</span>, err);
+  <span class="comment">// Graceful shutdown</span>
+  server.<span class="function">close</span>(() => process.<span class="function">exit</span>(<span class="number">1</span>));
+});</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="interactive-card" style="margin-top: 2rem;">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-bug"></i> Bug Bounty Challenge</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 1rem;">Find 3 critical bugs in this code:</p>
+                                <div class="code-editor">
+                                    <div class="editor-content">
+<pre>app.post('/transfer', async (req, res) => {
+  const { from, to, amount } = req.body;
+  
+  const sender = await User.findById(from);
+  const receiver = await User.findById(to);
+  
+  if (sender.balance >= amount) {
+    sender.balance -= amount;
+    receiver.balance += amount;
+    
+    await sender.save();
+    await receiver.save();
+    
+    res.json({ success: true });
+  }
+});</pre>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-top: 1rem;">
+                                    <button class="btn btn-secondary" onclick="revealBugs()" id="bugBtn">
+                                        <i class="fas fa-search"></i> Reveal Bugs
+                                    </button>
+                                </div>
+
+                                <div id="bugsList" style="display: none; margin-top: 1.5rem;">
+                                    <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                        <strong style="color: var(--danger);">Bug 1: No Transaction</strong>
+                                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                                            If server crashes between sender.save() and receiver.save(), money disappears. 
+                                            Use MongoDB transactions (multi-document ACID).
+                                        </p>
+                                    </div>
+                                    <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                        <strong style="color: var(--danger);">Bug 2: Race Condition</strong>
+                                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                                            Concurrent requests can overdraft. Use atomic $inc operator instead of read-modify-save.
+                                        </p>
+                                    </div>
+                                    <div style="background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px;">
+                                        <strong style="color: var(--danger);">Bug 3: No Validation/Auth</strong>
+                                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                                            No check that req.user owns the 'from' account. Anyone can drain any account!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+                            <button class="btn btn-secondary" onclick="loadModule('optimization')">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </button>
+                            <button class="btn btn-primary" onclick="completeModule('pitfalls'); loadModule('final')">
+                                Complete & Continue <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                `
+            },
+
+            final: {
+                title: 'Final Challenge: System Design Interview',
+                badge: 'Expert',
+                badgeClass: 'badge-advanced',
+                content: `
+                    <div class="content-header">
+                        <span class="badge badge-advanced">Final Boss</span>
+                        <h1>Design a Social Media Feed</h1>
+                        <p style="color: var(--gray); margin-top: 0.5rem;">
+                            10M users, 1M posts/day, 10k QPS. Design the database layer for a Twitter-like feed.
+                        </p>
+                    </div>
+                    <div class="content-body">
+                        <div class="interactive-card">
+                            <div class="card-header">
+                                <span class="card-title"><i class="fas fa-trophy"></i> Architecture Decision Points</span>
+                            </div>
+                            <div class="card-body">
+                                <form id="finalChallenge" onsubmit="checkFinalChallenge(event)">
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                                            1. Feed Generation Strategy
+                                        </label>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="feed" value="fanout" required>
+                                            <span>Fan-out on Write (Push) - Write to all followers' feeds</span>
+                                        </div>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="feed" value="pull">
+                                            <span>Fan-out on Read (Pull) - Query followees' posts on load</span>
+                                        </div>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="feed" value="hybrid">
+                                            <span>Hybrid - Push for normal users, Pull for celebrities</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                                            2. Database Choice for Feed
+                                        </label>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="db" value="mongo" required>
+                                            <span>MongoDB - Flexible schema for posts</span>
+                                        </div>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="db" value="redis">
+                                            <span>Redis - In-memory sorted sets for hot feeds</span>
+                                        </div>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="db" value="mixed">
+                                            <span>Mixed - Redis for hot feeds, MongoDB for persistence</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="margin-bottom: 1.5rem;">
+                                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                                            3. Handling Celebrity Users (10M followers)
+                                        </label>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="celebrity" value="sharding" required>
+                                            <span>Shard by user_id to distribute write load</span>
+                                        </div>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="celebrity" value="separate">
+                                            <span>Separate collection + Pull model for celebrities only</span>
+                                        </div>
+                                        <div class="quiz-option">
+                                            <input type="radio" name="celebrity" value="queue">
+                                            <span>Async queue to gradually fan out posts</span>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                                        <i class="fas fa-check-circle"></i> Submit Architecture
+                                    </button>
+                                </form>
+
+                                <div id="finalResult" style="margin-top: 2rem; display: none;">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="certificateArea" style="display: none; text-align: center; margin-top: 3rem; padding: 3rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1)); border-radius: 16px; border: 2px solid var(--primary);">
+                            <i class="fas fa-award" style="font-size: 4rem; color: var(--warning); margin-bottom: 1rem;"></i>
+                            <h2 style="margin-bottom: 0.5rem;">Database Mastery Achieved!</h2>
+                            <p style="color: var(--gray); margin-bottom: 2rem;">
+                                You've completed all modules. You're ready for senior-level database interviews.
+                            </p>
+                            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                <div class="achievement">
+                                    <i class="fas fa-plug"></i> Connection Expert
+                                </div>
+                                <div class="achievement">
+                                    <i class="fas fa-bolt"></i> Query Optimizer
+                                </div>
+                                <div class="achievement">
+                                    <i class="fas fa-shield-alt"></i> Security Aware
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="margin-top: 2rem;" onclick="location.reload()">
+                                <i class="fas fa-redo"></i> Restart Dojo
+                            </button>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        // Core Functions
+        function loadModule(moduleName) {
+            state.currentModule = moduleName;
+            const module = modules[moduleName];
+            const mainContent = document.getElementById('mainContent');
+            
+            // Update sidebar
+            document.querySelectorAll('.module-item').forEach(item => {
+                item.classList.remove('active');
+                if(item.textContent.toLowerCase().includes(moduleName)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Render content with animation
+            mainContent.style.opacity = '0';
+            setTimeout(() => {
+                mainContent.innerHTML = module.content;
+                mainContent.style.opacity = '1';
+                mainContent.style.transition = 'opacity 0.3s';
+            }, 100);
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function completeModule(moduleName) {
+            if (!state.completedModules.includes(moduleName)) {
+                state.completedModules.push(moduleName);
+                updateProgress();
+                addAchievement(moduleName);
+            }
+        }
+
+        function updateProgress() {
+            const progress = (state.completedModules.length / 7) * 100;
+            document.getElementById('globalProgress').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+        }
+
+        function addAchievement(moduleName) {
+            const achievements = {
+                'connection': { icon: 'fa-plug', name: 'Connection Expert' },
+                'crud': { icon: 'fa-edit', name: 'CRUD Master' },
+                'schema': { icon: 'fa-sitemap', name: 'Architect' },
+                'optimization': { icon: 'fa-tachometer-alt', name: 'Speed Demon' },
+                'pitfalls': { icon: 'fa-bug', name: 'Bug Hunter' }
+            };
+
+            if (achievements[moduleName]) {
+                const container = document.getElementById('achievementsContainer');
+                const badge = document.createElement('div');
+                badge.className = 'achievement';
+                badge.innerHTML = `<i class="fas ${achievements[moduleName].icon}"></i> ${achievements[moduleName].name}`;
+                container.appendChild(badge);
+            }
+        }
+
+        // Interactive Features
+        function checkConnectionCode() {
+            const code = document.getElementById('connectionCode').value.toLowerCase();
+            const feedback = document.getElementById('connectionFeedback');
+            let issues = [];
+
+            if (code.includes('mongoose.connect') && code.includes('app.get')) {
+                issues.push("❌ <strong>Critical:</strong> Connecting inside route handler creates connection per request");
+            }
+            if (!code.includes('try') || !code.includes('catch')) {
+                issues.push("❌ <strong>Error Handling:</strong> No try-catch blocks for connection errors");
+            }
+            if (!code.includes('process.exit') && !code.includes('close')) {
+                issues.push("⚠️ <strong>Graceful Shutdown:</strong> No cleanup on SIGINT/SIGTERM");
+            }
+            if (!code.includes('env')) {
+                issues.push("⚠️ <strong>Security:</strong> Hardcoded connection string (should use env vars)");
+            }
+
+            if (issues.length === 0) {
+                feedback.innerHTML = '<div style="color: var(--success); padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">✅ Perfect! Production-ready connection management.</div>';
+                state.score += 10;
+            } else {
+                feedback.innerHTML = '<div style="color: var(--danger); padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px;">' + issues.join('<br>') + '</div>';
+            }
+        }
+
+        function showConnectionSolution() {
+            document.getElementById('connectionSolution').style.display = 'block';
+        }
+
+        function simulatePool(size) {
+            const terminal = document.getElementById('poolTerminal');
+            terminal.innerHTML = '';
+            
+            const lines = [
+                `> Initializing connection pool (size: ${size})...`,
+                `> Simulating 100 concurrent requests...`,
+                size < 5 ? `> WARNING: Connection timeouts occurring!` : `> All connections acquired efficiently`,
+                size < 5 ? `> ERROR: Request 43 timed out after 5000ms` : `> Average wait time: ${Math.floor(Math.random() * 10)}ms`,
+                size < 5 ? `> Memory usage: CRITICAL` : `> Memory usage: Stable`,
+                `> Pool utilization: ${size === 1 ? '100% (saturated)' : Math.floor(Math.random() * 40 + 20) + '%'}`
+            ];
+
+            lines.forEach((line, i) => {
+                setTimeout(() => {
+                    const div = document.createElement('div');
+                    div.className = 'terminal-line';
+                    div.innerHTML = `<span class="${line.includes('ERROR') ? 'terminal-error' : line.includes('WARNING') ? 'terminal-error' : 'terminal-prompt'}">></span> ${line}`;
+                    terminal.appendChild(div);
+                    terminal.scrollTop = terminal.scrollHeight;
+                }, i * 600);
+            });
+        }
+
+        function executeCRUD() {
+            const query = document.getElementById('crudQuery').value;
+            const terminal = document.getElementById('crudTerminal');
+            
+            terminal.innerHTML = '<div class="terminal-line"><span class="terminal-prompt">></span> Executing query...</div>';
+            
+            setTimeout(() => {
+                let result;
+                // Simple simulation
+                if (query.includes('find')) {
+                    if (query.includes('role: "user"') || query.includes("role: 'user'")) {
+                        result = [
+                            { _id: 2, name: "Bob", email: "bob@example.com", age: 32, role: "user" },
+                            { _id: 3, name: "Charlie", email: "charlie@example.com", age: 24, role: "user" }
+                        ];
+                    } else {
+                        result = state.simulatedDB.users;
+                    }
+                } else if (query.includes('insert') || query.includes('create')) {
+                    result = { acknowledged: true, insertedId: new Date().getTime() };
+                } else {
+                    result = { message: "Query parsed (simulation)" };
+                }
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'terminal-line';
+                resultDiv.innerHTML = `<span class="terminal-success">✓</span> ${JSON.stringify(result, null, 2)}`;
+                terminal.appendChild(resultDiv);
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'terminal-line';
+                timeDiv.innerHTML = `<span class="terminal-prompt">></span> Execution time: ${Math.floor(Math.random() * 50 + 10)}ms`;
+                terminal.appendChild(timeDiv);
+            }, 500);
+        }
+
+        function checkAnswer(element, isCorrect) {
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                opt.style.pointerEvents = 'none';
+            });
+            
+            if (isCorrect) {
+                element.classList.add('correct');
+                document.getElementById('quizFeedback').innerHTML = '<span style="color: var(--success);">✅ Correct! This uses proper separation of concerns.</span>';
+                state.score += 5;
+            } else {
+                element.classList.add('wrong');
+                document.getElementById('quizFeedback').innerHTML = '<span style="color: var(--danger);">❌ This is actually vulnerable!</span>';
+                document.getElementById('injectionExplanation').style.display = 'block';
+            }
+        }
+
+        function addSchemaField() {
+            const container = document.getElementById('schemaFields');
+            const row = document.createElement('div');
+            row.className = 'field-row';
+            row.innerHTML = `
+                <input type="text" class="field-input" placeholder="Field name">
+                <select class="field-type">
+                    <option>ObjectId</option>
+                    <option>String</option>
+                    <option>Number</option>
+                    <option>Array</option>
+                    <option>Embedded</option>
+                </select>
+                <button class="btn btn-danger" style="padding: 0.5rem;" onclick="this.parentElement.remove()">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function validateSchema() {
+            const canvas = document.getElementById('schemaCanvas');
+            const feedback = document.getElementById('schemaFeedback');
+            
+            canvas.innerHTML = `
+                <div style="padding: 1rem;">
+                    <h4 style="color: var(--success); margin-bottom: 1rem;"><i class="fas fa-check-circle"></i> Analysis Complete</h4>
+                    <ul style="list-style: none; font-size: 0.9rem; line-height: 2;">
+                        <li><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Referencing Users (good for unbounded growth)</li>
+                        <li><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Consider embedding Product snapshots (price at purchase time)</li>
+                        <li><i class="fas fa-exclamation-triangle" style="color: var(--warning); margin-right: 0.5rem;"></i> Add index on { userId: 1, createdAt: -1 } for order history queries</li>
+                        <li><i class="fas fa-check" style="color: var(--success); margin-right: 0.5rem;"></i> Schema supports ACID transactions (MongoDB 4.0+)</li>
+                    </ul>
+                </div>
+            `;
+            
+            feedback.innerHTML = '<div style="color: var(--success);">✅ Good design! Remember: Orders should reference Users but embed product snapshots (prices change!).</div>';
+        }
+
+        function runExplainSimulation(type) {
+            const terminal = document.getElementById('explainTerminal');
+            const plans = {
+                collscan: {
+                    stage: 'COLLSCAN',
+                    docsExamined: 1000000,
+                    executionTime: '4500ms',
+                    index: 'None'
+                },
+                ixscan: {
+                    stage: 'IXSCAN { status: 1 }',
+                    docsExamined: 50000,
+                    executionTime: '1200ms',
+                    index: 'status_1'
+                },
+                covered: {
+                    stage: 'IXSCAN { status: 1, _id: 1 }',
+                    docsExamined: 0,
+                    executionTime: '3ms',
+                    index: 'Covered',
+                    extra: 'PROJECTION_COVERED'
+                }
+            };
+
+            const plan = plans[type];
+            terminal.innerHTML = `
+                <div class="terminal-line"><span class="terminal-prompt">></span> db.orders.explain("executionStats").find({ status: "shipped" })</div>
+                <div class="terminal-line" style="margin-top: 1rem; color: var(--gray);">Execution Stats:</div>
+                <div class="terminal-line">  stage: "${plan.stage}"</div>
+                <div class="terminal-line">  docsExamined: ${plan.docsExamined.toLocaleString()}</div>
+                <div class="terminal-line">  executionTimeMillis: ${plan.executionTime}</div>
+                <div class="terminal-line">  indexName: ${plan.index}</div>
+                ${plan.extra ? `<div class="terminal-line" style="color: var(--success);">  ${plan.extra}: true</div>` : ''}
+            `;
+        }
+
+        function checkIndexAnswer(element, isCorrect) {
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                opt.style.pointerEvents = 'none';
+            });
+            
+            if (isCorrect) {
+                element.classList.add('correct');
+                document.getElementById('indexExplanation').style.display = 'block';
+                state.score += 10;
+            } else {
+                element.classList.add('wrong');
+            }
+        }
+
+        function revealBugs() {
+            document.getElementById('bugsList').style.display = 'block';
+            document.getElementById('bugBtn').style.display = 'none';
+            completeModule('final');
+        }
+
+        function checkFinalChallenge(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const resultDiv = document.getElementById('finalResult');
+            const certificateArea = document.getElementById('certificateArea');
+            
+            const answers = {
+                feed: formData.get('feed'),
+                db: formData.get('db'),
+                celebrity: formData.get('celebrity')
+            };
+
+            let score = 0;
+            let feedback = [];
+
+            if (answers.feed === 'hybrid') {
+                score++;
+                feedback.push('<span style="color: var(--success);">✅ Hybrid feed: Correct! Push for normal users (fast read), Pull for celebs (fast write).</span>');
+            } else {
+                feedback.push('<span style="color: var(--warning);">⚠️ Consider: Pure push fails for celebrities (10M writes/post), pure pull is too slow.</span>');
+            }
+
+            if (answers.db === 'mixed') {
+                score++;
+                feedback.push('<span style="color: var(--success);">✅ Mixed approach: Redis for hot feeds (sub-millisecond), MongoDB for persistence.</span>');
+            }
+
+            if (answers.celebrity === 'separate') {
+                score++;
+                feedback.push('<span style="color: var(--success);">✅ Separate handling: Essential to prevent celebrity posts from DDOSing your system.</span>');
+            }
+
+            resultDiv.innerHTML = `
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--primary);">
+                    <h3 style="margin-bottom: 1rem;">Score: ${score}/3</h3>
+                    ${feedback.join('<br><br>')}
+                    ${score === 3 ? '<div style="margin-top: 1rem; color: var(--success); font-weight: bold;">🎉 Perfect! You understand web-scale architecture!</div>' : ''}
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+
+            if (score >= 2) {
+                setTimeout(() => {
+                    certificateArea.style.display = 'block';
+                    certificateArea.scrollIntoView({ behavior: 'smooth' });
+                }, 1000);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModule('intro');
+        });
+    </script>
+</body>
+</html>

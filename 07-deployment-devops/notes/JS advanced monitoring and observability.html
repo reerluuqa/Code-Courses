@@ -1,0 +1,3088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Monitoring & Observability Masterclass</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0e17;--surface:#131a2b;--surface2:#1a2340;--surface3:#222d4a;
+--primary:#6c63ff;--primary-glow:#6c63ff44;--secondary:#00d4aa;
+--accent:#ff6b9d;--warning:#ffb347;--danger:#ff4757;--success:#2ed573;
+--text:#e8eaf6;--text-dim:#8892b0;--text-muted:#5a6380;
+--border:#2a3555;--code-bg:#0d1117;--gradient:linear-gradient(135deg,#6c63ff,#00d4aa);
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+.app-container{display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:300px;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;transition:transform .3s}
+.sidebar-header{padding:24px 20px;background:var(--gradient);text-align:center}
+.sidebar-header h1{font-size:18px;font-weight:800;color:#fff;letter-spacing:.5px}
+.sidebar-header p{font-size:11px;color:rgba(255,255,255,.8);margin-top:4px;text-transform:uppercase;letter-spacing:2px}
+.progress-container{padding:16px 20px;border-bottom:1px solid var(--border)}
+.progress-bar-bg{height:8px;background:var(--surface3);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;background:var(--gradient);border-radius:4px;transition:width .5s;width:0}
+.progress-text{font-size:12px;color:var(--text-dim);margin-top:6px;display:flex;justify-content:space-between}
+.nav-section{padding:12px 0}
+.nav-section-title{padding:8px 20px;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);font-weight:700}
+.nav-item{display:flex;align-items:center;padding:10px 20px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;gap:10px;font-size:14px;color:var(--text-dim)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--surface2);color:var(--primary);border-left-color:var(--primary)}
+.nav-item.completed{color:var(--secondary)}
+.nav-item .icon{width:24px;text-align:center;font-size:16px}
+.nav-item .check{margin-left:auto;font-size:14px;color:var(--secondary)}
+/* Main */
+.main-content{margin-left:300px;flex:1;min-height:100vh}
+.content-area{max-width:900px;margin:0 auto;padding:40px 40px 100px}
+.section{display:none}
+.section.active{display:block;animation:fadeIn .4s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+h2{font-size:32px;font-weight:800;margin-bottom:8px;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h3{font-size:22px;font-weight:700;color:var(--text);margin:30px 0 12px;padding-left:14px;border-left:3px solid var(--primary)}
+h4{font-size:17px;font-weight:600;color:var(--secondary);margin:20px 0 8px}
+.subtitle{color:var(--text-dim);font-size:16px;margin-bottom:30px}
+p{margin-bottom:14px;color:var(--text-dim);font-size:15px}
+/* Cards */
+.concept-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:20px 0;position:relative;overflow:hidden}
+.concept-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient)}
+.concept-card.warning-card::before{background:var(--warning)}
+.concept-card.danger-card::before{background:var(--danger)}
+.concept-card.success-card::before{background:var(--success)}
+.card-label{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:2px;padding:3px 10px;border-radius:4px;margin-bottom:12px;font-weight:700}
+.card-label.info{background:var(--primary-glow);color:var(--primary)}
+.card-label.warn{background:#ffb34722;color:var(--warning)}
+.card-label.danger{background:#ff475722;color:var(--danger)}
+.card-label.tip{background:#2ed57322;color:var(--success)}
+/* Code */
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;margin:16px 0;overflow:hidden}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:var(--surface3);font-size:12px;color:var(--text-dim)}
+.code-header .lang{color:var(--secondary);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:1px}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;transition:all .2s}
+.copy-btn:hover{border-color:var(--primary);color:var(--primary)}
+pre{padding:16px;overflow-x:auto;font-size:13.5px;line-height:1.8}
+code{font-family:'Fira Code','Cascadia Code','JetBrains Mono',monospace}
+.kw{color:#c792ea}.fn{color:#82aaff}.str{color:#c3e88d}.num{color:#f78c6c}.cm{color:#546e7a}.op{color:#89ddff}.type{color:#ffcb6b}.err{color:#ff5370}.bool{color:#ff5370}.prop{color:#80cbc4}
+/* Interactive */
+.interactive-area{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:20px 0;overflow:hidden}
+.interactive-header{padding:12px 20px;background:var(--surface2);display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.interactive-header .dot{width:10px;height:10px;border-radius:50%}
+.interactive-header .dot.r{background:#ff5f57}.dot.y{background:#ffbd2e}.dot.g{background:#28ca42}
+.interactive-header span{font-size:13px;color:var(--text-dim);margin-left:8px}
+.editor-area{display:grid;grid-template-columns:1fr 1fr;min-height:200px}
+.editor-area.full{grid-template-columns:1fr}
+.code-editor{background:var(--code-bg);padding:16px;font-family:'Fira Code',monospace;font-size:13px;color:var(--text);border:none;resize:none;outline:none;line-height:1.8;min-height:180px;width:100%}
+.output-panel{background:#080c14;padding:16px;border-left:1px solid var(--border);font-family:monospace;font-size:13px;color:var(--secondary);overflow-y:auto;max-height:400px}
+.output-panel .log-line{padding:2px 0;border-bottom:1px solid #ffffff08}
+.output-panel .log-error{color:var(--danger)}
+.output-panel .log-warn{color:var(--warning)}
+.output-panel .log-info{color:#64b5f6}
+.run-btn{background:var(--gradient);color:#fff;border:none;padding:8px 24px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;transition:transform .1s}
+.run-btn:hover{transform:scale(1.05)}
+.run-btn:active{transform:scale(.95)}
+.btn-row{padding:12px 20px;background:var(--surface2);display:flex;gap:10px;border-top:1px solid var(--border);align-items:center}
+.reset-btn{background:none;border:1px solid var(--border);color:var(--text-dim);padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+/* Quiz */
+.quiz-container{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin:20px 0}
+.quiz-question{font-size:16px;font-weight:600;color:var(--text);margin-bottom:16px;line-height:1.6}
+.quiz-question .q-num{color:var(--primary);margin-right:8px}
+.quiz-options{display:flex;flex-direction:column;gap:8px}
+.quiz-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-size:14px;color:var(--text-dim)}
+.quiz-option:hover{border-color:var(--primary);background:var(--surface2)}
+.quiz-option.selected{border-color:var(--primary);background:var(--primary-glow);color:var(--text)}
+.quiz-option.correct{border-color:var(--success);background:#2ed57315;color:var(--success)}
+.quiz-option.incorrect{border-color:var(--danger);background:#ff475715;color:var(--danger)}
+.quiz-option .letter{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.quiz-feedback{margin-top:16px;padding:14px;border-radius:8px;font-size:14px;display:none}
+.quiz-feedback.show{display:block;animation:fadeIn .3s}
+.quiz-feedback.correct{background:#2ed57315;border:1px solid #2ed57333;color:var(--success)}
+.quiz-feedback.incorrect{background:#ff475715;border:1px solid #ff475733;color:var(--danger)}
+.submit-quiz{background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-weight:600;margin-top:12px;font-size:14px}
+/* Exercises */
+.exercise-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin:20px 0;overflow:hidden}
+.exercise-header{padding:16px 20px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.exercise-title{font-weight:700;font-size:15px;color:var(--text)}
+.difficulty{font-size:11px;padding:4px 10px;border-radius:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.difficulty.easy{background:#2ed57322;color:var(--success)}
+.difficulty.medium{background:#ffb34722;color:var(--warning)}
+.difficulty.hard{background:#ff475722;color:var(--danger)}
+.exercise-body{padding:20px}
+.exercise-instructions{color:var(--text-dim);font-size:14px;margin-bottom:16px;line-height:1.8}
+.hint-toggle{background:none;border:1px solid var(--warning);color:var(--warning);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:8px}
+.hint-content{display:none;margin-top:12px;padding:12px;background:#ffb34711;border-radius:8px;color:var(--warning);font-size:13px;border:1px solid #ffb34733}
+.hint-content.show{display:block}
+/* Cheatsheet */
+.cheat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.cheat-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;transition:transform .2s}
+.cheat-item:hover{transform:translateY(-2px)}
+.cheat-item h5{color:var(--secondary);font-size:13px;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.cheat-item code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:12px;color:var(--accent)}
+.cheat-item p{font-size:13px;margin:0;color:var(--text-dim)}
+/* Pitfalls */
+.pitfall{background:var(--surface);border-left:4px solid var(--danger);border-radius:0 10px 10px 0;padding:20px;margin:16px 0}
+.pitfall h4{color:var(--danger);font-size:15px;margin:0 0 8px;border:none;padding:0}
+.pitfall p{font-size:14px;margin:0}
+.best-practice{background:var(--surface);border-left:4px solid var(--success);border-radius:0 10px 10px 0;padding:20px;margin:16px 0}
+.best-practice h4{color:var(--success);font-size:15px;margin:0 0 8px;border:none;padding:0}
+.best-practice p{font-size:14px;margin:0}
+/* Tabs */
+.tab-container{margin:20px 0}
+.tab-headers{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:0}
+.tab-header{padding:10px 20px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-dim);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab-header.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-header:hover{color:var(--text)}
+.tab-content{display:none;padding:20px;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px}
+.tab-content.active{display:block}
+/* Comparison table */
+.comparison-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px}
+.comparison-table th{background:var(--surface2);color:var(--primary);padding:12px;text-align:left;font-weight:700;border:1px solid var(--border)}
+.comparison-table td{padding:10px 12px;border:1px solid var(--border);color:var(--text-dim)}
+.comparison-table tr:hover td{background:var(--surface2)}
+/* Score */
+.score-display{background:var(--gradient);border-radius:12px;padding:24px;text-align:center;margin:20px 0}
+.score-display .score-num{font-size:48px;font-weight:900;color:#fff}
+.score-display .score-label{font-size:14px;color:rgba(255,255,255,.8)}
+/* Diagram */
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:30px;margin:20px 0;text-align:center}
+.flow-row{display:flex;justify-content:center;align-items:center;gap:12px;margin:12px 0;flex-wrap:wrap}
+.flow-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 20px;font-size:13px;font-weight:600;color:var(--text);min-width:120px}
+.flow-box.highlight{border-color:var(--primary);background:var(--primary-glow);color:var(--primary)}
+.flow-box.alert{border-color:var(--danger);background:#ff475715;color:var(--danger)}
+.flow-box.success-box{border-color:var(--success);background:#2ed57315;color:var(--success)}
+.flow-arrow{color:var(--text-muted);font-size:20px}
+/* Lists */
+ul.styled{list-style:none;padding:0;margin:12px 0}
+ul.styled li{padding:8px 0 8px 24px;position:relative;color:var(--text-dim);font-size:14px}
+ul.styled li::before{content:'▸';position:absolute;left:0;color:var(--primary);font-weight:bold}
+ol.styled{padding-left:20px;margin:12px 0}
+ol.styled li{padding:6px 0;color:var(--text-dim);font-size:14px}
+/* Nav buttons */
+.nav-buttons{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+.nav-btn{padding:12px 28px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;transition:all .2s;display:flex;align-items:center;gap:8px}
+.nav-btn.prev{background:var(--surface);border:1px solid var(--border);color:var(--text-dim)}
+.nav-btn.prev:hover{border-color:var(--primary);color:var(--primary)}
+.nav-btn.next{background:var(--gradient);border:none;color:#fff}
+.nav-btn.next:hover{transform:translateX(4px)}
+/* Mobile */
+.menu-toggle{display:none;position:fixed;top:16px;left:16px;z-index:200;background:var(--primary);border:none;color:#fff;width:40px;height:40px;border-radius:8px;cursor:pointer;font-size:20px}
+@media(max-width:768px){
+.sidebar{transform:translateX(-100%)}
+.sidebar.open{transform:translateX(0)}
+.main-content{margin-left:0}
+.menu-toggle{display:flex;align-items:center;justify-content:center}
+.content-area{padding:20px 16px 80px}
+.editor-area{grid-template-columns:1fr}
+.cheat-grid{grid-template-columns:1fr}
+h2{font-size:24px}
+}
+/* Animations */
+.highlight-flash{animation:flash 1s}
+@keyframes flash{0%,100%{background:transparent}50%{background:var(--primary-glow)}}
+.emoji{font-size:24px;margin-right:8px}
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+/* Inline code */
+p code, li code, .quiz-question code, .exercise-instructions code{
+  background:var(--code-bg);padding:2px 7px;border-radius:4px;font-size:13px;color:var(--accent);border:1px solid var(--border)
+}
+.visual-box{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;margin:4px}
+.visual-box.v-error{background:#ff475722;color:var(--danger);border:1px solid #ff475744}
+.visual-box.v-warn{background:#ffb34722;color:var(--warning);border:1px solid #ffb34744}
+.visual-box.v-info{background:#6c63ff22;color:var(--primary);border:1px solid #6c63ff44}
+.visual-box.v-success{background:#2ed57322;color:var(--success);border:1px solid #2ed57344}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin:16px 0}
+.metric-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.metric-card .metric-value{font-size:28px;font-weight:800;color:var(--primary)}
+.metric-card .metric-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-top:4px}
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+<div class="app-container">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>📊 Monitoring &<br>Observability</h1>
+    <p>JavaScript Masterclass</p>
+  </div>
+  <div class="progress-container">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-text"><span id="progressText">0% Complete</span><span id="progressCount">0/12</span></div>
+  </div>
+  <nav class="nav-section">
+    <div class="nav-section-title">📖 Foundations</div>
+    <div class="nav-item active" data-section="intro" onclick="navigate('intro',this)">
+      <span class="icon">🏠</span>Introduction<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="pillars" onclick="navigate('pillars',this)">
+      <span class="icon">🏛️</span>The 3 Pillars<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="error-tracking" onclick="navigate('error-tracking',this)">
+      <span class="icon">🐛</span>Error Tracking<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="sentry" onclick="navigate('sentry',this)">
+      <span class="icon">🛡️</span>Sentry Deep Dive<span class="check"></span>
+    </div>
+    <div class="nav-section-title">🔧 Techniques</div>
+    <div class="nav-item" data-section="logging" onclick="navigate('logging',this)">
+      <span class="icon">📝</span>Logging Strategies<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="perf-monitoring" onclick="navigate('perf-monitoring',this)">
+      <span class="icon">⚡</span>Perf Monitoring<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="alerting" onclick="navigate('alerting',this)">
+      <span class="icon">🚨</span>Alerting<span class="check"></span>
+    </div>
+    <div class="nav-section-title">💪 Practice</div>
+    <div class="nav-item" data-section="exercises" onclick="navigate('exercises',this)">
+      <span class="icon">🏋️</span>Exercises<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="quiz" onclick="navigate('quiz',this)">
+      <span class="icon">❓</span>Quiz (25 Q's)<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="pitfalls" onclick="navigate('pitfalls',this)">
+      <span class="icon">⚠️</span>Pitfalls & Mistakes<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="cheatsheet" onclick="navigate('cheatsheet',this)">
+      <span class="icon">📋</span>Cheat Sheet<span class="check"></span>
+    </div>
+    <div class="nav-item" data-section="interview" onclick="navigate('interview',this)">
+      <span class="icon">🎯</span>Interview Prep<span class="check"></span>
+    </div>
+  </nav>
+</aside>
+
+<main class="main-content">
+<div class="content-area">
+
+<!-- ============ SECTION: INTRO ============ -->
+<div class="section active" id="sec-intro">
+<h2>🏠 Introduction</h2>
+<p class="subtitle">Why monitoring & observability matter for every JS developer</p>
+
+<div class="concept-card">
+<span class="card-label info">THE BIG PICTURE</span>
+<h4>What is Monitoring & Observability?</h4>
+<p><strong>Monitoring</strong> = watching predefined metrics to detect known problems.<br>
+<strong>Observability</strong> = understanding your system's internal state from its external outputs, even for <em>unknown</em> problems.</p>
+<p>Think of it like this:</p>
+<ul class="styled">
+<li><strong>Monitoring</strong> is like a car dashboard — speed, fuel, temperature gauges</li>
+<li><strong>Observability</strong> is like having a mechanic who can diagnose <em>any</em> issue by listening to the engine, checking logs, and running diagnostics</li>
+</ul>
+</div>
+
+<div class="diagram">
+<p style="font-weight:700;margin-bottom:16px;color:var(--text)">How They Fit Together</p>
+<div class="flow-row">
+  <div class="flow-box highlight">Your App</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-box">Logs</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-box">Metrics</div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-box">Traces</div>
+</div>
+<div class="flow-row" style="margin-top:20px">
+  <span class="flow-arrow">↓</span>
+</div>
+<div class="flow-row">
+  <div class="flow-box success-box">Dashboards</div>
+  <div class="flow-box alert">Alerts</div>
+  <div class="flow-box highlight">Error Tracker</div>
+</div>
+</div>
+
+<div class="concept-card success-card">
+<span class="card-label tip">WHY THIS MATTERS FOR YOUR JOB</span>
+<p>Top companies expect developers to own their code <strong>in production</strong>. You need to know:</p>
+<ul class="styled">
+<li>How to find and fix bugs users hit in production</li>
+<li>How to measure and improve performance</li>
+<li>How to set up alerts before users complain</li>
+<li>How to use structured logging for debugging</li>
+</ul>
+</div>
+
+<h3>The Four Pillars We'll Cover</h3>
+<div class="metric-grid">
+<div class="metric-card"><div class="metric-value">🐛</div><div class="metric-label">Error Tracking</div></div>
+<div class="metric-card"><div class="metric-value">📝</div><div class="metric-label">Logging</div></div>
+<div class="metric-card"><div class="metric-value">⚡</div><div class="metric-label">Perf Monitoring</div></div>
+<div class="metric-card"><div class="metric-value">🚨</div><div class="metric-label">Alerting</div></div>
+</div>
+
+<div class="nav-buttons">
+<div></div>
+<button class="nav-btn next" onclick="navigate('pillars')">The 3 Pillars →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: PILLARS ============ -->
+<div class="section" id="sec-pillars">
+<h2>🏛️ The Three Pillars of Observability</h2>
+<p class="subtitle">Logs, Metrics, and Traces — the foundation of everything</p>
+
+<h3>1. Logs — What Happened</h3>
+<div class="concept-card">
+<span class="card-label info">DEFINITION</span>
+<p>Logs are <strong>timestamped, immutable records of discrete events</strong>. They tell you the story of what happened.</p>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// Simple log</span>
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'User signed in'</span>, { <span class="prop">userId</span>: <span class="num">42</span>, <span class="prop">method</span>: <span class="str">'oauth'</span> });
+
+<span class="cm">// Structured log (what production apps use)</span>
+<span class="kw">const</span> <span class="fn">log</span> = {
+  <span class="prop">timestamp</span>: <span class="kw">new</span> <span class="type">Date</span>().<span class="fn">toISOString</span>(),
+  <span class="prop">level</span>: <span class="str">'info'</span>,
+  <span class="prop">message</span>: <span class="str">'User signed in'</span>,
+  <span class="prop">context</span>: { <span class="prop">userId</span>: <span class="num">42</span>, <span class="prop">method</span>: <span class="str">'oauth'</span>, <span class="prop">ip</span>: <span class="str">'192.168.1.1'</span> }
+};</code></pre>
+</div>
+</div>
+
+<h3>2. Metrics — How Much / How Fast</h3>
+<div class="concept-card">
+<span class="card-label info">DEFINITION</span>
+<p>Metrics are <strong>numerical measurements collected at regular intervals</strong>. They tell you how your system is performing.</p>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// Common metrics you'd track:</span>
+<span class="kw">const</span> <span class="fn">metrics</span> = {
+  <span class="prop">requestCount</span>: <span class="num">15234</span>,          <span class="cm">// Counter - only goes up</span>
+  <span class="prop">responseTimeMs</span>: <span class="num">142</span>,           <span class="cm">// Gauge - can go up or down</span>
+  <span class="prop">requestDuration</span>: [<span class="num">12</span>,<span class="num">45</span>,<span class="num">200</span>],  <span class="cm">// Histogram - distribution</span>
+  <span class="prop">errorRate</span>: <span class="num">0.02</span>,               <span class="cm">// 2% of requests fail</span>
+  <span class="prop">activeConnections</span>: <span class="num">89</span>,         <span class="cm">// Current state</span>
+};
+
+<span class="cm">// Browser Performance API (built-in metrics!)</span>
+<span class="kw">const</span> <span class="fn">perf</span> = performance.<span class="fn">getEntriesByType</span>(<span class="str">'navigation'</span>)[<span class="num">0</span>];
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Page load:'</span>, perf.<span class="prop">loadEventEnd</span> - perf.<span class="prop">startTime</span>, <span class="str">'ms'</span>);</code></pre>
+</div>
+</div>
+
+<h3>3. Traces — The Journey</h3>
+<div class="concept-card">
+<span class="card-label info">DEFINITION</span>
+<p>Traces track a <strong>request's path through your entire system</strong>. They connect the dots across multiple services.</p>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// A trace follows one request across services:</span>
+<span class="cm">// Browser → API Gateway → Auth Service → Database → Response</span>
+
+<span class="cm">// Each step is a "span"</span>
+<span class="kw">const</span> <span class="fn">span</span> = {
+  <span class="prop">traceId</span>: <span class="str">'abc-123-def-456'</span>,     <span class="cm">// Same for entire request</span>
+  <span class="prop">spanId</span>: <span class="str">'span-789'</span>,               <span class="cm">// Unique to this step</span>
+  <span class="prop">parentSpanId</span>: <span class="str">'span-456'</span>,          <span class="cm">// Who called me</span>
+  <span class="prop">operation</span>: <span class="str">'db.query'</span>,             <span class="cm">// What I did</span>
+  <span class="prop">duration</span>: <span class="num">23</span>,                       <span class="cm">// How long (ms)</span>
+  <span class="prop">status</span>: <span class="str">'ok'</span>
+};</code></pre>
+</div>
+</div>
+
+<div class="concept-card warning-card">
+<span class="card-label warn">ANALOGY</span>
+<p>🍕 <strong>Pizza delivery tracking:</strong></p>
+<ul class="styled">
+<li><strong>Logs</strong> = "Order placed at 7:01pm", "Pizza in oven at 7:05pm", "Driver departed at 7:20pm"</li>
+<li><strong>Metrics</strong> = "Average delivery time: 32 min", "Orders/hour: 45", "Customer satisfaction: 4.2/5"</li>
+<li><strong>Traces</strong> = Following ONE specific pizza from order → kitchen → oven → driver → door</li>
+</ul>
+</div>
+
+<h3>How They Work Together</h3>
+<table class="comparison-table">
+<tr><th>Pillar</th><th>Answers</th><th>Example Question</th><th>Cardinality</th></tr>
+<tr><td>Logs</td><td>What happened?</td><td>"Why did user 42's payment fail?"</td><td>High</td></tr>
+<tr><td>Metrics</td><td>How much? How fast?</td><td>"What's our p99 latency?"</td><td>Low</td></tr>
+<tr><td>Traces</td><td>Where's the bottleneck?</td><td>"Why is this API call slow?"</td><td>Medium</td></tr>
+</table>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('intro')">← Introduction</button>
+<button class="nav-btn next" onclick="navigate('error-tracking')">Error Tracking →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: ERROR TRACKING ============ -->
+<div class="section" id="sec-error-tracking">
+<h2>🐛 Error Tracking</h2>
+<p class="subtitle">Catching, reporting, and managing errors in production</p>
+
+<h3>JavaScript Error Types</h3>
+<div class="concept-card">
+<span class="card-label info">FUNDAMENTALS</span>
+<p>Before tracking errors, understand what kinds exist:</p>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// 1. Syntax Errors — code won't even run</span>
+<span class="cm">// const x = ;  // SyntaxError</span>
+
+<span class="cm">// 2. Runtime Errors — crash during execution</span>
+<span class="kw">const</span> <span class="fn">obj</span> = <span class="kw">null</span>;
+obj.<span class="prop">name</span>;  <span class="cm">// TypeError: Cannot read properties of null</span>
+
+<span class="cm">// 3. Logical Errors — code runs but wrong result</span>
+<span class="kw">function</span> <span class="fn">calculateTax</span>(<span class="fn">price</span>) {
+  <span class="kw">return</span> price * <span class="num">0.1</span>;  <span class="cm">// Bug: should be 0.08 for this region</span>
+}
+
+<span class="cm">// 4. Async Errors — promises that reject</span>
+<span class="fn">fetch</span>(<span class="str">'/api/data'</span>).<span class="fn">then</span>(<span class="fn">r</span> => <span class="fn">r</span>.<span class="fn">json</span>());
+<span class="cm">// If no .catch() — unhandled rejection!</span>
+
+<span class="cm">// 5. Network Errors</span>
+<span class="cm">// Failed fetches, timeout errors, CORS errors</span></code></pre>
+</div>
+</div>
+
+<h3>Global Error Handlers</h3>
+<div class="concept-card">
+<span class="card-label info">CRITICAL KNOWLEDGE</span>
+<p>These are the <strong>safety nets</strong> that catch errors nothing else handles:</p>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 1. window.onerror — catches uncaught errors</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="fn">window</span>.<span class="prop">onerror</span> = <span class="kw">function</span>(<span class="fn">message</span>, <span class="fn">source</span>, <span class="fn">lineno</span>, <span class="fn">colno</span>, <span class="fn">error</span>) {
+  <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Global error:'</span>, {
+    <span class="prop">message</span>,          <span class="cm">// Error message string</span>
+    <span class="prop">source</span>,           <span class="cm">// Script URL</span>
+    <span class="prop">lineno</span>,           <span class="cm">// Line number</span>
+    <span class="prop">colno</span>,            <span class="cm">// Column number</span>
+    <span class="prop">stack</span>: error?.stack <span class="cm">// Stack trace</span>
+  });
+  
+  <span class="cm">// Send to your error tracking service</span>
+  <span class="fn">sendToErrorTracker</span>({ message, source, lineno, error });
+  
+  <span class="kw">return</span> <span class="bool">true</span>; <span class="cm">// Prevents default browser error log</span>
+};
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 2. window.onunhandledrejection — unhandled promises</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="fn">window</span>.<span class="fn">addEventListener</span>(<span class="str">'unhandledrejection'</span>, (<span class="fn">event</span>) => {
+  <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Unhandled promise rejection:'</span>, event.<span class="prop">reason</span>);
+  
+  <span class="fn">sendToErrorTracker</span>({
+    <span class="prop">type</span>: <span class="str">'unhandled_rejection'</span>,
+    <span class="prop">reason</span>: event.<span class="prop">reason</span>,
+    <span class="prop">promise</span>: event.<span class="prop">promise</span>
+  });
+  
+  event.<span class="fn">preventDefault</span>(); <span class="cm">// Prevents console error</span>
+});
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 3. addEventListener('error') — resource load failures</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="fn">window</span>.<span class="fn">addEventListener</span>(<span class="str">'error'</span>, (<span class="fn">event</span>) => {
+  <span class="kw">if</span> (event.<span class="prop">target</span> !== <span class="fn">window</span>) {
+    <span class="cm">// This is a resource error (img, script, css failed to load)</span>
+    <span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Resource failed:'</span>, event.<span class="prop">target</span>.<span class="prop">src</span> || event.<span class="prop">target</span>.<span class="prop">href</span>);
+  }
+}, <span class="bool">true</span>); <span class="cm">// ⚡ Must use capture phase!</span></code></pre>
+</div>
+</div>
+
+<h3>Try It: Error Catching in Action</h3>
+<div class="interactive-area">
+<div class="interactive-header">
+<span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+<span>Live Error Tracker</span>
+</div>
+<div class="editor-area">
+<textarea class="code-editor" id="errorEditor">// Try triggering different errors!
+// Uncomment one at a time and click Run:
+
+// 1. TypeError
+// null.toString();
+
+// 2. ReferenceError
+// console.log(undeclaredVariable);
+
+// 3. Custom Error
+// throw new Error('Something went wrong!');
+
+// 4. Unhandled Promise Rejection
+// Promise.reject('Payment failed');
+
+// 5. Range Error
+// new Array(-1);
+
+// 6. Try-catch (handled error)
+try {
+  JSON.parse('invalid json{{{');
+} catch (err) {
+  console.log('Caught:', err.name, '-', err.message);
+}
+
+console.log('✅ Script completed');</textarea>
+<div class="output-panel" id="errorOutput"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runErrorDemo()">▶ Run Code</button>
+<button class="reset-btn" onclick="resetEditor('errorEditor','errorOutput')">↺ Reset</button>
+</div>
+</div>
+
+<h3>Building a Simple Error Tracker</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="kw">class</span> <span class="type">ErrorTracker</span> {
+  <span class="kw">constructor</span>(<span class="fn">options</span> = {}) {
+    <span class="kw">this</span>.<span class="prop">endpoint</span> = options.<span class="prop">endpoint</span> || <span class="str">'/api/errors'</span>;
+    <span class="kw">this</span>.<span class="prop">appVersion</span> = options.<span class="prop">version</span> || <span class="str">'1.0.0'</span>;
+    <span class="kw">this</span>.<span class="prop">errors</span> = [];
+    <span class="kw">this</span>.<span class="prop">maxErrors</span> = options.<span class="prop">maxErrors</span> || <span class="num">100</span>;
+    <span class="kw">this</span>.<span class="fn">init</span>();
+  }
+
+  <span class="fn">init</span>() {
+    <span class="cm">// Catch all uncaught errors</span>
+    <span class="fn">window</span>.<span class="prop">onerror</span> = (<span class="fn">msg</span>, <span class="fn">src</span>, <span class="fn">line</span>, <span class="fn">col</span>, <span class="fn">err</span>) => {
+      <span class="kw">this</span>.<span class="fn">capture</span>(err || <span class="kw">new</span> <span class="type">Error</span>(msg), { src, line, col });
+    };
+
+    <span class="cm">// Catch unhandled promise rejections</span>
+    <span class="fn">window</span>.<span class="fn">addEventListener</span>(<span class="str">'unhandledrejection'</span>, (<span class="fn">e</span>) => {
+      <span class="kw">this</span>.<span class="fn">capture</span>(e.<span class="prop">reason</span>, { <span class="prop">type</span>: <span class="str">'unhandled_rejection'</span> });
+    });
+  }
+
+  <span class="fn">capture</span>(<span class="fn">error</span>, <span class="fn">extra</span> = {}) {
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="prop">errors</span>.<span class="prop">length</span> >= <span class="kw">this</span>.<span class="prop">maxErrors</span>) <span class="kw">return</span>; <span class="cm">// Rate limit</span>
+    
+    <span class="kw">const</span> <span class="fn">errorData</span> = {
+      <span class="prop">message</span>: error?.message || <span class="type">String</span>(error),
+      <span class="prop">stack</span>: error?.stack,
+      <span class="prop">name</span>: error?.name,
+      <span class="prop">timestamp</span>: <span class="kw">new</span> <span class="type">Date</span>().<span class="fn">toISOString</span>(),
+      <span class="prop">url</span>: <span class="fn">window</span>.<span class="prop">location</span>.<span class="prop">href</span>,
+      <span class="prop">userAgent</span>: navigator.<span class="prop">userAgent</span>,
+      <span class="prop">appVersion</span>: <span class="kw">this</span>.<span class="prop">appVersion</span>,
+      ...extra
+    };
+    
+    <span class="kw">this</span>.<span class="prop">errors</span>.<span class="fn">push</span>(errorData);
+    <span class="kw">this</span>.<span class="fn">send</span>(errorData);
+  }
+
+  <span class="kw">async</span> <span class="fn">send</span>(<span class="fn">data</span>) {
+    <span class="kw">try</span> {
+      <span class="kw">await</span> <span class="fn">fetch</span>(<span class="kw">this</span>.<span class="prop">endpoint</span>, {
+        <span class="prop">method</span>: <span class="str">'POST'</span>,
+        <span class="prop">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+        <span class="prop">body</span>: <span class="type">JSON</span>.<span class="fn">stringify</span>(data)
+      });
+    } <span class="kw">catch</span> {
+      <span class="cm">// Don't crash if error reporting fails!</span>
+      <span class="fn">console</span>.<span class="fn">warn</span>(<span class="str">'Failed to send error report'</span>);
+    }
+  }
+}
+
+<span class="cm">// Usage:</span>
+<span class="kw">const</span> <span class="fn">tracker</span> = <span class="kw">new</span> <span class="type">ErrorTracker</span>({ <span class="prop">version</span>: <span class="str">'2.1.0'</span> });</code></pre>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('pillars')">← The 3 Pillars</button>
+<button class="nav-btn next" onclick="navigate('sentry')">Sentry Deep Dive →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: SENTRY ============ -->
+<div class="section" id="sec-sentry">
+<h2>🛡️ Sentry Deep Dive</h2>
+<p class="subtitle">The industry standard for JavaScript error tracking</p>
+
+<div class="concept-card">
+<span class="card-label info">WHAT IS SENTRY</span>
+<p>Sentry is an <strong>application monitoring platform</strong> that helps developers identify, triage, and fix errors in real-time. It's used by companies like Disney, GitHub, Atlassian, and Stripe.</p>
+</div>
+
+<h3>Setting Up Sentry</h3>
+<div class="tab-container">
+<div class="tab-headers">
+  <div class="tab-header active" onclick="switchTab(this,'sentry-vanilla')">Vanilla JS</div>
+  <div class="tab-header" onclick="switchTab(this,'sentry-react')">React</div>
+  <div class="tab-header" onclick="switchTab(this,'sentry-node')">Node.js</div>
+</div>
+
+<div class="tab-content active" id="tab-sentry-vanilla">
+<div class="code-block">
+<div class="code-header"><span class="lang">HTML + JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// 1. Install via CDN or npm</span>
+<span class="cm">// npm install @sentry/browser</span>
+
+<span class="cm">// 2. Initialize Sentry (do this FIRST, before other code)</span>
+<span class="kw">import</span> * <span class="kw">as</span> <span class="type">Sentry</span> <span class="kw">from</span> <span class="str">'@sentry/browser'</span>;
+
+<span class="type">Sentry</span>.<span class="fn">init</span>({
+  <span class="prop">dsn</span>: <span class="str">'https://your-key@sentry.io/project-id'</span>,
+  <span class="prop">environment</span>: <span class="str">'production'</span>,
+  <span class="prop">release</span>: <span class="str">'my-app@2.1.0'</span>,
+  
+  <span class="cm">// Sample rate: 1.0 = 100% of errors, 0.1 = 10%</span>
+  <span class="prop">sampleRate</span>: <span class="num">1.0</span>,
+  
+  <span class="cm">// Performance monitoring sample rate</span>
+  <span class="prop">tracesSampleRate</span>: <span class="num">0.2</span>, <span class="cm">// 20% of transactions</span>
+  
+  <span class="cm">// Filter out noisy errors</span>
+  <span class="fn">beforeSend</span>(<span class="fn">event</span>) {
+    <span class="cm">// Don't send errors from browser extensions</span>
+    <span class="kw">if</span> (event.<span class="prop">exception</span>?.values?.[<span class="num">0</span>]?.stacktrace?.frames
+        ?.some(<span class="fn">f</span> => f.<span class="prop">filename</span>?.includes(<span class="str">'extension'</span>))) {
+      <span class="kw">return</span> <span class="kw">null</span>; <span class="cm">// Drop the event</span>
+    }
+    <span class="kw">return</span> event;
+  }
+});</code></pre>
+</div>
+</div>
+
+<div class="tab-content" id="tab-sentry-react">
+<div class="code-block">
+<div class="code-header"><span class="lang">React</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// npm install @sentry/react</span>
+<span class="kw">import</span> * <span class="kw">as</span> <span class="type">Sentry</span> <span class="kw">from</span> <span class="str">'@sentry/react'</span>;
+
+<span class="type">Sentry</span>.<span class="fn">init</span>({
+  <span class="prop">dsn</span>: <span class="str">'https://your-key@sentry.io/project-id'</span>,
+  <span class="prop">integrations</span>: [
+    <span class="type">Sentry</span>.<span class="fn">browserTracingIntegration</span>(),
+    <span class="type">Sentry</span>.<span class="fn">replayIntegration</span>(),  <span class="cm">// Session replay!</span>
+  ],
+  <span class="prop">tracesSampleRate</span>: <span class="num">0.1</span>,
+  <span class="prop">replaysSessionSampleRate</span>: <span class="num">0.1</span>,
+  <span class="prop">replaysOnErrorSampleRate</span>: <span class="num">1.0</span>, <span class="cm">// 100% if error occurs</span>
+});
+
+<span class="cm">// Error Boundary component</span>
+<span class="kw">const</span> <span class="fn">SentryErrorBoundary</span> = <span class="type">Sentry</span>.<span class="fn">withErrorBoundary</span>(MyApp, {
+  <span class="fn">fallback</span>: (<span class="fn">{ error }</span>) => <span class="op">&lt;</span>ErrorPage error={error} <span class="op">/&gt;</span>,
+});</code></pre>
+</div>
+</div>
+
+<div class="tab-content" id="tab-sentry-node">
+<div class="code-block">
+<div class="code-header"><span class="lang">Node.js / Express</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// npm install @sentry/node</span>
+<span class="kw">const</span> <span class="type">Sentry</span> = <span class="fn">require</span>(<span class="str">'@sentry/node'</span>);
+
+<span class="type">Sentry</span>.<span class="fn">init</span>({
+  <span class="prop">dsn</span>: <span class="str">'https://your-key@sentry.io/project-id'</span>,
+  <span class="prop">tracesSampleRate</span>: <span class="num">0.2</span>,
+});
+
+<span class="cm">// Express middleware — add BEFORE routes</span>
+app.<span class="fn">use</span>(<span class="type">Sentry</span>.<span class="type">Handlers</span>.<span class="fn">requestHandler</span>());
+app.<span class="fn">use</span>(<span class="type">Sentry</span>.<span class="type">Handlers</span>.<span class="fn">tracingHandler</span>());
+
+<span class="cm">// Your routes here...</span>
+app.<span class="fn">get</span>(<span class="str">'/api/data'</span>, dataHandler);
+
+<span class="cm">// Error handler — add AFTER routes</span>
+app.<span class="fn">use</span>(<span class="type">Sentry</span>.<span class="type">Handlers</span>.<span class="fn">errorHandler</span>());
+</code></pre>
+</div>
+</div>
+</div>
+
+<h3>Key Sentry Features You Must Know</h3>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 1. BREADCRUMBS — trail of events before error</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="type">Sentry</span>.<span class="fn">addBreadcrumb</span>({
+  <span class="prop">category</span>: <span class="str">'auth'</span>,
+  <span class="prop">message</span>: <span class="str">'User logged in'</span>,
+  <span class="prop">level</span>: <span class="str">'info'</span>,
+  <span class="prop">data</span>: { <span class="prop">userId</span>: <span class="num">42</span>, <span class="prop">method</span>: <span class="str">'google-oauth'</span> }
+});
+
+<span class="cm">// Sentry auto-captures: clicks, XHR, fetch, console, navigation</span>
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 2. CONTEXT — extra info attached to errors</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+
+<span class="cm">// Set user context</span>
+<span class="type">Sentry</span>.<span class="fn">setUser</span>({
+  <span class="prop">id</span>: <span class="str">'user-42'</span>,
+  <span class="prop">email</span>: <span class="str">'jane@example.com'</span>,
+  <span class="prop">subscription</span>: <span class="str">'premium'</span>
+});
+
+<span class="cm">// Set tags (searchable, indexed)</span>
+<span class="type">Sentry</span>.<span class="fn">setTag</span>(<span class="str">'page'</span>, <span class="str">'checkout'</span>);
+<span class="type">Sentry</span>.<span class="fn">setTag</span>(<span class="str">'feature_flag'</span>, <span class="str">'new_checkout_v2'</span>);
+
+<span class="cm">// Set extra context (not searchable, but visible)</span>
+<span class="type">Sentry</span>.<span class="fn">setExtra</span>(<span class="str">'cart'</span>, { <span class="prop">items</span>: <span class="num">3</span>, <span class="prop">total</span>: <span class="num">59.99</span> });
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 3. MANUAL ERROR CAPTURE</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+
+<span class="cm">// Capture an exception</span>
+<span class="kw">try</span> {
+  <span class="fn">processPayment</span>(order);
+} <span class="kw">catch</span> (error) {
+  <span class="type">Sentry</span>.<span class="fn">captureException</span>(error, {
+    <span class="prop">tags</span>: { <span class="prop">paymentProvider</span>: <span class="str">'stripe'</span> },
+    <span class="prop">extra</span>: { <span class="prop">orderId</span>: order.<span class="prop">id</span>, <span class="prop">amount</span>: order.<span class="prop">total</span> }
+  });
+  <span class="fn">showUserError</span>(<span class="str">'Payment failed, please try again'</span>);
+}
+
+<span class="cm">// Capture a message (not an exception)</span>
+<span class="type">Sentry</span>.<span class="fn">captureMessage</span>(<span class="str">'User attempted 5 failed logins'</span>, <span class="str">'warning'</span>);
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 4. SCOPES — temporary context</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="type">Sentry</span>.<span class="fn">withScope</span>((<span class="fn">scope</span>) => {
+  scope.<span class="fn">setTag</span>(<span class="str">'api'</span>, <span class="str">'payments'</span>);
+  scope.<span class="fn">setLevel</span>(<span class="str">'critical'</span>);
+  scope.<span class="fn">setFingerprint</span>([<span class="str">'payment-failure'</span>, order.<span class="prop">provider</span>]);
+  <span class="type">Sentry</span>.<span class="fn">captureException</span>(error);
+}); <span class="cm">// scope is automatically cleaned up</span>
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 5. PERFORMANCE TRANSACTIONS</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="kw">const</span> <span class="fn">transaction</span> = <span class="type">Sentry</span>.<span class="fn">startTransaction</span>({
+  <span class="prop">name</span>: <span class="str">'checkout-flow'</span>,
+  <span class="prop">op</span>: <span class="str">'checkout'</span>,
+});
+
+<span class="kw">const</span> <span class="fn">span</span> = transaction.<span class="fn">startChild</span>({
+  <span class="prop">op</span>: <span class="str">'db.query'</span>,
+  <span class="prop">description</span>: <span class="str">'Validate inventory'</span>,
+});
+<span class="cm">// ... do work ...</span>
+span.<span class="fn">finish</span>();
+transaction.<span class="fn">finish</span>();</code></pre>
+</div>
+
+<h3>Sentry Dashboard Concepts</h3>
+<table class="comparison-table">
+<tr><th>Concept</th><th>What It Is</th><th>Why It Matters</th></tr>
+<tr><td><strong>Issues</strong></td><td>Grouped similar errors</td><td>50,000 TypeError events → 1 Issue</td></tr>
+<tr><td><strong>Fingerprint</strong></td><td>How Sentry groups errors</td><td>Control what gets merged vs separate</td></tr>
+<tr><td><strong>Release</strong></td><td>Code version tag</td><td>Know which deploy caused errors</td></tr>
+<tr><td><strong>Environment</strong></td><td>staging/prod/dev</td><td>Filter errors by environment</td></tr>
+<tr><td><strong>Source Maps</strong></td><td>Map minified → original code</td><td>See actual code, not gibberish</td></tr>
+<tr><td><strong>Session Replay</strong></td><td>Video-like replay of user session</td><td>See exactly what user did</td></tr>
+</table>
+
+<div class="concept-card warning-card">
+<span class="card-label warn">SOURCE MAPS ARE CRITICAL</span>
+<p>In production, your JS is minified. Without source maps, you'll see errors in unreadable code like <code>a.b is not a function (main.min.js:1:54302)</code>. Upload source maps to Sentry!</p>
+<div class="code-block">
+<div class="code-header"><span class="lang">Shell</span></div>
+<pre><code><span class="cm"># Upload source maps with Sentry CLI</span>
+npx @sentry/cli sourcemaps upload \
+  --release=my-app@2.1.0 \
+  ./dist</code></pre>
+</div>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('error-tracking')">← Error Tracking</button>
+<button class="nav-btn next" onclick="navigate('logging')">Logging Strategies →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: LOGGING ============ -->
+<div class="section" id="sec-logging">
+<h2>📝 Logging Strategies</h2>
+<p class="subtitle">From console.log to production-grade structured logging</p>
+
+<h3>Log Levels</h3>
+<div class="concept-card">
+<span class="card-label info">THE HIERARCHY</span>
+<p>Log levels indicate severity, from most to least critical:</p>
+
+<div style="margin:16px 0">
+<div class="visual-box v-error">🔴 FATAL — App is crashing</div>
+<div class="visual-box v-error">🔴 ERROR — Something failed</div>
+<div class="visual-box v-warn">🟡 WARN — Something suspicious</div>
+<div class="visual-box v-info">🔵 INFO — Normal operations</div>
+<div class="visual-box v-success">🟢 DEBUG — Detailed dev info</div>
+<div class="visual-box v-success">🟢 TRACE — Very verbose</div>
+</div>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// Browser console methods map to levels:</span>
+<span class="fn">console</span>.<span class="fn">error</span>(<span class="str">'Database connection failed'</span>);   <span class="cm">// ERROR</span>
+<span class="fn">console</span>.<span class="fn">warn</span>(<span class="str">'API response slow: 3.2s'</span>);        <span class="cm">// WARN</span>
+<span class="fn">console</span>.<span class="fn">info</span>(<span class="str">'Server started on port 3000'</span>);    <span class="cm">// INFO</span>
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Processing order #1234'</span>);          <span class="cm">// INFO/DEBUG</span>
+<span class="fn">console</span>.<span class="fn">debug</span>(<span class="str">'Cache hit for key: user_42'</span>);   <span class="cm">// DEBUG</span>
+<span class="fn">console</span>.<span class="fn">trace</span>(<span class="str">'Function call stack'</span>);           <span class="cm">// TRACE</span></code></pre>
+</div>
+</div>
+
+<h3>Structured Logging</h3>
+<div class="concept-card">
+<span class="card-label info">PRODUCTION PATTERN</span>
+<p>Instead of <code>console.log('User 42 did something')</code>, use <strong>structured logs</strong> — JSON objects that machines can parse and search:</p>
+
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// ❌ BAD: String logs — hard to search, parse, filter</span>
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`User 42 purchased item 789 for $29.99 at ${new Date()}`</span>);
+
+<span class="cm">// ✅ GOOD: Structured log — searchable, filterable</span>
+<span class="fn">logger</span>.<span class="fn">info</span>(<span class="str">'Purchase completed'</span>, {
+  <span class="prop">userId</span>: <span class="num">42</span>,
+  <span class="prop">itemId</span>: <span class="num">789</span>,
+  <span class="prop">amount</span>: <span class="num">29.99</span>,
+  <span class="prop">currency</span>: <span class="str">'USD'</span>,
+  <span class="prop">paymentMethod</span>: <span class="str">'stripe'</span>,
+  <span class="prop">orderId</span>: <span class="str">'ord_abc123'</span>
+});</code></pre>
+</div>
+</div>
+
+<h3>Build a Production Logger</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="kw">class</span> <span class="type">Logger</span> {
+  <span class="kw">static</span> <span class="prop">LEVELS</span> = { 
+    <span class="prop">TRACE</span>: <span class="num">0</span>, <span class="prop">DEBUG</span>: <span class="num">1</span>, <span class="prop">INFO</span>: <span class="num">2</span>, 
+    <span class="prop">WARN</span>: <span class="num">3</span>, <span class="prop">ERROR</span>: <span class="num">4</span>, <span class="prop">FATAL</span>: <span class="num">5</span> 
+  };
+
+  <span class="kw">constructor</span>(<span class="fn">options</span> = {}) {
+    <span class="kw">this</span>.<span class="prop">minLevel</span> = <span class="type">Logger</span>.<span class="prop">LEVELS</span>[options.<span class="prop">level</span> || <span class="str">'INFO'</span>];
+    <span class="kw">this</span>.<span class="prop">service</span> = options.<span class="prop">service</span> || <span class="str">'app'</span>;
+    <span class="kw">this</span>.<span class="prop">defaultContext</span> = options.<span class="prop">context</span> || {};
+    <span class="kw">this</span>.<span class="prop">transports</span> = options.<span class="prop">transports</span> || [<span class="kw">this</span>.<span class="prop">consoleTransport</span>];
+  }
+
+  <span class="fn">_log</span>(<span class="fn">level</span>, <span class="fn">message</span>, <span class="fn">data</span> = {}) {
+    <span class="kw">if</span> (<span class="type">Logger</span>.<span class="prop">LEVELS</span>[level] < <span class="kw">this</span>.<span class="prop">minLevel</span>) <span class="kw">return</span>;
+
+    <span class="kw">const</span> <span class="fn">entry</span> = {
+      <span class="prop">timestamp</span>: <span class="kw">new</span> <span class="type">Date</span>().<span class="fn">toISOString</span>(),
+      <span class="prop">level</span>,
+      <span class="prop">service</span>: <span class="kw">this</span>.<span class="prop">service</span>,
+      <span class="prop">message</span>,
+      ...<span class="kw">this</span>.<span class="prop">defaultContext</span>,
+      ...data,
+      <span class="cm">// Add correlation ID for request tracing</span>
+      <span class="prop">correlationId</span>: data.<span class="prop">correlationId</span> || <span class="kw">this</span>.<span class="fn">getCorrelationId</span>()
+    };
+
+    <span class="kw">this</span>.<span class="prop">transports</span>.<span class="fn">forEach</span>(<span class="fn">t</span> => <span class="fn">t</span>(entry));
+    <span class="kw">return</span> entry;
+  }
+
+  <span class="fn">trace</span>(<span class="fn">msg</span>, <span class="fn">data</span>) { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_log</span>(<span class="str">'TRACE'</span>, msg, data); }
+  <span class="fn">debug</span>(<span class="fn">msg</span>, <span class="fn">data</span>) { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_log</span>(<span class="str">'DEBUG'</span>, msg, data); }
+  <span class="fn">info</span>(<span class="fn">msg</span>, <span class="fn">data</span>)  { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_log</span>(<span class="str">'INFO'</span>, msg, data); }
+  <span class="fn">warn</span>(<span class="fn">msg</span>, <span class="fn">data</span>)  { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_log</span>(<span class="str">'WARN'</span>, msg, data); }
+  <span class="fn">error</span>(<span class="fn">msg</span>, <span class="fn">data</span>) { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_log</span>(<span class="str">'ERROR'</span>, msg, data); }
+  <span class="fn">fatal</span>(<span class="fn">msg</span>, <span class="fn">data</span>) { <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">_log</span>(<span class="str">'FATAL'</span>, msg, data); }
+
+  <span class="fn">consoleTransport</span>(<span class="fn">entry</span>) {
+    <span class="kw">const</span> <span class="fn">methods</span> = { 
+      TRACE: <span class="str">'debug'</span>, DEBUG: <span class="str">'debug'</span>, INFO: <span class="str">'info'</span>,
+      WARN: <span class="str">'warn'</span>, ERROR: <span class="str">'error'</span>, FATAL: <span class="str">'error'</span>
+    };
+    <span class="fn">console</span>[methods[entry.<span class="prop">level</span>]](<span class="type">JSON</span>.<span class="fn">stringify</span>(entry));
+  }
+
+  <span class="fn">getCorrelationId</span>() {
+    <span class="kw">return</span> <span class="str">`cid_${Date.now()}_${Math.random().toString(36).slice(2,8)}`</span>;
+  }
+  
+  <span class="cm">// Create child logger with additional context</span>
+  <span class="fn">child</span>(<span class="fn">context</span>) {
+    <span class="kw">return</span> <span class="kw">new</span> <span class="type">Logger</span>({
+      <span class="prop">level</span>: <span class="type">Object</span>.<span class="fn">keys</span>(<span class="type">Logger</span>.<span class="prop">LEVELS</span>).<span class="fn">find</span>(
+        <span class="fn">k</span> => <span class="type">Logger</span>.<span class="prop">LEVELS</span>[k] === <span class="kw">this</span>.<span class="prop">minLevel</span>
+      ),
+      <span class="prop">service</span>: <span class="kw">this</span>.<span class="prop">service</span>,
+      <span class="prop">context</span>: { ...<span class="kw">this</span>.<span class="prop">defaultContext</span>, ...context },
+      <span class="prop">transports</span>: <span class="kw">this</span>.<span class="prop">transports</span>
+    });
+  }
+}
+
+<span class="cm">// Usage:</span>
+<span class="kw">const</span> <span class="fn">logger</span> = <span class="kw">new</span> <span class="type">Logger</span>({ <span class="prop">service</span>: <span class="str">'payment-api'</span>, <span class="prop">level</span>: <span class="str">'DEBUG'</span> });
+logger.<span class="fn">info</span>(<span class="str">'Payment processed'</span>, { <span class="prop">orderId</span>: <span class="str">'123'</span>, <span class="prop">amount</span>: <span class="num">49.99</span> });
+
+<span class="cm">// Child logger for a specific request</span>
+<span class="kw">const</span> <span class="fn">reqLogger</span> = logger.<span class="fn">child</span>({ <span class="prop">requestId</span>: <span class="str">'req-abc'</span>, <span class="prop">userId</span>: <span class="num">42</span> });
+reqLogger.<span class="fn">info</span>(<span class="str">'Validating cart'</span>);  <span class="cm">// Has requestId & userId automatically</span></code></pre>
+</div>
+
+<h3>Try It: Logger in Action</h3>
+<div class="interactive-area">
+<div class="interactive-header">
+<span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+<span>Structured Logger Playground</span>
+</div>
+<div class="editor-area">
+<textarea class="code-editor" id="logEditor">// Build and use a structured logger
+const logger = {
+  _format(level, msg, data) {
+    return JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level,
+      message: msg,
+      ...data
+    }, null, 2);
+  },
+  info(msg, data) { console.log(this._format('INFO', msg, data)); },
+  warn(msg, data) { console.warn(this._format('WARN', msg, data)); },
+  error(msg, data) { console.error(this._format('ERROR', msg, data)); }
+};
+
+// Try these:
+logger.info('User signed up', { 
+  userId: 42, 
+  email: 'jane@test.com',
+  source: 'google-ads' 
+});
+
+logger.warn('Slow API response', { 
+  endpoint: '/api/search',
+  duration: 3200,
+  threshold: 2000 
+});
+
+logger.error('Payment failed', { 
+  orderId: 'ord_789',
+  provider: 'stripe',
+  errorCode: 'card_declined'
+});</textarea>
+<div class="output-panel" id="logOutput"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runLogDemo()">▶ Run Code</button>
+<button class="reset-btn" onclick="resetEditor('logEditor','logOutput')">↺ Reset</button>
+</div>
+</div>
+
+<h3>Logging Best Practices</h3>
+<div class="best-practice">
+<h4>✅ DO: Log with context</h4>
+<p><code>logger.info('Order created', { orderId, userId, items: items.length })</code></p>
+</div>
+<div class="best-practice">
+<h4>✅ DO: Use correlation IDs</h4>
+<p>Add a unique ID that follows a request through all services for distributed tracing.</p>
+</div>
+<div class="best-practice">
+<h4>✅ DO: Set appropriate log levels per environment</h4>
+<p>DEBUG in development, WARN in production. You can adjust dynamically!</p>
+</div>
+
+<div class="pitfall">
+<h4>❌ DON'T: Log sensitive data</h4>
+<p>Never log passwords, credit cards, tokens, SSNs, or PII. Scrub them first!</p>
+</div>
+<div class="pitfall">
+<h4>❌ DON'T: Use console.log in production code</h4>
+<p>Use a proper logger with levels, structured output, and transports.</p>
+</div>
+
+<h3>Popular Logging Tools</h3>
+<table class="comparison-table">
+<tr><th>Tool</th><th>Type</th><th>Best For</th></tr>
+<tr><td>Winston</td><td>Node.js logger</td><td>Server-side logging with multiple transports</td></tr>
+<tr><td>Pino</td><td>Node.js logger</td><td>High-performance JSON logging</td></tr>
+<tr><td>Bunyan</td><td>Node.js logger</td><td>Structured logging with streams</td></tr>
+<tr><td>DataDog</td><td>SaaS platform</td><td>Log aggregation + metrics + APM</td></tr>
+<tr><td>ELK Stack</td><td>Self-hosted</td><td>Elasticsearch + Logstash + Kibana</td></tr>
+<tr><td>Loki (Grafana)</td><td>Open source</td><td>Lightweight log aggregation</td></tr>
+</table>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('sentry')">← Sentry</button>
+<button class="nav-btn next" onclick="navigate('perf-monitoring')">Perf Monitoring →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: PERF MONITORING ============ -->
+<div class="section" id="sec-perf-monitoring">
+<h2>⚡ Performance Monitoring</h2>
+<p class="subtitle">Measure, track, and improve your app's speed</p>
+
+<h3>Core Web Vitals</h3>
+<div class="concept-card">
+<span class="card-label info">GOOGLE'S KEY METRICS</span>
+<p>These are the metrics Google uses to rank your site and that top companies monitor:</p>
+<div class="metric-grid">
+<div class="metric-card"><div class="metric-value" style="font-size:22px">LCP</div><div class="metric-label">Largest Contentful Paint</div><p style="font-size:11px;margin:4px 0 0;color:var(--text-muted)">≤ 2.5s good</p></div>
+<div class="metric-card"><div class="metric-value" style="font-size:22px">INP</div><div class="metric-label">Interaction to Next Paint</div><p style="font-size:11px;margin:4px 0 0;color:var(--text-muted)">≤ 200ms good</p></div>
+<div class="metric-card"><div class="metric-value" style="font-size:22px">CLS</div><div class="metric-label">Cumulative Layout Shift</div><p style="font-size:11px;margin:4px 0 0;color:var(--text-muted)">≤ 0.1 good</p></div>
+<div class="metric-card"><div class="metric-value" style="font-size:22px">FCP</div><div class="metric-label">First Contentful Paint</div><p style="font-size:11px;margin:4px 0 0;color:var(--text-muted)">≤ 1.8s good</p></div>
+<div class="metric-card"><div class="metric-value" style="font-size:22px">TTFB</div><div class="metric-label">Time to First Byte</div><p style="font-size:11px;margin:4px 0 0;color:var(--text-muted)">≤ 800ms good</p></div>
+</div>
+</div>
+
+<h3>Browser Performance APIs</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 1. PERFORMANCE TIMING — Page load metrics</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="fn">window</span>.<span class="fn">addEventListener</span>(<span class="str">'load'</span>, () => {
+  <span class="kw">const</span> <span class="fn">nav</span> = performance.<span class="fn">getEntriesByType</span>(<span class="str">'navigation'</span>)[<span class="num">0</span>];
+  
+  <span class="kw">const</span> <span class="fn">metrics</span> = {
+    <span class="prop">dns</span>: nav.<span class="prop">domainLookupEnd</span> - nav.<span class="prop">domainLookupStart</span>,
+    <span class="prop">tcp</span>: nav.<span class="prop">connectEnd</span> - nav.<span class="prop">connectStart</span>,
+    <span class="prop">ttfb</span>: nav.<span class="prop">responseStart</span> - nav.<span class="prop">requestStart</span>,
+    <span class="prop">download</span>: nav.<span class="prop">responseEnd</span> - nav.<span class="prop">responseStart</span>,
+    <span class="prop">domParse</span>: nav.<span class="prop">domContentLoadedEventEnd</span> - nav.<span class="prop">responseEnd</span>,
+    <span class="prop">totalLoad</span>: nav.<span class="prop">loadEventEnd</span> - nav.<span class="prop">startTime</span>
+  };
+  
+  <span class="fn">console</span>.<span class="fn">table</span>(metrics);
+});
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 2. PERFORMANCE OBSERVER — Watch for events</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+
+<span class="cm">// Observe Largest Contentful Paint</span>
+<span class="kw">new</span> <span class="type">PerformanceObserver</span>((<span class="fn">list</span>) => {
+  <span class="kw">const</span> <span class="fn">entries</span> = list.<span class="fn">getEntries</span>();
+  <span class="kw">const</span> <span class="fn">lastEntry</span> = entries[entries.<span class="prop">length</span> - <span class="num">1</span>];
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'LCP:'</span>, lastEntry.<span class="prop">startTime</span>, <span class="str">'ms'</span>);
+}).<span class="fn">observe</span>({ <span class="prop">type</span>: <span class="str">'largest-contentful-paint'</span>, <span class="prop">buffered</span>: <span class="bool">true</span> });
+
+<span class="cm">// Observe Layout Shifts</span>
+<span class="kw">let</span> <span class="fn">clsScore</span> = <span class="num">0</span>;
+<span class="kw">new</span> <span class="type">PerformanceObserver</span>((<span class="fn">list</span>) => {
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="fn">entry</span> <span class="kw">of</span> list.<span class="fn">getEntries</span>()) {
+    <span class="kw">if</span> (!entry.<span class="prop">hadRecentInput</span>) { <span class="cm">// Ignore user-caused shifts</span>
+      clsScore += entry.<span class="prop">value</span>;
+    }
+  }
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'CLS:'</span>, clsScore);
+}).<span class="fn">observe</span>({ <span class="prop">type</span>: <span class="str">'layout-shift'</span>, <span class="prop">buffered</span>: <span class="bool">true</span> });
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 3. CUSTOM PERFORMANCE MARKS & MEASURES</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+performance.<span class="fn">mark</span>(<span class="str">'render-start'</span>);
+
+<span class="cm">// ... render your component ...</span>
+
+performance.<span class="fn">mark</span>(<span class="str">'render-end'</span>);
+performance.<span class="fn">measure</span>(<span class="str">'render-time'</span>, <span class="str">'render-start'</span>, <span class="str">'render-end'</span>);
+
+<span class="kw">const</span> <span class="fn">measure</span> = performance.<span class="fn">getEntriesByName</span>(<span class="str">'render-time'</span>)[<span class="num">0</span>];
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`Render took: ${measure.duration}ms`</span>);
+
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// 4. RESOURCE TIMING — Track network requests</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="kw">const</span> <span class="fn">resources</span> = performance.<span class="fn">getEntriesByType</span>(<span class="str">'resource'</span>);
+<span class="kw">const</span> <span class="fn">slowResources</span> = resources
+  .<span class="fn">filter</span>(<span class="fn">r</span> => r.<span class="prop">duration</span> > <span class="num">1000</span>)
+  .<span class="fn">map</span>(<span class="fn">r</span> => ({ <span class="prop">name</span>: r.<span class="prop">name</span>, <span class="prop">duration</span>: r.<span class="prop">duration</span>, <span class="prop">type</span>: r.<span class="prop">initiatorType</span> }));
+<span class="fn">console</span>.<span class="fn">table</span>(slowResources);</code></pre>
+</div>
+
+<h3>Try It: Performance Measurement</h3>
+<div class="interactive-area">
+<div class="interactive-header">
+<span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+<span>Performance Playground</span>
+</div>
+<div class="editor-area">
+<textarea class="code-editor" id="perfEditor">// Measure execution time of different operations
+
+function measureTime(label, fn) {
+  performance.mark(`${label}-start`);
+  fn();
+  performance.mark(`${label}-end`);
+  performance.measure(label, `${label}-start`, `${label}-end`);
+  const entry = performance.getEntriesByName(label).pop();
+  console.log(`⏱️ ${label}: ${entry.duration.toFixed(3)}ms`);
+}
+
+// Test 1: Array creation
+measureTime('Array.push 10000 items', () => {
+  const arr = [];
+  for (let i = 0; i < 10000; i++) arr.push(i);
+});
+
+// Test 2: Object creation
+measureTime('Create 10000 objects', () => {
+  const objs = [];
+  for (let i = 0; i < 10000; i++) {
+    objs.push({ id: i, name: `item_${i}`, active: true });
+  }
+});
+
+// Test 3: String concat vs array join
+measureTime('String concat', () => {
+  let s = '';
+  for (let i = 0; i < 10000; i++) s += 'x';
+});
+
+measureTime('Array join', () => {
+  const parts = [];
+  for (let i = 0; i < 10000; i++) parts.push('x');
+  parts.join('');
+});
+
+// Test 4: JSON operations
+measureTime('JSON parse/stringify', () => {
+  const data = { users: Array.from({length: 100}, (_, i) => ({id: i, name: `User ${i}`})) };
+  for (let i = 0; i < 100; i++) {
+    JSON.parse(JSON.stringify(data));
+  }
+});
+
+console.log('\n📊 All measurements done!');</textarea>
+<div class="output-panel" id="perfOutput"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runPerfDemo()">▶ Run Code</button>
+<button class="reset-btn" onclick="resetEditor('perfEditor','perfOutput')">↺ Reset</button>
+</div>
+</div>
+
+<h3>Full Monitoring Setup</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// Complete performance monitoring class</span>
+<span class="kw">class</span> <span class="type">PerfMonitor</span> {
+  <span class="kw">constructor</span>(<span class="fn">endpoint</span>) {
+    <span class="kw">this</span>.<span class="prop">endpoint</span> = endpoint;
+    <span class="kw">this</span>.<span class="prop">metrics</span> = {};
+    <span class="kw">this</span>.<span class="fn">observeWebVitals</span>();
+    <span class="kw">this</span>.<span class="fn">observeLongTasks</span>();
+    <span class="kw">this</span>.<span class="fn">observeErrors</span>();
+  }
+
+  <span class="fn">observeWebVitals</span>() {
+    <span class="cm">// LCP</span>
+    <span class="kw">new</span> <span class="type">PerformanceObserver</span>(<span class="fn">l</span> => {
+      <span class="kw">const</span> <span class="fn">e</span> = l.<span class="fn">getEntries</span>().<span class="fn">pop</span>();
+      <span class="kw">this</span>.<span class="fn">record</span>(<span class="str">'lcp'</span>, e.<span class="prop">startTime</span>);
+    }).<span class="fn">observe</span>({<span class="prop">type</span>:<span class="str">'largest-contentful-paint'</span>, <span class="prop">buffered</span>:<span class="bool">true</span>});
+
+    <span class="cm">// FID (First Input Delay)</span>
+    <span class="kw">new</span> <span class="type">PerformanceObserver</span>(<span class="fn">l</span> => {
+      <span class="kw">const</span> <span class="fn">e</span> = l.<span class="fn">getEntries</span>()[<span class="num">0</span>];
+      <span class="kw">this</span>.<span class="fn">record</span>(<span class="str">'fid'</span>, e.<span class="prop">processingStart</span> - e.<span class="prop">startTime</span>);
+    }).<span class="fn">observe</span>({<span class="prop">type</span>:<span class="str">'first-input'</span>, <span class="prop">buffered</span>:<span class="bool">true</span>});
+  }
+
+  <span class="fn">observeLongTasks</span>() {
+    <span class="kw">new</span> <span class="type">PerformanceObserver</span>(<span class="fn">l</span> => {
+      <span class="kw">for</span> (<span class="kw">const</span> <span class="fn">entry</span> <span class="kw">of</span> l.<span class="fn">getEntries</span>()) {
+        <span class="kw">if</span> (entry.<span class="prop">duration</span> > <span class="num">50</span>) { <span class="cm">// > 50ms = long task</span>
+          <span class="kw">this</span>.<span class="fn">record</span>(<span class="str">'long_task'</span>, entry.<span class="prop">duration</span>);
+        }
+      }
+    }).<span class="fn">observe</span>({<span class="prop">type</span>:<span class="str">'longtask'</span>, <span class="prop">buffered</span>:<span class="bool">true</span>});
+  }
+
+  <span class="fn">observeErrors</span>() {
+    <span class="fn">window</span>.<span class="fn">addEventListener</span>(<span class="str">'error'</span>, () => <span class="kw">this</span>.<span class="fn">increment</span>(<span class="str">'js_errors'</span>));
+    <span class="fn">window</span>.<span class="fn">addEventListener</span>(<span class="str">'unhandledrejection'</span>, () => 
+      <span class="kw">this</span>.<span class="fn">increment</span>(<span class="str">'unhandled_rejections'</span>));
+  }
+
+  <span class="fn">record</span>(<span class="fn">name</span>, <span class="fn">value</span>) {
+    <span class="kw">if</span> (!<span class="kw">this</span>.<span class="prop">metrics</span>[name]) <span class="kw">this</span>.<span class="prop">metrics</span>[name] = [];
+    <span class="kw">this</span>.<span class="prop">metrics</span>[name].<span class="fn">push</span>(value);
+  }
+
+  <span class="fn">increment</span>(<span class="fn">name</span>) {
+    <span class="kw">this</span>.<span class="prop">metrics</span>[name] = (<span class="kw">this</span>.<span class="prop">metrics</span>[name] || <span class="num">0</span>) + <span class="num">1</span>;
+  }
+
+  <span class="cm">// Calculate percentiles (p50, p95, p99)</span>
+  <span class="fn">percentile</span>(<span class="fn">arr</span>, <span class="fn">p</span>) {
+    <span class="kw">const</span> <span class="fn">sorted</span> = [...arr].<span class="fn">sort</span>((<span class="fn">a</span>,<span class="fn">b</span>) => a - b);
+    <span class="kw">const</span> <span class="fn">idx</span> = <span class="type">Math</span>.<span class="fn">ceil</span>(sorted.<span class="prop">length</span> * p / <span class="num">100</span>) - <span class="num">1</span>;
+    <span class="kw">return</span> sorted[idx];
+  }
+
+  <span class="fn">getReport</span>() {
+    <span class="kw">const</span> <span class="fn">report</span> = {};
+    <span class="kw">for</span> (<span class="kw">const</span> [key, values] <span class="kw">of</span> <span class="type">Object</span>.<span class="fn">entries</span>(<span class="kw">this</span>.<span class="prop">metrics</span>)) {
+      <span class="kw">if</span> (<span class="type">Array</span>.<span class="fn">isArray</span>(values)) {
+        report[key] = {
+          <span class="prop">p50</span>: <span class="kw">this</span>.<span class="fn">percentile</span>(values, <span class="num">50</span>),
+          <span class="prop">p95</span>: <span class="kw">this</span>.<span class="fn">percentile</span>(values, <span class="num">95</span>),
+          <span class="prop">p99</span>: <span class="kw">this</span>.<span class="fn">percentile</span>(values, <span class="num">99</span>),
+          <span class="prop">count</span>: values.<span class="prop">length</span>
+        };
+      } <span class="kw">else</span> { report[key] = values; }
+    }
+    <span class="kw">return</span> report;
+  }
+}</code></pre>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('logging')">← Logging</button>
+<button class="nav-btn next" onclick="navigate('alerting')">Alerting →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: ALERTING ============ -->
+<div class="section" id="sec-alerting">
+<h2>🚨 Alerting</h2>
+<p class="subtitle">Getting notified when things go wrong — before your users tell you</p>
+
+<h3>Alerting Philosophy</h3>
+<div class="concept-card">
+<span class="card-label info">THE GOLDEN RULE</span>
+<p><strong>Every alert should be actionable.</strong> If an alert fires and nobody needs to do anything, it's noise and people will start ignoring ALL alerts.</p>
+</div>
+
+<div class="diagram">
+<p style="font-weight:700;margin-bottom:16px;color:var(--text)">Alert Severity Levels</p>
+<div class="flow-row">
+  <div class="flow-box alert">🔴 P1 Critical<br><small>Revenue impact NOW</small></div>
+  <div class="flow-box" style="border-color:var(--warning);color:var(--warning)">🟡 P2 High<br><small>Degraded experience</small></div>
+  <div class="flow-box" style="border-color:var(--primary);color:var(--primary)">🔵 P3 Medium<br><small>Needs attention soon</small></div>
+  <div class="flow-box success-box">🟢 P4 Low<br><small>Investigate when free</small></div>
+</div>
+</div>
+
+<h3>What to Alert On</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="cm">// ═══════════════════════════════════════════════</span>
+<span class="cm">// Alert Configuration Examples</span>
+<span class="cm">// ═══════════════════════════════════════════════</span>
+
+<span class="kw">const</span> <span class="fn">alertRules</span> = [
+  {
+    <span class="prop">name</span>: <span class="str">'High Error Rate'</span>,
+    <span class="prop">condition</span>: <span class="str">'error_rate > 5%'</span>,
+    <span class="prop">window</span>: <span class="str">'5 minutes'</span>,
+    <span class="prop">severity</span>: <span class="str">'critical'</span>,
+    <span class="prop">notify</span>: [<span class="str">'pagerduty'</span>, <span class="str">'slack-oncall'</span>],
+    <span class="prop">description</span>: <span class="str">'More than 5% of requests are failing'</span>
+  },
+  {
+    <span class="prop">name</span>: <span class="str">'Slow Response Time'</span>,
+    <span class="prop">condition</span>: <span class="str">'p95_latency > 3000ms'</span>,
+    <span class="prop">window</span>: <span class="str">'10 minutes'</span>,
+    <span class="prop">severity</span>: <span class="str">'warning'</span>,
+    <span class="prop">notify</span>: [<span class="str">'slack-engineering'</span>],
+    <span class="prop">description</span>: <span class="str">'95th percentile response time exceeds 3s'</span>
+  },
+  {
+    <span class="prop">name</span>: <span class="str">'Memory Usage High'</span>,
+    <span class="prop">condition</span>: <span class="str">'memory_usage > 85%'</span>,
+    <span class="prop">window</span>: <span class="str">'15 minutes'</span>,
+    <span class="prop">severity</span>: <span class="str">'warning'</span>,
+    <span class="prop">notify</span>: [<span class="str">'slack-infra'</span>]
+  },
+  {
+    <span class="prop">name</span>: <span class="str">'Zero Traffic'</span>,
+    <span class="prop">condition</span>: <span class="str">'request_count == 0'</span>,
+    <span class="prop">window</span>: <span class="str">'5 minutes'</span>,
+    <span class="prop">severity</span>: <span class="str">'critical'</span>,
+    <span class="prop">notify</span>: [<span class="str">'pagerduty'</span>],
+    <span class="prop">description</span>: <span class="str">'No requests received — possible outage'</span>
+  }
+];</code></pre>
+</div>
+
+<h3>Building an Alert System</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">JavaScript</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="kw">class</span> <span class="type">AlertManager</span> {
+  <span class="kw">constructor</span>() {
+    <span class="kw">this</span>.<span class="prop">rules</span> = [];
+    <span class="kw">this</span>.<span class="prop">activeAlerts</span> = <span class="kw">new</span> <span class="type">Map</span>();
+    <span class="kw">this</span>.<span class="prop">cooldowns</span> = <span class="kw">new</span> <span class="type">Map</span>(); <span class="cm">// Prevent alert flooding</span>
+    <span class="kw">this</span>.<span class="prop">handlers</span> = <span class="kw">new</span> <span class="type">Map</span>();
+  }
+
+  <span class="fn">addRule</span>(<span class="fn">rule</span>) {
+    <span class="kw">this</span>.<span class="prop">rules</span>.<span class="fn">push</span>({
+      <span class="prop">cooldownMs</span>: <span class="num">300000</span>, <span class="cm">// 5 min default cooldown</span>
+      ...rule
+    });
+  }
+
+  <span class="fn">registerHandler</span>(<span class="fn">name</span>, <span class="fn">handler</span>) {
+    <span class="kw">this</span>.<span class="prop">handlers</span>.<span class="fn">set</span>(name, handler);
+  }
+
+  <span class="fn">check</span>(<span class="fn">metricName</span>, <span class="fn">value</span>) {
+    <span class="kw">for</span> (<span class="kw">const</span> <span class="fn">rule</span> <span class="kw">of</span> <span class="kw">this</span>.<span class="prop">rules</span>) {
+      <span class="kw">if</span> (rule.<span class="prop">metric</span> !== metricName) <span class="kw">continue</span>;
+      
+      <span class="kw">const</span> <span class="fn">triggered</span> = rule.<span class="fn">evaluate</span>(value);
+      
+      <span class="kw">if</span> (triggered && !<span class="kw">this</span>.<span class="fn">isInCooldown</span>(rule.<span class="prop">name</span>)) {
+        <span class="kw">this</span>.<span class="fn">fire</span>(rule, value);
+      } <span class="kw">else if</span> (!triggered && <span class="kw">this</span>.<span class="prop">activeAlerts</span>.<span class="fn">has</span>(rule.<span class="prop">name</span>)) {
+        <span class="kw">this</span>.<span class="fn">resolve</span>(rule.<span class="prop">name</span>);
+      }
+    }
+  }
+
+  <span class="fn">fire</span>(<span class="fn">rule</span>, <span class="fn">value</span>) {
+    <span class="kw">const</span> <span class="fn">alert</span> = {
+      <span class="prop">rule</span>: rule.<span class="prop">name</span>,
+      <span class="prop">severity</span>: rule.<span class="prop">severity</span>,
+      <span class="prop">message</span>: rule.<span class="prop">message</span>,
+      <span class="prop">value</span>,
+      <span class="prop">timestamp</span>: <span class="kw">new</span> <span class="type">Date</span>().<span class="fn">toISOString</span>(),
+      <span class="prop">status</span>: <span class="str">'firing'</span>
+    };
+    
+    <span class="kw">this</span>.<span class="prop">activeAlerts</span>.<span class="fn">set</span>(rule.<span class="prop">name</span>, alert);
+    <span class="kw">this</span>.<span class="prop">cooldowns</span>.<span class="fn">set</span>(rule.<span class="prop">name</span>, <span class="type">Date</span>.<span class="fn">now</span>() + rule.<span class="prop">cooldownMs</span>);
+    
+    <span class="cm">// Notify all configured channels</span>
+    rule.<span class="prop">notify</span>.<span class="fn">forEach</span>(<span class="fn">channel</span> => {
+      <span class="kw">const</span> <span class="fn">handler</span> = <span class="kw">this</span>.<span class="prop">handlers</span>.<span class="fn">get</span>(channel);
+      <span class="kw">if</span> (handler) handler(alert);
+    });
+  }
+
+  <span class="fn">resolve</span>(<span class="fn">name</span>) {
+    <span class="kw">this</span>.<span class="prop">activeAlerts</span>.<span class="fn">delete</span>(name);
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`✅ Alert resolved: ${name}`</span>);
+  }
+
+  <span class="fn">isInCooldown</span>(<span class="fn">name</span>) {
+    <span class="kw">const</span> <span class="fn">until</span> = <span class="kw">this</span>.<span class="prop">cooldowns</span>.<span class="fn">get</span>(name);
+    <span class="kw">return</span> until && <span class="type">Date</span>.<span class="fn">now</span>() < until;
+  }
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">const</span> <span class="fn">alerts</span> = <span class="kw">new</span> <span class="type">AlertManager</span>();
+
+alerts.<span class="fn">registerHandler</span>(<span class="str">'slack'</span>, (<span class="fn">alert</span>) => {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`🚨 SLACK: [${alert.severity}] ${alert.message}`</span>);
+});
+
+alerts.<span class="fn">registerHandler</span>(<span class="str">'pagerduty'</span>, (<span class="fn">alert</span>) => {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`📟 PAGERDUTY: ${alert.message} (waking someone up!)`</span>);
+});
+
+alerts.<span class="fn">addRule</span>({
+  <span class="prop">name</span>: <span class="str">'high-error-rate'</span>,
+  <span class="prop">metric</span>: <span class="str">'error_rate'</span>,
+  <span class="prop">evaluate</span>: (<span class="fn">v</span>) => v > <span class="num">0.05</span>,
+  <span class="prop">severity</span>: <span class="str">'critical'</span>,
+  <span class="prop">message</span>: <span class="str">'Error rate exceeded 5%!'</span>,
+  <span class="prop">notify</span>: [<span class="str">'slack'</span>, <span class="str">'pagerduty'</span>]
+});</code></pre>
+</div>
+
+<h3>Try It: Alert System Simulation</h3>
+<div class="interactive-area">
+<div class="interactive-header">
+<span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+<span>Alert Simulation</span>
+</div>
+<div class="editor-area">
+<textarea class="code-editor" id="alertEditor">// Simulate a simple alert system
+
+class SimpleAlertManager {
+  constructor() {
+    this.rules = [];
+    this.fired = [];
+  }
+  
+  addRule(name, check, severity) {
+    this.rules.push({ name, check, severity });
+  }
+  
+  evaluate(metrics) {
+    console.log('📊 Evaluating metrics:', JSON.stringify(metrics));
+    console.log('---');
+    
+    for (const rule of this.rules) {
+      const triggered = rule.check(metrics);
+      const icon = triggered ? '🚨' : '✅';
+      const status = triggered ? 'FIRING' : 'OK';
+      
+      console.log(`${icon} [${rule.severity.toUpperCase()}] ${rule.name}: ${status}`);
+      
+      if (triggered) {
+        this.fired.push({ rule: rule.name, time: new Date().toISOString() });
+      }
+    }
+    
+    console.log(`\n📋 Total alerts fired: ${this.fired.length}`);
+  }
+}
+
+const alertMgr = new SimpleAlertManager();
+
+// Define rules
+alertMgr.addRule(
+  'High Error Rate',
+  (m) => m.errorRate > 0.05,
+  'critical'
+);
+
+alertMgr.addRule(
+  'Slow Response',
+  (m) => m.p95Latency > 2000,
+  'warning'
+);
+
+alertMgr.addRule(
+  'High Memory',
+  (m) => m.memoryPercent > 85,
+  'warning'
+);
+
+alertMgr.addRule(
+  'Low Throughput',
+  (m) => m.requestsPerMin < 10,
+  'info'
+);
+
+// Simulate normal metrics
+console.log('=== Normal Operation ===');
+alertMgr.evaluate({
+  errorRate: 0.01,
+  p95Latency: 450,
+  memoryPercent: 62,
+  requestsPerMin: 150
+});
+
+console.log('\n=== Degraded Performance ===');
+alertMgr.evaluate({
+  errorRate: 0.08,  // 8% errors!
+  p95Latency: 3500, // Slow!
+  memoryPercent: 91, // High memory!
+  requestsPerMin: 5  // Low traffic!
+});</textarea>
+<div class="output-panel" id="alertOutput"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runAlertDemo()">▶ Run Code</button>
+<button class="reset-btn" onclick="resetEditor('alertEditor','alertOutput')">↺ Reset</button>
+</div>
+</div>
+
+<h3>Popular Alerting Tools</h3>
+<table class="comparison-table">
+<tr><th>Tool</th><th>Best For</th><th>Integrations</th></tr>
+<tr><td>PagerDuty</td><td>On-call management</td><td>Everything</td></tr>
+<tr><td>OpsGenie</td><td>Alert routing</td><td>Atlassian ecosystem</td></tr>
+<tr><td>Grafana Alerting</td><td>Metric-based alerts</td><td>Prometheus, Loki</td></tr>
+<tr><td>Sentry Alerts</td><td>Error-based alerts</td><td>Slack, PagerDuty, email</td></tr>
+<tr><td>DataDog Monitors</td><td>Full-stack alerting</td><td>500+ integrations</td></tr>
+</table>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('perf-monitoring')">← Perf Monitoring</button>
+<button class="nav-btn next" onclick="navigate('exercises')">Exercises →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: EXERCISES ============ -->
+<div class="section" id="sec-exercises">
+<h2>🏋️ Practice Exercises</h2>
+<p class="subtitle">Hands-on coding challenges to solidify your knowledge</p>
+
+<div class="exercise-box">
+<div class="exercise-header">
+<span class="exercise-title">Exercise 1: Build a Global Error Handler</span>
+<span class="difficulty easy">Easy</span>
+</div>
+<div class="exercise-body">
+<div class="exercise-instructions">
+Set up <code>window.onerror</code> and <code>unhandledrejection</code> handlers that capture errors into an array. Then trigger both types of errors and log the captured array.
+</div>
+<div class="interactive-area" style="margin:0">
+<div class="editor-area">
+<textarea class="code-editor" id="ex1Editor">// YOUR TASK: Complete this error handler
+
+const capturedErrors = [];
+
+// TODO: Set up window.onerror handler
+// It should push an object with { type, message, timestamp } 
+// into capturedErrors
+
+// TODO: Set up unhandledrejection handler
+// Same format: { type, message, timestamp }
+
+
+// Test: Trigger a runtime error
+try {
+  // This simulates an uncaught error
+  setTimeout(() => {
+    // Uncomment to test: null.toString()
+  }, 100);
+} catch(e) {}
+
+// Test: Trigger an unhandled rejection
+// Promise.reject('API timeout');
+
+// After setting up handlers, log the array
+setTimeout(() => {
+  console.log('Captured errors:', capturedErrors);
+}, 500);</textarea>
+<div class="output-panel" id="ex1Output"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runExercise('ex1')">▶ Run</button>
+<button class="hint-toggle" onclick="toggleHint('ex1Hint')">💡 Show Hint</button>
+<button class="reset-btn" onclick="showSolution('ex1')">📖 Solution</button>
+</div>
+</div>
+<div class="hint-content" id="ex1Hint">
+Use <code>window.onerror = function(message, source, line, col, error) { ... }</code> and <code>window.addEventListener('unhandledrejection', (event) => { ... })</code>
+</div>
+</div>
+</div>
+
+<div class="exercise-box">
+<div class="exercise-header">
+<span class="exercise-title">Exercise 2: Structured Logger</span>
+<span class="difficulty medium">Medium</span>
+</div>
+<div class="exercise-body">
+<div class="exercise-instructions">
+Create a <code>Logger</code> class with: log levels (DEBUG, INFO, WARN, ERROR), a minimum level filter, structured JSON output, and a <code>child()</code> method that creates a new logger with inherited context.
+</div>
+<div class="interactive-area" style="margin:0">
+<div class="editor-area">
+<textarea class="code-editor" id="ex2Editor">// YOUR TASK: Build a structured Logger class
+
+class Logger {
+  // TODO: Define LEVELS as static property
+  // { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 }
+  
+  constructor(options = {}) {
+    // TODO: Store minLevel, service name, and context
+  }
+  
+  _log(level, message, data = {}) {
+    // TODO: Check if level meets minimum
+    // TODO: Create structured log entry with timestamp
+    // TODO: Output as JSON
+  }
+  
+  debug(msg, data) { /* TODO */ }
+  info(msg, data) { /* TODO */ }
+  warn(msg, data) { /* TODO */ }
+  error(msg, data) { /* TODO */ }
+  
+  child(extraContext) {
+    // TODO: Return new Logger with merged context
+  }
+}
+
+// Test your logger:
+const log = new Logger({ 
+  service: 'api', 
+  level: 'INFO' 
+});
+
+log.debug('This should NOT appear (below INFO level)');
+log.info('Server started', { port: 3000 });
+log.warn('Slow query', { duration: 2500, query: 'SELECT *' });
+log.error('Connection failed', { host: 'db.example.com' });
+
+// Test child logger
+const reqLog = log.child({ requestId: 'req-abc', userId: 42 });
+reqLog.info('Processing request');
+reqLog.error('Validation failed', { field: 'email' });</textarea>
+<div class="output-panel" id="ex2Output"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runExercise('ex2')">▶ Run</button>
+<button class="hint-toggle" onclick="toggleHint('ex2Hint')">💡 Show Hint</button>
+<button class="reset-btn" onclick="showSolution('ex2')">📖 Solution</button>
+</div>
+</div>
+<div class="hint-content" id="ex2Hint">
+Compare <code>Logger.LEVELS[level]</code> against <code>this.minLevel</code>. For child(), create a new Logger and spread both the parent context and the new context.
+</div>
+</div>
+</div>
+
+<div class="exercise-box">
+<div class="exercise-header">
+<span class="exercise-title">Exercise 3: Performance Timer Utility</span>
+<span class="difficulty medium">Medium</span>
+</div>
+<div class="exercise-body">
+<div class="exercise-instructions">
+Create a <code>Timer</code> class that measures function execution time. It should support: <code>time(label)</code> to start, <code>timeEnd(label)</code> to stop and return duration, and <code>getReport()</code> to return all measurements with min/max/avg.
+</div>
+<div class="interactive-area" style="margin:0">
+<div class="editor-area">
+<textarea class="code-editor" id="ex3Editor">// YOUR TASK: Build a performance Timer
+
+class Timer {
+  constructor() {
+    // TODO: Initialize storage for marks and measurements
+  }
+  
+  time(label) {
+    // TODO: Record start time using performance.now()
+  }
+  
+  timeEnd(label) {
+    // TODO: Calculate duration, store it, return it
+  }
+  
+  getReport() {
+    // TODO: Return object with min, max, avg for each label
+  }
+}
+
+// Test your timer:
+const timer = new Timer();
+
+// Measure some operations
+for (let i = 0; i < 5; i++) {
+  timer.time('array-sort');
+  const arr = Array.from({length: 10000}, () => Math.random());
+  arr.sort((a, b) => a - b);
+  const duration = timer.timeEnd('array-sort');
+  console.log(`Sort #${i + 1}: ${duration.toFixed(2)}ms`);
+}
+
+for (let i = 0; i < 3; i++) {
+  timer.time('json-parse');
+  const data = JSON.stringify({ items: Array(1000).fill({ x: 1 }) });
+  JSON.parse(data);
+  const d = timer.timeEnd('json-parse');
+  console.log(`JSON #${i + 1}: ${d.toFixed(2)}ms`);
+}
+
+console.log('\n📊 Report:');
+console.log(JSON.stringify(timer.getReport(), null, 2));</textarea>
+<div class="output-panel" id="ex3Output"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runExercise('ex3')">▶ Run</button>
+<button class="hint-toggle" onclick="toggleHint('ex3Hint')">💡 Show Hint</button>
+<button class="reset-btn" onclick="showSolution('ex3')">📖 Solution</button>
+</div>
+</div>
+<div class="hint-content" id="ex3Hint">
+Use <code>performance.now()</code> for high-resolution timing. Store measurements in a Map with arrays of durations. Calculate stats with Math.min, Math.max, and reduce for average.
+</div>
+</div>
+</div>
+
+<div class="exercise-box">
+<div class="exercise-header">
+<span class="exercise-title">Exercise 4: Alert Rules Engine</span>
+<span class="difficulty hard">Hard</span>
+</div>
+<div class="exercise-body">
+<div class="exercise-instructions">
+Build an alert engine that: accepts metric rules with thresholds, evaluates metrics against rules, supports cooldown periods (don't re-alert within X seconds), tracks alert history, and supports multiple notification channels.
+</div>
+<div class="interactive-area" style="margin:0">
+<div class="editor-area">
+<textarea class="code-editor" id="ex4Editor">// YOUR TASK: Build an Alert Rules Engine
+
+class AlertEngine {
+  constructor() {
+    // TODO: Initialize rules, history, cooldowns, channels
+  }
+  
+  addRule(rule) {
+    // Rule: { name, metric, operator, threshold, severity, cooldownSec, channels }
+    // TODO: Store the rule
+  }
+  
+  addChannel(name, handler) {
+    // TODO: Register notification channel
+  }
+  
+  evaluate(metrics) {
+    // TODO: Check each rule against metrics
+    // TODO: Respect cooldowns
+    // TODO: Fire alerts through channels
+    // TODO: Track in history
+  }
+  
+  getHistory() {
+    // TODO: Return alert history
+  }
+}
+
+// Test:
+const engine = new AlertEngine();
+
+engine.addChannel('console', (alert) => {
+  console.log(`🚨 [${alert.severity}] ${alert.name}: ${alert.message}`);
+});
+
+engine.addChannel('log', (alert) => {
+  console.log(`📝 Logged alert: ${alert.name} at ${alert.timestamp}`);
+});
+
+engine.addRule({
+  name: 'High Error Rate',
+  metric: 'errorRate',
+  operator: '>',
+  threshold: 0.05,
+  severity: 'CRITICAL',
+  cooldownSec: 5,
+  channels: ['console', 'log']
+});
+
+engine.addRule({
+  name: 'High Latency',
+  metric: 'p95ms',
+  operator: '>',
+  threshold: 2000,
+  severity: 'WARNING',
+  cooldownSec: 10,
+  channels: ['console']
+});
+
+engine.addRule({
+  name: 'Low Throughput',
+  metric: 'rps',
+  operator: '<',
+  threshold: 10,
+  severity: 'INFO',
+  cooldownSec: 30,
+  channels: ['log']
+});
+
+// Simulate metrics over time
+console.log('=== Check 1: Normal ===');
+engine.evaluate({ errorRate: 0.01, p95ms: 200, rps: 150 });
+
+console.log('\n=== Check 2: Problems! ===');
+engine.evaluate({ errorRate: 0.12, p95ms: 4500, rps: 3 });
+
+console.log('\n=== Check 3: Still bad (cooldown?) ===');
+engine.evaluate({ errorRate: 0.15, p95ms: 5000, rps: 2 });
+
+console.log('\nAlert history:', engine.getHistory().length, 'alerts');</textarea>
+<div class="output-panel" id="ex4Output"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runExercise('ex4')">▶ Run</button>
+<button class="hint-toggle" onclick="toggleHint('ex4Hint')">💡 Show Hint</button>
+<button class="reset-btn" onclick="showSolution('ex4')">📖 Solution</button>
+</div>
+</div>
+<div class="hint-content" id="ex4Hint">
+For cooldowns, store the last fire time per rule. Compare <code>Date.now() - lastFired > cooldownSec * 1000</code>. For operators, use a switch: <code>case '>': return value > threshold</code>.
+</div>
+</div>
+</div>
+
+<div class="exercise-box">
+<div class="exercise-header">
+<span class="exercise-title">Exercise 5: Error Boundary Pattern</span>
+<span class="difficulty medium">Medium</span>
+</div>
+<div class="exercise-body">
+<div class="exercise-instructions">
+Create a <code>withErrorBoundary</code> higher-order function that wraps any function with error handling: catches errors, logs them with context, reports to an error tracker, and returns a fallback value instead of crashing.
+</div>
+<div class="interactive-area" style="margin:0">
+<div class="editor-area">
+<textarea class="code-editor" id="ex5Editor">// YOUR TASK: Create a withErrorBoundary wrapper
+
+const errorLog = [];
+
+function withErrorBoundary(fn, options = {}) {
+  const { fallback = null, context = {}, onError } = options;
+  
+  // TODO: Return a new function that:
+  // 1. Tries to execute fn with all arguments
+  // 2. If it succeeds, returns the result
+  // 3. If it fails, logs the error with context
+  // 4. Calls onError callback if provided
+  // 5. Returns the fallback value
+  // 6. Works with both sync and async functions
+}
+
+// Test sync function
+const safeDivide = withErrorBoundary(
+  (a, b) => {
+    if (b === 0) throw new Error('Division by zero');
+    return a / b;
+  },
+  { 
+    fallback: 0, 
+    context: { operation: 'divide' },
+    onError: (err) => errorLog.push(err.message)
+  }
+);
+
+console.log('10 / 2 =', safeDivide(10, 2));  // Should work: 5
+console.log('10 / 0 =', safeDivide(10, 0));  // Should return fallback: 0
+
+// Test with JSON parsing
+const safeParse = withErrorBoundary(
+  (str) => JSON.parse(str),
+  { 
+    fallback: {},
+    onError: (err) => errorLog.push(err.message)
+  }
+);
+
+console.log('Valid:', safeParse('{"name":"test"}'));
+console.log('Invalid:', safeParse('not json{{{'));
+
+console.log('\nError log:', errorLog);</textarea>
+<div class="output-panel" id="ex5Output"></div>
+</div>
+<div class="btn-row">
+<button class="run-btn" onclick="runExercise('ex5')">▶ Run</button>
+<button class="hint-toggle" onclick="toggleHint('ex5Hint')">💡 Show Hint</button>
+<button class="reset-btn" onclick="showSolution('ex5')">📖 Solution</button>
+</div>
+</div>
+<div class="hint-content" id="ex5Hint">
+Return a new function: <code>return function(...args) { try { return fn(...args); } catch(err) { ... return fallback; } }</code>. For async, check if the result is a Promise and add .catch().
+</div>
+</div>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('alerting')">← Alerting</button>
+<button class="nav-btn next" onclick="navigate('quiz')">Quiz →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: QUIZ ============ -->
+<div class="section" id="sec-quiz">
+<h2>❓ Quiz — Test Your Knowledge</h2>
+<p class="subtitle">25 questions covering all monitoring & observability topics</p>
+
+<div id="quizContainer"></div>
+
+<div style="text-align:center;margin-top:30px">
+<button class="run-btn" onclick="gradeQuiz()" style="padding:14px 40px;font-size:16px">📝 Grade My Quiz</button>
+</div>
+
+<div id="quizResults" style="display:none"></div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('exercises')">← Exercises</button>
+<button class="nav-btn next" onclick="navigate('pitfalls')">Pitfalls →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: PITFALLS ============ -->
+<div class="section" id="sec-pitfalls">
+<h2>⚠️ Common Pitfalls & Mistakes</h2>
+<p class="subtitle">What experienced developers know to avoid</p>
+
+<div class="pitfall">
+<h4>❌ Pitfall 1: Logging Sensitive Data</h4>
+<p><code>logger.info('User login', { password: req.body.password })</code> — NEVER log passwords, tokens, credit cards, or PII! Use a sanitizer.</p>
+<div class="code-block"><div class="code-header"><span class="lang">Fix</span></div>
+<pre><code><span class="kw">function</span> <span class="fn">sanitize</span>(<span class="fn">data</span>) {
+  <span class="kw">const</span> <span class="fn">sensitive</span> = [<span class="str">'password'</span>, <span class="str">'token'</span>, <span class="str">'ssn'</span>, <span class="str">'creditCard'</span>];
+  <span class="kw">const</span> <span class="fn">clean</span> = { ...data };
+  sensitive.<span class="fn">forEach</span>(<span class="fn">key</span> => {
+    <span class="kw">if</span> (clean[key]) clean[key] = <span class="str">'[REDACTED]'</span>;
+  });
+  <span class="kw">return</span> clean;
+}</code></pre></div>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 2: No Error Rate Limiting</h4>
+<p>A loop bug could send 10,000 errors per second to Sentry, costing you money and drowning out real issues.</p>
+<div class="code-block"><div class="code-header"><span class="lang">Fix</span></div>
+<pre><code><span class="cm">// Sentry has built-in rate limiting:</span>
+<span class="type">Sentry</span>.<span class="fn">init</span>({
+  <span class="prop">maxBreadcrumbs</span>: <span class="num">50</span>,        <span class="cm">// Limit breadcrumb count</span>
+  <span class="prop">sampleRate</span>: <span class="num">0.5</span>,            <span class="cm">// Only send 50% of errors</span>
+  <span class="fn">beforeSend</span>(<span class="fn">event</span>) {
+    <span class="cm">// Custom deduplication logic</span>
+    <span class="kw">return</span> <span class="fn">isDuplicate</span>(event) ? <span class="kw">null</span> : event;
+  }
+});</code></pre></div>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 3: Catching Errors Without Reporting Them</h4>
+<p><code>try { ... } catch(e) { /* silently swallowed */ }</code> — The worst kind of "error handling". At minimum log it!</p>
+<div class="code-block"><div class="code-header"><span class="lang">Fix</span></div>
+<pre><code><span class="kw">try</span> {
+  <span class="fn">riskyOperation</span>();
+} <span class="kw">catch</span> (err) {
+  <span class="fn">logger</span>.<span class="fn">error</span>(<span class="str">'Operation failed'</span>, { 
+    error: err.<span class="prop">message</span>, 
+    stack: err.<span class="prop">stack</span> 
+  });
+  <span class="type">Sentry</span>.<span class="fn">captureException</span>(err);
+  <span class="cm">// Still handle gracefully for the user</span>
+  <span class="fn">showFallbackUI</span>();
+}</code></pre></div>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 4: Console.log in Production</h4>
+<p>Left-over <code>console.log</code> statements: leaks info to users, can't be searched/filtered, has no log levels, impacts performance.</p>
+<div class="code-block"><div class="code-header"><span class="lang">Fix</span></div>
+<pre><code><span class="cm">// Use ESLint rule: no-console</span>
+<span class="cm">// .eslintrc: { "rules": { "no-console": "error" } }</span>
+
+<span class="cm">// Or strip console in production build:</span>
+<span class="cm">// babel-plugin-transform-remove-console</span>
+
+<span class="cm">// Or wrap in environment check:</span>
+<span class="kw">if</span> (process.<span class="prop">env</span>.<span class="prop">NODE_ENV</span> === <span class="str">'development'</span>) {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Debug info'</span>);
+}</code></pre></div>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 5: Alert Fatigue</h4>
+<p>Too many alerts = developers ignore ALL alerts. If you have 100+ alerts firing daily, you have a noise problem, not a monitoring problem.</p>
+<div class="best-practice">
+<h4>✅ Fix: Follow these rules</h4>
+<p>1. Every alert must be <strong>actionable</strong> — if nobody needs to do anything, delete it<br>
+2. Use <strong>severity levels</strong> — not everything is P1<br>
+3. Set proper <strong>thresholds</strong> — use percentiles not averages<br>
+4. Group related alerts — don't get 5 alerts for one incident<br>
+5. Review alerts monthly — delete unused ones</p>
+</div>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 6: No Source Maps in Production</h4>
+<p>Error stack traces show <code>main.min.js:1:45023</code> instead of <code>checkout.js:142:handlePayment</code>. Impossible to debug!</p>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 7: Missing Unhandled Rejection Handler</h4>
+<p>Promises without <code>.catch()</code> or without <code>unhandledrejection</code> listener = silent failures. The most dangerous errors are the ones you never see.</p>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 8: Logging Too Much or Too Little</h4>
+<p><strong>Too much:</strong> 10GB of logs per day, can't find anything, high costs.<br>
+<strong>Too little:</strong> Something breaks and you have zero clues why.</p>
+<div class="best-practice">
+<h4>✅ Fix: The Goldilocks Rule</h4>
+<p>Log <strong>decisions and outcomes</strong>, not routine operations. Log state changes, errors, external calls, and security events. Skip routine iterations and low-value reads.</p>
+</div>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 9: Using Averages Instead of Percentiles</h4>
+<p>"Average response time is 200ms" hides the fact that 5% of users wait 8+ seconds. Always use <strong>p50, p95, p99</strong> percentiles.</p>
+</div>
+
+<div class="pitfall">
+<h4>❌ Pitfall 10: Not Monitoring the Monitoring</h4>
+<p>If your error tracking service goes down, who alerts you? Always have a secondary check that your monitoring pipeline itself is working.</p>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('quiz')">← Quiz</button>
+<button class="nav-btn next" onclick="navigate('cheatsheet')">Cheat Sheet →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: CHEATSHEET ============ -->
+<div class="section" id="sec-cheatsheet">
+<h2>📋 Cheat Sheet</h2>
+<p class="subtitle">Quick reference for everything monitoring & observability</p>
+
+<h3>Global Error Handlers</h3>
+<div class="cheat-grid">
+<div class="cheat-item">
+<h5>Catch All Errors</h5>
+<code>window.onerror = (msg, src, line, col, err) => { }</code>
+<p>Catches uncaught runtime errors</p>
+</div>
+<div class="cheat-item">
+<h5>Catch Promise Rejections</h5>
+<code>window.addEventListener('unhandledrejection', e => { })</code>
+<p>Catches promises without .catch()</p>
+</div>
+<div class="cheat-item">
+<h5>Catch Resource Failures</h5>
+<code>window.addEventListener('error', e => { }, true)</code>
+<p>Catches failed images, scripts, CSS (use capture!)</p>
+</div>
+<div class="cheat-item">
+<h5>React Error Boundary</h5>
+<code>componentDidCatch(error, errorInfo) { }</code>
+<p>Catches errors in React component tree</p>
+</div>
+</div>
+
+<h3>Sentry Quick Reference</h3>
+<div class="cheat-grid">
+<div class="cheat-item">
+<h5>Initialize</h5>
+<code>Sentry.init({ dsn, release, environment })</code>
+</div>
+<div class="cheat-item">
+<h5>Capture Error</h5>
+<code>Sentry.captureException(error)</code>
+</div>
+<div class="cheat-item">
+<h5>Capture Message</h5>
+<code>Sentry.captureMessage('msg', 'warning')</code>
+</div>
+<div class="cheat-item">
+<h5>Set User</h5>
+<code>Sentry.setUser({ id, email })</code>
+</div>
+<div class="cheat-item">
+<h5>Add Breadcrumb</h5>
+<code>Sentry.addBreadcrumb({ category, message })</code>
+</div>
+<div class="cheat-item">
+<h5>Set Tag</h5>
+<code>Sentry.setTag('key', 'value')</code>
+</div>
+<div class="cheat-item">
+<h5>Scoped Context</h5>
+<code>Sentry.withScope(scope => { ... })</code>
+</div>
+<div class="cheat-item">
+<h5>Upload Source Maps</h5>
+<code>sentry-cli sourcemaps upload --release=v1 ./dist</code>
+</div>
+</div>
+
+<h3>Performance APIs</h3>
+<div class="cheat-grid">
+<div class="cheat-item">
+<h5>High-Res Timer</h5>
+<code>performance.now()</code>
+<p>Millisecond precision timing</p>
+</div>
+<div class="cheat-item">
+<h5>Custom Mark</h5>
+<code>performance.mark('my-mark')</code>
+<p>Create a named timestamp</p>
+</div>
+<div class="cheat-item">
+<h5>Measure Between</h5>
+<code>performance.measure('name', 'start', 'end')</code>
+<p>Measure duration between marks</p>
+</div>
+<div class="cheat-item">
+<h5>Navigation Timing</h5>
+<code>performance.getEntriesByType('navigation')</code>
+<p>Page load metrics</p>
+</div>
+<div class="cheat-item">
+<h5>Resource Timing</h5>
+<code>performance.getEntriesByType('resource')</code>
+<p>Individual resource load times</p>
+</div>
+<div class="cheat-item">
+<h5>Observer</h5>
+<code>new PerformanceObserver(cb).observe({type})</code>
+<p>Watch for performance events</p>
+</div>
+</div>
+
+<h3>Log Levels (Severity Order)</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">Reference</span></div>
+<pre><code><span class="cm">TRACE → DEBUG → INFO → WARN → ERROR → FATAL</span>
+  ↑                                        ↑
+ Most verbose                        Most critical
+ Dev only                            Wake someone up</code></pre>
+</div>
+
+<h3>Core Web Vitals Thresholds</h3>
+<table class="comparison-table">
+<tr><th>Metric</th><th>Good</th><th>Needs Work</th><th>Poor</th></tr>
+<tr><td>LCP (Largest Contentful Paint)</td><td>≤ 2.5s</td><td>2.5 - 4.0s</td><td>&gt; 4.0s</td></tr>
+<tr><td>INP (Interaction to Next Paint)</td><td>≤ 200ms</td><td>200 - 500ms</td><td>&gt; 500ms</td></tr>
+<tr><td>CLS (Cumulative Layout Shift)</td><td>≤ 0.1</td><td>0.1 - 0.25</td><td>&gt; 0.25</td></tr>
+<tr><td>FCP (First Contentful Paint)</td><td>≤ 1.8s</td><td>1.8 - 3.0s</td><td>&gt; 3.0s</td></tr>
+<tr><td>TTFB (Time to First Byte)</td><td>≤ 800ms</td><td>800 - 1800ms</td><td>&gt; 1800ms</td></tr>
+</table>
+
+<h3>Alerting Checklist</h3>
+<div class="cheat-grid">
+<div class="cheat-item">
+<h5>Rule of Thumb</h5>
+<p>Every alert must be <strong>actionable</strong></p>
+</div>
+<div class="cheat-item">
+<h5>Severity</h5>
+<p>P1=Critical, P2=High, P3=Medium, P4=Low</p>
+</div>
+<div class="cheat-item">
+<h5>Cooldown</h5>
+<p>Don't re-fire same alert within 5-15 minutes</p>
+</div>
+<div class="cheat-item">
+<h5>Use Percentiles</h5>
+<p>p95 > 2s, not avg > 2s</p>
+</div>
+</div>
+
+<h3>Structured Log Template</h3>
+<div class="code-block">
+<div class="code-header"><span class="lang">JSON</span></div>
+<pre><code>{
+  <span class="str">"timestamp"</span>: <span class="str">"2024-01-15T10:30:00.000Z"</span>,
+  <span class="str">"level"</span>: <span class="str">"ERROR"</span>,
+  <span class="str">"service"</span>: <span class="str">"payment-api"</span>,
+  <span class="str">"message"</span>: <span class="str">"Payment processing failed"</span>,
+  <span class="str">"correlationId"</span>: <span class="str">"req-abc-123"</span>,
+  <span class="str">"userId"</span>: <span class="num">42</span>,
+  <span class="str">"error"</span>: {
+    <span class="str">"name"</span>: <span class="str">"PaymentError"</span>,
+    <span class="str">"message"</span>: <span class="str">"Card declined"</span>,
+    <span class="str">"code"</span>: <span class="str">"card_declined"</span>
+  },
+  <span class="str">"metadata"</span>: {
+    <span class="str">"orderId"</span>: <span class="str">"ord-789"</span>,
+    <span class="str">"amount"</span>: <span class="num">49.99</span>,
+    <span class="str">"provider"</span>: <span class="str">"stripe"</span>
+  }
+}</code></pre>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('pitfalls')">← Pitfalls</button>
+<button class="nav-btn next" onclick="navigate('interview')">Interview Prep →</button>
+</div>
+</div>
+
+<!-- ============ SECTION: INTERVIEW ============ -->
+<div class="section" id="sec-interview">
+<h2>🎯 Interview Preparation</h2>
+<p class="subtitle">Questions and answers you'll face at competitive companies</p>
+
+<h3>Common Interview Questions</h3>
+
+<div class="concept-card">
+<span class="card-label info">QUESTION 1</span>
+<h4>"How would you set up error monitoring for a production JavaScript application?"</h4>
+<p><strong>Great answer structure:</strong></p>
+<ol class="styled">
+<li>Set up global error handlers (<code>window.onerror</code>, <code>unhandledrejection</code>)</li>
+<li>Integrate Sentry or similar tool with DSN, environment, release tags</li>
+<li>Upload source maps for readable stack traces</li>
+<li>Add user context and breadcrumbs for debugging</li>
+<li>Configure sampling rates to control costs</li>
+<li>Set up alert rules for error rate spikes</li>
+<li>Use <code>beforeSend</code> to filter noise (browser extensions, bots)</li>
+<li>Monitor unhandled promise rejections separately</li>
+</ol>
+</div>
+
+<div class="concept-card">
+<span class="card-label info">QUESTION 2</span>
+<h4>"What are the three pillars of observability?"</h4>
+<p><strong>Logs</strong> (what happened — discrete events), <strong>Metrics</strong> (how much/how fast — numerical aggregates), <strong>Traces</strong> (the journey — request path through services). They complement each other: metrics tell you SOMETHING is wrong, logs tell you WHAT, traces tell you WHERE in the request flow.</p>
+</div>
+
+<div class="concept-card">
+<span class="card-label info">QUESTION 3</span>
+<h4>"How do you avoid alert fatigue?"</h4>
+<p><strong>Key points:</strong></p>
+<ul class="styled">
+<li>Every alert must be actionable — delete alerts nobody acts on</li>
+<li>Use proper severity levels — not everything is critical</li>
+<li>Set intelligent thresholds — percentiles not averages</li>
+<li>Implement cooldown periods — don't re-fire every minute</li>
+<li>Group correlated alerts — one incident = one notification</li>
+<li>Review and prune alerts regularly (monthly)</li>
+<li>Differentiate page-worthy (wake someone up) from notification-worthy (check tomorrow)</li>
+</ul>
+</div>
+
+<div class="concept-card">
+<span class="card-label info">QUESTION 4</span>
+<h4>"What's the difference between monitoring and observability?"</h4>
+<p><strong>Monitoring</strong> = checking predefined metrics against known thresholds. It answers "is this specific thing broken?"<br>
+<strong>Observability</strong> = ability to understand ANY internal system state from external outputs. It answers "WHY is this unknown thing happening?"<br><br>
+Monitoring is a subset of observability. You can monitor without being observable, but you can't be observable without monitoring infrastructure.</p>
+</div>
+
+<div class="concept-card">
+<span class="card-label info">QUESTION 5</span>
+<h4>"Explain structured logging and why it matters."</h4>
+<p>Structured logging outputs logs as <strong>JSON objects</strong> instead of plain strings. This matters because:
+<br>• Machine-parseable — log aggregation tools can index and search fields
+<br>• Filterable — search by userId, errorCode, service, etc.
+<br>• Consistent — every log has the same schema
+<br>• Correlatable — correlation IDs link logs across services
+<br>• Alertable — trigger alerts based on specific field values
+</p>
+</div>
+
+<div class="concept-card">
+<span class="card-label info">QUESTION 6</span>
+<h4>"How would you measure and improve Core Web Vitals?"</h4>
+<p><strong>Measure:</strong> Use <code>PerformanceObserver</code> API, <code>web-vitals</code> library, or Lighthouse. Track LCP, INP, CLS in real user monitoring (RUM).<br>
+<strong>Improve LCP:</strong> Optimize images, preload critical resources, reduce server response time.<br>
+<strong>Improve INP:</strong> Break up long tasks, use <code>requestIdleCallback</code>, reduce main thread work.<br>
+<strong>Improve CLS:</strong> Set image dimensions, avoid dynamic content injection, use CSS containment.</p>
+</div>
+
+<div class="concept-card">
+<span class="card-label info">QUESTION 7</span>
+<h4>"Walk me through how you'd debug a production issue you've never seen before."</h4>
+<ol class="styled">
+<li>Check error tracker (Sentry) for new/spiking issues</li>
+<li>Look at breadcrumbs to understand what the user did before the error</li>
+<li>Check if it correlates with a recent deployment (release tracking)</li>
+<li>Look at metrics dashboards — is there an overall pattern?</li>
+<li>Search structured logs with correlation ID for the full request path</li>
+<li>If distributed system, check traces to find which service is failing</li>
+<li>Check if it's environment-specific (browser, region, device)</li>
+<li>Reproduce locally with the same inputs if possible</li>
+</ol>
+</div>
+
+<h3>Bonus: System Design Question</h3>
+<div class="concept-card warning-card">
+<span class="card-label warn">DESIGN CHALLENGE</span>
+<h4>"Design a client-side error reporting system"</h4>
+<p>Key considerations to mention:</p>
+<ul class="styled">
+<li><strong>Batching</strong> — Don't send every error immediately, batch them</li>
+<li><strong>Rate limiting</strong> — Cap at N errors per minute</li>
+<li><strong>Deduplication</strong> — Same error in a loop shouldn't create 10K reports</li>
+<li><strong>Sampling</strong> — Only send X% of errors in high-traffic apps</li>
+<li><strong>Offline support</strong> — Queue errors when offline, send when back online</li>
+<li><strong>Privacy</strong> — Scrub PII before sending</li>
+<li><strong>Performance</strong> — Error reporting shouldn't impact app performance</li>
+<li><strong>Graceful degradation</strong> — If error reporting fails, don't crash the app</li>
+<li><strong>Context enrichment</strong> — User, browser, URL, session, breadcrumbs</li>
+<li><strong>Source maps</strong> — Uploaded separately for security</li>
+</ul>
+</div>
+
+<div class="score-display" id="finalScore" style="display:none">
+<div class="score-label">🎓 Course Completed!</div>
+<div class="score-num" id="finalScoreNum">100%</div>
+<div class="score-label">You're ready for the interview</div>
+</div>
+
+<div class="nav-buttons">
+<button class="nav-btn prev" onclick="navigate('cheatsheet')">← Cheat Sheet</button>
+<button class="nav-btn next" onclick="completeCourse()" style="background:var(--success)">🎉 Complete Course</button>
+</div>
+</div>
+
+</div>
+</main>
+</div>
+
+<script>
+// ============================================
+// APP STATE
+// ============================================
+const state = {
+  currentSection: 'intro',
+  completed: new Set(),
+  quizAnswers: {},
+  quizGraded: false
+};
+
+const sectionOrder = ['intro','pillars','error-tracking','sentry','logging','perf-monitoring','alerting','exercises','quiz','pitfalls','cheatsheet','interview'];
+
+// ============================================
+// NAVIGATION
+// ============================================
+function navigate(sectionId, navItem) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const sec = document.getElementById('sec-' + sectionId);
+  if (sec) {
+    sec.classList.add('active');
+    state.currentSection = sectionId;
+    markCompleted(sectionId);
+  }
+
+  if (navItem) {
+    navItem.classList.add('active');
+  } else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.dataset.section === sectionId) n.classList.add('active');
+    });
+  }
+
+  window.scrollTo(0, 0);
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+  }
+}
+
+function markCompleted(sectionId) {
+  state.completed.add(sectionId);
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (state.completed.has(n.dataset.section)) {
+      n.classList.add('completed');
+      n.querySelector('.check').textContent = '✓';
+    }
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = sectionOrder.length;
+  const done = state.completed.size;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% Complete';
+  document.getElementById('progressCount').textContent = done + '/' + total;
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ============================================
+// CODE EXECUTION (SANDBOXED)
+// ============================================
+function createSandbox(outputId) {
+  const output = document.getElementById(outputId);
+  output.innerHTML = '';
+  const logs = [];
+  
+  const addLine = (type, args) => {
+    const line = document.createElement('div');
+    line.className = 'log-line' + (type === 'error' ? ' log-error' : type === 'warn' ? ' log-warn' : type === 'info' ? ' log-info' : '');
+    const text = args.map(a => {
+      if (typeof a === 'object') {
+        try { return JSON.stringify(a, null, 2); } catch { return String(a); }
+      }
+      return String(a);
+    }).join(' ');
+    line.textContent = text;
+    output.appendChild(line);
+    output.scrollTop = output.scrollHeight;
+  };
+
+  return {
+    console: {
+      log: (...args) => addLine('log', args),
+      info: (...args) => addLine('info', args),
+      warn: (...args) => addLine('warn', args),
+      error: (...args) => addLine('error', args),
+      debug: (...args) => addLine('log', args),
+      table: (data) => addLine('log', [JSON.stringify(data, null, 2)]),
+      trace: (...args) => addLine('log', args),
+    },
+    addLine
+  };
+}
+
+function runCode(editorId, outputId) {
+  const code = document.getElementById(editorId).value;
+  const sandbox = createSandbox(outputId);
+  
+  try {
+    const fn = new Function('console', 'performance', code);
+    fn(sandbox.console, performance);
+  } catch (err) {
+    sandbox.addLine('error', ['❌ ' + err.name + ': ' + err.message]);
+  }
+}
+
+function runErrorDemo() { runCode('errorEditor', 'errorOutput'); }
+function runLogDemo() { runCode('logEditor', 'logOutput'); }
+function runPerfDemo() { runCode('perfEditor', 'perfOutput'); }
+function runAlertDemo() { runCode('alertEditor', 'alertOutput'); }
+
+function runExercise(id) { runCode(id + 'Editor', id + 'Output'); }
+
+function resetEditor(editorId, outputId) {
+  document.getElementById(outputId).innerHTML = '';
+}
+
+// ============================================
+// EXERCISE SOLUTIONS
+// ============================================
+const solutions = {
+  ex1: `const capturedErrors = [];
+
+window.onerror = function(message, source, line, col, error) {
+  capturedErrors.push({
+    type: 'runtime_error',
+    message: message,
+    source: source,
+    line: line,
+    timestamp: new Date().toISOString()
+  });
+  console.log('🐛 Caught runtime error:', message);
+  return true;
+};
+
+window.addEventListener('unhandledrejection', (event) => {
+  capturedErrors.push({
+    type: 'unhandled_rejection',
+    message: String(event.reason),
+    timestamp: new Date().toISOString()
+  });
+  console.log('🐛 Caught rejection:', event.reason);
+  event.preventDefault();
+});
+
+// Simulate captured errors for demo:
+capturedErrors.push({
+  type: 'runtime_error',
+  message: 'Cannot read properties of null',
+  timestamp: new Date().toISOString()
+});
+capturedErrors.push({
+  type: 'unhandled_rejection',
+  message: 'API timeout',
+  timestamp: new Date().toISOString()
+});
+
+console.log('Captured errors:', JSON.stringify(capturedErrors, null, 2));`,
+
+  ex2: `class Logger {
+  static LEVELS = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
+
+  constructor(options = {}) {
+    this.minLevel = Logger.LEVELS[options.level || 'INFO'];
+    this.service = options.service || 'app';
+    this.context = options.context || {};
+  }
+
+  _log(level, message, data = {}) {
+    if (Logger.LEVELS[level] < this.minLevel) return;
+
+    const entry = {
+      timestamp: new Date().toISOString(),
+      level,
+      service: this.service,
+      message,
+      ...this.context,
+      ...data
+    };
+
+    const methods = { DEBUG: 'debug', INFO: 'info', WARN: 'warn', ERROR: 'error' };
+    console[methods[level]](JSON.stringify(entry, null, 2));
+    return entry;
+  }
+
+  debug(msg, data) { return this._log('DEBUG', msg, data); }
+  info(msg, data) { return this._log('INFO', msg, data); }
+  warn(msg, data) { return this._log('WARN', msg, data); }
+  error(msg, data) { return this._log('ERROR', msg, data); }
+
+  child(extraContext) {
+    return new Logger({
+      level: Object.keys(Logger.LEVELS).find(k => Logger.LEVELS[k] === this.minLevel),
+      service: this.service,
+      context: { ...this.context, ...extraContext }
+    });
+  }
+}
+
+const log = new Logger({ service: 'api', level: 'INFO' });
+log.debug('This should NOT appear');
+log.info('Server started', { port: 3000 });
+log.warn('Slow query', { duration: 2500 });
+log.error('Connection failed', { host: 'db.example.com' });
+
+const reqLog = log.child({ requestId: 'req-abc', userId: 42 });
+reqLog.info('Processing request');
+reqLog.error('Validation failed', { field: 'email' });`,
+
+  ex3: `class Timer {
+  constructor() {
+    this.marks = new Map();
+    this.measurements = new Map();
+  }
+
+  time(label) {
+    this.marks.set(label, performance.now());
+  }
+
+  timeEnd(label) {
+    const start = this.marks.get(label);
+    if (!start) throw new Error(\`No mark found for "\${label}"\`);
+    
+    const duration = performance.now() - start;
+    this.marks.delete(label);
+    
+    if (!this.measurements.has(label)) this.measurements.set(label, []);
+    this.measurements.get(label).push(duration);
+    
+    return duration;
+  }
+
+  getReport() {
+    const report = {};
+    for (const [label, durations] of this.measurements) {
+      const sorted = [...durations].sort((a, b) => a - b);
+      report[label] = {
+        count: durations.length,
+        min: Math.min(...durations).toFixed(2) + 'ms',
+        max: Math.max(...durations).toFixed(2) + 'ms',
+        avg: (durations.reduce((a, b) => a + b, 0) / durations.length).toFixed(2) + 'ms',
+        p95: sorted[Math.floor(sorted.length * 0.95)]?.toFixed(2) + 'ms'
+      };
+    }
+    return report;
+  }
+}
+
+const timer = new Timer();
+
+for (let i = 0; i < 5; i++) {
+  timer.time('array-sort');
+  const arr = Array.from({length: 10000}, () => Math.random());
+  arr.sort((a, b) => a - b);
+  console.log(\`Sort #\${i + 1}: \${timer.timeEnd('array-sort').toFixed(2)}ms\`);
+}
+
+for (let i = 0; i < 3; i++) {
+  timer.time('json-parse');
+  const data = JSON.stringify({ items: Array(1000).fill({ x: 1 }) });
+  JSON.parse(data);
+  console.log(\`JSON #\${i + 1}: \${timer.timeEnd('json-parse').toFixed(2)}ms\`);
+}
+
+console.log('\\n📊 Report:');
+console.log(JSON.stringify(timer.getReport(), null, 2));`,
+
+  ex4: `class AlertEngine {
+  constructor() {
+    this.rules = [];
+    this.history = [];
+    this.cooldowns = new Map();
+    this.channels = new Map();
+  }
+
+  addRule(rule) {
+    this.rules.push(rule);
+  }
+
+  addChannel(name, handler) {
+    this.channels.set(name, handler);
+  }
+
+  _checkCondition(value, operator, threshold) {
+    switch (operator) {
+      case '>': return value > threshold;
+      case '<': return value < threshold;
+      case '>=': return value >= threshold;
+      case '<=': return value <= threshold;
+      case '==': return value === threshold;
+      default: return false;
+    }
+  }
+
+  evaluate(metrics) {
+    for (const rule of this.rules) {
+      const value = metrics[rule.metric];
+      if (value === undefined) continue;
+
+      const triggered = this._checkCondition(value, rule.operator, rule.threshold);
+
+      if (triggered) {
+        const lastFired = this.cooldowns.get(rule.name) || 0;
+        const cooldownMs = (rule.cooldownSec || 0) * 1000;
+
+        if (Date.now() - lastFired < cooldownMs) {
+          console.log(\`⏸️ [COOLDOWN] \${rule.name} (skipped)\`);
+          continue;
+        }
+
+        const alert = {
+          name: rule.name,
+          severity: rule.severity,
+          message: \`\${rule.metric} = \${value} (\${rule.operator} \${rule.threshold})\`,
+          timestamp: new Date().toISOString()
+        };
+
+        this.history.push(alert);
+        this.cooldowns.set(rule.name, Date.now());
+
+        for (const ch of rule.channels) {
+          const handler = this.channels.get(ch);
+          if (handler) handler(alert);
+        }
+      } else {
+        console.log(\`✅ \${rule.name}: OK (\${rule.metric} = \${value})\`);
+      }
+    }
+  }
+
+  getHistory() { return this.history; }
+}
+
+const engine = new AlertEngine();
+
+engine.addChannel('console', (alert) => {
+  console.log(\`🚨 [\${alert.severity}] \${alert.name}: \${alert.message}\`);
+});
+engine.addChannel('log', (alert) => {
+  console.log(\`📝 Logged: \${alert.name} at \${alert.timestamp}\`);
+});
+
+engine.addRule({ name: 'High Error Rate', metric: 'errorRate', operator: '>', threshold: 0.05, severity: 'CRITICAL', cooldownSec: 5, channels: ['console', 'log'] });
+engine.addRule({ name: 'High Latency', metric: 'p95ms', operator: '>', threshold: 2000, severity: 'WARNING', cooldownSec: 10, channels: ['console'] });
+engine.addRule({ name: 'Low Throughput', metric: 'rps', operator: '<', threshold: 10, severity: 'INFO', cooldownSec: 30, channels: ['log'] });
+
+console.log('=== Check 1: Normal ===');
+engine.evaluate({ errorRate: 0.01, p95ms: 200, rps: 150 });
+
+console.log('\\n=== Check 2: Problems! ===');
+engine.evaluate({ errorRate: 0.12, p95ms: 4500, rps: 3 });
+
+console.log('\\n=== Check 3: Still bad (cooldown) ===');
+engine.evaluate({ errorRate: 0.15, p95ms: 5000, rps: 2 });
+
+console.log('\\nAlert history:', engine.getHistory().length, 'alerts');`,
+
+  ex5: `const errorLog = [];
+
+function withErrorBoundary(fn, options = {}) {
+  const { fallback = null, context = {}, onError } = options;
+
+  return function(...args) {
+    try {
+      const result = fn.apply(this, args);
+
+      // Handle async functions (Promises)
+      if (result && typeof result.then === 'function') {
+        return result.catch(err => {
+          console.error('🛡️ Async error caught:', err.message, context);
+          if (onError) onError(err);
+          return fallback;
+        });
+      }
+
+      return result;
+    } catch (err) {
+      console.error('🛡️ Error caught:', err.message, JSON.stringify(context));
+      if (onError) onError(err);
+      return fallback;
+    }
+  };
+}
+
+const safeDivide = withErrorBoundary(
+  (a, b) => {
+    if (b === 0) throw new Error('Division by zero');
+    return a / b;
+  },
+  { fallback: 0, context: { op: 'divide' }, onError: (e) => errorLog.push(e.message) }
+);
+
+console.log('10 / 2 =', safeDivide(10, 2));
+console.log('10 / 0 =', safeDivide(10, 0));
+
+const safeParse = withErrorBoundary(
+  (str) => JSON.parse(str),
+  { fallback: {}, onError: (e) => errorLog.push(e.message) }
+);
+
+console.log('Valid:', JSON.stringify(safeParse('{"name":"test"}')));
+console.log('Invalid:', JSON.stringify(safeParse('not json{{{' )));
+
+console.log('\\nError log:', errorLog);`
+};
+
+function showSolution(exId) {
+  if (solutions[exId]) {
+    document.getElementById(exId + 'Editor').value = solutions[exId];
+    runExercise(exId);
+  }
+}
+
+function toggleHint(hintId) {
+  const hint = document.getElementById(hintId);
+  hint.classList.toggle('show');
+}
+
+// ============================================
+// TABS
+// ============================================
+function switchTab(header, tabId) {
+  const container = header.closest('.tab-container');
+  container.querySelectorAll('.tab-header').forEach(h => h.classList.remove('active'));
+  container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  header.classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+
+// ============================================
+// COPY CODE
+// ============================================
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// ============================================
+// QUIZ
+// ============================================
+const quizData = [
+  {
+    q: "What are the three pillars of observability?",
+    options: ["Logs, Metrics, Traces", "Errors, Warnings, Info", "CPU, Memory, Disk", "Frontend, Backend, Database"],
+    correct: 0,
+    explanation: "Logs (events), Metrics (numerical measurements), and Traces (request paths) are the three pillars."
+  },
+  {
+    q: "Which handler catches unhandled Promise rejections?",
+    options: ["window.onerror", "window.onrejection", "window.addEventListener('unhandledrejection')", "Promise.onError"],
+    correct: 2,
+    explanation: "The 'unhandledrejection' event fires when a Promise is rejected without a .catch() handler."
+  },
+  {
+    q: "What does Sentry's `beforeSend` callback do?",
+    options: ["Sends errors faster", "Filters/modifies events before they're sent to Sentry", "Validates the DSN", "Batches errors for efficiency"],
+    correct: 1,
+    explanation: "beforeSend lets you inspect, modify, or drop (return null) events before they're sent to Sentry."
+  },
+  {
+    q: "What is a 'breadcrumb' in Sentry?",
+    options: ["A type of error", "A trail of events that happened before an error", "A navigation path", "A log level"],
+    correct: 1,
+    explanation: "Breadcrumbs are a trail of events (clicks, API calls, navigation) that occurred before an error, helping with debugging."
+  },
+  {
+    q: "Which is the correct log level hierarchy (least to most severe)?",
+    options: ["ERROR → WARN → INFO → DEBUG", "DEBUG → INFO → WARN → ERROR", "INFO → DEBUG → WARN → ERROR", "TRACE → ERROR → WARN → DEBUG"],
+    correct: 1,
+    explanation: "TRACE → DEBUG → INFO → WARN → ERROR → FATAL is the standard severity order."
+  },
+  {
+    q: "What is structured logging?",
+    options: ["Logging with proper indentation", "Outputting logs as parseable JSON objects", "Using console.table()", "Logging to a database"],
+    correct: 1,
+    explanation: "Structured logging outputs JSON objects that can be machine-parsed, indexed, and searched."
+  },
+  {
+    q: "What does LCP stand for in Core Web Vitals?",
+    options: ["Last Content Paint", "Largest Contentful Paint", "Layout Content Process", "Longest CPU Process"],
+    correct: 1,
+    explanation: "LCP = Largest Contentful Paint, measuring when the largest content element becomes visible."
+  },
+  {
+    q: "A good LCP score is:",
+    options: ["≤ 500ms", "≤ 1.0s", "≤ 2.5s", "≤ 5.0s"],
+    correct: 2,
+    explanation: "Google considers LCP ≤ 2.5 seconds as 'good'."
+  },
+  {
+    q: "What API provides high-resolution timing in the browser?",
+    options: ["Date.now()", "setTimeout()", "performance.now()", "requestAnimationFrame()"],
+    correct: 2,
+    explanation: "performance.now() provides sub-millisecond precision and is not affected by system clock changes."
+  },
+  {
+    q: "Why should you upload source maps to Sentry?",
+    options: ["To make the app faster", "To see original code in error stack traces instead of minified code", "To compress errors", "To auto-fix bugs"],
+    correct: 1,
+    explanation: "Source maps let Sentry map minified code (main.min.js:1:45000) back to your original source files and line numbers."
+  },
+  {
+    q: "What's the #1 rule of alerting?",
+    options: ["Alert on everything", "Every alert must be actionable", "Use only email alerts", "Alert only on errors"],
+    correct: 1,
+    explanation: "If an alert fires and nobody needs to take action, it's noise that leads to alert fatigue."
+  },
+  {
+    q: "What is 'alert fatigue'?",
+    options: ["When the alert system crashes", "When developers ignore alerts because there are too many false/noisy ones", "When alerts arrive too slowly", "A type of monitoring tool"],
+    correct: 1,
+    explanation: "Alert fatigue occurs when too many non-actionable alerts cause people to start ignoring ALL alerts, including critical ones."
+  },
+  {
+    q: "What is the difference between monitoring and observability?",
+    options: ["They're the same thing", "Monitoring checks known things; observability helps understand unknown issues", "Observability is cheaper", "Monitoring is only for servers"],
+    correct: 1,
+    explanation: "Monitoring checks predefined metrics. Observability lets you understand ANY internal state from external outputs."
+  },
+  {
+    q: "Why use percentiles (p95, p99) instead of averages for latency?",
+    options: ["Percentiles are faster to calculate", "Averages hide outliers — p95 shows what 95% of users experience", "Percentiles use less memory", "No reason, both are equal"],
+    correct: 1,
+    explanation: "An average of 200ms could hide that 5% of users wait 8+ seconds. p95 reveals the real user experience."
+  },
+  {
+    q: "What should you NEVER log?",
+    options: ["Error messages", "Timestamps", "Passwords and PII", "HTTP status codes"],
+    correct: 2,
+    explanation: "Never log passwords, credit cards, tokens, SSNs, or any PII (Personally Identifiable Information)."
+  },
+  {
+    q: "What is a correlation ID?",
+    options: ["A unique ID that follows a request across all services and logs", "An error code", "A user session ID", "A database primary key"],
+    correct: 0,
+    explanation: "Correlation IDs are unique identifiers attached to a request, enabling you to trace it through multiple services."
+  },
+  {
+    q: "In Sentry, what is 'fingerprinting'?",
+    options: ["User authentication", "How Sentry groups similar errors into issues", "Browser detection", "Code signing"],
+    correct: 1,
+    explanation: "Fingerprinting determines which errors are grouped together into a single 'issue'. You can customize it."
+  },
+  {
+    q: "What does CLS measure?",
+    options: ["How fast content loads", "Visual stability — how much the layout shifts unexpectedly", "JavaScript execution time", "Network latency"],
+    correct: 1,
+    explanation: "CLS (Cumulative Layout Shift) measures unexpected layout shifts. Lower is better (≤ 0.1 is good)."
+  },
+  {
+    q: "Which is a best practice for production logging?",
+    options: ["Use console.log everywhere", "Use structured JSON logging with levels and context", "Don't log anything to save resources", "Log only errors, never info"],
+    correct: 1,
+    explanation: "Structured logging with proper levels, timestamps, and context makes production debugging possible."
+  },
+  {
+    q: "What is the capture phase important for in error handling?",
+    options: ["It's not important", "Resource loading errors only bubble in capture phase", "It makes errors faster", "It prevents errors"],
+    correct: 1,
+    explanation: "addEventListener('error', handler, true) — the `true` flag enables capture phase, needed to catch resource load failures."
+  },
+  {
+    q: "What is a 'long task' in performance monitoring?",
+    options: ["Any task over 1 second", "Any task over 50ms that blocks the main thread", "Any API call", "A task with errors"],
+    correct: 1,
+    explanation: "Long tasks are tasks that block the main thread for 50ms or more, potentially causing janky user interactions."
+  },
+  {
+    q: "What does `sampleRate: 0.1` mean in Sentry?",
+    options: ["10x more errors are sent", "Only 10% of errors are sent to Sentry", "Errors are sampled every 10 seconds", "10 errors maximum"],
+    correct: 1,
+    explanation: "sampleRate: 0.1 means only 10% of events are randomly selected and sent. Useful for high-traffic apps to control costs."
+  },
+  {
+    q: "What's a 'child logger'?",
+    options: ["A logger for child processes", "A logger that inherits parent context and adds more", "A smaller log file", "A React child component logger"],
+    correct: 1,
+    explanation: "A child logger inherits all context from its parent (service, requestId) and adds additional context (userId, endpoint)."
+  },
+  {
+    q: "When should error tracking code be initialized?",
+    options: ["After all other code loads", "As early as possible, before other code", "Only when an error occurs", "In a setTimeout"],
+    correct: 1,
+    explanation: "Initialize Sentry/error tracking" 
+  }
+];
+
+// ============================================
+// QUIZ RENDERING
+// ============================================
+function renderQuiz() {
+  const container = document.getElementById('quizContainer');
+  if (!container) return;
+  
+  let html = '';
+  quizData.forEach((q, idx) => {
+    html += `
+      <div class="quiz-container" id="q-${idx}">
+        <div class="quiz-question"><span class="q-num">Q${idx+1}.</span> ${q.q}</div>
+        <div class="quiz-options">`;
+    
+    q.options.forEach((opt, optIdx) => {
+      const letter = String.fromCharCode(65 + optIdx); // A, B, C, D
+      html += `
+        <div class="quiz-option" data-q="${idx}" data-opt="${optIdx}" onclick="selectAnswer(${idx}, ${optIdx})">
+          <span class="letter">${letter}</span> ${opt}
+        </div>`;
+    });
+    
+    html += `</div>
+        <div class="quiz-feedback" id="fb-${idx}"></div>
+      </div>`;
+  });
+  
+  container.innerHTML = html;
+}
+
+// ============================================
+// QUIZ INTERACTION
+// ============================================
+function selectAnswer(qIdx, optIdx) {
+  const container = document.querySelector(`#q-${qIdx} .quiz-options`);
+  container.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+  container.querySelector(`[data-opt="${optIdx}"]`).classList.add('selected');
+  state.quizAnswers[qIdx] = optIdx;
+  // Hide any previous feedback
+  document.getElementById(`fb-${qIdx}`).classList.remove('show');
+}
+
+function gradeQuiz() {
+  if (state.quizGraded) {
+    // If already graded, maybe just show results again
+    displayQuizResults();
+    return;
+  }
+  
+  const total = quizData.length;
+  let correct = 0;
+  
+  // Check each answer and show feedback
+  quizData.forEach((q, idx) => {
+    const selected = state.quizAnswers[idx];
+    const feedbackDiv = document.getElementById(`fb-${idx}`);
+    const options = document.querySelectorAll(`#q-${idx} .quiz-option`);
+    
+    // Remove any previous correct/incorrect classes
+    options.forEach(opt => opt.classList.remove('correct', 'incorrect'));
+    
+    if (selected === undefined) {
+      feedbackDiv.innerHTML = '⚠️ Not answered.';
+      feedbackDiv.className = 'quiz-feedback show incorrect';
+      return;
+    }
+    
+    const isCorrect = (selected === q.correct);
+    if (isCorrect) correct++;
+    
+    // Mark selected option as correct/incorrect
+    options[selected].classList.add(isCorrect ? 'correct' : 'incorrect');
+    // Also mark the correct answer for reference
+    options[q.correct].classList.add('correct');
+    
+    feedbackDiv.innerHTML = isCorrect 
+      ? `✅ Correct! ${q.explanation || ''}` 
+      : `❌ Incorrect. The correct answer is: ${q.options[q.correct]}. ${q.explanation || ''}`;
+    feedbackDiv.className = `quiz-feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+  });
+  
+  state.quizGraded = true;
+  displayQuizResults(correct, total);
+}
+
+function displayQuizResults(correct, total) {
+  const resultsDiv = document.getElementById('quizResults');
+  if (!resultsDiv) return;
+  
+  if (correct === undefined) {
+    // Recalculate if not passed
+    correct = 0;
+    total = quizData.length;
+    quizData.forEach((q, idx) => {
+      if (state.quizAnswers[idx] === q.correct) correct++;
+    });
+  }
+  
+  const percentage = Math.round((correct / total) * 100);
+  const passed = percentage >= 70; // Passing threshold
+  
+  resultsDiv.style.display = 'block';
+  resultsDiv.innerHTML = `
+    <div class="score-display" style="margin-top:0;">
+      <div class="score-num">${correct}/${total}</div>
+      <div class="score-label">${percentage}% - ${passed ? '✅ Passed' : '❌ Needs more study'}</div>
+      ${passed ? '<p style="color:var(--text-dim);margin-top:10px;">Great job! You\'re ready for the next sections.</p>' : '<p style="color:var(--text-dim);margin-top:10px;">Review the material and try again.</p>'}
+    </div>
+  `;
+  
+  // Mark quiz as completed if passed (optional)
+  if (passed) markCompleted('quiz');
+}
+
+// ============================================
+// COMPLETE COURSE
+// ============================================
+function completeCourse() {
+  // Mark all sections as completed
+  sectionOrder.forEach(sec => markCompleted(sec));
+  // Show final score
+  const finalScoreDiv = document.getElementById('finalScore');
+  finalScoreDiv.style.display = 'block';
+  document.getElementById('finalScoreNum').textContent = '100%';
+  // Navigate to interview section if not already
+  navigate('interview');
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderQuiz();
+  updateProgress();
+  
+  // Mark any completed sections based on URL or default?
+  // For now, just mark intro as started (but not completed)
+  // Actually, intro is active but not marked completed until visited.
+  // We'll mark it only when user navigates away? But we can mark it on first view.
+  // Let's mark intro as completed when viewed (already done in navigate)
+  // But on load, we need to set the active section from URL or default to intro
+  const hash = window.location.hash.substring(1);
+  if (hash && sectionOrder.includes(hash)) {
+    navigate(hash);
+  } else {
+    navigate('intro');
+  }
+});
+
+// ============================================
+// EXPOSE GLOBALLY (for onclick handlers)
+// ============================================
+window.navigate = navigate;
+window.toggleSidebar = toggleSidebar;
+window.runErrorDemo = runErrorDemo;
+window.runLogDemo = runLogDemo;
+window.runPerfDemo = runPerfDemo;
+window.runAlertDemo = runAlertDemo;
+window.runExercise = runExercise;
+window.resetEditor = resetEditor;
+window.showSolution = showSolution;
+window.toggleHint = toggleHint;
+window.switchTab = switchTab;
+window.copyCode = copyCode;
+window.selectAnswer = selectAnswer;
+window.gradeQuiz = gradeQuiz;
+window.completeCourse = completeCourse;
+</script>
+
+<!-- Close main content and app container -->
+</div> <!-- .content-area -->
+</main> <!-- .main-content -->
+</div> <!-- .app-container -->
+
+<!-- Additional scripts or footer if needed -->
+</body>
+</html>

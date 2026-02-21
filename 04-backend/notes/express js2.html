@@ -1,0 +1,2957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Express.js Mastery — Interactive Learning</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0a0e17;--surface:#111827;--surface2:#1a2332;--surface3:#243044;
+    --primary:#6366f1;--primary-glow:#818cf850;--accent:#22d3ee;
+    --green:#10b981;--red:#ef4444;--orange:#f59e0b;--pink:#ec4899;
+    --text:#e2e8f0;--text-dim:#94a3b8;--text-muted:#64748b;
+    --border:#1e293b;--code-bg:#0d1117;
+    --radius:12px;--transition:all .3s ease;
+  }
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+  
+  /* Layout */
+  .app{display:flex;min-height:100vh}
+  
+  /* Sidebar */
+  .sidebar{
+    width:300px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);
+    position:fixed;left:0;top:0;bottom:0;overflow-y:auto;z-index:100;
+    transition:transform .3s ease;
+  }
+  .sidebar-header{padding:24px 20px;border-bottom:1px solid var(--border)}
+  .sidebar-header h1{font-size:1.3rem;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800}
+  .sidebar-header p{font-size:.75rem;color:var(--text-muted);margin-top:4px}
+  
+  .progress-bar-container{margin:16px 20px;background:var(--surface3);border-radius:20px;height:8px;overflow:hidden}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:20px;transition:width .5s ease;width:0%}
+  .progress-text{padding:0 20px 16px;font-size:.75rem;color:var(--text-muted);border-bottom:1px solid var(--border)}
+  
+  .nav-section{padding:12px 0}
+  .nav-section-title{padding:8px 20px;font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);font-weight:700}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;
+    transition:var(--transition);font-size:.88rem;color:var(--text-dim);position:relative;
+  }
+  .nav-item:hover{background:var(--surface2);color:var(--text)}
+  .nav-item.active{color:var(--accent);background:var(--surface2)}
+  .nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:0 3px 3px 0}
+  .nav-item .icon{font-size:1.1rem;width:24px;text-align:center}
+  .nav-item .check{margin-left:auto;font-size:.8rem;color:var(--green);opacity:0;transition:var(--transition)}
+  .nav-item.completed .check{opacity:1}
+  
+  /* Main Content */
+  .main{margin-left:300px;flex:1;min-height:100vh}
+  .content-area{max-width:900px;margin:0 auto;padding:40px 40px 100px}
+  
+  /* Sections */
+  .section{display:none}
+  .section.active{display:block;animation:fadeIn .4s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  
+  /* Typography */
+  .section-badge{
+    display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
+    background:linear-gradient(135deg,var(--primary)20,transparent);
+    border:1px solid var(--primary)40;border-radius:20px;font-size:.75rem;
+    color:var(--primary);font-weight:600;margin-bottom:16px;
+  }
+  .section h2{font-size:2rem;font-weight:800;margin-bottom:8px;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .section h3{font-size:1.3rem;font-weight:700;margin:32px 0 12px;color:var(--text)}
+  .section h4{font-size:1.05rem;font-weight:600;margin:24px 0 8px;color:var(--accent)}
+  .section>p,.card>p,.concept-text{color:var(--text-dim);margin-bottom:16px;font-size:.95rem}
+  
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin:20px 0}
+  .card.highlight{border-color:var(--primary)60}
+  .card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .card-header .emoji{font-size:1.5rem}
+  .card-header h4{margin:0;font-size:1.1rem}
+  
+  /* Code Blocks */
+  .code-block{
+    background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);
+    margin:16px 0;overflow:hidden;position:relative;
+  }
+  .code-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
+    font-size:.78rem;color:var(--text-muted);
+  }
+  .code-header .filename{display:flex;align-items:center;gap:6px}
+  .code-header .dots{display:flex;gap:5px}
+  .code-header .dots span{width:10px;height:10px;border-radius:50%}
+  .code-header .dots span:nth-child(1){background:#ef4444}
+  .code-header .dots span:nth-child(2){background:#f59e0b}
+  .code-header .dots span:nth-child(3){background:#10b981}
+  .code-body{padding:16px;overflow-x:auto;font-family:'Fira Code','Cascadia Code','Consolas',monospace;font-size:.85rem;line-height:1.8}
+  .code-body pre{margin:0;white-space:pre}
+  .copy-btn{
+    padding:4px 10px;background:var(--surface3);border:1px solid var(--border);
+    color:var(--text-dim);border-radius:6px;cursor:pointer;font-size:.72rem;transition:var(--transition);
+  }
+  .copy-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+  
+  /* Syntax Highlighting */
+  .kw{color:#c084fc}.str{color:#86efac}.cm{color:#64748b;font-style:italic}
+  .fn{color:#67e8f9}.num{color:#fbbf24}.op{color:#94a3b8}.prop{color:#f9a8d4}
+  .mth{color:#6ee7b7}.cls{color:#fca5a5}.dec{color:#a78bfa}
+  .param{color:#fdba74}.obj{color:#93c5fd}
+  
+  /* Output simulation */
+  .output-block{
+    background:#0f1419;border:1px solid var(--border);border-radius:var(--radius);
+    margin:12px 0;padding:16px;font-family:monospace;font-size:.85rem;
+  }
+  .output-block .label{color:var(--green);font-size:.72rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .output-block .output-text{color:var(--text-dim);white-space:pre-wrap}
+  .output-block .req-line{color:var(--accent)}
+  .output-block .res-line{color:var(--green)}
+  .output-block .err-line{color:var(--red)}
+  
+  /* Pitfall/Warning Boxes */
+  .pitfall-box{
+    background:linear-gradient(135deg,rgba(239,68,68,.08),transparent);
+    border:1px solid rgba(239,68,68,.25);border-left:4px solid var(--red);
+    border-radius:var(--radius);padding:20px;margin:20px 0;
+  }
+  .pitfall-box .title{display:flex;align-items:center;gap:8px;color:var(--red);font-weight:700;font-size:.95rem;margin-bottom:8px}
+  .pitfall-box p{color:var(--text-dim);font-size:.88rem}
+  
+  .tip-box{
+    background:linear-gradient(135deg,rgba(34,211,238,.08),transparent);
+    border:1px solid rgba(34,211,238,.25);border-left:4px solid var(--accent);
+    border-radius:var(--radius);padding:20px;margin:20px 0;
+  }
+  .tip-box .title{display:flex;align-items:center;gap:8px;color:var(--accent);font-weight:700;font-size:.95rem;margin-bottom:8px}
+  .tip-box p{color:var(--text-dim);font-size:.88rem}
+  
+  .success-box{
+    background:linear-gradient(135deg,rgba(16,185,129,.08),transparent);
+    border:1px solid rgba(16,185,129,.25);border-left:4px solid var(--green);
+    border-radius:var(--radius);padding:20px;margin:20px 0;
+  }
+  .success-box .title{display:flex;align-items:center;gap:8px;color:var(--green);font-weight:700;font-size:.95rem;margin-bottom:8px}
+  
+  /* Quiz Section */
+  .quiz-container{margin:24px 0}
+  .quiz-question{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:24px;margin:16px 0;
+  }
+  .quiz-question .q-number{color:var(--primary);font-weight:700;font-size:.8rem;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+  .quiz-question .q-text{font-size:1rem;font-weight:600;margin-bottom:16px}
+  .quiz-options{display:flex;flex-direction:column;gap:8px}
+  .quiz-option{
+    display:flex;align-items:center;gap:12px;padding:12px 16px;
+    background:var(--surface2);border:2px solid var(--border);border-radius:10px;
+    cursor:pointer;transition:var(--transition);font-size:.9rem;color:var(--text-dim);
+  }
+  .quiz-option:hover{border-color:var(--primary);color:var(--text)}
+  .quiz-option.selected{border-color:var(--primary);background:rgba(99,102,241,.1);color:var(--text)}
+  .quiz-option.correct{border-color:var(--green);background:rgba(16,185,129,.1);color:var(--green)}
+  .quiz-option.wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+  .quiz-option .marker{
+    width:22px;height:22px;border-radius:50%;border:2px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0;
+    transition:var(--transition);
+  }
+  .quiz-option.selected .marker{border-color:var(--primary);background:var(--primary);color:#fff}
+  .quiz-option.correct .marker{border-color:var(--green);background:var(--green);color:#fff}
+  .quiz-option.wrong .marker{border-color:var(--red);background:var(--red);color:#fff}
+  .quiz-explanation{
+    margin-top:12px;padding:12px 16px;background:var(--surface2);border-radius:8px;
+    font-size:.85rem;color:var(--text-dim);display:none;border-left:3px solid var(--primary);
+  }
+  .quiz-explanation.show{display:block;animation:fadeIn .3s ease}
+  .check-answer-btn{
+    margin-top:12px;padding:10px 24px;background:var(--primary);color:#fff;
+    border:none;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;
+    transition:var(--transition);
+  }
+  .check-answer-btn:hover{background:#4f46e5;transform:translateY(-1px)}
+  .check-answer-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  
+  /* Exercise */
+  .exercise-box{
+    background:var(--surface);border:2px solid var(--primary)40;border-radius:var(--radius);
+    padding:24px;margin:24px 0;
+  }
+  .exercise-box .ex-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .exercise-box .ex-header h4{margin:0;color:var(--primary)}
+  .exercise-box .ex-description{color:var(--text-dim);font-size:.9rem;margin-bottom:16px}
+  .exercise-editor{
+    width:100%;min-height:150px;background:var(--code-bg);color:var(--text);
+    border:1px solid var(--border);border-radius:8px;padding:16px;
+    font-family:'Fira Code','Consolas',monospace;font-size:.85rem;line-height:1.7;
+    resize:vertical;outline:none;
+  }
+  .exercise-editor:focus{border-color:var(--primary)}
+  .exercise-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .btn{
+    padding:10px 20px;border:none;border-radius:8px;cursor:pointer;
+    font-size:.85rem;font-weight:600;transition:var(--transition);
+  }
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:#4f46e5}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text-dim)}
+  .btn-outline:hover{border-color:var(--primary);color:var(--text)}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-green:hover{background:#059669}
+  .exercise-result{margin-top:12px;padding:12px 16px;border-radius:8px;font-size:.85rem;display:none}
+  .exercise-result.show{display:block;animation:fadeIn .3s ease}
+  .exercise-result.pass{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--green)}
+  .exercise-result.fail{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+  
+  /* Solution toggle */
+  .solution-toggle{
+    display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);
+    cursor:pointer;font-size:.82rem;margin-top:8px;padding:6px 12px;
+    background:var(--surface2);border-radius:6px;border:none;transition:var(--transition);
+  }
+  .solution-toggle:hover{color:var(--accent)}
+  .solution-content{display:none;margin-top:12px}
+  .solution-content.show{display:block;animation:fadeIn .3s ease}
+  
+  /* Flow diagrams */
+  .flow-diagram{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:24px;margin:20px 0;text-align:center;overflow-x:auto;
+  }
+  .flow-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .flow-box{
+    padding:10px 18px;border-radius:8px;font-size:.82rem;font-weight:600;
+    white-space:nowrap;
+  }
+  .flow-box.request{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:var(--primary)}
+  .flow-box.middleware{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.3);color:var(--accent)}
+  .flow-box.route{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--green)}
+  .flow-box.error{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+  .flow-box.response{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--orange)}
+  .flow-arrow{color:var(--text-muted);font-size:1.2rem}
+  
+  /* Tabs */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:16px}
+  .tab{
+    padding:10px 20px;cursor:pointer;color:var(--text-muted);font-size:.85rem;font-weight:600;
+    border-bottom:2px solid transparent;transition:var(--transition);
+  }
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-content{display:none}
+  .tab-content.active{display:block;animation:fadeIn .3s ease}
+  
+  /* Interactive Demo */
+  .demo-container{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    overflow:hidden;margin:20px 0;
+  }
+  .demo-header{
+    padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:10px;
+  }
+  .demo-header .demo-title{font-weight:700;font-size:.9rem;color:var(--accent)}
+  .demo-body{padding:20px}
+  .demo-url-bar{
+    display:flex;align-items:center;gap:8px;margin-bottom:16px;
+  }
+  .demo-method{
+    padding:6px 12px;background:var(--surface3);border:1px solid var(--border);
+    color:var(--green);border-radius:6px;font-family:monospace;font-size:.82rem;
+    cursor:pointer;font-weight:700;outline:none;
+  }
+  .demo-url{
+    flex:1;padding:8px 12px;background:var(--code-bg);border:1px solid var(--border);
+    color:var(--text);border-radius:6px;font-family:monospace;font-size:.85rem;outline:none;
+  }
+  .demo-url:focus{border-color:var(--primary)}
+  .demo-send{
+    padding:8px 20px;background:var(--green);color:#fff;border:none;border-radius:6px;
+    font-weight:700;cursor:pointer;font-size:.85rem;transition:var(--transition);
+  }
+  .demo-send:hover{background:#059669}
+  .demo-output{
+    background:var(--code-bg);border:1px solid var(--border);border-radius:8px;
+    padding:16px;font-family:monospace;font-size:.82rem;min-height:60px;
+    color:var(--text-dim);white-space:pre-wrap;
+  }
+  
+  /* Completion */
+  .section-complete-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:16px;margin-top:40px;background:linear-gradient(135deg,var(--primary),#8b5cf6);
+    color:#fff;border:none;border-radius:var(--radius);font-size:1rem;font-weight:700;
+    cursor:pointer;transition:var(--transition);
+  }
+  .section-complete-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,.3)}
+  .section-complete-btn.done{background:var(--green);cursor:default}
+  .section-complete-btn.done:hover{transform:none;box-shadow:none}
+  
+  /* Badges */
+  .badge-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .badge{
+    padding:4px 10px;border-radius:6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  }
+  .badge-get{background:rgba(16,185,129,.15);color:var(--green)}
+  .badge-post{background:rgba(99,102,241,.15);color:var(--primary)}
+  .badge-put{background:rgba(245,158,11,.15);color:var(--orange)}
+  .badge-delete{background:rgba(239,68,68,.15);color:var(--red)}
+  .badge-patch{background:rgba(236,72,153,.15);color:var(--pink)}
+  
+  /* Mobile toggle */
+  .menu-toggle{
+    display:none;position:fixed;top:16px;left:16px;z-index:200;
+    width:44px;height:44px;background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;cursor:pointer;color:var(--text);font-size:1.3rem;
+    align-items:center;justify-content:center;
+  }
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+  
+  /* Score display */
+  .score-card{
+    background:linear-gradient(135deg,var(--surface),var(--surface2));
+    border:1px solid var(--border);border-radius:var(--radius);padding:24px;
+    text-align:center;margin:20px 0;
+  }
+  .score-card .score-num{font-size:3rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .score-card .score-label{color:var(--text-muted);font-size:.85rem}
+  
+  /* Table */
+  .info-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.88rem}
+  .info-table th{text-align:left;padding:10px 14px;background:var(--surface2);color:var(--accent);font-weight:700;border:1px solid var(--border)}
+  .info-table td{padding:10px 14px;border:1px solid var(--border);color:var(--text-dim)}
+  .info-table tr:hover td{background:var(--surface2)}
+  
+  /* Comparison */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  .compare-card{padding:20px;border-radius:var(--radius);border:1px solid var(--border)}
+  .compare-card.do{background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.25)}
+  .compare-card.dont{background:rgba(239,68,68,.05);border-color:rgba(239,68,68,.25)}
+  .compare-card .compare-title{font-weight:700;font-size:.9rem;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .compare-card.do .compare-title{color:var(--green)}
+  .compare-card.dont .compare-title{color:var(--red)}
+  
+  @media(max-width:768px){
+    .sidebar{transform:translateX(-100%)}
+    .sidebar.open{transform:translateX(0)}
+    .menu-toggle{display:flex}
+    .main{margin-left:0}
+    .content-area{padding:70px 20px 100px}
+    .compare-grid{grid-template-columns:1fr}
+    .flow-row{flex-direction:column}
+    .flow-arrow{transform:rotate(90deg)}
+  }
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" id="menuToggle">☰</button>
+<div class="overlay" id="overlay"></div>
+
+<div class="app">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1>⚡ Express.js Mastery</h1>
+      <p>From Zero to Production-Ready</p>
+    </div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">0 of 8 completed</div>
+    
+    <nav class="nav-section">
+      <div class="nav-section-title">Foundations</div>
+      <div class="nav-item active" data-section="intro" data-index="0">
+        <span class="icon">🚀</span>
+        <span>Introduction to Express</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="nav-item" data-section="setup" data-index="1">
+        <span class="icon">🔧</span>
+        <span>Setup & First Server</span>
+        <span class="check">✓</span>
+      </div>
+    </nav>
+    
+    <nav class="nav-section">
+      <div class="nav-section-title">Core Concepts</div>
+      <div class="nav-item" data-section="routing" data-index="2">
+        <span class="icon">🛣️</span>
+        <span>Express Routing</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="nav-item" data-section="middleware" data-index="3">
+        <span class="icon">🔗</span>
+        <span>Middleware Deep Dive</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="nav-item" data-section="reqres" data-index="4">
+        <span class="icon">📡</span>
+        <span>Request & Response</span>
+        <span class="check">✓</span>
+      </div>
+    </nav>
+    
+    <nav class="nav-section">
+      <div class="nav-section-title">Advanced</div>
+      <div class="nav-item" data-section="errors" data-index="5">
+        <span class="icon">🛡️</span>
+        <span>Error Handling</span>
+        <span class="check">✓</span>
+      </div>
+      <div class="nav-item" data-section="api" data-index="6">
+        <span class="icon">🏗️</span>
+        <span>Building REST APIs</span>
+        <span class="check">✓</span>
+      </div>
+    </nav>
+    
+    <nav class="nav-section">
+      <div class="nav-section-title">Assessment</div>
+      <div class="nav-item" data-section="quiz" data-index="7">
+        <span class="icon">🎯</span>
+        <span>Final Challenge Quiz</span>
+        <span class="check">✓</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="content-area">
+
+      <!-- ===================== SECTION 0: INTRODUCTION ===================== -->
+      <div class="section active" id="section-intro">
+        <div class="section-badge">📘 Module 1</div>
+        <h2>Introduction to Express.js</h2>
+        <p>Express.js is the most popular Node.js web application framework. It provides a robust set of features to develop web and mobile applications, APIs, and more.</p>
+
+        <div class="card highlight">
+          <div class="card-header">
+            <span class="emoji">💡</span>
+            <h4>What is Express.js?</h4>
+          </div>
+          <p>Express is a <strong>minimal and flexible</strong> Node.js web application framework that provides a thin layer of fundamental features without obscuring Node.js features you already know.</p>
+          <ul style="color:var(--text-dim);margin:12px 0 0 20px;font-size:.9rem">
+            <li>Fast, unopinionated, minimalist web framework</li>
+            <li>Built on top of Node.js HTTP module</li>
+            <li>Middleware-based architecture</li>
+            <li>Robust routing system</li>
+            <li>Used by companies like IBM, Uber, Twitter, and more</li>
+          </ul>
+        </div>
+
+        <h3>Why Express Over Raw Node.js?</h3>
+        
+        <div class="compare-grid">
+          <div class="compare-card dont">
+            <div class="compare-title">❌ Raw Node.js HTTP</div>
+            <div class="code-block" style="margin:0">
+              <div class="code-body"><pre><span class="kw">const</span> http = <span class="fn">require</span>(<span class="str">'http'</span>);
+
+<span class="kw">const</span> server = http.<span class="fn">createServer</span>(
+  (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">if</span> (req.url === <span class="str">'/'</span> && 
+      req.method === <span class="str">'GET'</span>) {
+    res.<span class="fn">writeHead</span>(<span class="num">200</span>, {
+      <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>
+    });
+    res.<span class="fn">end</span>(JSON.<span class="fn">stringify</span>({
+      <span class="prop">msg</span>: <span class="str">'Hello'</span>
+    }));
+  }
+  <span class="cm">// Manual routing for EVERY path...</span>
+});</pre></div>
+            </div>
+          </div>
+          <div class="compare-card do">
+            <div class="compare-title">✅ Express.js</div>
+            <div class="code-block" style="margin:0">
+              <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+app.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">msg</span>: <span class="str">'Hello'</span> });
+});
+
+
+
+<span class="cm">// Clean, declarative, simple!</span>
+
+
+</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <h3>The Express Architecture</h3>
+        <div class="flow-diagram">
+          <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:16px">How a request flows through Express:</p>
+          <div class="flow-row">
+            <div class="flow-box request">📨 Incoming Request</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box middleware">🔗 Middleware Stack</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box route">🛣️ Route Handler</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box response">📤 Response</div>
+          </div>
+          <div class="flow-row" style="margin-top:12px">
+            <span style="color:var(--text-muted);font-size:.75rem">If error occurs anywhere →</span>
+            <div class="flow-box error">⚠️ Error Handler</div>
+          </div>
+        </div>
+
+        <h3>Key Concepts Overview</h3>
+        <table class="info-table">
+          <tr><th>Concept</th><th>Description</th></tr>
+          <tr><td><strong>Routing</strong></td><td>Defining URL patterns and HTTP methods your app responds to</td></tr>
+          <tr><td><strong>Middleware</strong></td><td>Functions that execute during the request-response cycle</td></tr>
+          <tr><td><strong>Request (req)</strong></td><td>Object representing the HTTP request with properties for query, params, body, headers</td></tr>
+          <tr><td><strong>Response (res)</strong></td><td>Object representing the HTTP response that Express sends back</td></tr>
+          <tr><td><strong>Error Handling</strong></td><td>Centralized error management for your application</td></tr>
+        </table>
+
+        <button class="section-complete-btn" onclick="completeSection(0)">
+          ✨ Mark as Complete & Continue
+        </button>
+      </div>
+
+      <!-- ===================== SECTION 1: SETUP ===================== -->
+      <div class="section" id="section-setup">
+        <div class="section-badge">📘 Module 2</div>
+        <h2>Setup & Your First Server</h2>
+        <p>Let's set up Express and build your first working server from scratch.</p>
+
+        <h3>Step 1: Initialize Your Project</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">Terminal</span>
+          </div>
+          <div class="code-body"><pre><span class="cm"># Create project directory</span>
+<span class="fn">mkdir</span> my-express-app
+<span class="fn">cd</span> my-express-app
+
+<span class="cm"># Initialize package.json</span>
+<span class="fn">npm</span> init -y
+
+<span class="cm"># Install Express</span>
+<span class="fn">npm</span> install express</pre></div>
+        </div>
+
+        <h3>Step 2: Create Your First Server</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">server.js</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="cm">// 1. Import Express</span>
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+
+<span class="cm">// 2. Create an Express application instance</span>
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+<span class="cm">// 3. Define a port</span>
+<span class="kw">const</span> PORT = process.env.PORT || <span class="num">3000</span>;
+
+<span class="cm">// 4. Define your first route</span>
+app.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">send</span>(<span class="str">'Hello, Express! 🚀'</span>);
+});
+
+<span class="cm">// 5. Start the server</span>
+app.<span class="fn">listen</span>(PORT, () => {
+  console.<span class="fn">log</span>(<span class="str">`Server running on http://localhost:</span><span class="kw">${</span>PORT<span class="kw">}</span><span class="str">`</span>);
+});</pre></div>
+        </div>
+
+        <div class="output-block">
+          <div class="label">▶ Terminal Output</div>
+          <div class="output-text"><span class="res-line">Server running on http://localhost:3000</span>
+
+<span class="req-line">→ Visit http://localhost:3000 in your browser</span>
+<span class="res-line">← "Hello, Express! 🚀"</span></div>
+        </div>
+
+        <h3>Understanding app.listen()</h3>
+        <div class="card">
+          <div class="card-header">
+            <span class="emoji">🔍</span>
+            <h4>What happens when you call app.listen()?</h4>
+          </div>
+          <div class="code-block">
+            <div class="code-body"><pre><span class="cm">// app.listen() is shorthand for:</span>
+<span class="kw">const</span> http = <span class="fn">require</span>(<span class="str">'http'</span>);
+<span class="kw">const</span> server = http.<span class="fn">createServer</span>(app);
+server.<span class="fn">listen</span>(PORT);
+
+<span class="cm">// Express wraps Node's HTTP module internally!</span>
+<span class="cm">// The app itself is just a callback function</span></pre></div>
+          </div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Common Mistake: Forgetting to listen</div>
+          <p>Your server won't start without <code>app.listen()</code>. Also, if the port is already in use, you'll get an <code>EADDRINUSE</code> error. Always use <code>process.env.PORT</code> for flexibility.</p>
+        </div>
+
+        <h3>Multiple Response Methods</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">response-types.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Send plain text</span>
+app.<span class="fn">get</span>(<span class="str">'/text'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">send</span>(<span class="str">'Plain text response'</span>);
+});
+
+<span class="cm">// Send JSON</span>
+app.<span class="fn">get</span>(<span class="str">'/json'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">message</span>: <span class="str">'JSON response'</span>, <span class="prop">status</span>: <span class="str">'ok'</span> });
+});
+
+<span class="cm">// Send HTML</span>
+app.<span class="fn">get</span>(<span class="str">'/html'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">send</span>(<span class="str">'&lt;h1&gt;HTML Response&lt;/h1&gt;'</span>);
+});
+
+<span class="cm">// Send with status code</span>
+app.<span class="fn">get</span>(<span class="str">'/created'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">created</span>: <span class="kw">true</span> });
+});
+
+<span class="cm">// Send a file</span>
+app.<span class="fn">get</span>(<span class="str">'/download'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">sendFile</span>(__dirname + <span class="str">'/public/index.html'</span>);
+});</pre></div>
+        </div>
+
+        <div class="exercise-box">
+          <div class="ex-header">
+            <span style="font-size:1.3rem">💪</span>
+            <h4>Exercise: Build a Basic Server</h4>
+          </div>
+          <p class="ex-description">Write an Express server that has three routes:<br>
+            1. <code>GET /</code> → responds with "Welcome Home"<br>
+            2. <code>GET /about</code> → responds with JSON <code>{ "page": "about", "version": "1.0" }</code><br>
+            3. <code>GET /health</code> → responds with status 200 and <code>{ "status": "ok" }</code>
+          </p>
+          <textarea class="exercise-editor" id="ex-setup" placeholder="// Write your Express server code here...
+const express = require('express');
+const app = express();
+
+// Add your routes...
+
+app.listen(3000);"></textarea>
+          <div class="exercise-actions">
+            <button class="btn btn-primary" onclick="checkExercise('setup')">Check Answer</button>
+            <button class="solution-toggle" onclick="toggleSolution('setup')">👁️ Show Solution</button>
+          </div>
+          <div class="exercise-result" id="result-setup"></div>
+          <div class="solution-content" id="solution-setup">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+app.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">send</span>(<span class="str">'Welcome Home'</span>);
+});
+
+app.<span class="fn">get</span>(<span class="str">'/about'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">page</span>: <span class="str">'about'</span>, <span class="prop">version</span>: <span class="str">'1.0'</span> });
+});
+
+app.<span class="fn">get</span>(<span class="str">'/health'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">200</span>).<span class="fn">json</span>({ <span class="prop">status</span>: <span class="str">'ok'</span> });
+});
+
+app.<span class="fn">listen</span>(<span class="num">3000</span>, () => {
+  console.<span class="fn">log</span>(<span class="str">'Server running on port 3000'</span>);
+});</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="section-complete-btn" onclick="completeSection(1)">
+          ✨ Mark as Complete & Continue
+        </button>
+      </div>
+
+      <!-- ===================== SECTION 2: ROUTING ===================== -->
+      <div class="section" id="section-routing">
+        <div class="section-badge">📘 Module 3</div>
+        <h2>Express Routing Deep Dive</h2>
+        <p>Routing refers to how your application responds to client requests at specific endpoints (URIs) and HTTP methods.</p>
+
+        <h3>HTTP Methods in Express</h3>
+        <div class="badge-row">
+          <span class="badge badge-get">GET</span>
+          <span class="badge badge-post">POST</span>
+          <span class="badge badge-put">PUT</span>
+          <span class="badge badge-delete">DELETE</span>
+          <span class="badge badge-patch">PATCH</span>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">http-methods.js</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="cm">// GET - Read data</span>
+app.<span class="fn">get</span>(<span class="str">'/users'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">users</span>: [<span class="str">'Alice'</span>, <span class="str">'Bob'</span>] });
+});
+
+<span class="cm">// POST - Create data</span>
+app.<span class="fn">post</span>(<span class="str">'/users'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> newUser = req.body;
+  res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">created</span>: newUser });
+});
+
+<span class="cm">// PUT - Replace entire resource</span>
+app.<span class="fn">put</span>(<span class="str">'/users/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">updated</span>: req.params.id });
+});
+
+<span class="cm">// PATCH - Partially update resource</span>
+app.<span class="fn">patch</span>(<span class="str">'/users/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">patched</span>: req.params.id });
+});
+
+<span class="cm">// DELETE - Remove data</span>
+app.<span class="fn">delete</span>(<span class="str">'/users/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">204</span>).<span class="fn">send</span>();
+});</pre></div>
+        </div>
+
+        <h3>Route Parameters</h3>
+        <p>Dynamic segments in URLs, prefixed with <code>:</code></p>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">route-params.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Single parameter</span>
+app.<span class="fn">get</span>(<span class="str">'/users/:userId'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  console.<span class="fn">log</span>(req.params.userId); <span class="cm">// "42"</span>
+  res.<span class="fn">json</span>({ <span class="prop">userId</span>: req.params.userId });
+});
+<span class="cm">// GET /users/42 → { userId: "42" }</span>
+
+<span class="cm">// Multiple parameters</span>
+app.<span class="fn">get</span>(<span class="str">'/users/:userId/posts/:postId'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> { userId, postId } = req.params;
+  res.<span class="fn">json</span>({ userId, postId });
+});
+<span class="cm">// GET /users/42/posts/7 → { userId: "42", postId: "7" }</span>
+
+<span class="cm">// ⚠️ IMPORTANT: params are ALWAYS strings!</span>
+app.<span class="fn">get</span>(<span class="str">'/items/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> id = <span class="fn">parseInt</span>(req.params.id, <span class="num">10</span>); <span class="cm">// Convert!</span>
+  <span class="kw">if</span> (<span class="fn">isNaN</span>(id)) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Invalid ID'</span> });
+  }
+  res.<span class="fn">json</span>({ id });
+});</pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: Route params are always strings</div>
+          <p><code>req.params.id</code> returns <code>"42"</code> not <code>42</code>. Always parse to number with <code>parseInt()</code> or <code>Number()</code> if you need numeric comparison. Forgetting this causes subtle bugs like <code>"42" === 42</code> being <code>false</code>.</p>
+        </div>
+
+        <h3>Query Strings</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">query-strings.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Query strings come after ? in URL</span>
+<span class="cm">// GET /search?q=express&page=2&limit=10</span>
+
+app.<span class="fn">get</span>(<span class="str">'/search'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> { q, page = <span class="num">1</span>, limit = <span class="num">20</span> } = req.query;
+  
+  console.<span class="fn">log</span>(q);     <span class="cm">// "express"</span>
+  console.<span class="fn">log</span>(page);  <span class="cm">// "2"  ← also a string!</span>
+  console.<span class="fn">log</span>(limit); <span class="cm">// "10" ← also a string!</span>
+  
+  res.<span class="fn">json</span>({
+    <span class="prop">searchTerm</span>: q,
+    <span class="prop">page</span>: <span class="fn">Number</span>(page),
+    <span class="prop">limit</span>: <span class="fn">Number</span>(limit),
+    <span class="prop">results</span>: []
+  });
+});</pre></div>
+        </div>
+
+        <h3>Route Patterns & Ordering</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">route-ordering.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// ⚠️ ORDER MATTERS! Express matches top-to-bottom</span>
+
+<span class="cm">// ❌ WRONG ORDER - /users/profile never reached</span>
+app.<span class="fn">get</span>(<span class="str">'/users/:id'</span>, handler1);      <span class="cm">// catches "profile" as id!</span>
+app.<span class="fn">get</span>(<span class="str">'/users/profile'</span>, handler2);  <span class="cm">// never reached!</span>
+
+<span class="cm">// ✅ CORRECT ORDER - specific before dynamic</span>
+app.<span class="fn">get</span>(<span class="str">'/users/profile'</span>, handler2);  <span class="cm">// specific first</span>
+app.<span class="fn">get</span>(<span class="str">'/users/:id'</span>, handler1);      <span class="cm">// dynamic second</span></pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Critical Pitfall: Route Ordering</div>
+          <p>Express matches routes <strong>first come, first served</strong>. If you put <code>/users/:id</code> before <code>/users/profile</code>, the string "profile" will be treated as an ID parameter. <strong>Always put specific routes before parameterized ones.</strong></p>
+        </div>
+
+        <h3>Express Router (Modular Routing)</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">routes/users.js</span>
+          </div>
+          <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> router = express.<span class="fn">Router</span>();
+
+<span class="cm">// All routes here are relative to the mount point</span>
+router.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">users</span>: [] });
+});
+
+router.<span class="fn">get</span>(<span class="str">'/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">user</span>: req.params.id });
+});
+
+router.<span class="fn">post</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">created</span>: req.body });
+});
+
+module.exports = router;</pre></div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">server.js</span>
+          </div>
+          <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> userRoutes = <span class="fn">require</span>(<span class="str">'./routes/users'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+<span class="cm">// Mount the router at /api/users</span>
+app.<span class="fn">use</span>(<span class="str">'/api/users'</span>, userRoutes);
+
+<span class="cm">// Now these routes work:</span>
+<span class="cm">// GET  /api/users      → list all users</span>
+<span class="cm">// GET  /api/users/42   → get user 42</span>
+<span class="cm">// POST /api/users      → create user</span></pre></div>
+        </div>
+
+        <h3>Route Chaining with app.route()</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">chained-routes.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Clean way to handle multiple methods on same path</span>
+app.<span class="fn">route</span>(<span class="str">'/articles'</span>)
+  .<span class="fn">get</span>((<span class="param">req</span>, <span class="param">res</span>) => {
+    res.<span class="fn">json</span>({ <span class="prop">action</span>: <span class="str">'List articles'</span> });
+  })
+  .<span class="fn">post</span>((<span class="param">req</span>, <span class="param">res</span>) => {
+    res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">action</span>: <span class="str">'Create article'</span> });
+  });
+
+app.<span class="fn">route</span>(<span class="str">'/articles/:id'</span>)
+  .<span class="fn">get</span>((<span class="param">req</span>, <span class="param">res</span>) => {
+    res.<span class="fn">json</span>({ <span class="prop">action</span>: <span class="str">'Get article'</span>, <span class="prop">id</span>: req.params.id });
+  })
+  .<span class="fn">put</span>((<span class="param">req</span>, <span class="param">res</span>) => {
+    res.<span class="fn">json</span>({ <span class="prop">action</span>: <span class="str">'Update article'</span>, <span class="prop">id</span>: req.params.id });
+  })
+  .<span class="fn">delete</span>((<span class="param">req</span>, <span class="param">res</span>) => {
+    res.<span class="fn">status</span>(<span class="num">204</span>).<span class="fn">send</span>();
+  });</pre></div>
+        </div>
+
+        <!-- Routing Interactive Demo -->
+        <div class="demo-container">
+          <div class="demo-header">
+            <span style="font-size:1.2rem">🎮</span>
+            <span class="demo-title">Interactive Route Matcher</span>
+          </div>
+          <div class="demo-body">
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:12px">Test which route handler would match. Try different URLs!</p>
+            <div class="demo-url-bar">
+              <select class="demo-method" id="routeMethod">
+                <option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option>
+              </select>
+              <input class="demo-url" id="routeUrl" value="/api/users/42" placeholder="/path">
+              <button class="demo-send" onclick="simulateRoute()">Send →</button>
+            </div>
+            <div class="demo-output" id="routeOutput">Click "Send" to test a route...</div>
+            <div style="margin-top:12px;font-size:.78rem;color:var(--text-muted)">
+              <strong>Available routes:</strong> GET /, GET /api/users, GET /api/users/:id, POST /api/users, GET /search?q=term, PUT /api/users/:id, DELETE /api/users/:id
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz -->
+        <h3>🧪 Routing Quiz</h3>
+        <div class="quiz-container">
+          <div class="quiz-question" id="rq1">
+            <div class="q-number">Question 1</div>
+            <div class="q-text">What does <code>req.params</code> contain for a request to <code>GET /users/42/posts/7</code> with route <code>/users/:userId/posts/:postId</code>?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>{ userId: 42, postId: 7 }</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span><code>{ userId: "42", postId: "7" }</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>{ id: "42", id: "7" }</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>["42", "7"]</code></span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Route parameters are <strong>always strings</strong>! They use the names you define with the <code>:</code> prefix. Always remember to parse them to numbers if needed.</div>
+          </div>
+
+          <div class="quiz-question" id="rq2">
+            <div class="q-number">Question 2</div>
+            <div class="q-text">What happens if you define <code>app.get('/users/:id')</code> BEFORE <code>app.get('/users/profile')</code>?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>Express throws an error for conflicting routes</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>Both routes work correctly, Express is smart enough</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span><code>/users/profile</code> is matched by <code>:id</code> param as "profile"</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>The second route overrides the first</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Express matches routes top-to-bottom. <code>:id</code> matches ANY string, including "profile". Always put <strong>specific routes before parameterized</strong> ones!</div>
+          </div>
+        </div>
+
+        <div class="exercise-box">
+          <div class="ex-header">
+            <span style="font-size:1.3rem">💪</span>
+            <h4>Exercise: Build a Book Router</h4>
+          </div>
+          <p class="ex-description">Create an Express Router for books with:<br>
+            1. <code>GET /</code> → List all books<br>
+            2. <code>GET /search</code> → Search by query <code>?title=something</code> (must be BEFORE :id)<br>
+            3. <code>GET /:id</code> → Get one book by ID<br>
+            4. <code>POST /</code> → Create a book<br>
+            5. <code>DELETE /:id</code> → Delete a book (respond with 204)
+          </p>
+          <textarea class="exercise-editor" id="ex-routing" placeholder="const express = require('express');
+const router = express.Router();
+
+// Your routes here...
+
+module.exports = router;"></textarea>
+          <div class="exercise-actions">
+            <button class="btn btn-primary" onclick="checkExercise('routing')">Check Answer</button>
+            <button class="solution-toggle" onclick="toggleSolution('routing')">👁️ Show Solution</button>
+          </div>
+          <div class="exercise-result" id="result-routing"></div>
+          <div class="solution-content" id="solution-routing">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> router = express.<span class="fn">Router</span>();
+
+<span class="cm">// GET all books</span>
+router.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">books</span>: [] });
+});
+
+<span class="cm">// Search - BEFORE :id to prevent "search" being treated as id</span>
+router.<span class="fn">get</span>(<span class="str">'/search'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> { title } = req.query;
+  res.<span class="fn">json</span>({ <span class="prop">searchFor</span>: title, <span class="prop">results</span>: [] });
+});
+
+<span class="cm">// GET one book</span>
+router.<span class="fn">get</span>(<span class="str">'/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">bookId</span>: req.params.id });
+});
+
+<span class="cm">// Create book</span>
+router.<span class="fn">post</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">created</span>: req.body });
+});
+
+<span class="cm">// Delete book</span>
+router.<span class="fn">delete</span>(<span class="str">'/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">204</span>).<span class="fn">send</span>();
+});
+
+module.exports = router;</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="section-complete-btn" onclick="completeSection(2)">
+          ✨ Mark as Complete & Continue
+        </button>
+      </div>
+
+      <!-- ===================== SECTION 3: MIDDLEWARE ===================== -->
+      <div class="section" id="section-middleware">
+        <div class="section-badge">📘 Module 4</div>
+        <h2>Middleware Deep Dive</h2>
+        <p>Middleware functions are the backbone of Express. They have access to the request, response, and the <code>next</code> function in the request-response cycle.</p>
+
+        <h3>What IS Middleware?</h3>
+        <div class="card highlight">
+          <div class="card-header">
+            <span class="emoji">🔗</span>
+            <h4>The Middleware Pipeline</h4>
+          </div>
+          <p>A middleware function is <strong>any function</strong> with the signature <code>(req, res, next)</code>. It can:</p>
+          <ul style="color:var(--text-dim);margin:8px 0 0 20px;font-size:.9rem">
+            <li>Execute any code</li>
+            <li>Modify <code>req</code> and <code>res</code> objects</li>
+            <li>End the request-response cycle</li>
+            <li>Call <code>next()</code> to pass to the next middleware</li>
+          </ul>
+        </div>
+
+        <div class="flow-diagram">
+          <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:16px">Middleware Execution Flow:</p>
+          <div class="flow-row">
+            <div class="flow-box request">Request</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box middleware">Logger</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box middleware">Auth Check</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box middleware">Body Parser</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box route">Route Handler</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box response">Response</div>
+          </div>
+        </div>
+
+        <h3>1. Application-Level Middleware</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">app-middleware.js</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+<span class="cm">// ✅ Middleware that runs for EVERY request</span>
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  console.<span class="fn">log</span>(<span class="str">`[</span><span class="kw">${</span><span class="kw">new</span> <span class="cls">Date</span>().<span class="fn">toISOString</span>()<span class="kw">}</span><span class="str">] </span><span class="kw">${</span>req.method<span class="kw">}</span><span class="str"> </span><span class="kw">${</span>req.url<span class="kw">}</span><span class="str">`</span>);
+  <span class="fn">next</span>(); <span class="cm">// ← MUST call next() or request hangs!</span>
+});
+
+<span class="cm">// ✅ Middleware for specific path only</span>
+app.<span class="fn">use</span>(<span class="str">'/api'</span>, (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  console.<span class="fn">log</span>(<span class="str">'API route accessed'</span>);
+  <span class="fn">next</span>();
+});
+
+<span class="cm">// ✅ Multiple middleware on a single route</span>
+<span class="kw">const</span> <span class="fn">validateId</span> = (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">const</span> id = <span class="fn">parseInt</span>(req.params.id);
+  <span class="kw">if</span> (<span class="fn">isNaN</span>(id) || id < <span class="num">1</span>) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Invalid ID'</span> });
+  }
+  req.validatedId = id; <span class="cm">// Attach to req for next handler</span>
+  <span class="fn">next</span>();
+};
+
+app.<span class="fn">get</span>(<span class="str">'/users/:id'</span>, validateId, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">id</span>: req.validatedId }); <span class="cm">// Use validated data</span>
+});</pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Critical Pitfall: Forgetting next()</div>
+          <p>If you don't call <code>next()</code> and don't send a response, the request will <strong>hang forever</strong> until the client times out. Always either call <code>next()</code> or send a response (<code>res.send()</code>, <code>res.json()</code>, etc.).</p>
+        </div>
+
+        <h3>2. Built-in Middleware</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">built-in-middleware.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Parse JSON request bodies</span>
+app.<span class="fn">use</span>(express.<span class="fn">json</span>());
+
+<span class="cm">// Parse URL-encoded form data</span>
+app.<span class="fn">use</span>(express.<span class="fn">urlencoded</span>({ <span class="prop">extended</span>: <span class="kw">true</span> }));
+
+<span class="cm">// Serve static files from 'public' directory</span>
+app.<span class="fn">use</span>(express.<span class="fn">static</span>(<span class="str">'public'</span>));
+
+<span class="cm">// Serve static with virtual path prefix</span>
+app.<span class="fn">use</span>(<span class="str">'/assets'</span>, express.<span class="fn">static</span>(<span class="str">'public'</span>));
+<span class="cm">// /assets/style.css → serves public/style.css</span></pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: express.json() must come BEFORE routes</div>
+          <p>If you don't add <code>express.json()</code> before your POST/PUT routes, <code>req.body</code> will be <code>undefined</code>. This is the #1 beginner mistake!</p>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">body-parsing-mistake.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// ❌ WRONG — req.body is undefined!</span>
+app.<span class="fn">post</span>(<span class="str">'/users'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  console.<span class="fn">log</span>(req.body); <span class="cm">// undefined!! 💥</span>
+});
+app.<span class="fn">use</span>(express.<span class="fn">json</span>()); <span class="cm">// too late!</span>
+
+<span class="cm">// ✅ CORRECT — parser BEFORE routes</span>
+app.<span class="fn">use</span>(express.<span class="fn">json</span>()); <span class="cm">// parse first</span>
+app.<span class="fn">post</span>(<span class="str">'/users'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  console.<span class="fn">log</span>(req.body); <span class="cm">// { name: "Alice" } ✅</span>
+});</pre></div>
+        </div>
+
+        <h3>3. Custom Middleware Patterns</h3>
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this, 'mw-tabs')">Logger</div>
+          <div class="tab" onclick="switchTab(this, 'mw-tabs')">Auth Guard</div>
+          <div class="tab" onclick="switchTab(this, 'mw-tabs')">Rate Limiter</div>
+          <div class="tab" onclick="switchTab(this, 'mw-tabs')">CORS</div>
+        </div>
+        <div class="tab-group" id="mw-tabs">
+          <div class="tab-content active">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="cm">// Custom request logger</span>
+<span class="kw">const</span> <span class="fn">logger</span> = (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">const</span> start = Date.<span class="fn">now</span>();
+  
+  <span class="cm">// Listen for when response finishes</span>
+  res.<span class="fn">on</span>(<span class="str">'finish'</span>, () => {
+    <span class="kw">const</span> duration = Date.<span class="fn">now</span>() - start;
+    console.<span class="fn">log</span>(
+      <span class="str">`</span><span class="kw">${</span>req.method<span class="kw">}</span><span class="str"> </span><span class="kw">${</span>req.originalUrl<span class="kw">}</span><span class="str"> </span><span class="kw">${</span>res.statusCode<span class="kw">}</span><span class="str"> </span><span class="kw">${</span>duration<span class="kw">}</span><span class="str">ms`</span>
+    );
+  });
+  
+  <span class="fn">next</span>();
+};
+
+app.<span class="fn">use</span>(logger);</pre></div>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="cm">// Authentication middleware</span>
+<span class="kw">const</span> <span class="fn">authenticate</span> = (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">const</span> token = req.headers.authorization;
+  
+  <span class="kw">if</span> (!token) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">json</span>({
+      <span class="prop">error</span>: <span class="str">'No token provided'</span>
+    });
+  }
+  
+  <span class="kw">try</span> {
+    <span class="kw">const</span> decoded = <span class="fn">verifyToken</span>(token);
+    req.user = decoded; <span class="cm">// Attach user to request</span>
+    <span class="fn">next</span>();
+  } <span class="kw">catch</span> (err) {
+    res.<span class="fn">status</span>(<span class="num">403</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Invalid token'</span> });
+  }
+};
+
+<span class="cm">// Use on specific routes only</span>
+app.<span class="fn">get</span>(<span class="str">'/profile'</span>, authenticate, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">user</span>: req.user });
+});
+
+<span class="cm">// Or protect entire router</span>
+router.<span class="fn">use</span>(authenticate);</pre></div>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="cm">// Simple rate limiter middleware</span>
+<span class="kw">const</span> <span class="fn">rateLimit</span> = (<span class="param">maxRequests</span>, <span class="param">windowMs</span>) => {
+  <span class="kw">const</span> requests = <span class="kw">new</span> <span class="cls">Map</span>();
+  
+  <span class="kw">return</span> (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+    <span class="kw">const</span> ip = req.ip;
+    <span class="kw">const</span> now = Date.<span class="fn">now</span>();
+    
+    <span class="kw">if</span> (!requests.<span class="fn">has</span>(ip)) {
+      requests.<span class="fn">set</span>(ip, []);
+    }
+    
+    <span class="kw">const</span> timestamps = requests.<span class="fn">get</span>(ip)
+      .<span class="fn">filter</span>(<span class="param">t</span> => now - t < windowMs);
+    
+    <span class="kw">if</span> (timestamps.length >= maxRequests) {
+      <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">429</span>).<span class="fn">json</span>({
+        <span class="prop">error</span>: <span class="str">'Too many requests'</span>
+      });
+    }
+    
+    timestamps.<span class="fn">push</span>(now);
+    requests.<span class="fn">set</span>(ip, timestamps);
+    <span class="fn">next</span>();
+  };
+};
+
+<span class="cm">// 100 requests per 15 minutes</span>
+app.<span class="fn">use</span>(<span class="fn">rateLimit</span>(<span class="num">100</span>, <span class="num">15</span> * <span class="num">60</span> * <span class="num">1000</span>));</pre></div>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="cm">// Manual CORS middleware</span>
+<span class="kw">const</span> <span class="fn">cors</span> = (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  res.<span class="fn">setHeader</span>(
+    <span class="str">'Access-Control-Allow-Origin'</span>, <span class="str">'*'</span>
+  );
+  res.<span class="fn">setHeader</span>(
+    <span class="str">'Access-Control-Allow-Methods'</span>,
+    <span class="str">'GET, POST, PUT, DELETE, PATCH'</span>
+  );
+  res.<span class="fn">setHeader</span>(
+    <span class="str">'Access-Control-Allow-Headers'</span>,
+    <span class="str">'Content-Type, Authorization'</span>
+  );
+  
+  <span class="cm">// Handle preflight</span>
+  <span class="kw">if</span> (req.method === <span class="str">'OPTIONS'</span>) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">204</span>).<span class="fn">send</span>();
+  }
+  
+  <span class="fn">next</span>();
+};
+
+app.<span class="fn">use</span>(cors);</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <h3>4. Middleware Execution Order</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">execution-order.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Middleware runs in the ORDER you define it</span>
+
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  console.<span class="fn">log</span>(<span class="str">'1️⃣ First middleware'</span>);
+  <span class="fn">next</span>();
+});
+
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  console.<span class="fn">log</span>(<span class="str">'2️⃣ Second middleware'</span>);
+  <span class="fn">next</span>();
+});
+
+app.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  console.<span class="fn">log</span>(<span class="str">'3️⃣ Route handler'</span>);
+  res.<span class="fn">send</span>(<span class="str">'Done!'</span>);
+});
+
+<span class="cm">// Output for GET /:</span>
+<span class="cm">// 1️⃣ First middleware</span>
+<span class="cm">// 2️⃣ Second middleware</span>
+<span class="cm">// 3️⃣ Route handler</span></pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: Calling next() after sending response</div>
+          <p>Never call <code>next()</code> after <code>res.send()</code> or <code>res.json()</code>. This can cause "Cannot set headers after they are sent" errors. Use <code>return</code> to stop execution.</p>
+          <div class="code-block" style="margin-top:12px">
+            <div class="code-body"><pre><span class="cm">// ❌ WRONG</span>
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">if</span> (!req.headers.authorization) {
+    res.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">send</span>(<span class="str">'Unauthorized'</span>);
+    <span class="fn">next</span>(); <span class="cm">// 💥 continues to next handler!</span>
+  }
+  <span class="fn">next</span>();
+});
+
+<span class="cm">// ✅ CORRECT</span>
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">if</span> (!req.headers.authorization) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">send</span>(<span class="str">'Unauthorized'</span>);
+  }
+  <span class="fn">next</span>();
+});</pre></div>
+          </div>
+        </div>
+
+        <!-- Middleware quiz -->
+        <h3>🧪 Middleware Quiz</h3>
+        <div class="quiz-container">
+          <div class="quiz-question">
+            <div class="q-number">Question 1</div>
+            <div class="q-text">What happens if a middleware function doesn't call <code>next()</code> and doesn't send a response?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>Express automatically calls the next middleware</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>Express sends a default 404 response</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span>The request hangs until the client times out</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>Express throws an error immediately</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">The request will <strong>hang indefinitely</strong> because Express is waiting for the middleware to either call <code>next()</code> or send a response. The client will eventually time out. This is one of the most common middleware bugs!</div>
+          </div>
+
+          <div class="quiz-question">
+            <div class="q-number">Question 2</div>
+            <div class="q-text">Which middleware setup correctly parses JSON bodies AND serves static files?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>app.use(json()); app.use(static('public'));</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span><code>app.use(express.json()); app.use(express.static('public'));</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>app.json(); app.static('public');</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>app.use(bodyParser.json()); app.use(express.static);</code></span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation"><code>express.json()</code> and <code>express.static()</code> are <strong>built-in middleware</strong> functions. They must be called as methods of the <code>express</code> object and passed to <code>app.use()</code>. Note: <code>bodyParser</code> is deprecated in favor of <code>express.json()</code>.</div>
+          </div>
+        </div>
+
+        <div class="exercise-box">
+          <div class="ex-header">
+            <span style="font-size:1.3rem">💪</span>
+            <h4>Exercise: Build a Request Logger Middleware</h4>
+          </div>
+          <p class="ex-description">Create a middleware function called <code>requestLogger</code> that:<br>
+            1. Logs the HTTP method, URL, and timestamp<br>
+            2. Adds a <code>requestId</code> property to the req object (use <code>Date.now()</code>)<br>
+            3. Properly calls <code>next()</code> to continue the chain
+          </p>
+          <textarea class="exercise-editor" id="ex-middleware" placeholder="const requestLogger = (req, res, next) => {
+  // Your code here...
+};"></textarea>
+          <div class="exercise-actions">
+            <button class="btn btn-primary" onclick="checkExercise('middleware')">Check Answer</button>
+            <button class="solution-toggle" onclick="toggleSolution('middleware')">👁️ Show Solution</button>
+          </div>
+          <div class="exercise-result" id="result-middleware"></div>
+          <div class="solution-content" id="solution-middleware">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="kw">const</span> <span class="fn">requestLogger</span> = (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">const</span> timestamp = <span class="kw">new</span> <span class="cls">Date</span>().<span class="fn">toISOString</span>();
+  
+  <span class="cm">// 1. Log method, URL, and timestamp</span>
+  console.<span class="fn">log</span>(<span class="str">`[</span><span class="kw">${</span>timestamp<span class="kw">}</span><span class="str">] </span><span class="kw">${</span>req.method<span class="kw">}</span><span class="str"> </span><span class="kw">${</span>req.url<span class="kw">}</span><span class="str">`</span>);
+  
+  <span class="cm">// 2. Add requestId to req object</span>
+  req.requestId = Date.<span class="fn">now</span>();
+  
+  <span class="cm">// 3. Call next to continue</span>
+  <span class="fn">next</span>();
+};
+
+<span class="cm">// Usage:</span>
+app.<span class="fn">use</span>(requestLogger);</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="section-complete-btn" onclick="completeSection(3)">
+          ✨ Mark as Complete & Continue
+        </button>
+      </div>
+
+      <!-- ===================== SECTION 4: REQUEST & RESPONSE ===================== -->
+      <div class="section" id="section-reqres">
+        <div class="section-badge">📘 Module 5</div>
+        <h2>Request & Response Objects</h2>
+        <p>Master the req and res objects — they're your main tools for handling HTTP communication.</p>
+
+        <h3>The Request Object (req)</h3>
+        <table class="info-table">
+          <tr><th>Property</th><th>Description</th><th>Example</th></tr>
+          <tr><td><code>req.params</code></td><td>Route parameters</td><td><code>{ id: "42" }</code></td></tr>
+          <tr><td><code>req.query</code></td><td>Query string parameters</td><td><code>{ page: "1" }</code></td></tr>
+          <tr><td><code>req.body</code></td><td>Request body (needs parser)</td><td><code>{ name: "Alice" }</code></td></tr>
+          <tr><td><code>req.headers</code></td><td>Request headers</td><td><code>{ 'content-type': '...' }</code></td></tr>
+          <tr><td><code>req.method</code></td><td>HTTP method</td><td><code>"GET"</code></td></tr>
+          <tr><td><code>req.url</code></td><td>Request URL path</td><td><code>"/users?page=1"</code></td></tr>
+          <tr><td><code>req.path</code></td><td>Path without query</td><td><code>"/users"</code></td></tr>
+          <tr><td><code>req.ip</code></td><td>Client IP address</td><td><code>"127.0.0.1"</code></td></tr>
+          <tr><td><code>req.cookies</code></td><td>Cookies (needs parser)</td><td><code>{ session: "abc" }</code></td></tr>
+          <tr><td><code>req.hostname</code></td><td>Hostname from header</td><td><code>"localhost"</code></td></tr>
+        </table>
+
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">request-deep-dive.js</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Complete request inspection example</span>
+<span class="cm">// URL: PUT /api/users/42?fields=name,email</span>
+<span class="cm">// Headers: { Authorization: "Bearer abc123", Content-Type: "application/json" }</span>
+<span class="cm">// Body: { "name": "Alice", "email": "alice@example.com" }</span>
+
+app.<span class="fn">put</span>(<span class="str">'/api/users/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  console.<span class="fn">log</span>(req.params);    <span class="cm">// { id: "42" }</span>
+  console.<span class="fn">log</span>(req.query);     <span class="cm">// { fields: "name,email" }</span>
+  console.<span class="fn">log</span>(req.body);      <span class="cm">// { name: "Alice", email: "alice@example.com" }</span>
+  console.<span class="fn">log</span>(req.method);    <span class="cm">// "PUT"</span>
+  console.<span class="fn">log</span>(req.path);      <span class="cm">// "/api/users/42"</span>
+  console.<span class="fn">log</span>(req.hostname);  <span class="cm">// "localhost"</span>
+  console.<span class="fn">log</span>(req.ip);        <span class="cm">// "::1"</span>
+  
+  <span class="cm">// Get specific header (case-insensitive)</span>
+  <span class="kw">const</span> auth = req.<span class="fn">get</span>(<span class="str">'Authorization'</span>);
+  console.<span class="fn">log</span>(auth); <span class="cm">// "Bearer abc123"</span>
+  
+  <span class="cm">// Check content type</span>
+  <span class="kw">if</span> (req.<span class="fn">is</span>(<span class="str">'application/json'</span>)) {
+    console.<span class="fn">log</span>(<span class="str">'JSON body received'</span>);
+  }
+  
+  res.<span class="fn">json</span>({ <span class="prop">received</span>: <span class="kw">true</span> });
+});</pre></div>
+        </div>
+
+        <h3>The Response Object (res)</h3>
+        <table class="info-table">
+          <tr><th>Method</th><th>Description</th></tr>
+          <tr><td><code>res.send(data)</code></td><td>Send string, Buffer, or object response</td></tr>
+          <tr><td><code>res.json(obj)</code></td><td>Send JSON response (sets Content-Type)</td></tr>
+          <tr><td><code>res.status(code)</code></td><td>Set HTTP status code (chainable)</td></tr>
+          <tr><td><code>res.sendStatus(code)</code></td><td>Set status AND send status text</td></tr>
+          <tr><td><code>res.redirect(url)</code></td><td>Redirect to another URL</td></tr>
+          <tr><td><code>res.set(header, value)</code></td><td>Set response header</td></tr>
+          <tr><td><code>res.cookie(name, val)</code></td><td>Set a cookie</td></tr>
+          <tr><td><code>res.sendFile(path)</code></td><td>Send a file as response</td></tr>
+          <tr><td><code>res.download(path)</code></td><td>Prompt file download</td></tr>
+          <tr><td><code>res.render(view)</code></td><td>Render a template (needs engine)</td></tr>
+        </table>
+
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">response-patterns.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Status codes you should know</span>
+res.<span class="fn">status</span>(<span class="num">200</span>).<span class="fn">json</span>(data);      <span class="cm">// OK</span>
+res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>(created);  <span class="cm">// Created</span>
+res.<span class="fn">status</span>(<span class="num">204</span>).<span class="fn">send</span>();          <span class="cm">// No Content (delete)</span>
+res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Bad request'</span> });
+res.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Unauthorized'</span> });
+res.<span class="fn">status</span>(<span class="num">403</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Forbidden'</span> });
+res.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Not found'</span> });
+res.<span class="fn">status</span>(<span class="num">500</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Server error'</span> });
+
+<span class="cm">// Set custom headers</span>
+res.<span class="fn">set</span>(<span class="str">'X-Request-Id'</span>, <span class="str">'abc123'</span>);
+res.<span class="fn">set</span>({
+  <span class="str">'X-Powered-By'</span>: <span class="str">'Express'</span>,
+  <span class="str">'Cache-Control'</span>: <span class="str">'no-cache'</span>
+});
+
+<span class="cm">// Redirect</span>
+res.<span class="fn">redirect</span>(<span class="str">'/new-location'</span>);
+res.<span class="fn">redirect</span>(<span class="num">301</span>, <span class="str">'/permanent-new-location'</span>);
+
+<span class="cm">// Chain multiple operations</span>
+res
+  .<span class="fn">status</span>(<span class="num">201</span>)
+  .<span class="fn">set</span>(<span class="str">'Location'</span>, <span class="str">`/users/</span><span class="kw">${</span>newId<span class="kw">}</span><span class="str">`</span>)
+  .<span class="fn">json</span>({ <span class="prop">id</span>: newId, <span class="prop">name</span>: <span class="str">'Alice'</span> });</pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: Double response</div>
+          <p>Sending multiple responses causes the "Cannot set headers after they are sent to the client" error. Use <code>return</code> to prevent it.</p>
+          <div class="code-block" style="margin-top:12px">
+            <div class="code-body"><pre><span class="cm">// ❌ WRONG — double response</span>
+app.<span class="fn">get</span>(<span class="str">'/check'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">if</span> (!req.query.token) {
+    res.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'No token'</span> });
+    <span class="cm">// Execution continues! 💥</span>
+  }
+  res.<span class="fn">json</span>({ <span class="prop">data</span>: <span class="str">'secret stuff'</span> }); <span class="cm">// 💥 CRASH!</span>
+});
+
+<span class="cm">// ✅ CORRECT — return stops execution</span>
+app.<span class="fn">get</span>(<span class="str">'/check'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">if</span> (!req.query.token) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">401</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'No token'</span> });
+  }
+  res.<span class="fn">json</span>({ <span class="prop">data</span>: <span class="str">'secret stuff'</span> }); <span class="cm">// ✅ Safe</span>
+});</pre></div>
+          </div>
+        </div>
+
+        <h3>Practical Pattern: Request Validation</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">validation.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Reusable validation middleware factory</span>
+<span class="kw">const</span> <span class="fn">validate</span> = (<span class="param">schema</span>) => {
+  <span class="kw">return</span> (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+    <span class="kw">const</span> errors = [];
+    
+    <span class="kw">for</span> (<span class="kw">const</span> [field, rules] <span class="kw">of</span> Object.<span class="fn">entries</span>(schema)) {
+      <span class="kw">const</span> value = req.body[field];
+      
+      <span class="kw">if</span> (rules.required && !value) {
+        errors.<span class="fn">push</span>(<span class="str">`</span><span class="kw">${</span>field<span class="kw">}</span><span class="str"> is required`</span>);
+      }
+      <span class="kw">if</span> (rules.type && value && <span class="kw">typeof</span> value !== rules.type) {
+        errors.<span class="fn">push</span>(<span class="str">`</span><span class="kw">${</span>field<span class="kw">}</span><span class="str"> must be a </span><span class="kw">${</span>rules.type<span class="kw">}</span><span class="str">`</span>);
+      }
+      <span class="kw">if</span> (rules.minLength && value?.length < rules.minLength) {
+        errors.<span class="fn">push</span>(<span class="str">`</span><span class="kw">${</span>field<span class="kw">}</span><span class="str"> min length: </span><span class="kw">${</span>rules.minLength<span class="kw">}</span><span class="str">`</span>);
+      }
+    }
+    
+    <span class="kw">if</span> (errors.length > <span class="num">0</span>) {
+      <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({ errors });
+    }
+    <span class="fn">next</span>();
+  };
+};
+
+<span class="cm">// Usage</span>
+<span class="kw">const</span> userSchema = {
+  <span class="prop">name</span>: { <span class="prop">required</span>: <span class="kw">true</span>, <span class="prop">type</span>: <span class="str">'string'</span>, <span class="prop">minLength</span>: <span class="num">2</span> },
+  <span class="prop">email</span>: { <span class="prop">required</span>: <span class="kw">true</span>, <span class="prop">type</span>: <span class="str">'string'</span> },
+  <span class="prop">age</span>: { <span class="prop">required</span>: <span class="kw">false</span>, <span class="prop">type</span>: <span class="str">'number'</span> }
+};
+
+app.<span class="fn">post</span>(<span class="str">'/users'</span>, <span class="fn">validate</span>(userSchema), (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">created</span>: req.body });
+});</pre></div>
+        </div>
+
+        <!-- Quiz -->
+        <h3>🧪 Request/Response Quiz</h3>
+        <div class="quiz-container">
+          <div class="quiz-question">
+            <div class="q-number">Question 1</div>
+            <div class="q-text">For <code>GET /products/shoes?color=red&size=10</code> with route <code>/products/:category</code>, what are the values?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span><code>req.params.category = "shoes"</code>, <code>req.query = { color: "red", size: "10" }</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>req.params = { category: "shoes", color: "red" }</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>req.query = { category: "shoes", color: "red", size: 10 }</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>req.body = { color: "red", size: 10 }</code></span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Route parameters (URL path segments with <code>:</code>) go in <code>req.params</code>. Query string parameters (after <code>?</code>) go in <code>req.query</code>. Both are always strings! <code>req.body</code> is for POST/PUT request bodies.</div>
+          </div>
+
+          <div class="quiz-question">
+            <div class="q-number">Question 2</div>
+            <div class="q-text">What's the difference between <code>res.send()</code> and <code>res.json()</code>?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>They are identical, just aliases</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span><code>res.json()</code> always sets Content-Type to application/json and stringifies objects</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>res.send()</code> can only send strings</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span><code>res.json()</code> compresses the response automatically</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation"><code>res.json()</code> explicitly sets <code>Content-Type: application/json</code>, converts the object to JSON string, and handles <code>null</code>/<code>undefined</code> properly. <code>res.send()</code> auto-detects content type but <code>res.json()</code> is preferred for APIs.</div>
+          </div>
+        </div>
+
+        <button class="section-complete-btn" onclick="completeSection(4)">
+          ✨ Mark as Complete & Continue
+        </button>
+      </div>
+
+      <!-- ===================== SECTION 5: ERROR HANDLING ===================== -->
+      <div class="section" id="section-errors">
+        <div class="section-badge">📘 Module 6</div>
+        <h2>Error Handling Mastery</h2>
+        <p>Proper error handling is what separates amateur Express apps from production-ready ones. Let's master it.</p>
+
+        <h3>The Error Handling Middleware Signature</h3>
+        <div class="card highlight">
+          <div class="card-header">
+            <span class="emoji">🔑</span>
+            <h4>The 4-Parameter Rule</h4>
+          </div>
+          <p>Error-handling middleware has <strong>exactly 4 parameters</strong>: <code>(err, req, res, next)</code>. Express identifies it by the parameter count. This is NOT optional — remove one parameter and it becomes regular middleware!</p>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">error-handling.js</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Basic error handling middleware</span>
+<span class="cm">// MUST have 4 parameters — Express uses this to identify it!</span>
+app.<span class="fn">use</span>((<span class="param">err</span>, <span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  console.<span class="fn">error</span>(err.stack);
+  res.<span class="fn">status</span>(<span class="num">500</span>).<span class="fn">json</span>({
+    <span class="prop">error</span>: <span class="str">'Something went wrong!'</span>
+  });
+});</pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Critical Pitfall: Error handler must have 4 parameters</div>
+          <p>Even if you don't use <code>next</code>, you MUST include it. Express checks the <strong>function's arity (parameter count)</strong> to distinguish error handlers from regular middleware. <code>(err, req, res) => {}</code> won't work as an error handler!</p>
+        </div>
+
+        <h3>Triggering Errors</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">triggering-errors.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Method 1: Pass error to next()</span>
+app.<span class="fn">get</span>(<span class="str">'/users/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">const</span> user = <span class="fn">findUser</span>(req.params.id);
+  <span class="kw">if</span> (!user) {
+    <span class="kw">const</span> error = <span class="kw">new</span> <span class="cls">Error</span>(<span class="str">'User not found'</span>);
+    error.status = <span class="num">404</span>;
+    <span class="kw">return</span> <span class="fn">next</span>(error); <span class="cm">// Skip to error handler</span>
+  }
+  res.<span class="fn">json</span>(user);
+});
+
+<span class="cm">// Method 2: Throw in synchronous code (Express catches it)</span>
+app.<span class="fn">get</span>(<span class="str">'/sync-error'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">throw</span> <span class="kw">new</span> <span class="cls">Error</span>(<span class="str">'Sync error!'</span>); <span class="cm">// Express catches this</span>
+});
+
+<span class="cm">// Method 3: Async errors — MUST use next() or try/catch!</span>
+app.<span class="fn">get</span>(<span class="str">'/async-error'</span>, <span class="kw">async</span> (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchFromDatabase</span>();
+    res.<span class="fn">json</span>(data);
+  } <span class="kw">catch</span> (err) {
+    <span class="fn">next</span>(err); <span class="cm">// Pass to error handler</span>
+  }
+});</pre></div>
+        </div>
+
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: Unhandled async errors crash your server</div>
+          <p>Express 4 does NOT catch errors from async/await or Promises automatically! You must use try/catch or a wrapper. Express 5 (beta) adds this, but most production apps use Express 4.</p>
+          <div class="code-block" style="margin-top:12px">
+            <div class="code-body"><pre><span class="cm">// ❌ WRONG — Express 4 won't catch this!</span>
+app.<span class="fn">get</span>(<span class="str">'/danger'</span>, <span class="kw">async</span> (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">riskyOperation</span>(); <span class="cm">// 💥 Unhandled rejection!</span>
+  res.<span class="fn">json</span>(data);
+});
+
+<span class="cm">// ✅ Solution 1: try/catch every async handler</span>
+app.<span class="fn">get</span>(<span class="str">'/safe'</span>, <span class="kw">async</span> (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">riskyOperation</span>();
+    res.<span class="fn">json</span>(data);
+  } <span class="kw">catch</span> (err) {
+    <span class="fn">next</span>(err);
+  }
+});
+
+<span class="cm">// ✅ Solution 2: asyncHandler wrapper (DRY!)</span>
+<span class="kw">const</span> <span class="fn">asyncHandler</span> = (<span class="param">fn</span>) => (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  Promise.<span class="fn">resolve</span>(<span class="fn">fn</span>(req, res, next)).<span class="fn">catch</span>(next);
+};
+
+app.<span class="fn">get</span>(<span class="str">'/safe2'</span>, <span class="fn">asyncHandler</span>(<span class="kw">async</span> (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">riskyOperation</span>(); <span class="cm">// errors auto-caught!</span>
+  res.<span class="fn">json</span>(data);
+}));</pre></div>
+          </div>
+        </div>
+
+        <h3>Custom Error Class</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">AppError.js</span>
+          </div>
+          <div class="code-body"><pre><span class="cm">// Custom error class for operational errors</span>
+<span class="kw">class</span> <span class="cls">AppError</span> <span class="kw">extends</span> <span class="cls">Error</span> {
+  <span class="fn">constructor</span>(<span class="param">message</span>, <span class="param">statusCode</span>) {
+    <span class="kw">super</span>(message);
+    <span class="kw">this</span>.statusCode = statusCode;
+    <span class="kw">this</span>.status = <span class="str">`</span><span class="kw">${</span>statusCode<span class="kw">}</span><span class="str">`</span>.<span class="fn">startsWith</span>(<span class="str">'4'</span>) ? <span class="str">'fail'</span> : <span class="str">'error'</span>;
+    <span class="kw">this</span>.isOperational = <span class="kw">true</span>;
+
+    Error.<span class="fn">captureStackTrace</span>(<span class="kw">this</span>, <span class="kw">this</span>.constructor);
+  }
+}
+
+<span class="cm">// Usage in routes:</span>
+app.<span class="fn">get</span>(<span class="str">'/users/:id'</span>, <span class="fn">asyncHandler</span>(<span class="kw">async</span> (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> user = <span class="kw">await</span> User.<span class="fn">findById</span>(req.params.id);
+  <span class="kw">if</span> (!user) {
+    <span class="kw">throw</span> <span class="kw">new</span> <span class="cls">AppError</span>(<span class="str">'User not found'</span>, <span class="num">404</span>);
+  }
+  res.<span class="fn">json</span>(user);
+}));</pre></div>
+        </div>
+
+        <h3>Production Error Handler</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">error-handler-production.js</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="cm">// 404 handler (BEFORE error handler)</span>
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  <span class="kw">const</span> error = <span class="kw">new</span> <span class="cls">AppError</span>(
+    <span class="str">`Cannot find </span><span class="kw">${</span>req.originalUrl<span class="kw">}</span><span class="str"> on this server`</span>, <span class="num">404</span>
+  );
+  <span class="fn">next</span>(error);
+});
+
+<span class="cm">// Global error handler (LAST middleware)</span>
+app.<span class="fn">use</span>((<span class="param">err</span>, <span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  err.statusCode = err.statusCode || <span class="num">500</span>;
+  err.status = err.status || <span class="str">'error'</span>;
+
+  <span class="kw">if</span> (process.env.NODE_ENV === <span class="str">'development'</span>) {
+    <span class="cm">// Development: send full error details</span>
+    res.<span class="fn">status</span>(err.statusCode).<span class="fn">json</span>({
+      <span class="prop">status</span>: err.status,
+      <span class="prop">error</span>: err,
+      <span class="prop">message</span>: err.message,
+      <span class="prop">stack</span>: err.stack
+    });
+  } <span class="kw">else</span> {
+    <span class="cm">// Production: don't leak error details</span>
+    <span class="kw">if</span> (err.isOperational) {
+      res.<span class="fn">status</span>(err.statusCode).<span class="fn">json</span>({
+        <span class="prop">status</span>: err.status,
+        <span class="prop">message</span>: err.message
+      });
+    } <span class="kw">else</span> {
+      <span class="cm">// Programming error: don't leak details</span>
+      console.<span class="fn">error</span>(<span class="str">'UNEXPECTED ERROR 💥'</span>, err);
+      res.<span class="fn">status</span>(<span class="num">500</span>).<span class="fn">json</span>({
+        <span class="prop">status</span>: <span class="str">'error'</span>,
+        <span class="prop">message</span>: <span class="str">'Something went wrong'</span>
+      });
+    }
+  }
+});</pre></div>
+        </div>
+
+        <div class="tip-box">
+          <div class="title">💡 Pro Tip: Error Handler Order</div>
+          <p>The error handling middleware must be defined <strong>AFTER all routes and other middleware</strong>. Express processes middleware in order, and error handlers should be the last safety net.</p>
+        </div>
+
+        <div class="flow-diagram">
+          <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:16px">Correct Middleware Order:</p>
+          <div class="flow-row">
+            <div class="flow-box middleware">1. Body Parsers</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box middleware">2. CORS / Logger</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box route">3. Routes</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box error">4. 404 Handler</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box error">5. Error Handler</div>
+          </div>
+        </div>
+
+        <h3>🧪 Error Handling Quiz</h3>
+        <div class="quiz-container">
+          <div class="quiz-question">
+            <div class="q-number">Question 1</div>
+            <div class="q-text">How does Express differentiate error-handling middleware from regular middleware?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>By the name of the function</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span>By the number of parameters (must have exactly 4)</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>By using a special <code>app.error()</code> method</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>By placing it in a special error handler file</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Express checks <code>function.length</code> (the number of declared parameters). If it's 4, Express treats it as an error handler. This is why you must ALWAYS declare all 4 params: <code>(err, req, res, next)</code>.</div>
+          </div>
+
+          <div class="quiz-question">
+            <div class="q-number">Question 2</div>
+            <div class="q-text">In Express 4, what happens when an async route handler throws an error without try/catch?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>Express catches it and sends a 500 response</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span>
+                <span>It becomes an unhandled promise rejection and may crash the server</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>Express automatically retries the request</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span>
+                <span>The error is silently ignored</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkQuizAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Express 4 does NOT handle async errors! Unhandled promise rejections can crash your Node.js process. Always use try/catch or an asyncHandler wrapper. Express 5 (currently beta) adds built-in async error handling.</div>
+          </div>
+        </div>
+
+        <div class="exercise-box">
+          <div class="ex-header">
+            <span style="font-size:1.3rem">💪</span>
+            <h4>Exercise: Build an asyncHandler Wrapper</h4>
+          </div>
+          <p class="ex-description">Create the <code>asyncHandler</code> utility function that:<br>
+            1. Takes an async function as argument<br>
+            2. Returns a new function with (req, res, next) signature<br>
+            3. Executes the async function and catches any errors<br>
+            4. Forwards caught errors to next()
+          </p>
+          <textarea class="exercise-editor" id="ex-errors" placeholder="const asyncHandler = (fn) => {
+  // Your code here...
+};"></textarea>
+          <div class="exercise-actions">
+            <button class="btn btn-primary" onclick="checkExercise('errors')">Check Answer</button>
+            <button class="solution-toggle" onclick="toggleSolution('errors')">👁️ Show Solution</button>
+          </div>
+          <div class="exercise-result" id="result-errors"></div>
+          <div class="solution-content" id="solution-errors">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="kw">const</span> <span class="fn">asyncHandler</span> = (<span class="param">fn</span>) => {
+  <span class="kw">return</span> (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+    Promise.<span class="fn">resolve</span>(<span class="fn">fn</span>(req, res, next)).<span class="fn">catch</span>(next);
+  };
+};
+
+<span class="cm">// Alternative shorter syntax:</span>
+<span class="kw">const</span> <span class="fn">asyncHandler</span> = (<span class="param">fn</span>) =>
+  (<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) =>
+    Promise.<span class="fn">resolve</span>(<span class="fn">fn</span>(req, res, next)).<span class="fn">catch</span>(next);
+
+<span class="cm">// Usage:</span>
+app.<span class="fn">get</span>(<span class="str">'/data'</span>, <span class="fn">asyncHandler</span>(<span class="kw">async</span> (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">getData</span>(); <span class="cm">// errors auto-forwarded!</span>
+  res.<span class="fn">json</span>(data);
+}));</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="section-complete-btn" onclick="completeSection(5)">
+          ✨ Mark as Complete & Continue
+        </button>
+      </div>
+
+      <!-- ===================== SECTION 6: API CREATION ===================== -->
+      <div class="section" id="section-api">
+        <div class="section-badge">📘 Module 7</div>
+        <h2>Building REST APIs</h2>
+        <p>Let's put everything together and build a complete, production-quality REST API.</p>
+
+        <h3>REST API Design Principles</h3>
+        <table class="info-table">
+          <tr><th>Method</th><th>Route</th><th>Action</th><th>Status</th></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td>/api/todos</td><td>List all todos</td><td>200</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td>/api/todos/:id</td><td>Get one todo</td><td>200</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td>/api/todos</td><td>Create a todo</td><td>201</td></tr>
+          <tr><td><span class="badge badge-put">PUT</span></td><td>/api/todos/:id</td><td>Replace a todo</td><td>200</td></tr>
+          <tr><td><span class="badge badge-patch">PATCH</span></td><td>/api/todos/:id</td><td>Partial update</td><td>200</td></tr>
+          <tr><td><span class="badge badge-delete">DELETE</span></td><td>/api/todos/:id</td><td>Delete a todo</td><td>204</td></tr>
+        </table>
+
+        <h3>Complete API Example</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">api/todos.js — Complete CRUD API</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> router = express.<span class="fn">Router</span>();
+
+<span class="cm">// In-memory data store (use a database in production!)</span>
+<span class="kw">let</span> todos = [
+  { <span class="prop">id</span>: <span class="num">1</span>, <span class="prop">title</span>: <span class="str">'Learn Express'</span>, <span class="prop">completed</span>: <span class="kw">false</span> },
+  { <span class="prop">id</span>: <span class="num">2</span>, <span class="prop">title</span>: <span class="str">'Build an API'</span>, <span class="prop">completed</span>: <span class="kw">false</span> },
+];
+<span class="kw">let</span> nextId = <span class="num">3</span>;
+
+<span class="cm">// GET /api/todos — List all (with filtering)</span>
+router.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">let</span> result = [...todos];
+  
+  <span class="cm">// Filter by completed status</span>
+  <span class="kw">if</span> (req.query.completed !== <span class="kw">undefined</span>) {
+    <span class="kw">const</span> isCompleted = req.query.completed === <span class="str">'true'</span>;
+    result = result.<span class="fn">filter</span>(<span class="param">t</span> => t.completed === isCompleted);
+  }
+  
+  <span class="cm">// Pagination</span>
+  <span class="kw">const</span> page = <span class="fn">parseInt</span>(req.query.page) || <span class="num">1</span>;
+  <span class="kw">const</span> limit = <span class="fn">parseInt</span>(req.query.limit) || <span class="num">10</span>;
+  <span class="kw">const</span> startIndex = (page - <span class="num">1</span>) * limit;
+  
+  res.<span class="fn">json</span>({
+    <span class="prop">data</span>: result.<span class="fn">slice</span>(startIndex, startIndex + limit),
+    <span class="prop">total</span>: result.length,
+    <span class="prop">page</span>,
+    <span class="prop">totalPages</span>: Math.<span class="fn">ceil</span>(result.length / limit)
+  });
+});
+
+<span class="cm">// GET /api/todos/:id — Get one</span>
+router.<span class="fn">get</span>(<span class="str">'/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> id = <span class="fn">parseInt</span>(req.params.id);
+  <span class="kw">const</span> todo = todos.<span class="fn">find</span>(<span class="param">t</span> => t.id === id);
+  
+  <span class="kw">if</span> (!todo) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Todo not found'</span> });
+  }
+  
+  res.<span class="fn">json</span>({ <span class="prop">data</span>: todo });
+});
+
+<span class="cm">// POST /api/todos — Create</span>
+router.<span class="fn">post</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> { title } = req.body;
+  
+  <span class="kw">if</span> (!title || <span class="kw">typeof</span> title !== <span class="str">'string'</span> || !title.<span class="fn">trim</span>()) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({
+      <span class="prop">error</span>: <span class="str">'Title is required and must be a non-empty string'</span>
+    });
+  }
+  
+  <span class="kw">const</span> newTodo = {
+    <span class="prop">id</span>: nextId++,
+    <span class="prop">title</span>: title.<span class="fn">trim</span>(),
+    <span class="prop">completed</span>: <span class="kw">false</span>,
+    <span class="prop">createdAt</span>: <span class="kw">new</span> <span class="cls">Date</span>().<span class="fn">toISOString</span>()
+  };
+  
+  todos.<span class="fn">push</span>(newTodo);
+  
+  res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ <span class="prop">data</span>: newTodo });
+});
+
+<span class="cm">// PUT /api/todos/:id — Full update</span>
+router.<span class="fn">put</span>(<span class="str">'/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> id = <span class="fn">parseInt</span>(req.params.id);
+  <span class="kw">const</span> index = todos.<span class="fn">findIndex</span>(<span class="param">t</span> => t.id === id);
+  
+  <span class="kw">if</span> (index === -<span class="num">1</span>) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Todo not found'</span> });
+  }
+  
+  <span class="kw">const</span> { title, completed } = req.body;
+  
+  <span class="kw">if</span> (!title) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Title is required'</span> });
+  }
+  
+  todos[index] = { ...todos[index], title, completed: !!completed };
+  res.<span class="fn">json</span>({ <span class="prop">data</span>: todos[index] });
+});
+
+<span class="cm">// PATCH /api/todos/:id — Partial update</span>
+router.<span class="fn">patch</span>(<span class="str">'/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> id = <span class="fn">parseInt</span>(req.params.id);
+  <span class="kw">const</span> todo = todos.<span class="fn">find</span>(<span class="param">t</span> => t.id === id);
+  
+  <span class="kw">if</span> (!todo) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Todo not found'</span> });
+  }
+  
+  <span class="cm">// Only update provided fields</span>
+  <span class="kw">if</span> (req.body.title !== <span class="kw">undefined</span>) todo.title = req.body.title;
+  <span class="kw">if</span> (req.body.completed !== <span class="kw">undefined</span>) todo.completed = req.body.completed;
+  
+  res.<span class="fn">json</span>({ <span class="prop">data</span>: todo });
+});
+
+<span class="cm">// DELETE /api/todos/:id</span>
+router.<span class="fn">delete</span>(<span class="str">'/:id'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> id = <span class="fn">parseInt</span>(req.params.id);
+  <span class="kw">const</span> index = todos.<span class="fn">findIndex</span>(<span class="param">t</span> => t.id === id);
+  
+  <span class="kw">if</span> (index === -<span class="num">1</span>) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">'Todo not found'</span> });
+  }
+  
+  todos.<span class="fn">splice</span>(index, <span class="num">1</span>);
+  res.<span class="fn">status</span>(<span class="num">204</span>).<span class="fn">send</span>();
+});
+
+module.exports = router;</pre></div>
+        </div>
+
+        <h3>The Complete Server File</h3>
+        <div class="code-block">
+          <div class="code-header">
+            <div class="dots"><span></span><span></span><span></span></div>
+            <span class="filename">server.js — Production Setup</span>
+            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+          </div>
+          <div class="code-body"><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> todoRoutes = <span class="fn">require</span>(<span class="str">'./api/todos'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+
+<span class="cm">// ═══════════ MIDDLEWARE STACK ═══════════</span>
+
+<span class="cm">// 1. Body parsing</span>
+app.<span class="fn">use</span>(express.<span class="fn">json</span>({ <span class="prop">limit</span>: <span class="str">'10kb'</span> })); <span class="cm">// limit body size</span>
+app.<span class="fn">use</span>(express.<span class="fn">urlencoded</span>({ <span class="prop">extended</span>: <span class="kw">true</span> }));
+
+<span class="cm">// 2. CORS (if needed)</span>
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  res.<span class="fn">setHeader</span>(<span class="str">'Access-Control-Allow-Origin'</span>, <span class="str">'*'</span>);
+  res.<span class="fn">setHeader</span>(<span class="str">'Access-Control-Allow-Methods'</span>, <span class="str">'GET,POST,PUT,PATCH,DELETE'</span>);
+  res.<span class="fn">setHeader</span>(<span class="str">'Access-Control-Allow-Headers'</span>, <span class="str">'Content-Type'</span>);
+  <span class="kw">if</span> (req.method === <span class="str">'OPTIONS'</span>) <span class="kw">return</span> res.<span class="fn">sendStatus</span>(<span class="num">204</span>);
+  <span class="fn">next</span>();
+});
+
+<span class="cm">// 3. Request logging</span>
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  console.<span class="fn">log</span>(<span class="str">`</span><span class="kw">${</span>req.method<span class="kw">}</span><span class="str"> </span><span class="kw">${</span>req.path<span class="kw">}</span><span class="str">`</span>);
+  <span class="fn">next</span>();
+});
+
+<span class="cm">// ═══════════ ROUTES ═══════════</span>
+
+app.<span class="fn">get</span>(<span class="str">'/'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">json</span>({ <span class="prop">message</span>: <span class="str">'API is running 🚀'</span>, <span class="prop">version</span>: <span class="str">'1.0.0'</span> });
+});
+
+app.<span class="fn">use</span>(<span class="str">'/api/todos'</span>, todoRoutes);
+
+<span class="cm">// ═══════════ ERROR HANDLING ═══════════</span>
+
+<span class="cm">// 404 - Route not found</span>
+app.<span class="fn">use</span>((<span class="param">req</span>, <span class="param">res</span>) => {
+  res.<span class="fn">status</span>(<span class="num">404</span>).<span class="fn">json</span>({ <span class="prop">error</span>: <span class="str">`Route </span><span class="kw">${</span>req.originalUrl<span class="kw">}</span><span class="str"> not found`</span> });
+});
+
+<span class="cm">// Global error handler</span>
+app.<span class="fn">use</span>((<span class="param">err</span>, <span class="param">req</span>, <span class="param">res</span>, <span class="param">next</span>) => {
+  console.<span class="fn">error</span>(err.stack);
+  res.<span class="fn">status</span>(err.statusCode || <span class="num">500</span>).<span class="fn">json</span>({
+    <span class="prop">error</span>: err.message || <span class="str">'Internal server error'</span>
+  });
+});
+
+<span class="cm">// ═══════════ START SERVER ═══════════</span>
+
+<span class="kw">const</span> PORT = process.env.PORT || <span class="num">3000</span>;
+app.<span class="fn">listen</span>(PORT, () => {
+  console.<span class="fn">log</span>(<span class="str">`🚀 Server running on port </span><span class="kw">${</span>PORT<span class="kw">}</span><span class="str">`</span>);
+});</pre></div>
+        </div>
+
+        <!-- Interactive API tester -->
+        <div class="demo-container">
+          <div class="demo-header">
+            <span style="font-size:1.2rem">🎮</span>
+            <span class="demo-title">Interactive API Tester</span>
+          </div>
+          <div class="demo-body">
+            <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:12px">Simulate API requests to the Todo API</p>
+            <div class="demo-url-bar">
+              <select class="demo-method" id="apiMethod">
+                <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+              </select>
+              <input class="demo-url" id="apiUrl" value="/api/todos" placeholder="/api/todos">
+              <button class="demo-send" onclick="simulateAPI()">Send →</button>
+            </div>
+            <div style="margin:8px 0">
+              <input class="demo-url" id="apiBody" placeholder='Request body (JSON): {"title":"New todo"}' style="width:100%">
+            </div>
+            <div class="demo-output" id="apiOutput">Click "Send" to test the API...</div>
+            <div style="margin-top:8px;font-size:.75rem;color:var(--text-muted)">
+              Try: GET /api/todos | GET /api/todos/1 | POST /api/todos (with body) | DELETE /api/todos/1 | GET /api/todos?completed=false
+            </div>
+          </div>
+        </div>
+
+        <h3>Common API Pitfalls</h3>
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: Not validating input</div>
+          <p>Never trust client data. Always validate and sanitize: check types, required fields, string lengths, and sanitize to prevent injection attacks.</p>
+        </div>
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: Using wrong status codes</div>
+          <p>Don't return 200 for everything. Use 201 for creation, 204 for deletion, 400 for bad requests, 404 for not found. Proper status codes make your API professional.</p>
+        </div>
+        <div class="pitfall-box">
+          <div class="title">⚠️ Pitfall: Inconsistent response format</div>
+          <p>Always use the same response structure. Wrap data in <code>{ data: ... }</code> for success and <code>{ error: "..." }</code> for errors. Consistency makes your API predictable.</p>
+        </div>
+
+        <div class="exercise-box">
+          <div class="ex-header">
+            <span style="font-size:1.3rem">💪</span>
+            <h4>Exercise: Add Search to the Todo API</h4>
+          </div>
+          <p class="ex-description">Write a GET route at <code>/search</code> for the todo router that:<br>
+            1. Accepts a <code>q</code> query parameter<br>
+            2. Returns 400 if <code>q</code> is missing<br>
+            3. Searches todos by title (case-insensitive)<br>
+            4. Returns matching todos in <code>{ data: [...], count: N }</code> format
+          </p>
+          <textarea class="exercise-editor" id="ex-api" placeholder="// Add this route to the todo router (BEFORE /:id)
+router.get('/search', (req, res) => {
+  // Your code here...
+});"></textarea>
+          <div class="exercise-actions">
+            <button class="btn btn-primary" onclick="checkExercise('api')">Check Answer</button>
+            <button class="solution-toggle" onclick="toggleSolution('api')">👁️ Show Solution</button>
+          </div>
+          <div class="exercise-result" id="result-api"></div>
+          <div class="solution-content" id="solution-api">
+            <div class="code-block">
+              <div class="code-body"><pre><span class="cm">// Must be BEFORE /:id route!</span>
+router.<span class="fn">get</span>(<span class="str">'/search'</span>, (<span class="param">req</span>, <span class="param">res</span>) => {
+  <span class="kw">const</span> { q } = req.query;
+  
+  <span class="kw">if</span> (!q) {
+    <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({
+      <span class="prop">error</span>: <span class="str">'Search query (q) is required'</span>
+    });
+  }
+  
+  <span class="kw">const</span> results = todos.<span class="fn">filter</span>(<span class="param">todo</span> =>
+    todo.title.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(q.<span class="fn">toLowerCase</span>())
+  );
+  
+  res.<span class="fn">json</span>({
+    <span class="prop">data</span>: results,
+    <span class="prop">count</span>: results.length
+  });
+});</pre></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="section-complete-btn" onclick="completeSection(6)">
+          ✨ Mark as Complete & Continue
+        </button>
+      </div>
+
+      <!-- ===================== SECTION 7: FINAL QUIZ ===================== -->
+      <div class="section" id="section-quiz">
+        <div class="section-badge">🎯 Final Challenge</div>
+        <h2>Express.js Mastery Quiz</h2>
+        <p>Test your knowledge with these challenging questions. You need 80% to pass!</p>
+
+        <div class="score-card" id="finalScoreCard" style="display:none">
+          <div class="score-num" id="finalScore">0/10</div>
+          <div class="score-label" id="finalScoreLabel">Complete all questions to see your score</div>
+        </div>
+
+        <div class="quiz-container" id="finalQuizContainer">
+          
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 1 of 10</div>
+            <div class="q-text">What is the correct order to set up Express middleware?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>Routes → Body parser → Error handler → Static files</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span>Body parser → Static files → Routes → 404 handler → Error handler</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>Error handler → Routes → Body parser → Static files</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>It doesn't matter, Express figures it out</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Middleware order matters! Body parsers and static files go first, then routes, then 404 catch-all, and finally the error handler (with 4 params) must be last.</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 2 of 10</div>
+            <div class="q-text">Which code correctly creates a middleware that adds a request timestamp?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>app.use((req, res) => { req.time = Date.now(); });</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span><code>app.use((req, res, next) => { req.time = Date.now(); next(); });</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>app.middleware((req, res) => { req.time = Date.now(); });</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>app.use((err, req, res, next) => { req.time = Date.now(); next(); });</code></span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Middleware needs <code>(req, res, next)</code> signature and must call <code>next()</code>. Without <code>next()</code>, the request hangs. The 4-param version is for error handling only.</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 3 of 10</div>
+            <div class="q-text">What does <code>express.json()</code> do?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>Converts all responses to JSON format</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>Validates that request body is valid JSON</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span>Parses incoming request bodies with JSON payloads and populates <code>req.body</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>Sets the Content-Type header to application/json</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation"><code>express.json()</code> is middleware that parses incoming requests with JSON payloads. It reads the body, parses the JSON string, and makes the result available as <code>req.body</code>. Without it, <code>req.body</code> is <code>undefined</code>.</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 4 of 10</div>
+            <div class="q-text">What status code should you return when a resource is successfully created?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>200 OK</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span>201 Created</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>204 No Content</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>202 Accepted</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">201 Created is the standard response for successful POST requests that create a new resource. 200 is for general success, 204 for successful deletion (no content to return).</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 5 of 10</div>
+            <div class="q-text">What's wrong with this code?<br><code>app.get('/users/:id', async (req, res) => { const user = await db.find(req.params.id); res.json(user); });</code></div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>You can't use async/await with Express</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span>Async errors aren't caught — needs try/catch or asyncHandler wrapper</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>Missing <code>express.json()</code> middleware</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>Nothing is wrong, this code is correct</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">In Express 4, async errors from rejected promises are NOT automatically caught. If <code>db.find()</code> throws, it becomes an unhandled promise rejection that can crash the server. Always wrap async handlers with try/catch or use an asyncHandler utility.</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 6 of 10</div>
+            <div class="q-text">What does <code>express.Router()</code> return?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>A new Express application instance</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span>A mini Express application that can only handle middleware and routes</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>An array of route definitions</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>A function that starts a new HTTP server</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation"><code>express.Router()</code> creates a modular, mountable route handler — essentially a "mini-app" that can have its own middleware and routes. You mount it on the main app with <code>app.use('/path', router)</code>.</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 7 of 10</div>
+            <div class="q-text">How do you access the query string <code>?page=2&sort=name</code> in Express?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>req.params.page</code> and <code>req.params.sort</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span><code>req.query.page</code> and <code>req.query.sort</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>req.body.page</code> and <code>req.body.sort</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>req.search.page</code> and <code>req.search.sort</code></span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">Query string parameters (after <code>?</code> in the URL) are available in <code>req.query</code>. Route parameters (like <code>/:id</code>) are in <code>req.params</code>. Request body data (POST/PUT) is in <code>req.body</code>.</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 8 of 10</div>
+            <div class="q-text">What happens when you call <code>next('route')</code> inside a route handler?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>It triggers the error handler with "route" as the error message</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span>It skips remaining callbacks on the current route and moves to the next matching route</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>It redirects to the route named "route"</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>It does the same thing as <code>next()</code></span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation"><code>next('route')</code> is special — it skips remaining callback functions attached to the current route definition and passes control to the next route that matches. Note: <code>next(anyOtherString)</code> triggers error handling!</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 9 of 10</div>
+            <div class="q-text">Which is the correct way to send a 204 No Content response for a DELETE request?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>res.status(204).json({ deleted: true })</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span><code>res.status(204).send()</code> or <code>res.sendStatus(204)</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>res.noContent()</code></span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span><code>res.delete(204)</code></span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation">204 No Content means there's no response body. Sending JSON with a 204 status is technically incorrect (the body will be ignored by clients). Use <code>res.status(204).send()</code> or the shorthand <code>res.sendStatus(204)</code>.</div>
+          </div>
+
+          <div class="quiz-question" data-final="true">
+            <div class="q-number">Question 10 of 10</div>
+            <div class="q-text">What's the purpose of the <code>return</code> keyword before <code>res.status(401).json(...)</code> in middleware?</div>
+            <div class="quiz-options">
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>It makes the response faster</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>It's required syntax — the response won't send without it</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="true">
+                <span class="marker"></span><span>It stops function execution to prevent code below from running (avoiding double response)</span>
+              </div>
+              <div class="quiz-option" onclick="selectOption(this)" data-correct="false">
+                <span class="marker"></span><span>It returns the response to the Express framework</span>
+              </div>
+            </div>
+            <button class="check-answer-btn" onclick="checkFinalAnswer(this)" disabled>Check Answer</button>
+            <div class="quiz-explanation"><code>return</code> stops the function from continuing to execute code below the early response. Without it, you might accidentally call <code>next()</code> or send another response, causing the dreaded "headers already sent" error.</div>
+          </div>
+        </div>
+
+        <button class="btn btn-green" onclick="calculateFinalScore()" id="showScoreBtn" style="width:100%;padding:16px;font-size:1rem;margin-top:20px">
+          📊 Calculate My Score
+        </button>
+
+        <button class="section-complete-btn" onclick="completeSection(7)" style="display:none" id="finalCompleteBtn">
+          🎉 Complete the Course!
+        </button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ===================== APP STATE =====================
+const state = {
+  currentSection: 0,
+  completedSections: new Set(),
+  totalSections: 8,
+  quizScores: {},
+  finalAnswered: 0,
+  finalCorrect: 0
+};
+
+// Section IDs
+const sectionIds = ['intro','setup','routing','middleware','reqres','errors','api','quiz'];
+
+// Load state from localStorage
+function loadState() {
+  try {
+    const saved = localStorage.getItem('express-mastery-state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state.completedSections = new Set(parsed.completedSections || []);
+      state.currentSection = parsed.currentSection || 0;
+      updateUI();
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('express-mastery-state', JSON.stringify({
+      completedSections: [...state.completedSections],
+      currentSection: state.currentSection
+    }));
+  } catch(e) {}
+}
+
+// ===================== NAVIGATION =====================
+const navItems = document.querySelectorAll('.nav-item');
+const sections = document.querySelectorAll('.section');
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const sectionName = item.dataset.section;
+    const index = parseInt(item.dataset.index);
+    navigateTo(index, sectionName);
+  });
+});
+
+function navigateTo(index, sectionName) {
+  state.currentSection = index;
+  
+  // Update nav
+  navItems.forEach(n => n.classList.remove('active'));
+  navItems[index].classList.add('active');
+  
+  // Update sections
+  sections.forEach(s => s.classList.remove('active'));
+  document.getElementById(`section-${sectionName}`).classList.add('active');
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').style.display = 'none';
+  
+  saveState();
+}
+
+// ===================== SECTION COMPLETION =====================
+function completeSection(index) {
+  const btn = event.target;
+  if (state.completedSections.has(index)) return;
+  
+  state.completedSections.add(index);
+  btn.textContent = '✅ Completed!';
+  btn.classList.add('done');
+  
+  updateUI();
+  saveState();
+  
+  // Auto-navigate to next section after delay
+  if (index < state.totalSections - 1) {
+    setTimeout(() => {
+      navigateTo(index + 1, sectionIds[index + 1]);
+    }, 800);
+  }
+}
+
+function updateUI() {
+  // Update nav completed states
+  navItems.forEach((item, i) => {
+    if (state.completedSections.has(i)) {
+      item.classList.add('completed');
+    }
+  });
+  
+  // Update progress
+  const pct = (state.completedSections.size / state.totalSections) * 100;
+  document.getElementById('progressFill').style.width = `${pct}%`;
+  document.getElementById('progressText').textContent = 
+    `${state.completedSections.size} of ${state.totalSections} completed`;
+  
+  // Update complete buttons
+  state.completedSections.forEach(i => {
+    const section = document.getElementById(`section-${sectionIds[i]}`);
+    if (section) {
+      const btn = section.querySelector('.section-complete-btn');
+      if (btn) {
+        btn.textContent = '✅ Completed!';
+        btn.classList.add('done');
+      }
+    }
+  });
+}
+
+// ===================== QUIZ SYSTEM =====================
+function selectOption(option) {
+  const question = option.closest('.quiz-question');
+  const options = question.querySelectorAll('.quiz-option');
+  
+  // Check if already answered
+  if (question.dataset.answered) return;
+  
+  options.forEach(o => o.classList.remove('selected'));
+  option.classList.add('selected');
+  
+  // Enable check button
+  const checkBtn = question.querySelector('.check-answer-btn');
+  if (checkBtn) checkBtn.disabled = false;
+}
+
+function checkQuizAnswer(btn) {
+  const question = btn.closest('.quiz-question');
+  if (question.dataset.answered) return;
+  question.dataset.answered = 'true';
+  
+  const options = question.querySelectorAll('.quiz-option');
+  const selected = question.querySelector('.quiz-option.selected');
+  
+  if (!selected) return;
+  
+  const isCorrect = selected.dataset.correct === 'true';
+  
+  options.forEach(opt => {
+    opt.style.pointerEvents = 'none';
+    if (opt.dataset.correct === 'true') {
+      opt.classList.add('correct');
+      opt.querySelector('.marker').textContent = '✓';
+    } else if (opt === selected && !isCorrect) {
+      opt.classList.add('wrong');
+      opt.querySelector('.marker').textContent = '✗';
+    }
+  });
+  
+  // Show explanation
+  const explanation = question.querySelector('.quiz-explanation');
+  if (explanation) explanation.classList.add('show');
+  
+  btn.disabled = true;
+  btn.textContent = isCorrect ? '✅ Correct!' : '❌ Incorrect';
+  btn.style.background = isCorrect ? 'var(--green)' : 'var(--red)';
+}
+
+// Final quiz
+function checkFinalAnswer(btn) {
+  const question = btn.closest('.quiz-question');
+  if (question.dataset.answered) return;
+  question.dataset.answered = 'true';
+  
+  const selected = question.querySelector('.quiz-option.selected');
+  if (!selected) return;
+  
+  const isCorrect = selected.dataset.correct === 'true';
+  const options = question.querySelectorAll('.quiz-option');
+  
+  state.finalAnswered++;
+  if (isCorrect) state.finalCorrect++;
+  
+  options.forEach(opt => {
+    opt.style.pointerEvents = 'none';
+    if (opt.dataset.correct === 'true') {
+      opt.classList.add('correct');
+      opt.querySelector('.marker').textContent = '✓';
+    } else if (opt === selected && !isCorrect) {
+      opt.classList.add('wrong');
+      opt.querySelector('.marker').textContent = '✗';
+    }
+  });
+  
+  const explanation = question.querySelector('.quiz-explanation');
+  if (explanation) explanation.classList.add('show');
+  
+  btn.disabled = true;
+  btn.textContent = isCorrect ? '✅ Correct!' : '❌ Incorrect';
+  btn.style.background = isCorrect ? 'var(--green)' : 'var(--red)';
+}
+
+function calculateFinalScore() {
+  const total = 10;
+  const scoreCard = document.getElementById('finalScoreCard');
+  const scoreNum = document.getElementById('finalScore');
+  const scoreLabel = document.getElementById('finalScoreLabel');
+  
+  scoreCard.style.display = 'block';
+  scoreNum.textContent = `${state.finalCorrect}/${total}`;
+  
+  const pct = (state.finalCorrect / total) * 100;
+  if (pct >= 80) {
+    scoreLabel.textContent = '🎉 Outstanding! You\'ve mastered Express.js!';
+    scoreLabel.style.color = 'var(--green)';
+    document.getElementById('finalCompleteBtn').style.display = 'flex';
+  } else if (pct >= 60) {
+    scoreLabel.textContent = '👍 Good effort! Review the sections you missed and try again.';
+    scoreLabel.style.color = 'var(--orange)';
+  } else {
+    scoreLabel.textContent = '📚 Keep studying! Go back and review the modules, then retake the quiz.';
+    scoreLabel.style.color = 'var(--red)';
+  }
+  
+  scoreCard.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ===================== EXERCISES =====================
+function checkExercise(id) {
+  const editor = document.getElementById(`ex-${id}`);
+  const result = document.getElementById(`result-${id}`);
+  const code = editor.value.toLowerCase().replace(/\s+/g, ' ');
+  
+  let pass = false;
+  let msg = '';
+  
+  switch(id) {
+    case 'setup':
+      pass = code.includes('app.get') && code.includes("'/'") && 
+             code.includes('/about') && code.includes('/health') &&
+             code.includes('.json') && code.includes('.send') &&
+             code.includes('listen');
+      msg = pass ? 'Great job! Your server has all three routes correctly defined.' : 
+                   'Make sure you have all 3 routes: GET /, GET /about (json), GET /health (json with status 200), and app.listen().';
+      break;
+    case 'routing':
+      pass = code.includes('router.get') && code.includes("'/search'") &&
+             code.includes('/:id') && code.includes('router.post') &&
+             code.includes('router.delete') && code.includes('req.query');
+      msg = pass ? 'Excellent! Your Book Router is well-structured with proper route ordering!' :
+                   'Check that you have: GET /, GET /search (with req.query), GET /:id, POST /, DELETE /:id. Remember /search must come BEFORE /:id!';
+      break;
+    case 'middleware':
+      pass = code.includes('req.method') && code.includes('req.url') &&
+             code.includes('requestid') && code.includes('next()');
+      msg = pass ? 'Perfect middleware! It logs, adds requestId, and calls next().' :
+                   'Make sure your middleware: 1) logs method & URL, 2) sets req.requestId, 3) calls next().';
+      break;
+    case 'errors':
+      pass = code.includes('promise') && code.includes('catch') &&
+             (code.includes('next') || code.includes('.catch(next)'));
+      msg = pass ? 'Your asyncHandler correctly wraps async functions and catches errors!' :
+                   'Use Promise.resolve(fn(req, res, next)).catch(next) pattern to catch async errors.';
+      break;
+    case 'api':
+      pass = code.includes("'/search'") && code.includes('req.query') &&
+             code.includes('400') && code.includes('tolowercase') &&
+             code.includes('filter');
+      msg = pass ? 'Your search route handles validation and case-insensitive filtering!' :
+                   'Make sure you: 1) check for missing q param (400), 2) filter case-insensitively, 3) return { data, count }.';
+      break;
+  }
+  
+  result.className = `exercise-result show ${pass ? 'pass' : 'fail'}`;
+  result.textContent = (pass ? '✅ ' : '❌ ') + msg;
+}
+
+function toggleSolution(id) {
+  const solution = document.getElementById(`solution-${id}`);
+  solution.classList.toggle('show');
+}
+
+// ===================== TABS =====================
+function switchTab(tab, groupId) {
+  const group = tab.closest('.section');
+  const tabs = tab.parentElement.querySelectorAll('.tab');
+  const contents = group.querySelector(`#${groupId}`).querySelectorAll('.tab-content');
+  
+  const index = Array.from(tabs).indexOf(tab);
+  
+  tabs.forEach(t => t.classList.remove('active'));
+  contents.forEach(c => c.classList.remove('active'));
+  
+  tab.classList.add('active');
+  contents[index].classList.add('active');
+}
+
+// ===================== ROUTE SIMULATOR =====================
+function simulateRoute() {
+  const method = document.getElementById('routeMethod').value;
+  const url = document.getElementById('routeUrl').value;
+  const output = document.getElementById('routeOutput');
+  
+  const routes = [
+    { method: 'GET', path: '/', desc: 'Home route' },
+    { method: 'GET', path: '/api/users', desc: 'List all users' },
+    { method: 'GET', path: '/api/users/:id', desc: 'Get user by ID', param: true },
+    { method: 'POST', path: '/api/users', desc: 'Create user' },
+    { method: 'PUT', path: '/api/users/:id', desc: 'Update user', param: true },
+    { method: 'DELETE', path: '/api/users/:id', desc: 'Delete user', param: true },
+    { method: 'GET', path: '/search', desc: 'Search (uses query params)' },
+  ];
+  
+  let matched = null;
+  let params = {};
+  
+  const cleanUrl = url.split('?')[0];
+  const queryString = url.split('?')[1];
+  
+  for (const route of routes) {
+    if (route.method !== method) continue;
+    
+    if (route.param) {
+      const routeParts = route.path.split('/');
+      const urlParts = cleanUrl.split('/');
+      
+      if (routeParts.length === urlParts.length) {
+        let match = true;
+        const extractedParams = {};
+        
+        for (let i = 0; i < routeParts.length; i++) {
+          if (routeParts[i].startsWith(':')) {
+            extractedParams[routeParts[i].slice(1)] = urlParts[i];
+          } else if (routeParts[i] !== urlParts[i]) {
+            match = false;
+            break;
+          }
+        }
+        
+        if (match) { matched = route; params = extractedParams; break; }
+      }
+    } else if (cleanUrl === route.path) {
+      matched = route;
+      break;
+    }
+  }
+  
+  if (matched) {
+    let result = `✅ Route Matched!\n\n`;
+    result += `Route:   ${matched.method} ${matched.path}\n`;
+    result += `Handler: ${matched.desc}\n`;
+    if (Object.keys(params).length) result += `Params:  ${JSON.stringify(params)}\n`;
+    if (queryString) {
+      const qp = {};
+      queryString.split('&').forEach(p => { const [k,v] = p.split('='); qp[k] = v; });
+      result += `Query:   ${JSON.stringify(qp)}\n`;
+    }
+    result += `\nResponse: 200 OK`;
+    output.innerHTML = `<span class="res-line">${result}</span>`;
+  } else {
+    output.innerHTML = `<span class="err-line">❌ No route matches ${method} ${url}\n\nThis would hit your 404 handler:\nres.status(404).json({ error: "Route ${url} not found" })</span>`;
+  }
+}
+
+// ===================== API SIMULATOR =====================
+const apiTodos = [
+  { id: 1, title: 'Learn Express', completed: false, createdAt: '2024-01-15T10:00:00Z' },
+  { id: 2, title: 'Build an API', completed: false, createdAt: '2024-01-15T11:00:00Z' },
+  { id: 3, title: 'Master middleware', completed: true, createdAt: '2024-01-15T12:00:00Z' },
+];
+let apiNextId = 4;
+
+function simulateAPI() {
+  const method = document.getElementById('apiMethod').value;
+  const fullUrl = document.getElementById('apiUrl').value;
+  const bodyStr = document.getElementById('apiBody').value;
+  const output = document.getElementById('apiOutput');
+  
+  const [path, queryStr] = fullUrl.split('?');
+  const query = {};
+  if (queryStr) queryStr.split('&').forEach(p => { const [k,v] = p.split('='); query[k] = decodeURIComponent(v); });
+  
+  let status, response;
+  
+  try {
+    if (path === '/api/todos' && method === 'GET') {
+      let result = [...apiTodos];
+      if (query.completed !== undefined) {
+        result = result.filter(t => t.completed === (query.completed === 'true'));
+      }
+      status = 200;
+      response = { data: result, total: result.length, page: 1 };
+    } 
+    else if (path.match(/^\/api\/todos\/\d+$/) && method === 'GET') {
+      const id = parseInt(path.split('/').pop());
+      const todo = apiTodos.find(t => t.id === id);
+      if (!todo) { status = 404; response = { error: 'Todo not found' }; }
+      else { status = 200; response = { data: todo }; }
+    }
+    else if (path === '/api/todos' && method === 'POST') {
+      const body = bodyStr ? JSON.parse(bodyStr) : {};
+      if (!body.title) { status = 400; response = { error: 'Title is required' }; }
+      else {
+        const newTodo = { id: apiNextId++, title: body.title, completed: false, createdAt: new Date().toISOString() };
+        apiTodos.push(newTodo);
+        status = 201; response = { data: newTodo };
+      }
+    }
+    else if (path.match(/^\/api\/todos\/\d+$/) && method === 'PUT') {
+      const id = parseInt(path.split('/').pop());
+      const idx = apiTodos.findIndex(t => t.id === id);
+      if (idx === -1) { status = 404; response = { error: 'Todo not found' }; }
+      else {
+        const body = bodyStr ? JSON.parse(bodyStr) : {};
+        if (!body.title) { status = 400; response = { error: 'Title required for PUT' }; }
+        else { apiTodos[idx] = { ...apiTodos[idx], ...body }; status = 200; response = { data: apiTodos[idx] }; }
+      }
+    }
+    else if (path.match(/^\/api\/todos\/\d+$/) && method === 'PATCH') {
+      const id = parseInt(path.split('/').pop());
+      const todo = apiTodos.find(t => t.id === id);
+      if (!todo) { status = 404; response = { error: 'Todo not found' }; }
+      else {
+        const body = bodyStr ? JSON.parse(bodyStr) : {};
+        Object.assign(todo, body);
+        status = 200; response = { data: todo };
+      }
+    }
+    else if (path.match(/^\/api\/todos\/\d+$/) && method === 'DELETE') {
+      const id = parseInt(path.split('/').pop());
+      const idx = apiTodos.findIndex(t => t.id === id);
+      if (idx === -1) { status = 404; response = { error: 'Todo not found' }; }
+      else { apiTodos.splice(idx, 1); status = 204; response = null; }
+    }
+    else {
+      status = 404; response = { error: `Route ${fullUrl} not found` };
+    }
+  } catch(e) {
+    status = 400; response = { error: 'Invalid JSON in request body: ' + e.message };
+  }
+  
+  const statusColors = { 200: 'res-line', 201: 'res-line', 204: 'res-line', 400: 'err-line', 404: 'err-line', 500: 'err-line' };
+  const statusTexts = { 200: 'OK', 201: 'Created', 204: 'No Content', 400: 'Bad Request', 404: 'Not Found', 500: 'Server Error' };
+  
+  let out = `<span class="${statusColors[status] || 'output-text'}">HTTP/1.1 ${status} ${statusTexts[status] || ''}\n`;
+  out += `Content-Type: application/json\n\n`;
+  out += response ? JSON.stringify(response, null, 2) : '(No Content)';
+  out += `</span>`;
+  
+  output.innerHTML = out;
+}
+
+// ===================== COPY CODE =====================
+function copyCode(btn) {
+  const codeBlock = btn.closest('.code-block');
+  const code = codeBlock.querySelector('.code-body pre').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+  });
+}
+
+// ===================== MOBILE MENU =====================
+document.getElementById('menuToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').style.display = 
+    document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+});
+
+document.getElementById('overlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').style.display = 'none';
+});
+
+// ===================== INIT =====================
+loadState();
+</script>
+</body>
+</html>

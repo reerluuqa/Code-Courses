@@ -1,0 +1,3436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Architecture & System Design Mastery</title>
+<style>
+  :root {
+    --primary: #6c63ff;
+    --secondary: #f50057;
+    --dark: #0a0a1a;
+    --darker: #050510;
+    --card: #12122a;
+    --card2: #1a1a35;
+    --text: #e0e0ff;
+    --muted: #8888aa;
+    --success: #00e676;
+    --error: #ff5252;
+    --warning: #ffab40;
+    --info: #40c4ff;
+    --border: #2a2a4a;
+    --gradient: linear-gradient(135deg, #6c63ff, #f50057);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--darker);
+    border-bottom: 2px solid var(--primary);
+    padding: 1rem 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.4rem;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .progress-bar {
+    background: var(--border);
+    border-radius: 20px;
+    height: 8px;
+    width: 200px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--gradient);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .progress-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* NAV */
+  nav {
+    background: var(--darker);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    overflow-x: auto;
+  }
+
+  .nav-btn {
+    background: var(--card);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--primary); }
+
+  .card h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card h3 {
+    font-size: 1.1rem;
+    color: var(--info);
+    margin: 1rem 0 0.5rem;
+  }
+
+  .card p { color: var(--muted); margin-bottom: 0.75rem; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-primary { background: rgba(108,99,255,0.2); color: var(--primary); border: 1px solid var(--primary); }
+  .badge-success { background: rgba(0,230,118,0.1); color: var(--success); border: 1px solid var(--success); }
+  .badge-warning { background: rgba(255,171,64,0.1); color: var(--warning); border: 1px solid var(--warning); }
+  .badge-error { background: rgba(255,82,82,0.1); color: var(--error); border: 1px solid var(--error); }
+  .badge-info { background: rgba(64,196,255,0.1); color: var(--info); border: 1px solid var(--info); }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: #0d0d1f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-block::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .num { color: #f78c6c; }
+  .cm { color: #546e7a; font-style: italic; }
+  .cl { color: #ffcb6b; }
+  .op { color: #89ddff; }
+
+  /* DIAGRAMS */
+  .diagram {
+    background: #0a0a1f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    overflow-x: auto;
+    line-height: 2;
+  }
+
+  .diagram .box {
+    display: inline-block;
+    border: 1px solid var(--primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    color: var(--primary);
+    font-weight: bold;
+  }
+
+  .diagram .arrow { color: var(--warning); }
+  .diagram .label { color: var(--muted); font-size: 0.7rem; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* QUIZ */
+  .quiz-question {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-question h3 {
+    color: var(--text);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+
+  .quiz-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .quiz-option {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .quiz-option:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: rgba(108,99,255,0.1);
+  }
+
+  .quiz-option.correct { border-color: var(--success); background: rgba(0,230,118,0.1); color: var(--success); }
+  .quiz-option.wrong { border-color: var(--error); background: rgba(255,82,82,0.1); color: var(--error); }
+  .quiz-option:disabled { cursor: default; }
+
+  .quiz-feedback {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.success { background: rgba(0,230,118,0.1); color: var(--success); border: 1px solid var(--success); }
+  .quiz-feedback.error { background: rgba(255,82,82,0.1); color: var(--error); border: 1px solid var(--error); }
+
+  /* EXERCISE */
+  .exercise {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  textarea {
+    width: 100%;
+    background: #0d0d1f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+    min-height: 200px;
+    margin: 0.5rem 0;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { outline: none; border-color: var(--primary); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #5a52e0; transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: #000; }
+  .btn-success:hover { background: #00c764; }
+  .btn-warning { background: var(--warning); color: #000; }
+  .btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--primary); }
+  .btn-danger { background: var(--error); color: white; }
+
+  .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+
+  /* OUTPUT */
+  .output {
+    background: #0a0a1f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.75rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    min-height: 60px;
+    color: var(--success);
+    white-space: pre-wrap;
+  }
+
+  /* PITFALLS */
+  .pitfall {
+    background: rgba(255,82,82,0.05);
+    border: 1px solid rgba(255,82,82,0.3);
+    border-left: 4px solid var(--error);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+  }
+
+  .pitfall-title {
+    color: var(--error);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .tip {
+    background: rgba(0,230,118,0.05);
+    border: 1px solid rgba(0,230,118,0.3);
+    border-left: 4px solid var(--success);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+  }
+
+  .tip-title {
+    color: var(--success);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .warning-box {
+    background: rgba(255,171,64,0.05);
+    border: 1px solid rgba(255,171,64,0.3);
+    border-left: 4px solid var(--warning);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+  }
+
+  .info-box {
+    background: rgba(64,196,255,0.05);
+    border: 1px solid rgba(64,196,255,0.3);
+    border-left: 4px solid var(--info);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0.75rem 0;
+  }
+
+  /* CHEAT SHEET */
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .cheat-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .cheat-card:hover { border-color: var(--primary); }
+
+  .cheat-card h4 {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .cheat-code {
+    background: #0a0a1f;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--info);
+    margin-top: 0.5rem;
+  }
+
+  /* INTERACTIVE DEMO */
+  .demo-area {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .demo-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .demo-visual {
+    background: #0a0a1f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+  }
+
+  .service-box {
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    min-width: 100px;
+    position: relative;
+    background: rgba(108,99,255,0.05);
+    transition: all 0.3s;
+  }
+
+  .service-box.active {
+    border-color: var(--success);
+    background: rgba(0,230,118,0.1);
+    box-shadow: 0 0 15px rgba(0,230,118,0.3);
+  }
+
+  .service-box.error-state {
+    border-color: var(--error);
+    background: rgba(255,82,82,0.1);
+    box-shadow: 0 0 15px rgba(255,82,82,0.3);
+  }
+
+  .service-name { font-weight: bold; color: var(--primary); font-size: 0.75rem; }
+  .service-status { font-size: 0.65rem; color: var(--muted); margin-top: 0.25rem; }
+
+  .arrow-right {
+    color: var(--warning);
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  /* COMPARISON TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+  }
+
+  th {
+    background: rgba(108,99,255,0.2);
+    color: var(--primary);
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+
+  td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  tr:hover td { background: rgba(108,99,255,0.05); }
+
+  td.good { color: var(--success); }
+  td.bad { color: var(--error); }
+  td.neutral { color: var(--warning); }
+
+  /* SCORE */
+  .score-display {
+    background: var(--gradient);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    margin: 1rem 0;
+  }
+
+  .score-number { font-size: 2.5rem; font-weight: 900; }
+  .score-label { font-size: 0.85rem; opacity: 0.8; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab:hover { color: var(--primary); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* PATTERN CARD */
+  .pattern-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    height: 100%;
+    transition: all 0.2s;
+  }
+
+  .pattern-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+
+  .pattern-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .pattern-card h4 { color: var(--primary); margin-bottom: 0.5rem; }
+  .pattern-card p { font-size: 0.8rem; color: var(--muted); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--darker); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .section-subtitle {
+    color: var(--muted);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+
+  /* HIGHLIGHT */
+  .highlight { color: var(--warning); font-weight: bold; }
+  .text-primary { color: var(--primary); }
+  .text-success { color: var(--success); }
+  .text-error { color: var(--error); }
+  .text-info { color: var(--info); }
+
+  /* List styles */
+  ul.styled, ol.styled {
+    padding-left: 1.5rem;
+    color: var(--muted);
+  }
+  ul.styled li, ol.styled li { margin-bottom: 0.4rem; }
+
+  .vs-container {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .vs-label {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.5rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 2rem;
+  }
+
+  @media (max-width: 600px) {
+    .vs-container { grid-template-columns: 1fr; }
+    .vs-label { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏗️ JS Architecture & System Design</h1>
+  <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <div>
+      <div class="progress-label" id="progressLabel">Progress: 0%</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="badge badge-primary" id="scoreDisplay">⭐ Score: 0</div>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showSection('intro')">🌱 Intro</button>
+  <button class="nav-btn" onclick="showSection('patterns')">🧩 Patterns</button>
+  <button class="nav-btn" onclick="showSection('microservices')">⚙️ Microservices</button>
+  <button class="nav-btn" onclick="showSection('monorepo')">📦 Monorepos</button>
+  <button class="nav-btn" onclick="showSection('communication')">📡 Communication</button>
+  <button class="nav-btn" onclick="showSection('scalability')">📈 Scalability</button>
+  <button class="nav-btn" onclick="showSection('exercises')">💻 Exercises</button>
+  <button class="nav-btn" onclick="showSection('quiz')">🧠 Quiz</button>
+  <button class="nav-btn" onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+  <button class="nav-btn" onclick="showSection('cheatsheet')">📋 Cheat Sheet</button>
+</nav>
+
+<main>
+
+<!-- ============================================================ -->
+<!-- INTRO SECTION -->
+<!-- ============================================================ -->
+<div class="section active" id="intro">
+  <h1 class="section-title">🌱 Architecture 101</h1>
+  <p class="section-subtitle">Think of architecture like planning a city — before building, you decide where roads, buildings, and utilities go.</p>
+
+  <div class="card">
+    <h2>🤔 What Is Software Architecture?</h2>
+    <p>Architecture is the <span class="highlight">high-level structure</span> of a software system — how it's divided into parts, how those parts communicate, and the decisions that are hard to change later.</p>
+
+    <div class="info-box">
+      <div style="font-weight:700;color:var(--info);margin-bottom:0.5rem;">💡 The Simple Analogy</div>
+      <p style="color:var(--muted);">
+        <strong style="color:var(--text);">Bad architecture</strong> = Building a house, then realizing you forgot plumbing and now must tear down walls.<br>
+        <strong style="color:var(--text);">Good architecture</strong> = Planning plumbing, electrical, and structure BEFORE laying the foundation.
+      </p>
+    </div>
+
+    <div class="grid-2">
+      <div class="pattern-card">
+        <div class="pattern-icon">🏠</div>
+        <h4>Monolithic</h4>
+        <p>Everything in one codebase. Simple to start, hard to scale later.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🏙️</div>
+        <h4>Microservices</h4>
+        <p>Many small services working together. Complex, but highly scalable.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗺️ Architecture Evolution Timeline</h2>
+    <div class="diagram">
+<pre style="color:var(--text);font-family:'Courier New',monospace;font-size:0.8rem;line-height:2.5;">
+<span style="color:var(--muted);">1990s</span>   <span style="color:var(--warning);">───▶</span>  <span style="color:var(--primary);">[Monolith]</span>  Everything in one app. Simple!
+            
+<span style="color:var(--muted);">2000s</span>   <span style="color:var(--warning);">───▶</span>  <span style="color:var(--primary);">[SOA]</span>  Service-Oriented Architecture. Split by domain.
+            
+<span style="color:var(--muted);">2010s</span>   <span style="color:var(--warning);">───▶</span>  <span style="color:var(--primary);">[Microservices]</span>  Tiny independent services.
+            
+<span style="color:var(--muted);">2020s</span>   <span style="color:var(--warning);">───▶</span>  <span style="color:var(--primary);">[Serverless + Edge]</span>  No servers to manage!
+</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📐 Key Architecture Principles</h2>
+    <div class="grid-3">
+      <div class="pattern-card">
+        <div class="pattern-icon">🔒</div>
+        <h4>Separation of Concerns</h4>
+        <p>Each part does ONE thing well. Don't mix UI with database logic.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🔗</div>
+        <h4>Loose Coupling</h4>
+        <p>Parts should depend on each other as LITTLE as possible.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🔧</div>
+        <h4>High Cohesion</h4>
+        <p>Related code should stay TOGETHER. Like keeps like nearby.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">📏</div>
+        <h4>Single Responsibility</h4>
+        <p>A module should have ONE reason to change.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🔄</div>
+        <h4>DRY Principle</h4>
+        <p>Don't Repeat Yourself. Share code, don't copy it.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">📦</div>
+        <h4>Encapsulation</h4>
+        <p>Hide internal details. Expose only what others need.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔬 Monolith vs Microservices — Simple View</h2>
+
+    <div class="vs-container">
+      <div class="card" style="background:var(--card2);border-color:rgba(108,99,255,0.4);">
+        <h3 style="color:var(--primary);">🏠 Monolith</h3>
+        <div class="code-block" data-lang="structure">
+<pre><span class="cm">// One big application</span>
+<span class="kw">const</span> app <span class="op">=</span> {
+  users: userController,
+  products: productController,
+  orders: orderController,
+  payments: paymentController,
+  <span class="cm">// All in ONE codebase</span>
+  <span class="cm">// ONE database</span>
+  <span class="cm">// ONE deploy</span>
+}</pre>
+        </div>
+        <p class="text-success">✅ Easy to develop initially</p>
+        <p class="text-success">✅ Simple to debug</p>
+        <p class="text-success">✅ Easy deployment</p>
+        <p class="text-error">❌ Hard to scale specific parts</p>
+        <p class="text-error">❌ One bug can crash everything</p>
+        <p class="text-error">❌ Tech stack locked in</p>
+      </div>
+
+      <div class="vs-label">VS</div>
+
+      <div class="card" style="background:var(--card2);border-color:rgba(0,230,118,0.4);">
+        <h3 style="color:var(--success);">🏙️ Microservices</h3>
+        <div class="code-block" data-lang="structure">
+<pre><span class="cm">// Many small services</span>
+<span class="kw">const</span> system <span class="op">=</span> {
+  userService: <span class="str">'users.api.com'</span>,
+  productService: <span class="str">'products.api.com'</span>,
+  orderService: <span class="str">'orders.api.com'</span>,
+  paymentService: <span class="str">'payments.api.com'</span>,
+  <span class="cm">// Each has OWN database</span>
+  <span class="cm">// Deploy INDEPENDENTLY</span>
+}</pre>
+        </div>
+        <p class="text-success">✅ Scale specific services</p>
+        <p class="text-success">✅ Fault isolation</p>
+        <p class="text-success">✅ Different tech per service</p>
+        <p class="text-error">❌ Complex to manage</p>
+        <p class="text-error">❌ Network latency</p>
+        <p class="text-error">❌ Distributed debugging hard</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💻 Your First Architecture Decision in Code</h2>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this, 'bad-arch')">❌ Tight Coupling (Bad)</div>
+      <div class="tab" onclick="switchTab(this, 'good-arch')">✅ Loose Coupling (Good)</div>
+    </div>
+
+    <div class="tab-content active" id="bad-arch">
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ❌ BAD: UserService directly creates EmailService</span>
+<span class="cm">// Hard to test, hard to change email provider</span>
+
+<span class="kw">class</span> <span class="cl">UserService</span> {
+  <span class="fn">register</span>(user) {
+    <span class="cm">// Directly depends on specific email implementation</span>
+    <span class="kw">const</span> emailService <span class="op">=</span> <span class="kw">new</span> <span class="cl">SendGridEmailService</span>();
+    emailService.<span class="fn">send</span>(user.email, <span class="str">'Welcome!'</span>);
+    
+    <span class="cm">// Directly depends on specific database</span>
+    <span class="kw">const</span> db <span class="op">=</span> <span class="kw">new</span> <span class="cl">MySQLDatabase</span>();
+    db.<span class="fn">save</span>(user);
+  }
+}
+
+<span class="cm">// Problem: To test UserService, you need SendGrid + MySQL!</span>
+<span class="cm">// Problem: Changing email provider means editing UserService!</span></pre>
+      </div>
+    </div>
+
+    <div class="tab-content" id="good-arch">
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ✅ GOOD: Dependency Injection - loose coupling</span>
+
+<span class="kw">class</span> <span class="cl">UserService</span> {
+  <span class="fn">constructor</span>(emailService, userRepository) {
+    <span class="cm">// Depends on INTERFACES, not implementations</span>
+    <span class="kw">this</span>.emailService <span class="op">=</span> emailService;
+    <span class="kw">this</span>.userRepository <span class="op">=</span> userRepository;
+  }
+
+  <span class="kw">async</span> <span class="fn">register</span>(user) {
+    <span class="kw">await</span> <span class="kw">this</span>.userRepository.<span class="fn">save</span>(user);
+    <span class="kw">await</span> <span class="kw">this</span>.emailService.<span class="fn">send</span>(user.email, <span class="str">'Welcome!'</span>);
+  }
+}
+
+<span class="cm">// Production</span>
+<span class="kw">const</span> service <span class="op">=</span> <span class="kw">new</span> <span class="cl">UserService</span>(
+  <span class="kw">new</span> <span class="cl">SendGridEmailService</span>(),
+  <span class="kw">new</span> <span class="cl">PostgresUserRepo</span>()
+);
+
+<span class="cm">// Testing - swap with mocks!</span>
+<span class="kw">const</span> testService <span class="op">=</span> <span class="kw">new</span> <span class="cl">UserService</span>(
+  <span class="kw">new</span> <span class="cl">MockEmailService</span>(),   <span class="cm">// No real emails sent!</span>
+  <span class="kw">new</span> <span class="cl">InMemoryUserRepo</span>()   <span class="cm">// No real database!</span>
+);</pre>
+      </div>
+      <div class="tip">
+        <div class="tip-title">✅ Why This Is Better</div>
+        <p style="color:var(--muted);">You can swap email providers without touching UserService. You can test without real infrastructure. This is the <strong style="color:var(--text);">Dependency Injection</strong> pattern!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PATTERNS SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="patterns">
+  <h1 class="section-title">🧩 Architectural Patterns</h1>
+  <p class="section-subtitle">Proven solutions to recurring architectural problems</p>
+
+  <div class="card">
+    <h2>📋 Pattern Overview</h2>
+    <div class="grid-3">
+      <div class="pattern-card">
+        <div class="pattern-icon">🍰</div>
+        <h4>Layered Architecture</h4>
+        <p>Presentation → Business → Data. Classic and proven.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🌊</div>
+        <h4>Event-Driven</h4>
+        <p>Services communicate via events. Decoupled and async.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🔭</div>
+        <h4>CQRS</h4>
+        <p>Separate read and write operations for performance.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🗃️</div>
+        <h4>Repository Pattern</h4>
+        <p>Abstract data storage behind a clean interface.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🚪</div>
+        <h4>API Gateway</h4>
+        <p>Single entry point that routes to services.</p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🏭</div>
+        <h4>Factory Pattern</h4>
+        <p>Create objects without specifying exact class.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🍰 Layered Architecture (MVC/N-Tier)</h2>
+    <p>The most common pattern. Separate your app into distinct layers with one-way dependencies.</p>
+
+    <div class="diagram">
+<pre style="color:var(--text);font-family:'Courier New',monospace;line-height:2.5;">
+  <span style="color:var(--info);">┌─────────────────────────────────┐</span>
+  <span style="color:var(--info);">│     PRESENTATION LAYER          │</span>  <span style="color:var(--muted);">← UI, Controllers, API Routes</span>
+  <span style="color:var(--info);">│   (React, Express Routes)       │</span>
+  <span style="color:var(--info);">└──────────────┬──────────────────┘</span>
+                <span style="color:var(--warning);">↓</span>
+  <span style="color:var(--primary);">┌─────────────────────────────────┐</span>
+  <span style="color:var(--primary);">│      BUSINESS LOGIC LAYER       │</span>  <span style="color:var(--muted);">← Services, Use Cases, Rules</span>
+  <span style="color:var(--primary);">│   (UserService, OrderService)   │</span>
+  <span style="color:var(--primary);">└──────────────┬──────────────────┘</span>
+                <span style="color:var(--warning);">↓</span>
+  <span style="color:var(--success);">┌─────────────────────────────────┐</span>
+  <span style="color:var(--success);">│        DATA ACCESS LAYER        │</span>  <span style="color:var(--muted);">← Repositories, DB queries</span>
+  <span style="color:var(--success);">│   (UserRepository, DB Models)   │</span>
+  <span style="color:var(--success);">└──────────────┬──────────────────┘</span>
+                <span style="color:var(--warning);">↓</span>
+  <span style="color:var(--warning);">┌─────────────────────────────────┐</span>
+  <span style="color:var(--warning);">│         DATABASE LAYER          │</span>  <span style="color:var(--muted);">← PostgreSQL, MongoDB, Redis</span>
+  <span style="color:var(--warning);">└─────────────────────────────────┘</span>
+</pre>
+    </div>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// === LAYER 1: Route (Presentation) ===</span>
+app.<span class="fn">post</span>(<span class="str">'/api/users'</span>, <span class="kw">async</span> (req, res) <span class="op">=&gt;</span> {
+  <span class="kw">const</span> result <span class="op">=</span> <span class="kw">await</span> userService.<span class="fn">createUser</span>(req.body);
+  res.<span class="fn">json</span>(result);
+});
+
+<span class="cm">// === LAYER 2: Service (Business Logic) ===</span>
+<span class="kw">class</span> <span class="cl">UserService</span> {
+  <span class="kw">async</span> <span class="fn">createUser</span>(data) {
+    <span class="cm">// Business rules live here</span>
+    <span class="kw">if</span> (<span class="kw">await</span> <span class="kw">this</span>.userRepo.<span class="fn">existsByEmail</span>(data.email)) {
+      <span class="kw">throw new</span> <span class="cl">Error</span>(<span class="str">'Email already registered'</span>);
+    }
+    data.password <span class="op">=</span> <span class="kw">await</span> <span class="fn">hashPassword</span>(data.password);
+    <span class="kw">return</span> <span class="kw">this</span>.userRepo.<span class="fn">create</span>(data);
+  }
+}
+
+<span class="cm">// === LAYER 3: Repository (Data Access) ===</span>
+<span class="kw">class</span> <span class="cl">UserRepository</span> {
+  <span class="kw">async</span> <span class="fn">create</span>(userData) {
+    <span class="kw">return</span> <span class="kw">await</span> db.query(
+      <span class="str">'INSERT INTO users (name, email, password) VALUES ($1, $2, $3)'</span>,
+      [userData.name, userData.email, userData.password]
+    );
+  }
+  
+  <span class="kw">async</span> <span class="fn">existsByEmail</span>(email) {
+    <span class="kw">const</span> result <span class="op">=</span> <span class="kw">await</span> db.query(
+      <span class="str">'SELECT 1 FROM users WHERE email = $1'</span>, [email]
+    );
+    <span class="kw">return</span> result.rows.length <span class="op">&gt;</span> <span class="num">0</span>;
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🌊 Event-Driven Architecture</h2>
+    <p>Services communicate by publishing and subscribing to events. They don't call each other directly!</p>
+
+    <div class="demo-area">
+      <h3 style="color:var(--info);margin-bottom:1rem;">🔴 Live Demo: Event Bus</h3>
+      <div class="demo-controls">
+        <button class="btn btn-primary" onclick="fireEvent('ORDER_PLACED')">📦 Place Order</button>
+        <button class="btn btn-warning" onclick="fireEvent('PAYMENT_RECEIVED')">💳 Payment</button>
+        <button class="btn btn-danger" onclick="fireEvent('USER_DELETED')">🗑️ Delete User</button>
+        <button class="btn btn-secondary" onclick="clearEventLog()">🗑️ Clear</button>
+      </div>
+      <div id="eventLog" class="output" style="min-height:120px;color:var(--text);">
+        🎧 Listening for events... Click a button above!
+      </div>
+    </div>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// Simple Event Bus implementation</span>
+<span class="kw">class</span> <span class="cl">EventBus</span> {
+  <span class="fn">constructor</span>() {
+    <span class="kw">this</span>.subscribers <span class="op">=</span> {};
+  }
+
+  <span class="fn">subscribe</span>(event, handler) {
+    <span class="kw">if</span> (<span class="op">!</span><span class="kw">this</span>.subscribers[event]) {
+      <span class="kw">this</span>.subscribers[event] <span class="op">=</span> [];
+    }
+    <span class="kw">this</span>.subscribers[event].<span class="fn">push</span>(handler);
+  }
+
+  <span class="fn">publish</span>(event, data) {
+    <span class="kw">const</span> handlers <span class="op">=</span> <span class="kw">this</span>.subscribers[event] <span class="op">||</span> [];
+    handlers.<span class="fn">forEach</span>(handler <span class="op">=&gt;</span> <span class="fn">handler</span>(data));
+  }
+}
+
+<span class="kw">const</span> bus <span class="op">=</span> <span class="kw">new</span> <span class="cl">EventBus</span>();
+
+<span class="cm">// Services subscribe to events they care about</span>
+bus.<span class="fn">subscribe</span>(<span class="str">'ORDER_PLACED'</span>, (order) <span class="op">=&gt;</span> {
+  console.<span class="fn">log</span>(<span class="str">'📧 Email service: Sending confirmation'</span>);
+});
+
+bus.<span class="fn">subscribe</span>(<span class="str">'ORDER_PLACED'</span>, (order) <span class="op">=&gt;</span> {
+  console.<span class="fn">log</span>(<span class="str">'📦 Inventory: Reserving items'</span>);
+});
+
+bus.<span class="fn">subscribe</span>(<span class="str">'ORDER_PLACED'</span>, (order) <span class="op">=&gt;</span> {
+  console.<span class="fn">log</span>(<span class="str">'📊 Analytics: Recording sale'</span>);
+});
+
+<span class="cm">// OrderService just publishes — doesn't know who handles it!</span>
+bus.<span class="fn">publish</span>(<span class="str">'ORDER_PLACED'</span>, { id: <span class="num">123</span>, amount: <span class="num">99.99</span> });
+<span class="cm">// All 3 handlers run automatically!</span></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔭 CQRS Pattern (Command Query Responsibility Segregation)</h2>
+    <p>Separate the models for <span class="text-primary">reading</span> and <span class="text-error">writing</span> data. Reads are optimized differently than writes.</p>
+
+    <div class="diagram">
+<pre style="color:var(--text);font-family:'Courier New',monospace;line-height:2.5;">
+                <span style="color:var(--info);">Client</span>
+               <span style="color:var(--warning);">/     \</span>
+        <span style="color:var(--warning);">Write</span>        <span style="color:var(--success);">Read</span>
+          <span style="color:var(--warning);">↓</span>             <span style="color:var(--success);">↓</span>
+  <span style="color:var(--warning);">[Commands]</span>    <span style="color:var(--success);">[Queries]</span>
+  <span style="color:var(--warning);">CreateUser</span>    <span style="color:var(--success);">GetUser</span>
+  <span style="color:var(--warning);">UpdateUser</span>    <span style="color:var(--success);">ListUsers</span>
+       <span style="color:var(--warning);">↓</span>             <span style="color:var(--success);">↓</span>
+  <span style="color:var(--warning);">[Write DB]</span>   <span style="color:var(--success);">[Read DB]</span>
+  <span style="color:var(--warning);">PostgreSQL</span>   <span style="color:var(--success);">Elasticsearch</span>
+       <span style="color:var(--warning);">↓</span>        <span style="color:var(--warning);">↑</span>
+   <span style="color:var(--muted);">Event → Sync Read DB</span>
+</pre>
+    </div>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// COMMAND side — handles writes</span>
+<span class="kw">class</span> <span class="cl">UserCommandHandler</span> {
+  <span class="kw">async</span> <span class="fn">handle</span>(command) {
+    <span class="kw">switch</span>(command.type) {
+      <span class="kw">case</span> <span class="str">'CREATE_USER'</span>:
+        <span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> this.writeDb.<span class="fn">insert</span>(<span class="str">'users'</span>, command.data);
+        <span class="cm">// Emit event to update read model</span>
+        eventBus.<span class="fn">publish</span>(<span class="str">'USER_CREATED'</span>, user);
+        <span class="kw">return</span> user;
+
+      <span class="kw">case</span> <span class="str">'UPDATE_USER'</span>:
+        <span class="kw">const</span> updated <span class="op">=</span> <span class="kw">await</span> this.writeDb.<span class="fn">update</span>(<span class="str">'users'</span>, command.data);
+        eventBus.<span class="fn">publish</span>(<span class="str">'USER_UPDATED'</span>, updated);
+        <span class="kw">return</span> updated;
+    }
+  }
+}
+
+<span class="cm">// QUERY side — optimized for reads (e.g., Elasticsearch)</span>
+<span class="kw">class</span> <span class="cl">UserQueryHandler</span> {
+  <span class="kw">async</span> <span class="fn">getUser</span>(id) {
+    <span class="cm">// Read from optimized read store (fast!)</span>
+    <span class="kw">return</span> <span class="kw">await</span> this.readDb.<span class="fn">findById</span>(id);
+  }
+
+  <span class="kw">async</span> <span class="fn">searchUsers</span>(query) {
+    <span class="cm">// Full-text search on read-optimized store</span>
+    <span class="kw">return</span> <span class="kw">await</span> this.elasticsearch.<span class="fn">search</span>(query);
+  }
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">const</span> commands <span class="op">=</span> <span class="kw">new</span> <span class="cl">UserCommandHandler</span>();
+<span class="kw">const</span> queries  <span class="op">=</span> <span class="kw">new</span> <span class="cl">UserQueryHandler</span>();
+
+<span class="kw">await</span> commands.<span class="fn">handle</span>({ type: <span class="str">'CREATE_USER'</span>, data: { name: <span class="str">'Alice'</span> } });
+<span class="kw">const</span> users <span class="op">=</span> <span class="kw">await</span> queries.<span class="fn">searchUsers</span>(<span class="str">'Alice'</span>);</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MICROSERVICES SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="microservices">
+  <h1 class="section-title">⚙️ Microservices</h1>
+  <p class="section-subtitle">Breaking your app into small, independent, deployable services</p>
+
+  <div class="card">
+    <h2>🏗️ Microservices Architecture Map</h2>
+
+    <div class="diagram">
+<pre style="color:var(--text);font-family:'Courier New',monospace;font-size:0.75rem;line-height:2.5;">
+         <span style="color:var(--info);">Internet</span>
+             <span style="color:var(--warning);">↓</span>
+    <span style="color:var(--primary);">┌────────────────┐</span>
+    <span style="color:var(--primary);">│  API GATEWAY   │</span>  <span style="color:var(--muted);">← Single entry point, auth, rate limiting</span>
+    <span style="color:var(--primary);">└────┬──┬──┬─────┘</span>
+         <span style="color:var(--warning);">↙  ↓  ↘</span>
+<span style="color:var(--success);">┌────────┐</span> <span style="color:var(--success);">┌────────┐</span> <span style="color:var(--success);">┌────────┐</span> <span style="color:var(--success);">┌────────┐</span>
+<span style="color:var(--success);">│ Users  │</span> <span style="color:var(--success);">│Products│</span> <span style="color:var(--success);">│ Orders │</span> <span style="color:var(--success);">│Payment │</span>
+<span style="color:var(--success);">│Service │</span> <span style="color:var(--success);">│Service │</span> <span style="color:var(--success);">│Service │</span> <span style="color:var(--success);">│Service │</span>
+<span style="color:var(--success);">└───┬────┘</span> <span style="color:var(--success);">└───┬────┘</span> <span style="color:var(--success);">└───┬────┘</span> <span style="color:var(--success);">└───┬────┘</span>
+    <span style="color:var(--warning);">↓</span>           <span style="color:var(--warning);">↓</span>           <span style="color:var(--warning);">↓</span>           <span style="color:var(--warning);">↓</span>
+<span style="color:var(--warning);">[Postgres] [MongoDB] [Postgres]  [Redis]</span>  <span style="color:var(--muted);">← Own DB per service!</span>
+</pre>
+    </div>
+
+    <!-- Interactive Microservices Demo -->
+    <div class="demo-area">
+      <h3 style="color:var(--info);margin-bottom:1rem;">🎮 Interactive: Request Flow Simulator</h3>
+      <div class="demo-controls">
+        <button class="btn btn-primary" onclick="simulateRequest('GET /api/orders/123')">GET Order</button>
+        <button class="btn btn-success" onclick="simulateRequest('POST /api/orders')">POST Order</button>
+        <button class="btn btn-warning" onclick="simulateRequest('DELETE /api/users/5')">DELETE User</button>
+        <button class="btn btn-danger" onclick="simulateRequest('FAIL')">💥 Simulate Failure</button>
+      </div>
+      <div id="requestFlow" class="demo-visual">
+        <span style="color:var(--muted);">Click a button to simulate a request through the system</span>
+      </div>
+      <div id="requestLog" class="output" style="color:var(--text);">Request log will appear here...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔌 API Gateway Pattern</h2>
+    <p>The gateway is the single entry point. It handles auth, routing, rate limiting, and aggregation.</p>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// Simplified API Gateway with Express</span>
+<span class="kw">const</span> express <span class="op">=</span> <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> proxy <span class="op">=</span> <span class="fn">require</span>(<span class="str">'http-proxy-middleware'</span>);
+<span class="kw">const</span> rateLimit <span class="op">=</span> <span class="fn">require</span>(<span class="str">'express-rate-limit'</span>);
+
+<span class="kw">const</span> gateway <span class="op">=</span> <span class="fn">express</span>();
+
+<span class="cm">// 1️⃣ Rate Limiting</span>
+gateway.<span class="fn">use</span>(<span class="fn">rateLimit</span>({
+  windowMs: <span class="num">15</span> <span class="op">*</span> <span class="num">60</span> <span class="op">*</span> <span class="num">1000</span>,  <span class="cm">// 15 minutes</span>
+  max: <span class="num">100</span>                   <span class="cm">// 100 requests per window</span>
+}));
+
+<span class="cm">// 2️⃣ Authentication middleware</span>
+gateway.<span class="fn">use</span>(<span class="fn">authenticate</span>);
+
+<span class="cm">// 3️⃣ Route to appropriate service</span>
+gateway.<span class="fn">use</span>(<span class="str">'/api/users'</span>, proxy.<span class="fn">createProxyMiddleware</span>({
+  target: <span class="str">'http://user-service:3001'</span>,
+  changeOrigin: <span class="kw">true</span>
+}));
+
+gateway.<span class="fn">use</span>(<span class="str">'/api/products'</span>, proxy.<span class="fn">createProxyMiddleware</span>({
+  target: <span class="str">'http://product-service:3002'</span>,
+  changeOrigin: <span class="kw">true</span>
+}));
+
+gateway.<span class="fn">use</span>(<span class="str">'/api/orders'</span>, proxy.<span class="fn">createProxyMiddleware</span>({
+  target: <span class="str">'http://order-service:3003'</span>,
+  changeOrigin: <span class="kw">true</span>
+}));
+
+<span class="cm">// 4️⃣ Aggregation endpoint (combines multiple services)</span>
+gateway.<span class="fn">get</span>(<span class="str">'/api/dashboard'</span>, <span class="kw">async</span> (req, res) <span class="op">=&gt;</span> {
+  <span class="kw">const</span> [user, orders, notifications] <span class="op">=</span> <span class="kw">await</span> Promise.<span class="fn">all</span>([
+    <span class="fn">fetch</span>(<span class="str">`http://user-service/users/${req.userId}`</span>),
+    <span class="fn">fetch</span>(<span class="str">`http://order-service/orders?userId=${req.userId}`</span>),
+    <span class="fn">fetch</span>(<span class="str">`http://notification-service/unseen?userId=${req.userId}`</span>)
+  ]);
+  res.<span class="fn">json</span>({ user, orders, notifications });
+});</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔄 Circuit Breaker Pattern</h2>
+    <p>Prevents cascading failures. If service B is down, stop calling it and return a fallback.</p>
+
+    <div class="diagram">
+<pre style="color:var(--text);font-family:'Courier New',monospace;line-height:2.5;">
+  <span style="color:var(--success);">CLOSED (Normal)</span>         <span style="color:var(--error);">OPEN (Failure)</span>       <span style="color:var(--warning);">HALF-OPEN (Testing)</span>
+  Requests flow through   Return fallback       Allow 1 request
+  Count failures          No calls to service   If success → CLOSED
+         <span style="color:var(--warning);">↓</span>                      <span style="color:var(--warning);">↑</span>                    <span style="color:var(--warning);">↕</span>
+  Failures &gt; threshold <span style="color:var(--warning);">──→</span> OPEN            After timeout <span style="color:var(--warning);">──→</span> HALF-OPEN
+</pre>
+    </div>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="kw">class</span> <span class="cl">CircuitBreaker</span> {
+  <span class="fn">constructor</span>(service, options <span class="op">=</span> {}) {
+    <span class="kw">this</span>.service <span class="op">=</span> service;
+    <span class="kw">this</span>.failureThreshold <span class="op">=</span> options.failureThreshold <span class="op">||</span> <span class="num">5</span>;
+    <span class="kw">this</span>.timeout <span class="op">=</span> options.timeout <span class="op">||</span> <span class="num">60000</span>; <span class="cm">// 1 min</span>
+    <span class="kw">this</span>.state <span class="op">=</span> <span class="str">'CLOSED'</span>;
+    <span class="kw">this</span>.failures <span class="op">=</span> <span class="num">0</span>;
+    <span class="kw">this</span>.nextAttempt <span class="op">=</span> Date.<span class="fn">now</span>();
+  }
+
+  <span class="kw">async</span> <span class="fn">call</span>(...args) {
+    <span class="kw">if</span> (<span class="kw">this</span>.state <span class="op">===</span> <span class="str">'OPEN'</span>) {
+      <span class="kw">if</span> (Date.<span class="fn">now</span>() <span class="op">&lt;</span> <span class="kw">this</span>.nextAttempt) {
+        <span class="kw">throw new</span> <span class="cl">Error</span>(<span class="str">'Circuit OPEN — service unavailable'</span>);
+      }
+      <span class="kw">this</span>.state <span class="op">=</span> <span class="str">'HALF_OPEN'</span>;
+    }
+
+    <span class="kw">try</span> {
+      <span class="kw">const</span> result <span class="op">=</span> <span class="kw">await</span> <span class="kw">this</span>.service(...args);
+      <span class="kw">this</span>.<span class="fn">onSuccess</span>();
+      <span class="kw">return</span> result;
+    } <span class="kw">catch</span> (error) {
+      <span class="kw">this</span>.<span class="fn">onFailure</span>();
+      <span class="kw">throw</span> error;
+    }
+  }
+
+  <span class="fn">onSuccess</span>() {
+    <span class="kw">this</span>.failures <span class="op">=</span> <span class="num">0</span>;
+    <span class="kw">this</span>.state <span class="op">=</span> <span class="str">'CLOSED'</span>;
+  }
+
+  <span class="fn">onFailure</span>() {
+    <span class="kw">this</span>.failures<span class="op">++</span>;
+    <span class="kw">if</span> (<span class="kw">this</span>.failures <span class="op">&gt;=</span> <span class="kw">this</span>.failureThreshold) {
+      <span class="kw">this</span>.state <span class="op">=</span> <span class="str">'OPEN'</span>;
+      <span class="kw">this</span>.nextAttempt <span class="op">=</span> Date.<span class="fn">now</span>() <span class="op">+</span> <span class="kw">this</span>.timeout;
+    }
+  }
+}
+
+<span class="cm">// Usage</span>
+<span class="kw">const</span> breaker <span class="op">=</span> <span class="kw">new</span> <span class="cl">CircuitBreaker</span>(paymentService.charge, {
+  failureThreshold: <span class="num">3</span>,
+  timeout: <span class="num">30000</span>
+});
+
+<span class="kw">try</span> {
+  <span class="kw">await</span> breaker.<span class="fn">call</span>({ amount: <span class="num">99.99</span> });
+} <span class="kw">catch</span> (e) {
+  <span class="cm">// Handle gracefully — maybe show "try again later"</span>
+  <span class="kw">return</span> { status: <span class="str">'payment_deferred'</span> };
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MONOREPO SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="monorepo">
+  <h1 class="section-title">📦 Monorepos</h1>
+  <p class="section-subtitle">Multiple projects in a single repository — with shared code and tooling</p>
+
+  <div class="card">
+    <h2>🤔 Monorepo vs Polyrepo</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>Monorepo</th>
+          <th>Polyrepo (Multiple Repos)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Code sharing</td>
+          <td class="good">Easy — shared packages</td>
+          <td class="bad">Hard — publish npm packages</td>
+        </tr>
+        <tr>
+          <td>Atomic changes</td>
+          <td class="good">One PR for all affected code</td>
+          <td class="bad">Multiple PRs across repos</td>
+        </tr>
+        <tr>
+          <td>Versioning</td>
+          <td class="neutral">Managed together</td>
+          <td class="good">Fully independent</td>
+        </tr>
+        <tr>
+          <td>CI/CD speed</td>
+          <td class="bad">Slow (large repo)</td>
+          <td class="good">Fast per repo</td>
+        </tr>
+        <tr>
+          <td>Team autonomy</td>
+          <td class="neutral">Shared conventions</td>
+          <td class="good">Fully autonomous</td>
+        </tr>
+        <tr>
+          <td>Tooling</td>
+          <td class="bad">Needs special tools</td>
+          <td class="good">Standard tools</td>
+        </tr>
+        <tr>
+          <td>Used by</td>
+          <td class="good">Google, Facebook, Uber</td>
+          <td class="neutral">Most companies</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📁 Monorepo Structure</h2>
+
+    <div class="code-block" data-lang="structure">
+<pre><span class="cm"># Typical Turborepo/Nx structure</span>
+
+my-monorepo/
+├── apps/                    <span class="cm"># Applications</span>
+│   ├── web/                 <span class="cm"># React frontend</span>
+│   │   ├── package.json
+│   │   └── src/
+│   ├── api/                 <span class="cm"># Node.js backend</span>
+│   │   ├── package.json
+│   │   └── src/
+│   └── mobile/              <span class="cm"># React Native app</span>
+│       ├── package.json
+│       └── src/
+├── packages/                <span class="cm"># Shared packages</span>
+│   ├── ui/                  <span class="cm"># Shared component library</span>
+│   │   ├── package.json
+│   │   └── src/Button.tsx
+│   ├── utils/               <span class="cm"># Shared utilities</span>
+│   │   ├── package.json
+│   │   └── src/format.ts
+│   └── types/               <span class="cm"># Shared TypeScript types</span>
+│       ├── package.json
+│       └── src/index.ts
+├── package.json             <span class="cm"># Root package.json</span>
+├── turbo.json               <span class="cm"># Turborepo config</span>
+└── pnpm-workspace.yaml      <span class="cm"># Workspace definition</span></pre>
+    </div>
+
+    <div class="code-block" data-lang="package.json">
+<pre><span class="cm">// root package.json</span>
+{
+  <span class="str">"name"</span>: <span class="str">"my-monorepo"</span>,
+  <span class="str">"private"</span>: <span class="kw">true</span>,
+  <span class="str">"workspaces"</span>: [
+    <span class="str">"apps/*"</span>,
+    <span class="str">"packages/*"</span>
+  ],
+  <span class="str">"scripts"</span>: {
+    <span class="str">"build"</span>: <span class="str">"turbo run build"</span>,
+    <span class="str">"dev"</span>: <span class="str">"turbo run dev --parallel"</span>,
+    <span class="str">"test"</span>: <span class="str">"turbo run test"</span>,
+    <span class="str">"lint"</span>: <span class="str">"turbo run lint"</span>
+  },
+  <span class="str">"devDependencies"</span>: {
+    <span class="str">"turbo"</span>: <span class="str">"^1.10.0"</span>
+  }
+}
+
+<span class="cm">// apps/web/package.json — using shared packages</span>
+{
+  <span class="str">"name"</span>: <span class="str">"@myapp/web"</span>,
+  <span class="str">"dependencies"</span>: {
+    <span class="str">"@myapp/ui"</span>: <span class="str">"workspace:*"</span>,      <span class="cm">// shared UI components</span>
+    <span class="str">"@myapp/utils"</span>: <span class="str">"workspace:*"</span>,   <span class="cm">// shared utilities</span>
+    <span class="str">"@myapp/types"</span>: <span class="str">"workspace:*"</span>    <span class="cm">// shared TypeScript types</span>
+  }
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Turborepo — Smart Caching</h2>
+    <p>Turborepo only rebuilds what changed. It caches results and can share them across your team!</p>
+
+    <div class="code-block" data-lang="turbo.json">
+<pre><span class="cm">// turbo.json — defines task pipeline</span>
+{
+  <span class="str">"$schema"</span>: <span class="str">"https://turbo.build/schema.json"</span>,
+  <span class="str">"pipeline"</span>: {
+    <span class="str">"build"</span>: {
+      <span class="str">"dependsOn"</span>: [<span class="str">"^build"</span>],  <span class="cm">// build deps first</span>
+      <span class="str">"outputs"</span>: [<span class="str">"dist/**"</span>, <span class="str">".next/**"</span>]
+    },
+    <span class="str">"test"</span>: {
+      <span class="str">"dependsOn"</span>: [<span class="str">"build"</span>],
+      <span class="str">"outputs"</span>: [<span class="str">"coverage/**"</span>]
+    },
+    <span class="str">"lint"</span>: {
+      <span class="str">"outputs"</span>: []
+    },
+    <span class="str">"dev"</span>: {
+      <span class="str">"cache"</span>: <span class="kw">false</span>  <span class="cm">// don't cache dev servers</span>
+    }
+  }
+}
+
+<span class="cm">// Without Turborepo:</span>
+<span class="cm">// build all packages: 120 seconds</span>
+
+<span class="cm">// With Turborepo (nothing changed):</span>
+<span class="cm">// FULL TURBO! Cache hit: 0.1 seconds ⚡</span>
+
+<span class="cm">// With Turborepo (1 package changed):</span>
+<span class="cm">// Rebuild only affected packages: ~5 seconds ⚡</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- COMMUNICATION SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="communication">
+  <h1 class="section-title">📡 Service Communication</h1>
+  <p class="section-subtitle">How microservices talk to each other</p>
+
+  <div class="card">
+    <h2>📊 Communication Patterns Overview</h2>
+
+    <div class="grid-2">
+      <div class="pattern-card">
+        <div class="pattern-icon">🔁</div>
+        <h4>Synchronous (Request/Response)</h4>
+        <p>Service A calls Service B and WAITS for response.</p>
+        <p><span class="badge badge-info">REST</span> <span class="badge badge-primary">gRPC</span> <span class="badge badge-warning">GraphQL</span></p>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">📬</div>
+        <h4>Asynchronous (Fire & Forget)</h4>
+        <p>Service A sends message and continues. B processes later.</p>
+        <p><span class="badge badge-success">Kafka</span> <span class="badge badge-warning">RabbitMQ</span> <span class="badge badge-info">SQS</span></p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Method</th><th>Type</th><th>When to Use</th><th>Pros</th><th>Cons</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="text-primary">REST</span></td>
+          <td>Sync</td>
+          <td>CRUD APIs</td>
+          <td class="good">Simple, universal</td>
+          <td class="bad">Coupling, latency</td>
+        </tr>
+        <tr>
+          <td><span class="text-primary">gRPC</span></td>
+          <td>Sync</td>
+          <td>Internal services</td>
+          <td class="good">Fast, typed</td>
+          <td class="bad">Protobuf complexity</td>
+        </tr>
+        <tr>
+          <td><span class="text-success">Message Queue</span></td>
+          <td>Async</td>
+          <td>Decoupled tasks</td>
+          <td class="good">Resilient, scalable</td>
+          <td class="bad">Eventual consistency</td>
+        </tr>
+        <tr>
+          <td><span class="text-warning">GraphQL</span></td>
+          <td>Sync</td>
+          <td>Flexible queries</td>
+          <td class="good">Flexible, typed</td>
+          <td class="bad">Complex caching</td>
+        </tr>
+        <tr>
+          <td><span class="text-info">WebSocket</span></td>
+          <td>Async</td>
+          <td>Real-time</td>
+          <td class="good">Real-time, bi-directional</td>
+          <td class="bad">State management</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📨 Message Queue Implementation</h2>
+
+    <div class="demo-area">
+      <h3 style="color:var(--info);margin-bottom:1rem;">🎮 Message Queue Simulator</h3>
+      <div class="demo-controls">
+        <button class="btn btn-primary" onclick="enqueueMessage('ORDER_PLACED', {id:Math.floor(Math.random()*1000)})">📦 Enqueue Order</button>
+        <button class="btn btn-warning" onclick="enqueueMessage('USER_SIGNUP', {id:Math.floor(Math.random()*1000)})">👤 Enqueue Signup</button>
+        <button class="btn btn-success" onclick="processQueue()">▶️ Process Queue</button>
+        <button class="btn btn-secondary" onclick="clearQueue()">🗑️ Clear</button>
+      </div>
+      <div id="queueVisual" class="output" style="min-height:100px;color:var(--text);">Queue is empty. Enqueue some messages!</div>
+    </div>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// Producer - publishes messages to queue</span>
+<span class="kw">const</span> amqp <span class="op">=</span> <span class="fn">require</span>(<span class="str">'amqplib'</span>);
+
+<span class="kw">async function</span> <span class="fn">publishOrder</span>(orderData) {
+  <span class="kw">const</span> connection <span class="op">=</span> <span class="kw">await</span> amqp.<span class="fn">connect</span>(<span class="str">'amqp://localhost'</span>);
+  <span class="kw">const</span> channel <span class="op">=</span> <span class="kw">await</span> connection.<span class="fn">createChannel</span>();
+  
+  <span class="kw">const</span> queue <span class="op">=</span> <span class="str">'order_processing'</span>;
+  <span class="kw">await</span> channel.<span class="fn">assertQueue</span>(queue, { durable: <span class="kw">true</span> });
+  
+  channel.<span class="fn">sendToQueue</span>(
+    queue,
+    Buffer.<span class="fn">from</span>(JSON.<span class="fn">stringify</span>(orderData)),
+    { persistent: <span class="kw">true</span> }  <span class="cm">// Survive RabbitMQ restart</span>
+  );
+  
+  console.<span class="fn">log</span>(<span class="str">'✅ Order queued:'</span>, orderData.id);
+  <span class="kw">await</span> connection.<span class="fn">close</span>();
+}
+
+<span class="cm">// Consumer - processes messages</span>
+<span class="kw">async function</span> <span class="fn">startOrderWorker</span>() {
+  <span class="kw">const</span> connection <span class="op">=</span> <span class="kw">await</span> amqp.<span class="fn">connect</span>(<span class="str">'amqp://localhost'</span>);
+  <span class="kw">const</span> channel <span class="op">=</span> <span class="kw">await</span> connection.<span class="fn">createChannel</span>();
+  
+  <span class="kw">const</span> queue <span class="op">=</span> <span class="str">'order_processing'</span>;
+  <span class="kw">await</span> channel.<span class="fn">assertQueue</span>(queue, { durable: <span class="kw">true</span> });
+  
+  <span class="cm">// Process one at a time (don't overwhelm)</span>
+  channel.<span class="fn">prefetch</span>(<span class="num">1</span>);
+  
+  console.<span class="fn">log</span>(<span class="str">'🎧 Waiting for orders...'</span>);
+  
+  channel.<span class="fn">consume</span>(queue, <span class="kw">async</span> (msg) <span class="op">=&gt;</span> {
+    <span class="kw">const</span> order <span class="op">=</span> JSON.<span class="fn">parse</span>(msg.content.<span class="fn">toString</span>());
+    
+    <span class="kw">try</span> {
+      <span class="kw">await</span> <span class="fn">processOrder</span>(order);
+      channel.<span class="fn">ack</span>(msg);  <span class="cm">// ✅ Acknowledge — remove from queue</span>
+    } <span class="kw">catch</span> (error) {
+      channel.<span class="fn">nack</span>(msg, <span class="kw">false</span>, <span class="kw">true</span>);  <span class="cm">// ❌ Requeue on failure</span>
+    }
+  });
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🌐 REST vs gRPC Deep Dive</h2>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this, 'rest-tab')">REST</div>
+      <div class="tab" onclick="switchTab(this, 'grpc-tab')">gRPC</div>
+      <div class="tab" onclick="switchTab(this, 'graphql-tab')">GraphQL</div>
+    </div>
+
+    <div class="tab-content active" id="rest-tab">
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// REST API - familiar, HTTP-based</span>
+
+<span class="cm">// Server</span>
+app.<span class="fn">get</span>(<span class="str">'/users/:id'</span>, <span class="kw">async</span> (req, res) <span class="op">=&gt;</span> {
+  <span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> userService.<span class="fn">findById</span>(req.params.id);
+  res.<span class="fn">json</span>(user);
+});
+
+app.<span class="fn">post</span>(<span class="str">'/users'</span>, <span class="kw">async</span> (req, res) <span class="op">=&gt;</span> {
+  <span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> userService.<span class="fn">create</span>(req.body);
+  res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>(user);
+});
+
+<span class="cm">// Client</span>
+<span class="kw">const</span> response <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/users/123'</span>);
+<span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> response.<span class="fn">json</span>();
+
+<span class="cm">// ✅ REST HTTP Status Codes to know:</span>
+<span class="cm">// 200 OK, 201 Created, 204 No Content</span>
+<span class="cm">// 400 Bad Request, 401 Unauthorized, 403 Forbidden</span>
+<span class="cm">// 404 Not Found, 409 Conflict, 422 Unprocessable</span>
+<span class="cm">// 500 Internal Server Error, 503 Service Unavailable</span></pre>
+      </div>
+    </div>
+
+    <div class="tab-content" id="grpc-tab">
+      <div class="code-block" data-lang="protobuf">
+<pre><span class="cm">// gRPC - define your API in Protobuf (language-agnostic)</span>
+
+<span class="cm">// user.proto</span>
+<span class="kw">syntax</span> <span class="op">=</span> <span class="str">"proto3"</span>;
+
+<span class="kw">service</span> <span class="cl">UserService</span> {
+  <span class="fn">rpc</span> GetUser (UserRequest) <span class="kw">returns</span> (User);
+  <span class="fn">rpc</span> CreateUser (CreateUserRequest) <span class="kw">returns</span> (User);
+  <span class="fn">rpc</span> ListUsers (ListRequest) <span class="kw">returns</span> (<span class="fn">stream</span> User); <span class="cm">// streaming!</span>
+}
+
+<span class="kw">message</span> User {
+  <span class="kw">string</span> id = <span class="num">1</span>;
+  <span class="kw">string</span> name = <span class="num">2</span>;
+  <span class="kw">string</span> email = <span class="num">3</span>;
+}
+
+<span class="cm">// JavaScript gRPC server</span>
+<span class="kw">const</span> grpc <span class="op">=</span> <span class="fn">require</span>(<span class="str">'@grpc/grpc-js'</span>);
+
+server.<span class="fn">addService</span>(UserServiceService, {
+  <span class="kw">async</span> <span class="fn">getUser</span>(call, callback) {
+    <span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> db.<span class="fn">findById</span>(call.request.id);
+    <span class="fn">callback</span>(<span class="kw">null</span>, user);  <span class="cm">// returns protobuf, not JSON</span>
+  }
+});
+
+<span class="cm">// gRPC client</span>
+<span class="kw">const</span> client <span class="op">=</span> <span class="kw">new</span> <span class="cl">UserServiceClient</span>(
+  <span class="str">'user-service:50051'</span>, grpc.credentials.<span class="fn">createInsecure</span>()
+);
+
+client.<span class="fn">getUser</span>({ id: <span class="str">'123'</span> }, (err, user) <span class="op">=&gt;</span> {
+  console.<span class="fn">log</span>(user); <span class="cm">// ~10x faster than REST!</span>
+});</pre>
+      </div>
+    </div>
+
+    <div class="tab-content" id="graphql-tab">
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// GraphQL - clients get exactly what they need</span>
+
+<span class="cm">// Schema definition</span>
+<span class="kw">const</span> typeDefs <span class="op">=</span> <span class="fn">gql</span><span class="str">`
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+    orders: [Order!]!    # nested data, one request!
+  }
+
+  type Query {
+    user(id: ID!): User
+    users: [User!]!
+  }
+
+  type Mutation {
+    createUser(name: String!, email: String!): User!
+  }
+`</span>;
+
+<span class="cm">// Resolver</span>
+<span class="kw">const</span> resolvers <span class="op">=</span> {
+  Query: {
+    user: (_, { id }) <span class="op">=&gt;</span> userService.<span class="fn">findById</span>(id),
+    users: () <span class="op">=&gt;</span> userService.<span class="fn">findAll</span>()
+  },
+  User: {
+    <span class="cm">// Auto-resolved when requested — lazy loading!</span>
+    orders: (user) <span class="op">=&gt;</span> orderService.<span class="fn">findByUserId</span>(user.id)
+  }
+};
+
+<span class="cm">// Client query - get ONLY what you need</span>
+<span class="kw">const</span> query <span class="op">=</span> <span class="fn">gql</span><span class="str">`
+  query GetUser($id: ID!) {
+    user(id: $id) {
+      name          # only name
+      orders {      # AND orders in ONE request!
+        id
+        total
+      }
+    }               # no unnecessary fields!
+  }
+`</span>;</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCALABILITY SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="scalability">
+  <h1 class="section-title">📈 Scalability Patterns</h1>
+  <p class="section-subtitle">Design systems that handle growth gracefully</p>
+
+  <div class="card">
+    <h2>⬆️ Vertical vs Horizontal Scaling</h2>
+    <div class="grid-2">
+      <div class="pattern-card">
+        <div class="pattern-icon">💪</div>
+        <h4>Vertical Scaling (Scale Up)</h4>
+        <p>Add more power to existing machine. More RAM, CPU, SSD.</p>
+        <div class="code-block" data-lang="analogy" style="margin-top:0.5rem;">
+<pre>Server: 2 CPUs, 4GB RAM
+   ↓
+Server: 32 CPUs, 256GB RAM
+(same machine, just bigger)
+
+Limit: There's a max server size!</pre>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">🌐</div>
+        <h4>Horizontal Scaling (Scale Out)</h4>
+        <p>Add more machines. Distribute the load.</p>
+        <div class="code-block" data-lang="analogy" style="margin-top:0.5rem;">
+<pre>Server: 1 instance
+   ↓
+Servers: 100 instances
+(same size, more of them!)
+
+Limit: No practical limit!</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Caching Strategies</h2>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// 1️⃣ Cache-Aside (Lazy Loading) — most common</span>
+<span class="kw">async function</span> <span class="fn">getUser</span>(id) {
+  <span class="cm">// Check cache first</span>
+  <span class="kw">let</span> user <span class="op">=</span> <span class="kw">await</span> redis.<span class="fn">get</span>(<span class="str">`user:${id}`</span>);
+  
+  <span class="kw">if</span> (<span class="op">!</span>user) {
+    <span class="cm">// Cache miss — get from database</span>
+    user <span class="op">=</span> <span class="kw">await</span> db.<span class="fn">findById</span>(id);
+    <span class="cm">// Store in cache for 1 hour</span>
+    <span class="kw">await</span> redis.<span class="fn">setex</span>(<span class="str">`user:${id}`</span>, <span class="num">3600</span>, JSON.<span class="fn">stringify</span>(user));
+  }
+  
+  <span class="kw">return</span> user;
+}
+
+<span class="cm">// 2️⃣ Write-Through — update cache on write</span>
+<span class="kw">async function</span> <span class="fn">updateUser</span>(id, data) {
+  <span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> db.<span class="fn">update</span>(id, data);
+  <span class="cm">// Update cache immediately</span>
+  <span class="kw">await</span> redis.<span class="fn">setex</span>(<span class="str">`user:${id}`</span>, <span class="num">3600</span>, JSON.<span class="fn">stringify</span>(user));
+  <span class="kw">return</span> user;
+}
+
+<span class="cm">// 3️⃣ Cache Invalidation — delete on update</span>
+<span class="kw">async function</span> <span class="fn">deleteUser</span>(id) {
+  <span class="kw">await</span> db.<span class="fn">delete</span>(id);
+  <span class="kw">await</span> redis.<span class="fn">del</span>(<span class="str">`user:${id}`</span>);   <span class="cm">// Remove from cache</span>
+  <span class="kw">await</span> redis.<span class="fn">del</span>(<span class="str">'users:list'</span>);   <span class="cm">// Invalidate list cache too</span>
+}
+
+<span class="cm">// 4️⃣ Memoization — in-memory function cache</span>
+<span class="kw">function</span> <span class="fn">memoize</span>(fn) {
+  <span class="kw">const</span> cache <span class="op">=</span> <span class="kw">new</span> <span class="cl">Map</span>();
+  <span class="kw">return</span> <span class="kw">function</span>(...args) {
+    <span class="kw">const</span> key <span class="op">=</span> JSON.<span class="fn">stringify</span>(args);
+    <span class="kw">if</span> (cache.<span class="fn">has</span>(key)) <span class="kw">return</span> cache.<span class="fn">get</span>(key);
+    <span class="kw">const</span> result <span class="op">=</span> fn.<span class="fn">apply</span>(<span class="kw">this</span>, args);
+    cache.<span class="fn">set</span>(key, result);
+    <span class="kw">return</span> result;
+  };
+}
+
+<span class="kw">const</span> expensiveCalc <span class="op">=</span> <span class="fn">memoize</span>((n) <span class="op">=&gt;</span> fibonacci(n));
+expensiveCalc(<span class="num">40</span>);  <span class="cm">// slow first time</span>
+expensiveCalc(<span class="num">40</span>);  <span class="cm">// instant from cache!</span></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔀 Load Balancing Strategies</h2>
+
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// Simple Round-Robin Load Balancer</span>
+<span class="kw">class</span> <span class="cl">LoadBalancer</span> {
+  <span class="fn">constructor</span>(servers) {
+    <span class="kw">this</span>.servers <span class="op">=</span> servers;
+    <span class="kw">this</span>.current <span class="op">=</span> <span class="num">0</span>;
+  }
+
+  <span class="cm">// Strategy 1: Round Robin</span>
+  <span class="fn">roundRobin</span>() {
+    <span class="kw">const</span> server <span class="op">=</span> <span class="kw">this</span>.servers[<span class="kw">this</span>.current];
+    <span class="kw">this</span>.current <span class="op">=</span> (<span class="kw">this</span>.current <span class="op">+</span> <span class="num">1</span>) <span class="op">%</span> <span class="kw">this</span>.servers.length;
+    <span class="kw">return</span> server;
+  }
+
+  <span class="cm">// Strategy 2: Least Connections</span>
+  <span class="fn">leastConnections</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.servers.<span class="fn">reduce</span>((min, server) <span class="op">=&gt;</span>
+      server.connections <span class="op">&lt;</span> min.connections ? server : min
+    );
+  }
+
+  <span class="cm">// Strategy 3: Weighted (powerful servers get more)</span>
+  <span class="fn">weighted</span>() {
+    <span class="kw">const</span> totalWeight <span class="op">=</span> <span class="kw">this</span>.servers.<span class="fn">reduce</span>((sum, s) <span class="op">=&gt;</span> sum <span class="op">+</span> s.weight, <span class="num">0</span>);
+    <span class="kw">let</span> random <span class="op">=</span> Math.<span class="fn">random</span>() <span class="op">*</span> totalWeight;
+    <span class="kw">for</span> (<span class="kw">const</span> server <span class="kw">of</span> <span class="kw">this</span>.servers) {
+      random <span class="op">-=</span> server.weight;
+      <span class="kw">if</span> (random <span class="op">&lt;=</span> <span class="num">0</span>) <span class="kw">return</span> server;
+    }
+  }
+
+  <span class="cm">// Strategy 4: Sticky Session (same user → same server)</span>
+  <span class="fn">sticky</span>(userId) {
+    <span class="kw">const</span> index <span class="op">=</span> <span class="fn">hashCode</span>(userId) <span class="op">%</span> <span class="kw">this</span>.servers.length;
+    <span class="kw">return</span> <span class="kw">this</span>.servers[index];
+  }
+}
+
+<span class="kw">const</span> lb <span class="op">=</span> <span class="kw">new</span> <span class="cl">LoadBalancer</span>([
+  { url: <span class="str">'server-1:3000'</span>, weight: <span class="num">3</span>, connections: <span class="num">10</span> },
+  { url: <span class="str">'server-2:3000'</span>, weight: <span class="num">2</span>, connections: <span class="num">5</span> },
+  { url: <span class="str">'server-3:3000'</span>, weight: <span class="num">1</span>, connections: <span class="num">2</span> }
+]);</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏛️ Database Scaling Patterns</h2>
+
+    <div class="grid-2">
+      <div class="pattern-card">
+        <div class="pattern-icon">📖</div>
+        <h4>Read Replicas</h4>
+        <p>One write DB, many read DBs. 80% of traffic is reads!</p>
+        <div class="code-block" style="margin-top:0.5rem;">
+<pre style="font-size:0.7rem;"><span class="kw">const</span> writePool <span class="op">=</span> createPool(masterDB);
+<span class="kw">const</span> readPool <span class="op">=</span> createPool(replicaDB);
+
+<span class="cm">// Writes go to master</span>
+writePool.query(<span class="str">'INSERT ...'</span>);
+
+<span class="cm">// Reads go to replica</span>
+readPool.query(<span class="str">'SELECT ...'</span>);</pre>
+        </div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-icon">✂️</div>
+        <h4>Database Sharding</h4>
+        <p>Split data across multiple databases by a shard key.</p>
+        <div class="code-block" style="margin-top:0.5rem;">
+<pre style="font-size:0.7rem;"><span class="kw">function</span> <span class="fn">getShard</span>(userId) {
+  <span class="cm">// Users 0-999 → shard 0</span>
+  <span class="cm">// Users 1000-1999 → shard 1</span>
+  <span class="kw">return</span> shards[userId <span class="op">%</span> shards.length];
+}
+<span class="kw">const</span> db <span class="op">=</span> <span class="fn">getShard</span>(userId);
+db.query(<span class="str">'SELECT * FROM users ...'</span>);</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- EXERCISES SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="exercises">
+  <h1 class="section-title">💻 Exercises</h1>
+  <p class="section-subtitle">Practice implementing architectural patterns</p>
+
+  <!-- Exercise 1 -->
+  <div class="exercise">
+    <div class="exercise-header">
+      <div>
+        <h3>Exercise 1: Repository Pattern</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">Create a UserRepository class that abstracts database access</p>
+      </div>
+      <span class="badge badge-info">Beginner</span>
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--info);">Task:</strong>
+      <p style="color:var(--muted);">Implement a <code>UserRepository</code> class with methods: <code>findById(id)</code>, <code>findAll()</code>, <code>create(user)</code>, <code>update(id, data)</code>, <code>delete(id)</code>. Use an in-memory array as your "database".</p>
+    </div>
+
+    <textarea id="ex1" spellcheck="false" rows="20">// Implement the UserRepository class
+// Use an array as your in-memory "database"
+class UserRepository {
+  constructor() {
+    // In-memory storage
+    this.users = [];
+    this.nextId = 1;
+  }
+
+  // TODO: findById(id) - return user with matching id
+  
+  // TODO: findAll() - return all users
+  
+  // TODO: create(userData) - add user to array, auto-assign id
+  
+  // TODO: update(id, data) - update user fields
+  
+  // TODO: delete(id) - remove user from array
+
+}
+
+// Test your implementation
+const repo = new UserRepository();
+// Your code here...
+</textarea>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="runExercise('ex1', 'ex1-output', validateEx1)">▶️ Run</button>
+      <button class="btn btn-secondary" onclick="showSolution('ex1', ex1Solution)">👁️ Solution</button>
+      <button class="btn btn-warning" onclick="resetExercise('ex1', ex1Starter)">↩️ Reset</button>
+    </div>
+    <div class="output" id="ex1-output">Output will appear here...</div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="exercise">
+    <div class="exercise-header">
+      <div>
+        <h3>Exercise 2: Event Bus</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">Build a pub/sub event bus with once() and unsubscribe()</p>
+      </div>
+      <span class="badge badge-warning">Intermediate</span>
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--info);">Task:</strong>
+      <p style="color:var(--muted);">Extend the EventBus to support: <code>on(event, handler)</code> (multiple times), <code>once(event, handler)</code> (fires only once), <code>off(event, handler)</code> (unsubscribe), <code>emit(event, data)</code> (publish).</p>
+    </div>
+
+    <textarea id="ex2" spellcheck="false" rows="22">class EventBus {
+  constructor() {
+    this.events = {};
+  }
+
+  // TODO: on(event, handler) - subscribe, can be called multiple times
+  
+  // TODO: once(event, handler) - subscribe but only fire ONCE then auto-remove
+  
+  // TODO: off(event, handler) - remove a specific handler
+  
+  // TODO: emit(event, data) - trigger all handlers for event
+
+}
+
+// Test:
+const bus = new EventBus();
+
+// Should log once
+bus.once('login', (data) => console.log('First login handler:', data));
+
+// Should log both times
+bus.on('login', (data) => console.log('Persistent handler:', data));
+
+bus.emit('login', { user: 'Alice' });  // both handlers fire
+bus.emit('login', { user: 'Bob' });    // only persistent handler fires
+</textarea>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="runExercise('ex2', 'ex2-output', validateEx2)">▶️ Run</button>
+      <button class="btn btn-secondary" onclick="showSolution('ex2', ex2Solution)">👁️ Solution</button>
+      <button class="btn btn-warning" onclick="resetExercise('ex2', ex2Starter)">↩️ Reset</button>
+    </div>
+    <div class="output" id="ex2-output">Output will appear here...</div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="exercise">
+    <div class="exercise-header">
+      <div>
+        <h3>Exercise 3: Service Layer</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">Build a layered UserService with dependency injection</p>
+      </div>
+      <span class="badge badge-error">Advanced</span>
+    </div>
+
+    <div class="info-box">
+      <strong style="color:var(--info);">Task:</strong>
+      <p style="color:var(--muted);">Create a <code>UserService</code> that: accepts <code>repository</code> and <code>emailService</code> via constructor, validates data before saving, sends email on register, prevents duplicate emails.</p>
+    </div>
+
+    <textarea id="ex3" spellcheck="false" rows="28">// Mock dependencies (provided for you)
+class MockEmailService {
+  async send(to, subject, body) {
+    console.log(`📧 Email sent to ${to}: "${subject}"`);
+  }
+}
+
+class MockUserRepository {
+  constructor() { this.users = []; this.nextId = 1; }
+  async findByEmail(email) { return this.users.find(u => u.email === email); }
+  async create(data) {
+    const user = { id: this.nextId++, ...data };
+    this.users.push(user);
+    return user;
+  }
+  async findAll() { return this.users; }
+}
+
+// TODO: Implement UserService
+class UserService {
+  constructor(userRepository, emailService) {
+    // Store dependencies
+  }
+
+  async register(userData) {
+    // TODO: Validate userData has name, email, password
+    // TODO: Check email not already registered (throw error if so)
+    // TODO: Create user in repository
+    // TODO: Send welcome email
+    // TODO: Return user (without password!)
+  }
+}
+
+// Test
+const service = new UserService(new MockUserRepository(), new MockEmailService());
+
+(async () => {
+  const user = await service.register({
+    name: 'Alice', email: 'alice@example.com', password: 'secret123'
+  });
+  console.log('Registered:', user);
+  
+  // This should throw:
+  try {
+    await service.register({ name: 'Alice2', email: 'alice@example.com', password: 'pass' });
+  } catch(e) {
+    console.log('Error caught:', e.message);
+  }
+})();
+</textarea>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="runExercise('ex3', 'ex3-output', validateEx3)">▶️ Run</button>
+      <button class="btn btn-secondary" onclick="showSolution('ex3', ex3Solution)">👁️ Solution</button>
+      <button class="btn btn-warning" onclick="resetExercise('ex3', ex3Starter)">↩️ Reset</button>
+    </div>
+    <div class="output" id="ex3-output">Output will appear here...</div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="exercise">
+    <div class="exercise-header">
+      <div>
+        <h3>Exercise 4: Circuit Breaker</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin-top:0.25rem;">Implement a simplified circuit breaker</p>
+      </div>
+      <span class="badge badge-error">Advanced</span>
+    </div>
+
+    <textarea id="ex4" spellcheck="false" rows="22">// Implement CircuitBreaker class
+// States: 'CLOSED' (normal), 'OPEN' (failing), 'HALF_OPEN' (testing)
+class CircuitBreaker {
+  constructor(fn, { failureThreshold = 3, cooldown = 5000 } = {}) {
+    this.fn = fn;
+    this.failureThreshold = failureThreshold;
+    this.cooldown = cooldown;
+    // TODO: Initialize state, failures count, nextAttempt timestamp
+  }
+
+  async call(...args) {
+    // TODO: If OPEN, check if cooldown passed → HALF_OPEN, else throw
+    // TODO: Try calling this.fn with args
+    // TODO: On success: reset failures, set state to CLOSED
+    // TODO: On failure: increment failures, if >= threshold → OPEN
+  }
+}
+
+// Test with a flaky service
+let callCount = 0;
+const flakyService = async () => {
+  callCount++;
+  if (callCount <= 4) throw new Error('Service down!');
+  return 'Success!';
+};
+
+const breaker = new CircuitBreaker(flakyService, { failureThreshold: 3 });
+
+(async () => {
+  for (let i = 0; i < 6; i++) {
+    try {
+      const result = await breaker.call();
+      console.log(`Call ${i+1}: ✅`, result, `| State: ${breaker.state}`);
+    } catch(e) {
+      console.log(`Call ${i+1}: ❌`, e.message, `| State: ${breaker.state}`);
+    }
+  }
+})();
+</textarea>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="runExercise('ex4', 'ex4-output', null)">▶️ Run</button>
+      <button class="btn btn-secondary" onclick="showSolution('ex4', ex4Solution)">👁️ Solution</button>
+      <button class="btn btn-warning" onclick="resetExercise('ex4', ex4Starter)">↩️ Reset</button>
+    </div>
+    <div class="output" id="ex4-output">Output will appear here...</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- QUIZ SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="quiz">
+  <h1 class="section-title">🧠 Architecture Quiz</h1>
+  <p class="section-subtitle">Test your knowledge — 15 questions covering all topics</p>
+
+  <div id="quizScore" class="score-display" style="display:none;">
+    <div class="score-number" id="finalScore">0/15</div>
+    <div class="score-label">Architecture Knowledge Score</div>
+  </div>
+
+  <div id="quizContainer">
+    <!-- Q1 -->
+    <div class="quiz-question" id="q1">
+      <h3>1. Which principle states that a module should have only ONE reason to change?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q1')">Open/Closed Principle</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q1')">Single Responsibility Principle</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q1')">Dependency Inversion Principle</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q1')">Interface Segregation Principle</button>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="quiz-question" id="q2">
+      <h3>2. In microservices, each service should have its own:</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q2')">Shared database (to avoid data duplication)</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q2')">Own database (database per service)</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q2')">Same codebase for easy refactoring</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q2')">Central authentication service always</button>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="quiz-question" id="q3">
+      <h3>3. What does CQRS stand for?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q3')">Command Queue Response System</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q3')">Centralized Query Routing Service</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q3')">Command Query Responsibility Segregation</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q3')">Concurrent Queue Request Synchronization</button>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="quiz-question" id="q4">
+      <h3>4. The Circuit Breaker pattern primarily prevents:</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q4')">SQL injection attacks</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q4')">Cascading failures in distributed systems</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q4')">Memory leaks in Node.js</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q4')">Race conditions in async code</button>
+      </div>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="quiz-question" id="q5">
+      <h3>5. Which is a benefit of monorepos over polyrepos?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q5')">Faster CI/CD pipelines</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q5')">Complete team independence</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q5')">Atomic cross-project changes in one commit</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q5')">Smaller repository size</button>
+      </div>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="quiz-question" id="q6">
+      <h3>6. In Event-Driven Architecture, what is the publisher responsible for?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q6')">Publishing events without knowing who consumes them</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q6')">Directly calling all subscriber services</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q6')">Managing subscriber lifecycles</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q6')">Ensuring all subscribers receive events synchronously</button>
+      </div>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="quiz-question" id="q7">
+      <h3>7. What is the primary role of an API Gateway in microservices?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q7')">Storing shared data between services</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q7')">Running business logic for all services</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q7')">Single entry point for client requests with routing and auth</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q7')">Replacing the need for a message queue</button>
+      </div>
+      <div class="quiz-feedback" id="q7-feedback"></div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="quiz-question" id="q8">
+      <h3>8. Which caching strategy updates the cache only when data is read (and missed)?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q8')">Write-Through</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q8')">Write-Back</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q8')">Cache-Aside (Lazy Loading)</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q8')">Read-Through</button>
+      </div>
+      <div class="quiz-feedback" id="q8-feedback"></div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="quiz-question" id="q9">
+      <h3>9. Dependency Injection means:</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q9')">Importing dependencies with require()</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q9')">Passing dependencies from outside rather than creating them internally</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q9')">Using a CDN to load libraries</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q9')">Automatically installing npm packages</button>
+      </div>
+      <div class="quiz-feedback" id="q9-feedback"></div>
+    </div>
+
+    <!-- Q10 -->
+    <div class="quiz-question" id="q10">
+      <h3>10. What is "horizontal scaling"?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q10')">Adding more RAM and CPU to existing server</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q10')">Adding more server instances to distribute load</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q10')">Increasing database storage capacity</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q10')">Expanding bandwidth of network connections</button>
+      </div>
+      <div class="quiz-feedback" id="q10-feedback"></div>
+    </div>
+
+    <!-- Q11 -->
+    <div class="quiz-question" id="q11">
+      <h3>11. Which gRPC feature makes it faster than REST for internal services?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q11')">It uses JSON for data serialization</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q11')">It uses HTTP/1.1 for compatibility</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q11')">It uses Protobuf binary serialization over HTTP/2</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q11')">It caches all responses automatically</button>
+      </div>
+      <div class="quiz-feedback" id="q11-feedback"></div>
+    </div>
+
+    <!-- Q12 -->
+    <div class="quiz-question" id="q12">
+      <h3>12. The Repository Pattern primarily helps with:</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q12')">Making HTTP requests faster</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q12')">Abstracting database access so business logic doesn't depend on it</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q12')">Storing files in the repository</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q12')">Managing git version control</button>
+      </div>
+      <div class="quiz-feedback" id="q12-feedback"></div>
+    </div>
+
+    <!-- Q13 -->
+    <div class="quiz-question" id="q13">
+      <h3>13. Database sharding splits data based on:</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q13')">Alphabetical order of table names</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q13')">Server CPU availability</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q13')">A shard key (e.g., userId, region)</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q13')">Random distribution for fairness</button>
+      </div>
+      <div class="quiz-feedback" id="q13-feedback"></div>
+    </div>
+
+    <!-- Q14 -->
+    <div class="quiz-question" id="q14">
+      <h3>14. Which message queue behavior ensures a message is processed even if a consumer crashes?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q14')">Acknowledgment (ACK) — only remove from queue after confirmation</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q14')">Fire-and-forget — delete immediately when sent</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q14')">TTL — delete messages after timeout</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q14')">Round-robin — send to multiple consumers simultaneously</button>
+      </div>
+      <div class="quiz-feedback" id="q14-feedback"></div>
+    </div>
+
+    <!-- Q15 -->
+    <div class="quiz-question" id="q15">
+      <h3>15. What's the main advantage of Turborepo in a monorepo?</h3>
+      <div class="quiz-options">
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q15')">It replaces npm/yarn completely</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q15')">It automatically deploys your applications</button>
+        <button class="quiz-option" onclick="checkAnswer(this, true, 'q15')">Smart caching — only rebuilds what actually changed</button>
+        <button class="quiz-option" onclick="checkAnswer(this, false, 'q15')">It converts JavaScript to TypeScript</button>
+      </div>
+      <div class="quiz-feedback" id="q15-feedback"></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="showQuizScore()">📊 Show Score</button>
+      <button class="btn btn-secondary" onclick="resetQuiz()">🔄 Reset Quiz</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PITFALLS SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="pitfalls">
+  <h1 class="section-title">⚠️ Common Mistakes & Pitfalls</h1>
+  <p class="section-subtitle">Learn from mistakes before you make them in production</p>
+
+  <div class="card">
+    <h2>🎯 The Most Common Architecture Mistakes</h2>
+
+    <div class="pitfall">
+      <div class="pitfall-title">💀 Mistake #1: Premature Microservices</div>
+      <p style="color:var(--muted);">Starting with microservices before you understand your domain boundaries. Netflix started as a monolith!</p>
+      <div class="code-block" data-lang="bad">
+<pre><span class="cm">// ❌ BAD: 10-person startup with 20 microservices</span>
+<span class="cm">// You don't know your domain yet!</span>
+userService    → port 3001
+authService    → port 3002
+emailService   → port 3003
+profileService → port 3004
+avatarService  → port 3005
+<span class="cm">// This is "distributed monolith" — worst of both worlds!</span></pre>
+      </div>
+      <div class="tip">
+        <div class="tip-title">✅ Do This Instead</div>
+        <p style="color:var(--muted);">Start as a modular monolith. Extract services only when you have clear domain boundaries AND real scaling needs.</p>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <div class="pitfall-title">💀 Mistake #2: Shared Database in Microservices</div>
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ❌ BAD: Multiple services share ONE database</span>
+<span class="cm">// This creates tight coupling — defeats the purpose!</span>
+
+<span class="cm">// OrderService queries UserService's table directly!</span>
+<span class="kw">const</span> orders <span class="op">=</span> db.query(<span class="str">`
+  SELECT o.*, u.name, u.email  
+  FROM orders o
+  JOIN users u ON o.user_id = u.id  ← WRONG! users is owned by UserService
+`</span>);</pre>
+      </div>
+      <div class="tip">
+        <div class="tip-title">✅ Do This Instead</div>
+        <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ✅ Each service owns its data. Call the API!</span>
+<span class="kw">async function</span> <span class="fn">getOrderWithUser</span>(orderId) {
+  <span class="kw">const</span> order <span class="op">=</span> <span class="kw">await</span> orderRepo.<span class="fn">findById</span>(orderId);
+  <span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`http://user-service/users/${order.userId}`</span>);
+  <span class="kw">return</span> { ...order, user };
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <div class="pitfall-title">💀 Mistake #3: Not Handling Async Errors</div>
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ❌ BAD: Unhandled promise rejections crash your service!</span>
+app.<span class="fn">get</span>(<span class="str">'/users'</span>, <span class="kw">async</span> (req, res) <span class="op">=&gt;</span> {
+  <span class="kw">const</span> users <span class="op">=</span> <span class="kw">await</span> userService.<span class="fn">getAll</span>();  <span class="cm">// ← What if DB is down?</span>
+  res.<span class="fn">json</span>(users);
+  <span class="cm">// UnhandledPromiseRejection → process crashes!</span>
+});</pre>
+      </div>
+      <div class="tip">
+        <div class="tip-title">✅ Always wrap async route handlers</div>
+        <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ✅ Async wrapper utility</span>
+<span class="kw">const</span> asyncHandler <span class="op">=</span> (fn) <span class="op">=&gt;</span> (req, res, next) <span class="op">=&gt;</span>
+  Promise.<span class="fn">resolve</span>(<span class="fn">fn</span>(req, res, next)).<span class="fn">catch</span>(next);
+
+app.<span class="fn">get</span>(<span class="str">'/users'</span>, <span class="fn">asyncHandler</span>(<span class="kw">async</span> (req, res) <span class="op">=&gt;</span> {
+  <span class="kw">const</span> users <span class="op">=</span> <span class="kw">await</span> userService.<span class="fn">getAll</span>();
+  res.<span class="fn">json</span>(users);
+}));
+
+<span class="cm">// Global error handler catches it!</span>
+app.<span class="fn">use</span>((err, req, res, next) <span class="op">=&gt;</span> {
+  res.<span class="fn">status</span>(err.status <span class="op">||</span> <span class="num">500</span>).<span class="fn">json</span>({ error: err.message });
+});</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <div class="pitfall-title">💀 Mistake #4: Synchronous Calls Creating Dependency Chains</div>
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ❌ BAD: Synchronous chain — if Payment goes down, orders fail!</span>
+<span class="kw">async function</span> <span class="fn">placeOrder</span>(order) {
+  <span class="kw">await</span> inventoryService.<span class="fn">reserve</span>(order);    <span class="cm">// step 1: must succeed</span>
+  <span class="kw">await</span> paymentService.<span class="fn">charge</span>(order);       <span class="cm">// step 2: must succeed</span>
+  <span class="kw">await</span> emailService.<span class="fn">sendConfirmation</span>(order); <span class="cm">// step 3: must succeed</span>
+  <span class="kw">await</span> analyticsService.<span class="fn">track</span>(order);      <span class="cm">// step 4: must succeed</span>
+}
+<span class="cm">// Latency = sum of ALL service latencies. One fails = all fail!</span></pre>
+      </div>
+      <div class="tip">
+        <div class="tip-title">✅ Use events for non-critical steps</div>
+        <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ✅ GOOD: Only essential steps are sync, rest are async events</span>
+<span class="kw">async function</span> <span class="fn">placeOrder</span>(order) {
+  <span class="kw">await</span> paymentService.<span class="fn">charge</span>(order);  <span class="cm">// Critical: must be sync</span>
+  
+  <span class="cm">// Non-critical: publish event, let services handle async</span>
+  eventBus.<span class="fn">publish</span>(<span class="str">'ORDER_PLACED'</span>, order);
+  <span class="cm">// Email, inventory, analytics handle it independently!</span>
+  
+  <span class="kw">return</span> { success: <span class="kw">true</span>, orderId: order.id };
+}
+<span class="cm">// Latency = only payment service! Much faster!</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <div class="pitfall-title">💀 Mistake #5: No Cache Invalidation Strategy</div>
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ❌ BAD: Caching without thinking about staleness</span>
+<span class="kw">async function</span> <span class="fn">getUser</span>(id) {
+  <span class="kw">const</span> cached <span class="op">=</span> <span class="kw">await</span> redis.<span class="fn">get</span>(<span class="str">`user:${id}`</span>);
+  <span class="kw">if</span> (cached) <span class="kw">return</span> JSON.<span class="fn">parse</span>(cached);
+  <span class="kw">const</span> user <span class="op">=</span> <span class="kw">await</span> db.<span class="fn">find</span>(id);
+  redis.<span class="fn">set</span>(<span class="str">`user:${id}`</span>, JSON.<span class="fn">stringify</span>(user)); <span class="cm">// NO TTL!</span>
+  <span class="kw">return</span> user;
+}
+<span class="cm">// User updates their email → cache still shows old email!</span>
+<span class="cm">// Cache lives FOREVER — memory leak!</span></pre>
+      </div>
+      <div class="tip">
+        <div class="tip-title">✅ Always set TTL and invalidate on write</div>
+        <div class="code-block" data-lang="javascript">
+<pre>redis.<span class="fn">setex</span>(<span class="str">`user:${id}`</span>, <span class="num">3600</span>, JSON.<span class="fn">stringify</span>(user)); <span class="cm">// 1hr TTL</span>
+
+<span class="cm">// And invalidate on update!</span>
+<span class="kw">async function</span> <span class="fn">updateUser</span>(id, data) {
+  <span class="kw">await</span> db.<span class="fn">update</span>(id, data);
+  <span class="kw">await</span> redis.<span class="fn">del</span>(<span class="str">`user:${id}`</span>);  <span class="cm">// ← Invalidate cache!</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <div class="pitfall-title">💀 Mistake #6: Versioning API Without Backward Compatibility</div>
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ❌ BAD: Breaking change without versioning</span>
+<span class="cm">// Old: { "name": "Alice" }</span>
+<span class="cm">// New: { "firstName": "Alice", "lastName": "Smith" }</span>
+<span class="cm">// All existing clients BREAK instantly!</span>
+
+<span class="cm">// ✅ GOOD: Version your API</span>
+app.<span class="fn">get</span>(<span class="str">'/v1/users/:id'</span>, v1Handler); <span class="cm">// Old clients still work</span>
+app.<span class="fn">get</span>(<span class="str">'/v2/users/:id'</span>, v2Handler); <span class="cm">// New clients use new format</span>
+
+<span class="cm">// Or: be backward compatible</span>
+{
+  name: <span class="str">'Alice Smith'</span>,       <span class="cm">// Keep old field</span>
+  firstName: <span class="str">'Alice'</span>,       <span class="cm">// Add new fields</span>
+  lastName: <span class="str">'Smith'</span>
+}</pre>
+      </div>
+    </div>
+
+    <div class="pitfall">
+      <div class="pitfall-title">💀 Mistake #7: God Service (Violates Single Responsibility)</div>
+      <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ❌ BAD: One service does EVERYTHING</span>
+<span class="kw">class</span> <span class="cl">AppService</span> {
+  <span class="fn">createUser</span>() {}
+  <span class="fn">sendEmail</span>() {}
+  <span class="fn">processPayment</span>() {}
+  <span class="fn">generateReport</span>() {}
+  <span class="fn">uploadFile</span>() {}
+  <span class="fn">sendNotification</span>() {}
+  <span class="fn">updateInventory</span>() {}
+  <span class="cm">// 50 more methods...</span>
+}
+<span class="cm">// Impossible to test, maintain, or scale independently!</span>
+
+<span class="cm">// ✅ GOOD: Separate, focused services</span>
+<span class="kw">class</span> <span class="cl">UserService</span>    { <span class="fn">createUser</span>() {} }
+<span class="kw">class</span> <span class="cl">EmailService</span>   { <span class="fn">sendEmail</span>() {} }
+<span class="kw">class</span> <span class="cl">PaymentService</span> { <span class="fn">processPayment</span>() {} }</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- CHEAT SHEET SECTION -->
+<!-- ============================================================ -->
+<div class="section" id="cheatsheet">
+  <h1 class="section-title">📋 Architecture Cheat Sheet</h1>
+  <p class="section-subtitle">Quick reference for interviews and daily work</p>
+
+  <div class="card">
+    <h2>🧩 Patterns at a Glance</h2>
+    <div class="cheat-grid">
+
+      <div class="cheat-card">
+        <h4>🍰 Layered Architecture</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">UI → Service → Repo → DB. One-way dependencies.</p>
+        <div class="cheat-code">Presentation → Business → Data → DB</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>🌊 Event-Driven</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Publisher emits events. Subscribers react. Decoupled.</p>
+        <div class="cheat-code">bus.emit(event) / bus.on(event, handler)</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>🔭 CQRS</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Separate read/write models for performance.</p>
+        <div class="cheat-code">Commands → WriteDB / Queries → ReadDB</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>🗃️ Repository Pattern</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Abstract DB access. Business logic never touches SQL.</p>
+        <div class="cheat-code">find() create() update() delete()</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>🔄 Circuit Breaker</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Stop calling failing services. Prevent cascades.</p>
+        <div class="cheat-code">CLOSED → OPEN → HALF_OPEN → CLOSED</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>🚪 API Gateway</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Single entry point. Auth, routing, rate limiting.</p>
+        <div class="cheat-code">Client → Gateway → Service A/B/C</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>📥 Saga Pattern</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Distributed transactions via events & compensations.</p>
+        <div class="cheat-code">Step1 → Step2 → fail → rollback Step1</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>🎯 Sidecar Pattern</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Deploy helper containers alongside main service.</p>
+        <div class="cheat-code">Service + Sidecar (logging, proxy)</div>
+      </div>
+
+      <div class="cheat-card">
+        <h4>📝 Strangler Fig</h4>
+        <p style="color:var(--muted);font-size:0.8rem;">Gradually replace monolith. Route traffic to new services.</p>
+        <div class="cheat-code">Proxy → Old/New (by route/feature)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔧 Key Decision Framework</h2>
+    <table>
+      <thead>
+        <tr><th>Question</th><th>If Yes</th><th>Technology/Pattern</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Need real-time data?</td><td class="good">Yes</td><td>WebSocket, Server-Sent Events</td></tr>
+        <tr><td>Read-heavy system?</td><td class="good">Yes</td><td>Read replicas, Redis cache, CQRS</td></tr>
+        <tr><td>Need loose coupling?</td><td class="good">Yes</td><td>Message Queue (Kafka, RabbitMQ)</td></tr>
+        <tr><td>Internal service calls?</td><td class="good">Yes</td><td>gRPC (faster than REST)</td></tr>
+        <tr><td>Public API?</td><td class="good">Yes</td><td>REST or GraphQL</td></tr>
+        <tr><td>Huge data volume?</td><td class="good">Yes</td><td>Database sharding, partitioning</td></tr>
+        <tr><td>Cross-service transactions?</td><td class="good">Yes</td><td>Saga pattern</td></tr>
+        <tr><td>External service unreliable?</td><td class="good">Yes</td><td>Circuit Breaker + retry + fallback</td></tr>
+        <tr><td>Multiple frontend clients?</td><td class="good">Yes</td><td>Backend for Frontend (BFF) pattern</td></tr>
+        <tr><td>Team < 10 people?</td><td class="good">Yes</td><td>Modular Monolith (NOT microservices yet)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>⚡ HTTP Status Codes (MUST KNOW)</h2>
+    <div class="cheat-grid">
+      <div class="cheat-card">
+        <h4 style="color:var(--success);">2xx Success</h4>
+        <div class="cheat-code">200 OK
+201 Created
+204 No Content
+206 Partial Content</div>
+      </div>
+      <div class="cheat-card">
+        <h4 style="color:var(--warning);">3xx Redirect</h4>
+        <div class="cheat-code">301 Moved Permanently
+302 Found (temp redirect)
+304 Not Modified (cached)</div>
+      </div>
+      <div class="cheat-card">
+        <h4 style="color:var(--error);">4xx Client Error</h4>
+        <div class="cheat-code">400 Bad Request
+401 Unauthorized
+403 Forbidden
+404 Not Found
+409 Conflict
+422 Unprocessable
+429 Too Many Requests</div>
+      </div>
+      <div class="cheat-card">
+        <h4 style="color:var(--error);">5xx Server Error</h4>
+        <div class="cheat-code">500 Internal Server Error
+502 Bad Gateway
+503 Service Unavailable
+504 Gateway Timeout</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏗️ Architecture Interview Questions</h2>
+    <div class="cheat-grid">
+      <div class="cheat-card">
+        <h4>💬 "Design a URL shortener like bit.ly"</h4>
+        <p style="color:var(--muted);font-size:0.78rem;">Think: read-heavy → cache. Hash → 6 char code. Redirect = 302. Scale = CDN + Redis.</p>
+      </div>
+      <div class="cheat-card">
+        <h4>💬 "Design Twitter's feed"</h4>
+        <p style="color:var(--muted);font-size:0.78rem;">Think: fan-out on write vs read. Timeline cache in Redis. Celebrities = special case.</p>
+      </div>
+      <div class="cheat-card">
+        <h4>💬 "How to migrate monolith to microservices?"</h4>
+        <p style="color:var(--muted);font-size:0.78rem;">Strangler Fig pattern. Extract one service at a time. Start with least coupled domain.</p>
+      </div>
+      <div class="cheat-card">
+        <h4>💬 "Handle payment failure in order flow"</h4>
+        <p style="color:var(--muted);font-size:0.78rem;">Saga pattern. Compensating transactions. Idempotency keys. Dead letter queue.</p>
+      </div>
+      <div class="cheat-card">
+        <h4>💬 "App is slow, how to fix?"</h4>
+        <p style="color:var(--muted);font-size:0.78rem;">Profile first! DB queries (N+1?), missing indexes, no caching, no CDN, sync bottleneck.</p>
+      </div>
+      <div class="cheat-card">
+        <h4>💬 "How to ensure consistency across services?"</h4>
+        <p style="color:var(--muted);font-size:0.78rem;">Saga + events. Eventual consistency. Outbox pattern. Idempotent consumers.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📦 Monorepo Tooling Cheat Sheet</h2>
+    <table>
+      <thead>
+        <tr><th>Tool</th><th>Best For</th><th>Key Feature</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="text-primary">Turborepo</td><td>JS/TS monorepos</td><td>Smart caching, parallel tasks</td></tr>
+        <tr><td class="text-primary">Nx</td><td>Enterprise monorepos</td><td>Code generation, affected commands</td></tr>
+        <tr><td class="text-info">Lerna</td><td>Publishing packages</td><td>Package versioning & publishing</td></tr>
+        <tr><td class="text-warning">pnpm workspaces</td><td>Package management</td><td>Shared dependencies, fast installs</td></tr>
+        <tr><td class="text-success">Changesets</td><td>Versioning</td><td>Changelog & version management</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>🚀 Quick Implementation Patterns</h2>
+    <div class="code-block" data-lang="javascript">
+<pre><span class="cm">// ✅ Retry with exponential backoff</span>
+<span class="kw">async function</span> <span class="fn">withRetry</span>(fn, retries <span class="op">=</span> <span class="num">3</span>) {
+  <span class="kw">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="num">0</span>; i <span class="op">&lt;</span> retries; i<span class="op">++</span>) {
+    <span class="kw">try</span> { <span class="kw">return await</span> <span class="fn">fn</span>(); }
+    <span class="kw">catch</span> (e) {
+      <span class="kw">if</span> (i <span class="op">===</span> retries <span class="op">-</span> <span class="num">1</span>) <span class="kw">throw</span> e;
+      <span class="kw">await</span> <span class="kw">new</span> <span class="cl">Promise</span>(r <span class="op">=&gt;</span> <span class="fn">setTimeout</span>(r, <span class="num">1000</span> <span class="op">*</span> <span class="num">2</span><span class="op">**</span>i));
+    }
+  }
+}
+
+<span class="cm">// ✅ Timeout wrapper</span>
+<span class="kw">function</span> <span class="fn">withTimeout</span>(promise, ms) {
+  <span class="kw">const</span> timeout <span class="op">=</span> <span class="kw">new</span> <span class="cl">Promise</span>((_, reject) <span class="op">=&gt;</span>
+    <span class="fn">setTimeout</span>(() <span class="op">=&gt;</span> reject(<span class="kw">new</span> <span class="cl">Error</span>(<span class="str">'Timeout'</span>)), ms)
+  );
+  <span class="kw">return</span> Promise.<span class="fn">race</span>([promise, timeout]);
+}
+
+<span class="cm">// ✅ Idempotency key</span>
+<span class="kw">async function</span> <span class="fn">createOrder</span>(order, idempotencyKey) {
+  <span class="kw">const</span> existing <span class="op">=</span> <span class="kw">await</span> redis.<span class="fn">get</span>(<span class="str">`idem:${idempotencyKey}`</span>);
+  <span class="kw">if</span> (existing) <span class="kw">return</span> JSON.<span class="fn">parse</span>(existing); <span class="cm">// Return cached result</span>
+  <span class="kw">const</span> result <span class="op">=</span> <span class="kw">await</span> orderRepo.<span class="fn">create</span>(order);
+  <span class="kw">await</span> redis.<span class="fn">setex</span>(<span class="str">`idem:${idempotencyKey}`</span>, <span class="num">86400</span>, JSON.<span class="fn">stringify</span>(result));
+  <span class="kw">return</span> result;
+}
+
+<span class="cm">// ✅ Health check endpoint (every service needs this!)</span>
+app.<span class="fn">get</span>(<span class="str">'/health'</span>, <span class="kw">async</span> (req, res) <span class="op">=&gt;</span> {
+  <span class="kw">const</span> checks <span class="op">=</span> <span class="kw">await</span> Promise.<span class="fn">allSettled</span>([
+    db.<span class="fn">ping</span>(),
+    redis.<span class="fn">ping</span>()
+  ]);
+  <span class="kw">const</span> healthy <span class="op">=</span> checks.<span class="fn">every</span>(c <span class="op">=&gt;</span> c.status <span class="op">===</span> <span class="str">'fulfilled'</span>);
+  res.<span class="fn">status</span>(healthy ? <span class="num">200</span> : <span class="num">503</span>).<span class="fn">json</span>({ status: healthy ? <span class="str">'ok'</span> : <span class="str">'degraded'</span> });
+});</pre>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let score = 0;
+let quizAnswered = {};
+let sectionsVisited = new Set(['intro']);
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  sectionsVisited.add(id);
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+function updateProgress() {
+  const total = document.querySelectorAll('.section').length;
+  const pct = Math.round((sectionsVisited.size / total) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Progress: ${pct}%`;
+}
+
+function addScore(pts) {
+  score += pts;
+  document.getElementById('scoreDisplay').textContent = `⭐ Score: ${score}`;
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(el, contentId) {
+  const parent = el.closest('.card');
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(contentId).classList.add('active');
+}
+
+// ============================================================
+// EVENT BUS DEMO
+// ============================================================
+const eventHandlers = {
+  'ORDER_PLACED': [
+    { name: '📧 EmailService', msg: 'Sending order confirmation to customer' },
+    { name: '📦 InventoryService', msg: 'Reserving stock items' },
+    { name: '📊 AnalyticsService', msg: 'Recording sale event' },
+    { name: '🚚 ShippingService', msg: 'Calculating shipping estimate' }
+  ],
+  'PAYMENT_RECEIVED': [
+    { name: '📧 EmailService', msg: 'Sending payment receipt' },
+    { name: '🧾 AccountingService', msg: 'Recording payment in ledger' },
+    { name: '🚚 FulfillmentService', msg: 'Initiating order fulfillment' }
+  ],
+  'USER_DELETED': [
+    { name: '🗃️ DataService', msg: 'Anonymizing user data (GDPR)' },
+    { name: '📧 EmailService', msg: 'Sending goodbye email' },
+    { name: '🔑 AuthService', msg: 'Revoking all tokens' }
+  ]
+};
+
+function fireEvent(eventName) {
+  const log = document.getElementById('eventLog');
+  const handlers = eventHandlers[eventName] || [];
+  let output = `\n🔔 EVENT PUBLISHED: "${eventName}"\n`;
+  output += '─'.repeat(40) + '\n';
+
+  handlers.forEach((h, i) => {
+    setTimeout(() => {
+      const current = document.getElementById('eventLog').textContent;
+      document.getElementById('eventLog').textContent =
+        current + `  ✅ ${h.name}: ${h.msg}\n`;
+    }, i * 200);
+  });
+
+  log.textContent += output;
+  addScore(2);
+}
+
+function clearEventLog() {
+  document.getElementById('eventLog').textContent = '🎧 Listening for events... Click a button above!';
+}
+
+// ============================================================
+// MICROSERVICES REQUEST SIMULATOR
+// ============================================================
+let reqCount = 0;
+function simulateRequest(type) {
+  reqCount++;
+  const visual = document.getElementById('requestFlow');
+  const log = document.getElementById('requestLog');
+
+  const services = ['API Gateway', 'Auth Service', 'Order Service', 'User Service', 'DB'];
+  const colors = ['#6c63ff', '#40c4ff', '#00e676', '#ffab40', '#ff5252'];
+
+  visual.innerHTML = '';
+  let logText = `\n📤 Request #${reqCount}: ${type}\n`;
+
+  if (type === 'FAIL') {
+    visual.innerHTML = `
+      <div class="service-box active"><div class="service-name">API Gateway</div></div>
+      <div class="arrow-right">→</div>
+      <div class="service-box active"><div class="service-name">Auth Service</div></div>
+      <div class="arrow-right">→</div>
+      <div class="service-box error-state"><div class="service-name">Order Service</div><div class="service-status">💥 CRASHED</div></div>
+    `;
+    logText += '  ✅ API Gateway: Received request\n';
+    logText += '  ✅ Auth Service: Token valid\n';
+    logText += '  ❌ Order Service: Connection refused\n';
+    logText += '  🔄 Circuit Breaker: OPENED — returning fallback\n';
+    logText += '  📤 Response: 503 Service Unavailable\n';
+    log.textContent += logText;
+    addScore(1);
+    return;
+  }
+
+  const route = {
+    'GET /api/orders/123': ['API Gateway', 'Auth', 'Order Service', 'PostgreSQL'],
+    'POST /api/orders': ['API Gateway', 'Auth', 'Order Service', 'Payment Service', 'PostgreSQL'],
+    'DELETE /api/users/5': ['API Gateway', 'Auth', 'User Service', 'PostgreSQL']
+  };
+
+  const path = route[type] || ['API Gateway', 'Auth', 'Service'];
+
+  path.forEach((name, i) => {
+    const box = document.createElement('div');
+    box.className = 'service-box';
+    box.innerHTML = `<div class="service-name">${name}</div><div class="service-status">●</div>`;
+
+    if (i > 0) {
+      const arrow = document.createElement('div');
+      arrow.className = 'arrow-right';
+      arrow.textContent = '→';
+      visual.appendChild(arrow);
+    }
+    visual.appendChild(box);
+
+    setTimeout(() => {
+      box.classList.add('active');
+      logText += `  ✅ ${name}: OK\n`;
+      if (i === path.length - 1) {
+        logText += `  📤 Response: 200 OK\n`;
+        log.textContent += logText;
+        addScore(2);
+      }
+    }, i * 300);
+  });
+}
+
+// ============================================================
+// MESSAGE QUEUE SIMULATOR
+// ============================================================
+let messageQueue = [];
+let processed = [];
+
+function enqueueMessage(type, data) {
+  const msg = { id: Date.now(), type, data, timestamp: new Date().toLocaleTimeString() };
+  messageQueue.push(msg);
+  updateQueueDisplay();
+  addScore(1);
+}
+
+function processQueue() {
+  if (messageQueue.length === 0) {
+    document.getElementById('queueVisual').textContent = '📭 Queue is empty! Enqueue some messages first.';
+    return;
+  }
+  const msg = messageQueue.shift();
+  processed.push(msg);
+  updateQueueDisplay();
+  addScore(3);
+}
+
+function clearQueue() {
+  messageQueue = [];
+  processed = [];
+  document.getElementById('queueVisual').textContent = 'Queue is empty. Enqueue some messages!';
+}
+
+function updateQueueDisplay() {
+  const el = document.getElementById('queueVisual');
+  let text = '';
+  if (messageQueue.length > 0) {
+    text += `📬 Queue (${messageQueue.length} pending):\n`;
+    messageQueue.forEach((m, i) => {
+      text += `  [${i}] ${m.type} (id:${m.data.id}) @${m.timestamp}\n`;
+    });
+  } else {
+    text += '📭 Queue: empty\n';
+  }
+  if (processed.length > 0) {
+    text += `\n✅ Processed (${processed.length}):\n`;
+    processed.slice(-3).forEach(m => {
+      text += `  ✓ ${m.type} (id:${m.data.id}) processed\n`;
+    });
+  }
+  el.textContent = text;
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+const quizAnswers = {
+  q1: 'Single Responsibility Principle states a module should have one reason to change.',
+  q2: 'Database per service is a core microservices pattern. Shared DB = tight coupling!',
+  q3: 'CQRS = Command Query Responsibility Segregation. Separate read/write operations.',
+  q4: 'Circuit Breaker stops calls to failing services, preventing cascade failures.',
+  q5: 'Monorepos allow atomic commits that span multiple packages simultaneously.',
+  q6: 'Publishers only emit events. They are fully decoupled from who handles them.',
+  q7: 'API Gateway = single entry point for all clients, handles auth/routing/limiting.',
+  q8: 'Cache-Aside (lazy) only loads cache on miss. Write-Through updates on every write.',
+  q9: 'DI = pass dependencies from outside, not create them internally. Enables testing!',
+  q10: 'Horizontal = more instances. Vertical = bigger instance. Horizontal is preferred.',
+  q11: 'Protobuf binary (not text JSON) + HTTP/2 multiplexing makes gRPC ~10x faster.',
+  q12: 'Repository pattern abstracts DB access so business logic is DB-agnostic.',
+  q13: 'Shard key determines which shard stores data. Common: userId, region, date.',
+  q14: 'ACK ensures message processing confirmation before removal from queue.',
+  q15: 'Turborepo caches build outputs and shares them — huge time savings!'
+};
+
+function checkAnswer(btn, isCorrect, qId) {
+  if (quizAnswered[qId]) return;
+  quizAnswered[qId] = true;
+
+  const q = document.getElementById(qId);
+  const feedback = document.getElementById(qId + '-feedback');
+  const options = q.querySelectorAll('.quiz-option');
+
+  options.forEach(opt => opt.disabled = true);
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    feedback.className = 'quiz-feedback show success';
+    feedback.textContent = '✅ Correct! ' + quizAnswers[qId];
+    addScore(10);
+  } else {
+    btn.classList.add('wrong');
+    feedback.className = 'quiz-feedback show error';
+    feedback.textContent = '❌ Not quite. ' + quizAnswers[qId];
+    // Highlight correct answer
+    options.forEach(opt => {
+      if (opt.onclick.toString().includes('true')) {
+        opt.classList.add('correct');
+      }
+    });
+  }
+}
+
+function showQuizScore() {
+  const answered = Object.keys(quizAnswered).length;
+  const correct = Object.keys(quizAnswered)
+    .filter(q => document.getElementById(q).querySelector('.correct') !== null).length;
+
+  document.getElementById('quizScore').style.display = 'block';
+  document.getElementById('finalScore').textContent = `${correct}/${answered}`;
+  document.getElementById('quizScore').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetQuiz() {
+  quizAnswered = {};
+  document.querySelectorAll('.quiz-option').forEach(opt => {
+    opt.disabled = false;
+    opt.className = 'quiz-option';
+  });
+  document.querySelectorAll('.quiz-feedback').forEach(f => {
+    f.className = 'quiz-feedback';
+  });
+  document.getElementById('quizScore').style.display = 'none';
+}
+
+// ============================================================
+// EXERCISES
+// ============================================================
+const ex1Starter = `// Implement the UserRepository class
+// Use an array as your in-memory "database"
+class UserRepository {
+  constructor() {
+    // In-memory storage
+    this.users = [];
+    this.nextId = 1;
+  }
+
+  // TODO: findById(id) - return user with matching id
+  
+  // TODO: findAll() - return all users
+  
+  // TODO: create(userData) - add user to array, auto-assign id
+  
+  // TODO: update(id, data) - update user fields
+  
+  // TODO: delete(id) - remove user from array
+
+}
+
+// Test your implementation
+const repo = new UserRepository();
+// Your code here...`;
+
+const ex1Solution = `class UserRepository {
+  constructor() {
+    this.users = [];
+    this.nextId = 1;
+  }
+
+  findById(id) {
+    return this.users.find(u => u.id === id) || null;
+  }
+
+  findAll() {
+    return [...this.users]; // Return copy
+  }
+
+  create(userData) {
+    const user = { id: this.nextId++, ...userData };
+    this.users.push(user);
+    return user;
+  }
+
+  update(id, data) {
+    const index = this.users.findIndex(u => u.id === id);
+    if (index === -1) throw new Error('User not found');
+    this.users[index] = { ...this.users[index], ...data };
+    return this.users[index];
+  }
+
+  delete(id) {
+    const index = this.users.findIndex(u => u.id === id);
+    if (index === -1) throw new Error('User not found');
+    this.users.splice(index, 1);
+    return true;
+  }
+}
+
+// Test
+const repo = new UserRepository();
+const alice = repo.create({ name: 'Alice', email: 'alice@test.com' });
+const bob = repo.create({ name: 'Bob', email: 'bob@test.com' });
+
+console.log('Created:', alice);
+console.log('All users:', repo.findAll());
+console.log('Find by id:', repo.findById(1));
+
+repo.update(1, { name: 'Alice Updated' });
+console.log('After update:', repo.findById(1));
+
+repo.delete(2);
+console.log('After delete:', repo.findAll());`;
+
+const ex2Starter = `class EventBus {
+  constructor() {
+    this.events = {};
+  }
+
+  // TODO: on(event, handler) - subscribe, can be called multiple times
+  
+  // TODO: once(event, handler) - subscribe but only fire ONCE then auto-remove
+  
+  // TODO: off(event, handler) - remove a specific handler
+  
+  // TODO: emit(event, data) - trigger all handlers for event
+
+}
+
+// Test:
+const bus = new EventBus();
+
+// Should log once
+bus.once('login', (data) => console.log('First login handler:', data));
+
+// Should log both times
+bus.on('login', (data) => console.log('Persistent handler:', data));
+
+bus.emit('login', { user: 'Alice' });  // both handlers fire
+bus.emit('login', { user: 'Bob' });    // only persistent handler fires`;
+
+const ex2Solution = `class EventBus {
+  constructor() {
+    this.events = {};
+  }
+
+  on(event, handler) {
+    if (!this.events[event]) this.events[event] = [];
+    this.events[event].push({ handler, once: false });
+  }
+
+  once(event, handler) {
+    if (!this.events[event]) this.events[event] = [];
+    this.events[event].push({ handler, once: true });
+  }
+
+  off(event, handler) {
+    if (!this.events[event]) return;
+    this.events[event] = this.events[event].filter(h => h.handler !== handler);
+  }
+
+  emit(event, data) {
+    if (!this.events[event]) return;
+    // Filter out 'once' handlers AFTER calling them
+    this.events[event] = this.events[event].filter(({ handler, once }) => {
+      handler(data);
+      return !once; // Keep if not 'once'
+    });
+  }
+}
+
+// Test
+const bus = new EventBus();
+
+bus.once('login', (data) => console.log('Once handler:', JSON.stringify(data)));
+bus.on('login', (data) => console.log('Persistent handler:', JSON.stringify(data)));
+
+console.log('--- First emit ---');
+bus.emit('login', { user: 'Alice' }); // Both fire
+
+console.log('--- Second emit ---');
+bus.emit('login', { user: 'Bob' }); // Only persistent fires
+
+// Test off
+const handler = (d) => console.log('Will be removed:', d);
+bus.on('test', handler);
+bus.off('test', handler);
+bus.emit('test', {}); // Nothing logged
+console.log('off() works — nothing above for test event');`;
+
+const ex3Starter = `// Mock dependencies (provided for you)
+class MockEmailService {
+  async send(to, subject, body) {
+    console.log(\`📧 Email sent to \${to}: "\${subject}"\`);
+  }
+}
+
+class MockUserRepository {
+  constructor() { this.users = []; this.nextId = 1; }
+  async findByEmail(email) { return this.users.find(u => u.email === email); }
+  async create(data) {
+    const user = { id: this.nextId++, ...data };
+    this.users.push(user);
+    return user;
+  }
+  async findAll() { return this.users; }
+}
+
+// TODO: Implement UserService
+class UserService {
+  constructor(userRepository, emailService) {
+    // Store dependencies
+  }
+
+  async register(userData) {
+    // TODO: Validate userData has name, email, password
+    // TODO: Check email not already registered (throw error if so)
+    // TODO: Create user in repository
+    // TODO: Send welcome email
+    // TODO: Return user (without password!)
+  }
+}
+
+// Test
+const service = new UserService(new MockUserRepository(), new MockEmailService());
+
+(async () => {
+  const user = await service.register({
+    name: 'Alice', email: 'alice@example.com', password: 'secret123'
+  });
+  console.log('Registered:', user);
+  
+  // This should throw:
+  try {
+    await service.register({ name: 'Alice2', email: 'alice@example.com', password: 'pass' });
+  } catch(e) {
+    console.log('Error caught:', e.message);
+  }
+})();`;
+
+const ex3Solution = `class MockEmailService {
+  async send(to, subject) {
+    console.log(\`📧 Email sent to \${to}: "\${subject}"\`);
+  }
+}
+
+class MockUserRepository {
+  constructor() { this.users = []; this.nextId = 1; }
+  async findByEmail(email) { return this.users.find(u => u.email === email); }
+  async create(data) {
+    const user = { id: this.nextId++, ...data };
+    this.users.push(user);
+    return user;
+  }
+  async findAll() { return this.users; }
+}
+
+class UserService {
+  constructor(userRepository, emailService) {
+    this.userRepository = userRepository;
+    this.emailService = emailService;
+  }
+
+  async register(userData) {
+    // Validate
+    if (!userData.name || !userData.email || !userData.password) {
+      throw new Error('name, email, and password are required');
+    }
+    if (!userData.email.includes('@')) {
+      throw new Error('Invalid email format');
+    }
+    if (userData.password.length < 6) {
+      throw new Error('Password must be at least 6 characters');
+    }
+
+    // Check duplicate
+    const existing = await this.userRepository.findByEmail(userData.email);
+    if (existing) {
+      throw new Error(\`Email \${userData.email} is already registered\`);
+    }
+
+    // Create user
+    const user = await this.userRepository.create(userData);
+    
+    // Send welcome email
+    await this.emailService.send(user.email, 'Welcome to our platform!');
+    
+    // Return without password
+    const { password, ...safeUser } = user;
+    return safeUser;
+  }
+}
+
+const service = new UserService(new MockUserRepository(), new MockEmailService());
+
+(async () => {
+  const user = await service.register({
+    name: 'Alice', email: 'alice@example.com', password: 'secret123'
+  });
+  console.log('Registered:', user);
+
+  try {
+    await service.register({ name: 'Alice2', email: 'alice@example.com', password: 'pass' });
+  } catch(e) {
+    console.log('Duplicate error:', e.message);
+  }
+  
+  try {
+    await service.register({ name: 'Bob', email: 'bob@example.com', password: '123' });
+  } catch(e) {
+    console.log('Validation error:', e.message);
+  }
+})();`;
+
+const ex4Starter = `// Implement CircuitBreaker class
+class CircuitBreaker {
+  constructor(fn, { failureThreshold = 3, cooldown = 5000 } = {}) {
+    this.fn = fn;
+    this.failureThreshold = failureThreshold;
+    this.cooldown = cooldown;
+    // TODO: Initialize state, failures count, nextAttempt timestamp
+  }
+
+  async call(...args) {
+    // TODO: If OPEN, check if cooldown passed → HALF_OPEN, else throw
+    // TODO: Try calling this.fn with args
+    // TODO: On success: reset failures, set state to CLOSED
+    // TODO: On failure: increment failures, if >= threshold → OPEN
+  }
+}
+
+let callCount = 0;
+const flakyService = async () => {
+  callCount++;
+  if (callCount <= 4) throw new Error('Service down!');
+  return 'Success!';
+};
+
+const breaker = new CircuitBreaker(flakyService, { failureThreshold: 3 });
+
+(async () => {
+  for (let i = 0; i < 6; i++) {
+    try {
+      const result = await breaker.call();
+      console.log(\`Call \${i+1}: ✅\`, result, \`| State: \${breaker.state}\`);
+    } catch(e) {
+      console.log(\`Call \${i+1}: ❌\`, e.message, \`| State: \${breaker.state}\`);
+    }
+  }
+})();`;
+
+const ex4Solution = `class CircuitBreaker {
+  constructor(fn, { failureThreshold = 3, cooldown = 5000 } = {}) {
+    this.fn = fn;
+    this.failureThreshold = failureThreshold;
+    this.cooldown = cooldown;
+    this.state = 'CLOSED';
+    this.failures = 0;
+    this.nextAttempt = 0;
+  }
+
+  async call(...args) {
+    if (this.state === 'OPEN') {
+      if (Date.now() < this.nextAttempt) {
+        throw new Error(\`Circuit OPEN — retry after cooldown\`);
+      }
+      this.state = 'HALF_OPEN';
+    }
+
+    try {
+      const result = await this.fn(...args);
+      // Success!
+      this.failures = 0;
+      this.state = 'CLOSED';
+      return result;
+    } catch (error) {
+      this.failures++;
+      if (this.failures >= this.failureThreshold) {
+        this.state = 'OPEN';
+        this.nextAttempt = Date.now() + this.cooldown;
+      }
+      throw error;
+    }
+  }
+}
+
+let callCount = 0;
+const flakyService = async () => {
+  callCount++;
+  if (callCount <= 4) throw new Error('Service down!');
+  return 'Success!';
+};
+
+const breaker = new CircuitBreaker(flakyService, { 
+  failureThreshold: 3, 
+  cooldown: 100 // short for demo
+});
+
+(async () => {
+  for (let i = 0; i < 8; i++) {
+    if (i === 5) {
+      // Simulate cooldown
+      await new Promise(r => setTimeout(r, 150));
+      console.log('--- Cooldown passed, trying again ---');
+    }
+    try {
+      const result = await breaker.call();
+      console.log(\`Call \${i+1}: ✅ \${result} | State: \${breaker.state}\`);
+    } catch(e) {
+      console.log(\`Call \${i+1}: ❌ \${e.message} | State: \${breaker.state}\`);
+    }
+  }
+})();`;
+
+function runExercise(inputId, outputId, validator) {
+  const code = document.getElementById(inputId).value;
+  const output = document.getElementById(outputId);
+  const logs = [];
+
+  const fakeConsole = {
+    log: (...args) => logs.push(args.map(a =>
+      typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+    ).join(' ')),
+    error: (...args) => logs.push('ERROR: ' + args.join(' ')),
+    warn: (...args) => logs.push('WARN: ' + args.join(' '))
+  };
+
+  try {
+    const fn = new Function('console', code);
+    const result = fn(fakeConsole);
+    if (result && typeof result.then === 'function') {
+      result
+        .then(() => {
+          output.style.color = 'var(--success)';
+          output.textContent = logs.join('\n') || '✅ Ran successfully (no output)';
+          addScore(15);
+        })
+        .catch(e => {
+          output.style.color = 'var(--error)';
+          output.textContent = 'Runtime Error:\n' + e.message + '\n\nOutput so far:\n' + logs.join('\n');
+        });
+    } else {
+      output.style.color = 'var(--success)';
+      output.textContent = logs.join('\n') || '✅ Ran successfully (no output)';
+      if (logs.length > 0) addScore(15);
+    }
+  } catch (e) {
+    output.style.color = 'var(--error)';
+    output.textContent = '❌ Syntax/Runtime Error:\n' + e.message;
+  }
+}
+
+function validateEx1(logs) { return logs.some(l => l.includes('Updated')); }
+function validateEx2(logs) { return logs.some(l => l.includes('Persistent')); }
+function validateEx3(logs) { return logs.some(l => l.includes('Registered')); }
+
+function showSolution(inputId, solution) {
+  if (confirm('Show solution? (This will replace your code)')) {
+    document.getElementById(inputId).value = solution;
+    addScore(0);
+  }
+}
+
+function resetExercise(inputId, starter) {
+  document.getElementById(inputId).value = starter;
+  const outputId = inputId + '-output';
+  if (document.getElementById(outputId)) {
+    document.getElementById(outputId).textContent = 'Output will appear here...';
+    document.getElementById(outputId).style.color = 'var(--success)';
+  }
+}
+
+// Initialize exercises
+document.getElementById('ex1').value = ex1Starter;
+document.getElementById('ex2').value = ex2Starter;
+document.getElementById('ex3').value = ex3Starter;
+document.getElementById('ex4').value = ex4Starter;
+
+// Init progress
+updateProgress();
+</script>
+</body>
+</html>

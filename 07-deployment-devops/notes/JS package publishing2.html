@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPM Mastery Academy - Package Publishing Bootcamp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #cb3837;
+            --primary-dark: #a02e2d;
+            --secondary: #000000;
+            --accent: #f7df1e;
+            --success: #00c853;
+            --warning: #ffd600;
+            --error: #ff1744;
+            --bg: #0f1115;
+            --surface: #1a1d24;
+            --surface-light: #252a33;
+            --text: #e0e0e0;
+            --text-muted: #888;
+            --border: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--surface);
+            padding: 1rem 2rem;
+            border-bottom: 2px solid var(--primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 8px;
+            background: var(--bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .stats {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: var(--surface);
+            padding: 2rem 0;
+            border-right: 1px solid var(--border);
+        }
+
+        .nav-item {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .nav-item:hover {
+            background: var(--surface-light);
+            border-left-color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--surface-light);
+            border-left-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* FIX 1: Removed "margin: 0 auto" which was fighting with flex:1 and causing blank content */
+        .content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            min-width: 0;
+        }
+
+        /* Module Styles */
+        .module-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .module-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            max-width: 900px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            color: var(--accent);
+        }
+
+        /* Interactive Terminal */
+        .terminal {
+            background: #000;
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            border: 1px solid #333;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-btn.red { background: var(--error); }
+        .terminal-btn.yellow { background: var(--warning); }
+        .terminal-btn.green { background: var(--success); }
+
+        .terminal-content {
+            color: #0f0;
+            line-height: 1.8;
+        }
+
+        .terminal-input {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .prompt {
+            color: var(--accent);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: #0f0;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Code Editor */
+        .code-editor {
+            background: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 1rem 0;
+            border: 1px solid #333;
+        }
+
+        .editor-header {
+            background: #252526;
+            padding: 0.5rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .editor-tabs {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .editor-tab {
+            padding: 0.3rem 0.8rem;
+            background: #1e1e1e;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+        }
+
+        .editor-tab.active {
+            background: #1e1e1e;
+            color: var(--accent);
+            border-top: 2px solid var(--accent);
+        }
+
+        .code-content {
+            padding: 1.5rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .comment { color: #6a9955; }
+        .number { color: #b5cea8; }
+        .operator { color: #d4d4d4; }
+
+        /* Interactive Elements */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(203, 56, 55, 0.4);
+        }
+
+        .btn.secondary {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+        }
+
+        .btn.secondary:hover {
+            background: var(--border);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Quiz Styles */
+        .quiz-option {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary);
+            background: var(--surface-light);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success);
+            background: rgba(0, 200, 83, 0.1);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--error);
+            background: rgba(255, 23, 68, 0.1);
+        }
+
+        .quiz-option input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        /* File Tree */
+        .file-tree {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: monospace;
+        }
+
+        .tree-item {
+            padding: 0.3rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .tree-item:hover {
+            color: var(--accent);
+        }
+
+        .tree-indent { margin-left: 1.5rem; }
+        .tree-file { color: var(--text-muted); }
+        .tree-folder { color: var(--accent); font-weight: bold; }
+
+        /* Semver Calculator */
+        .semver-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 2rem 0;
+            font-family: monospace;
+            text-shadow: 0 0 20px rgba(247, 223, 30, 0.3);
+        }
+
+        .semver-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .version-type {
+            background: var(--bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .version-type:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .version-type.selected {
+            border-color: var(--accent);
+            background: rgba(247, 223, 30, 0.1);
+        }
+
+        /* Pitfall Game */
+        .pitfall-code {
+            position: relative;
+            background: #1e1e1e;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #333;
+        }
+
+        .bug-line {
+            background: rgba(255, 23, 68, 0.2);
+            border-left: 3px solid var(--error);
+            margin: 0 -1.5rem;
+            padding: 0 1.5rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .bug-line:hover::after {
+            content: "Click to inspect";
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--error);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .hidden-explanation {
+            display: none;
+            background: var(--surface-light);
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Success Animation */
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .success-animation {
+            animation: successPulse 0.5s ease;
+            color: var(--success);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .content { padding: 1rem; }
+            .module-title { font-size: 1.8rem; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .hint-box {
+            background: rgba(247, 223, 30, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: rgba(255, 214, 0, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .error-box {
+            background: rgba(255, 23, 68, 0.1);
+            border-left: 4px solid var(--error);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box {
+            background: rgba(0, 200, 83, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        pre {
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="logo">
+            <span>📦</span>
+            <span>NPM Mastery Academy</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="stats">
+            <div class="stat-item">
+                <span>🏆</span>
+                <span id="xpDisplay">0 XP</span>
+            </div>
+            <div class="stat-item">
+                <span>⭐</span>
+                <span id="levelDisplay">Level 1</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <aside class="sidebar">
+            <div class="nav-item active" onclick="loadModule(0)">
+                <span>🏗️</span>
+                <div>
+                    <div>Package Structure</div>
+                    <small style="color: var(--text-muted)">The Foundation</small>
+                </div>
+            </div>
+            <div class="nav-item locked" onclick="loadModule(1)" id="nav1">
+                <span>🔢</span>
+                <div>
+                    <div>Semantic Versioning</div>
+                    <small style="color: var(--text-muted)">Version Control</small>
+                </div>
+            </div>
+            <div class="nav-item locked" onclick="loadModule(2)" id="nav2">
+                <span>📚</span>
+                <div>
+                    <div>Documentation</div>
+                    <small style="color: var(--text-muted)">README & JSDoc</small>
+                </div>
+            </div>
+            <div class="nav-item locked" onclick="loadModule(3)" id="nav3">
+                <span>🚀</span>
+                <div>
+                    <div>Publishing Workflow</div>
+                    <small style="color: var(--text-muted)">npm publish</small>
+                </div>
+            </div>
+            <div class="nav-item locked" onclick="loadModule(4)" id="nav4">
+                <span>🐛</span>
+                <div>
+                    <div>Pitfalls & Security</div>
+                    <small style="color: var(--text-muted)">Production Ready</small>
+                </div>
+            </div>
+            <div class="nav-item locked" onclick="loadModule(5)" id="nav5">
+                <span>🎯</span>
+                <div>
+                    <div>Final Challenge</div>
+                    <small style="color: var(--text-muted)">Master Exam</small>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content" id="mainContent">
+            <!-- Content loaded dynamically -->
+        </main>
+    </div>
+
+    <script>
+        // Game State
+        let state = {
+            xp: 0,
+            level: 1,
+            completedModules: [],
+            currentModule: 0,
+            packageConfig: {
+                name: '',
+                version: '1.0.0',
+                main: 'index.js',
+                exports: {}
+            }
+        };
+
+        // Module Content
+        const modules = [
+            {
+                title: "Package Structure Mastery",
+                subtitle: "Building enterprise-grade npm packages",
+                content: `
+                    <div class="card">
+                        <div class="card-header">
+                            <span>📁</span>
+                            <span>Modern Package Architecture</span>
+                        </div>
+                        <p style="margin-bottom: 1rem;">In competitive organizations, package structure isn't just about working code—it's about maintainability, tree-shaking, and dual-module support (CommonJS + ESM).</p>
+                        
+                        <div class="file-tree" id="fileTree">
+                            <div class="tree-item tree-folder" onclick="toggleTree(this)">
+                                <span>📁</span> my-awesome-lib/
+                            </div>
+                            <div class="tree-indent" style="display: block;">
+                                <div class="tree-item tree-folder" onclick="toggleTree(this)">
+                                    <span>📁</span> src/
+                                </div>
+                                <div class="tree-indent" style="display: block;">
+                                    <div class="tree-item tree-file">
+                                        <span>📄</span> index.js
+                                    </div>
+                                    <div class="tree-item tree-file">
+                                        <span>📄</span> utils.js
+                                    </div>
+                                </div>
+                                <div class="tree-item tree-file" onclick="showFileInfo('package.json')">
+                                    <span>📄</span> package.json ⚠️
+                                </div>
+                                <div class="tree-item tree-file">
+                                    <span>📄</span> README.md
+                                </div>
+                                <div class="tree-item tree-file" onclick="showFileInfo('exports')">
+                                    <span>📄</span> exports field 🔑
+                                </div>
+                                <div class="tree-item tree-file">
+                                    <span>📄</span> .npmignore
+                                </div>
+                                <div class="tree-item tree-file">
+                                    <span>📄</span> LICENSE
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🔧</span>
+                            <span>Interactive: Configure package.json</span>
+                        </div>
+                        <p>Configure a modern dual-mode package (CJS + ESM). This is critical for library authors!</p>
+                        
+                        <div class="code-editor">
+                            <div class="editor-header">
+                                <span>package.json</span>
+                                <div class="editor-tabs">
+                                    <span class="editor-tab active">JSON</span>
+                                </div>
+                            </div>
+                            <div class="code-content" contenteditable="true" id="packageJsonEditor" style="outline: none;">
+{
+  <span class="string">"name"</span>: <span class="string">"my-lib"</span>,
+  <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="string">"description"</span>: <span class="string">"A sample library"</span>,
+  <span class="string">"main"</span>: <span class="string">"./dist/index.cjs"</span>,
+  <span class="string">"module"</span>: <span class="string">"./dist/index.mjs"</span>,
+  <span class="string">"exports"</span>: {
+    <span class="string">"."</span>: {
+      <span class="string">"import"</span>: <span class="string">"./dist/index.mjs"</span>,
+      <span class="string">"require"</span>: <span class="string">"./dist/index.cjs"</span>
+    }
+  },
+  <span class="string">"files"</span>: [<span class="string">"dist"</span>],
+  <span class="string">"scripts"</span>: {
+    <span class="string">"build"</span>: <span class="string">"rollup -c"</span>,
+    <span class="string">"prepublishOnly"</span>: <span class="string">"npm run build && npm test"</span>
+  },
+  <span class="string">"keywords"</span>: [],
+  <span class="string">"author"</span>: <span class="string">""</span>,
+  <span class="string">"license"</span>: <span class="string">"MIT"</span>
+}</div>
+                        </div>
+
+                        <div class="warning-box">
+                            <strong>⚠️ Common Mistake:</strong> Using <code>"type": "module"</code> without providing CommonJS exports breaks Node.js projects still using require(). Always provide dual support for libraries!
+                        </div>
+
+                        <button class="btn" onclick="validatePackageJson()">Validate Configuration</button>
+                        <div id="validationResult"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🧪</span>
+                            <span>Exercise: The Dual Package Hazard</span>
+                        </div>
+                        <p>What's wrong with this package structure that causes the "Dual Package Hazard"?</p>
+                        
+                        <div class="pitfall-code">
+                            <div class="code-content">
+<span class="comment">// package.json</span>
+{
+  <span class="string">"name"</span>: <span class="string">"state-manager"</span>,
+  <span class="string">"version"</span>: <span class="string">"1.0.0"</span>,
+  <span class="string">"main"</span>: <span class="string">"./index.cjs"</span>,
+  <span class="string">"module"</span>: <span class="string">"./index.mjs"</span>
+}
+
+<span class="comment">// index.mjs</span>
+<span class="keyword">export const</span> <span class="function">store</span> = <span class="keyword">new</span> <span class="function">Map</span>();
+
+<span class="comment">// index.cjs</span>
+<span class="keyword">module</span>.exports.store = <span class="keyword">new</span> <span class="function">Map</span>();
+                            </div>
+                            <div class="bug-line" onclick="revealPitfall(1)">
+                                <span class="comment">// Hint: Click to see the issue</span>
+                            </div>
+                            <div class="hidden-explanation" id="pitfall1">
+                                <strong>The Problem:</strong> The ESM and CJS versions create <strong>two separate instances</strong> of the Map! If a user imports via ESM and another via CJS, they get different state. The fix is using the <code>exports</code> field to ensure both resolve to the same underlying module, or using a stateless design.
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="completeModule(0)" style="width: 100%; margin-top: 2rem;">
+                        Complete Module & Continue →
+                    </button>
+                `
+            },
+            {
+                title: "Semantic Versioning Deep Dive",
+                subtitle: "Communicating breaking changes professionally",
+                content: `
+                    <div class="card">
+                        <div class="card-header">
+                            <span>📊</span>
+                            <span>The Semver Calculator</span>
+                        </div>
+                        <p>Master the art of version bumping. In enterprise settings, incorrect versioning breaks CI/CD pipelines and consumer applications.</p>
+                        
+                        <div class="semver-display" id="semverDisplay">1.0.0</div>
+                        
+                        <div class="semver-controls">
+                            <div class="version-type" onclick="bumpVersion('major')">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">💥</div>
+                                <div style="font-weight: bold; color: var(--error)">MAJOR</div>
+                                <small>Breaking Changes</small>
+                            </div>
+                            <div class="version-type" onclick="bumpVersion('minor')">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">✨</div>
+                                <div style="font-weight: bold; color: var(--accent)">MINOR</div>
+                                <small>New Features</small>
+                            </div>
+                            <div class="version-type" onclick="bumpVersion('patch')">
+                                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🐛</div>
+                                <div style="font-weight: bold; color: var(--success)">PATCH</div>
+                                <small>Bug Fixes</small>
+                            </div>
+                        </div>
+
+                        <div class="hint-box">
+                            <strong>Pro Tip:</strong> In pre-1.0.0 (0.x.x), minor bumps ARE breaking changes. Many enterprise packages stay at 0.x for years—don't trust them in production!
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🎯</span>
+                            <span>Quiz: Version Strategy</span>
+                        </div>
+                        <p>You change a function signature from <code>getUser(id)</code> to <code>getUser(id, options)</code>. What version bump?</p>
+                        
+                        <div class="quiz-option" onclick="selectQuiz(this, false)">
+                            <input type="radio" name="q1">
+                            <span>Patch (1.0.1) - It's just a small change</span>
+                        </div>
+                        <div class="quiz-option" onclick="selectQuiz(this, false)">
+                            <input type="radio" name="q1">
+                            <span>Minor (1.1.0) - New parameter is a feature</span>
+                        </div>
+                        <div class="quiz-option" onclick="selectQuiz(this, true)">
+                            <input type="radio" name="q1">
+                            <span>Major (2.0.0) - Existing calls will break</span>
+                        </div>
+                        
+                        <div id="quizFeedback" style="margin-top: 1rem;"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>⚠️</span>
+                            <span>The Caret (^) Trap</span>
+                        </div>
+                        <p>Understand dependency resolution:</p>
+                        
+                        <div class="terminal">
+                            <div class="terminal-header">
+                                <div class="terminal-btn red"></div>
+                                <div class="terminal-btn yellow"></div>
+                                <div class="terminal-btn green"></div>
+                            </div>
+                            <div class="terminal-content">
+                                <div style="color: #666;"># Your package.json</div>
+                                <div>"dependencies": {</div>
+                                <div>  "lodash": "^4.17.0"</div>
+                                <div>}</div>
+                                <br>
+                                <div style="color: #666;"># Consumer installs your package</div>
+                                <div>$ npm install your-package</div>
+                                <div>$ npm ls lodash</div>
+                                <div style="color: var(--error);">└── lodash@4.17.21 (resolved to latest minor)</div>
+                                <br>
+                                <div style="color: #666;"># But you tested with 4.17.0!</div>
+                            </div>
+                        </div>
+
+                        <div class="error-box">
+                            <strong>Enterprise Risk:</strong> The caret allows minors that might break your package. Use <code>--save-exact</code> for critical dependencies or specify exact versions in libraries.
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="completeModule(1)" style="width: 100%; margin-top: 2rem;">
+                        Complete Module & Continue →
+                    </button>
+                `
+            },
+            {
+                title: "Documentation Excellence",
+                subtitle: "READMEs that get you hired",
+                content: `
+                    <div class="card">
+                        <div class="card-header">
+                            <span>📝</span>
+                            <span>The README Generator</span>
+                        </div>
+                        <p>Fill in the sections to generate an enterprise-grade README:</p>
+                        
+                        <div style="display: grid; gap: 1rem; margin: 1rem 0;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Installation</label>
+                                <input type="text" id="installCmd" placeholder="npm install my-package" style="width: 100%; padding: 0.8rem; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted);">Quick Start Code</label>
+                                <textarea id="quickStart" rows="3" placeholder="import { foo } from 'bar';" style="width: 100%; padding: 0.8rem; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-family: monospace;"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="code-editor">
+                            <div class="editor-header">
+                                <span>README.md Preview</span>
+                            </div>
+                            <div class="code-content" style="white-space: pre-wrap;" id="readmePreview">
+# my-package
+
+> One-line description here
+
+## Installation
+
+\`\`\`bash
+npm install my-package
+\`\`\`
+
+## Usage
+
+\`\`\`javascript
+// Add your quick start example
+\`\`\`
+
+## API Documentation
+
+*Coming soon...*
+
+## License
+
+MIT
+                            </div>
+                        </div>
+                        
+                        <button class="btn secondary" onclick="updateReadme()">Generate Preview</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>📚</span>
+                            <span>JSDoc Mastery</span>
+                        </div>
+                        <p>Proper JSDoc enables IntelliSense in VS Code and TypeScript definitions without .d.ts files:</p>
+                        
+                        <div class="code-editor">
+                            <div class="editor-header">
+                                <span>src/utils.js</span>
+                            </div>
+                            <div class="code-content">
+<span class="comment">/**
+ * Calculates discount price with tax
+ * @param {number} basePrice - Original price in cents
+ * @param {number} [discountPercent=0] - Discount 0-100
+ * @param {Object} [options] - Configuration options
+ * @param {boolean} options.roundUp - Round to nearest dollar
+ * @returns {{finalPrice: number, saved: number}} Price calculation result
+ * @throws {TypeError} When basePrice is negative
+ * @example
+ * const result = calculatePrice(1000, 20, { roundUp: true });
+ * console.log(result.finalPrice); // 800
+ */</span>
+<span class="keyword">export function</span> <span class="function">calculatePrice</span>(basePrice, discountPercent = 0, options = {}) {
+  <span class="comment">// Implementation</span>
+}
+                            </div>
+                        </div>
+
+                        <div class="success-box">
+                            <strong>Interview Tip:</strong> Good JSDoc shows you care about Developer Experience (DX). At Google/Amazon-level companies, undocumented code won't pass code review.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🔍</span>
+                            <span>Exercise: Spot Missing Docs</span>
+                        </div>
+                        <p>What's missing from this function documentation that would fail a FAANG code review?</p>
+                        
+                        <div class="pitfall-code">
+                            <div class="code-content">
+<span class="comment">// Calculates total</span>
+<span class="keyword">function</span> <span class="function">calc</span>(a, b) {
+  <span class="keyword">return</span> a * b;
+}
+                            </div>
+                            <div class="bug-line" onclick="revealPitfall(2)">
+                                <span class="comment">// Click to see 5 missing items</span>
+                            </div>
+                            <div class="hidden-explanation" id="pitfall2">
+                                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                                    <li>No @param types (TypeScript won't infer)</li>
+                                    <li>Parameter names not descriptive (a, b instead of price, quantity)</li>
+                                    <li>No @returns documentation</li>
+                                    <li>No unit specification (cents? dollars?)</li>
+                                    <li>No error handling documentation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="completeModule(2)" style="width: 100%; margin-top: 2rem;">
+                        Complete Module & Continue →
+                    </button>
+                `
+            },
+            {
+                title: "Publishing Workflow",
+                subtitle: "From local to npm registry",
+                content: `
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🚀</span>
+                            <span>Interactive Publish Simulator</span>
+                        </div>
+                        <p>Walk through the professional publishing workflow. One mistake here is public and permanent!</p>
+                        
+                        <div class="terminal" id="publishTerminal">
+                            <div class="terminal-header">
+                                <div class="terminal-btn red"></div>
+                                <div class="terminal-btn yellow"></div>
+                                <div class="terminal-btn green"></div>
+                            </div>
+                            <div class="terminal-content" id="terminalContent">
+                                <div>$ npm whoami</div>
+                                <div style="color: var(--error);">npm ERR! code ENEEDAUTH</div>
+                                <div style="color: var(--error);">npm ERR! need auth This command requires you to be logged in.</div>
+                                <br>
+                                <div style="color: #666;"># Step 1: Login (simulated)</div>
+                                <div class="terminal-input">
+                                    <span class="prompt">$</span>
+                                    <input type="text" id="npmCommand" placeholder="Enter npm login command..." style="background: transparent; border: none; color: #0f0; font-family: inherit; outline: none; flex: 1;" onkeypress="handleTerminal(event)">
+                                    <span class="cursor"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                            <button class="btn secondary" onclick="hintTerminal()">Hint</button>
+                            <button class="btn secondary" onclick="resetTerminal()">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>⚡</span>
+                            <span>The prepublishOnly Script</span>
+                        </div>
+                        <p>Never publish unbuilt code! Here's the safety net:</p>
+                        
+                        <div class="code-editor">
+                            <div class="editor-header">
+                                <span>package.json</span>
+                            </div>
+                            <div class="code-content">
+<span class="string">"scripts"</span>: {
+  <span class="string">"build"</span>: <span class="string">"rollup -c"</span>,
+  <span class="string">"test"</span>: <span class="string">"jest"</span>,
+  <span class="string">"lint"</span>: <span class="string">"eslint src/"</span>,
+  <span class="string">"prepublishOnly"</span>: <span class="string">"npm run lint && npm test && npm run build"</span>
+}
+                            </div>
+                        </div>
+
+                        <div class="warning-box">
+                            <strong>Gotcha:</strong> <code>prepublish</code> runs on local <code>npm install</code> too! Always use <code>prepublishOnly</code> (runs only on publish).
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>👻</span>
+                            <span>The Ghost of Published Code</span>
+                        </div>
+                        <p>Once published, you cannot unpublish after 24 hours (or if downloaded > 300 times). This is permanent!</p>
+                        
+                        <div class="error-box">
+                            <strong>War Story:</strong> A developer at a major tech company accidentally published internal credentials in a package. Even after unpublishing, mirrors forever archived it. Always use <code>npm publish --dry-run</code> first!
+                        </div>
+
+                        <button class="btn" onclick="simulateDryRun()">Run Dry Run Simulation</button>
+                        <div id="dryRunResult" style="margin-top: 1rem;"></div>
+                    </div>
+
+                    <button class="btn" onclick="completeModule(3)" style="width: 100%; margin-top: 2rem;">
+                        Complete Module & Continue →
+                    </button>
+                `
+            },
+            {
+                title: "Pitfalls & Security",
+                subtitle: "Avoiding career-ending mistakes",
+                content: `
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🛡️</span>
+                            <span>Security Checklist</span>
+                        </div>
+                        <p>Before publishing, verify these critical items:</p>
+                        
+                        <div style="display: grid; gap: 0.8rem; margin: 1rem 0;">
+                            <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; padding: 0.5rem; background: var(--bg); border-radius: 6px;">
+                                <input type="checkbox" onchange="checkSecurity(this)"> 
+                                <span>No .env files in files array</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; padding: 0.5rem; background: var(--bg); border-radius: 6px;">
+                                <input type="checkbox" onchange="checkSecurity(this)"> 
+                                <span>npmignore includes test/ and .github/</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; padding: 0.5rem; background: var(--bg); border-radius: 6px;">
+                                <input type="checkbox" onchange="checkSecurity(this)"> 
+                                <span>No console.log statements in dist/</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; padding: 0.5rem; background: var(--bg); border-radius: 6px;">
+                                <input type="checkbox" onchange="checkSecurity(this)"> 
+                                <span>engines field specifies Node version</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.8rem; cursor: pointer; padding: 0.5rem; background: var(--bg); border-radius: 6px;">
+                                <input type="checkbox" onchange="checkSecurity(this)"> 
+                                <span>npm audit passes</span>
+                            </label>
+                        </div>
+
+                        <div id="securityStatus" style="display: none;" class="success-box">
+                            <strong>✅ Secure!</strong> You've avoided the common vulnerabilities. In real life, run <code>npm audit</code> and <code>npm outdated</code> before every publish.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🎭</span>
+                            <span>Typosquatting Attack</span>
+                        </div>
+                        <p>Malicious actors publish packages with names similar to popular ones (e.g., <code>lodashs</code> instead of <code>lodash</code>). How do you protect against this?</p>
+                        
+                        <div class="quiz-option" onclick="selectQuiz(this, false)">
+                            <input type="radio" name="security">
+                            <span>Use npm audit</span>
+                        </div>
+                        <div class="quiz-option" onclick="selectQuiz(this, true)">
+                            <input type="radio" name="security">
+                            <span>Enable 2FA on npm and use scoped packages (@org/name)</span>
+                        </div>
+                        <div class="quiz-option" onclick="selectQuiz(this, false)">
+                            <input type="radio" name="security">
+                            <span>Only install packages with >1000 downloads</span>
+                        </div>
+
+                        <div class="hint-box" style="margin-top: 1rem;">
+                            <strong>Enterprise Pattern:</strong> Always use scoped packages (@yourcompany/lib) for internal code. This prevents name collisions and typosquatting.
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🧹</span>
+                            <span>Bundle Bloat Detector</span>
+                        </div>
+                        <p>What's wrong with this package that bloats consumer node_modules by 50MB?</p>
+                        
+                        <div class="pitfall-code">
+                            <div class="code-content">
+<span class="comment">// .npmignore - WRONG!</span>
+node_modules
+src
+.git
+
+<span class="comment">// But docs/, examples/, and *.test.js are published!</span>
+                            </div>
+                            <div class="bug-line" onclick="revealPitfall(3)">
+                                <span class="comment">// Click for solution</span>
+                            </div>
+                            <div class="hidden-explanation" id="pitfall3">
+                                <strong>The Fix:</strong> Use <code>files</code> array in package.json (whitelist) instead of .npmignore (blacklist). It's safer:
+                                <br><br>
+                                <code>"files": ["dist/", "README.md", "LICENSE"]</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="completeModule(4)" style="width: 100%; margin-top: 2rem;">
+                        Complete Module & Continue →
+                    </button>
+                `
+            },
+            {
+                title: "Final Challenge: Master Publisher",
+                subtitle: "Prove your enterprise readiness",
+                content: `
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🏆</span>
+                            <span>Scenario: Build & Publish</span>
+                        </div>
+                        <p>You're tasked with publishing a utility library. Fix the issues and complete the workflow:</p>
+                        
+                        <div class="code-editor" style="margin: 1rem 0;">
+                            <div class="editor-header">
+                                <span>Broken Package</span>
+                            </div>
+                            <div class="code-content" contenteditable="true" id="finalChallenge">
+{
+  "name": "utils",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'Error: no test specified'",
+    "publish": "npm publish"
+  },
+  "dependencies": {
+    "lodash": "*"
+  }
+}
+                            </div>
+                        </div>
+
+                        <div style="margin: 1rem 0;">
+                            <p><strong>Issues to fix:</strong></p>
+                            <ul style="margin-left: 2rem; margin-top: 0.5rem; line-height: 2;">
+                                <li id="issue1">❌ Unscoped generic name</li>
+                                <li id="issue2">❌ No ESM support</li>
+                                <li id="issue3">❌ Wildcard dependency (dangerous)</li>
+                                <li id="issue4">❌ No prepublishOnly script</li>
+                                <li id="issue5">❌ Missing files array</li>
+                            </ul>
+                        </div>
+
+                        <button class="btn" onclick="checkFinalChallenge()">Submit Solution</button>
+                        <div id="finalResult"></div>
+                    </div>
+
+                    <div class="card" id="certificateCard" style="display: none; border: 2px solid var(--accent);">
+                        <div class="card-header">
+                            <span>🎓</span>
+                            <span>Certificate of Mastery</span>
+                        </div>
+                        <div style="text-align: center; padding: 2rem;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">📦</div>
+                            <h2 style="color: var(--accent); margin-bottom: 1rem;">Package Publishing Master</h2>
+                            <p>Congratulations! You've demonstrated enterprise-level understanding of:</p>
+                            <div style="display: flex; justify-content: center; gap: 1rem; margin: 1.5rem 0; flex-wrap: wrap;">
+                                <span class="badge">Dual Module Support</span>
+                                <span class="badge">Semantic Versioning</span>
+                                <span class="badge">Security Best Practices</span>
+                            </div>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                                You're now ready to maintain packages at top-tier tech companies.
+                            </p>
+                        </div>
+                    </div>
+                `
+            }
+        ];
+
+        let currentVersion = { major: 1, minor: 0, patch: 0 };
+        let terminalStep = 0;
+
+        // FIX 2: Wrap init() in DOMContentLoaded so the DOM is ready before we try to inject content
+        function init() {
+            loadModule(0);
+        }
+
+        function loadModule(index) {
+            if (index > 0 && !state.completedModules.includes(index - 1)) {
+                alert("Complete previous modules first!");
+                return;
+            }
+            
+            state.currentModule = index;
+            document.querySelectorAll('.nav-item').forEach((el, i) => {
+                el.classList.remove('active');
+                if (i === index) el.classList.add('active');
+            });
+            
+            document.getElementById('mainContent').innerHTML = modules[index].content;
+            updateProgress();
+            
+            // Initialize specific module features
+            if (index === 1) initSemver();
+            if (index === 3) initTerminal();
+        }
+
+        function updateProgress() {
+            const progress = ((state.completedModules.length) / modules.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('xpDisplay').textContent = state.xp + ' XP';
+            document.getElementById('levelDisplay').textContent = 'Level ' + Math.floor(state.xp / 500 + 1);
+        }
+
+        function completeModule(index) {
+            if (!state.completedModules.includes(index)) {
+                state.completedModules.push(index);
+                state.xp += 250;
+                updateProgress();
+                
+                // Unlock next
+                if (index + 1 < modules.length) {
+                    document.getElementById('nav' + (index + 1))?.classList.remove('locked');
+                }
+                
+                // Animation
+                document.querySelector('.nav').classList.add('success-animation');
+                setTimeout(() => {
+                    document.querySelector('.nav').classList.remove('success-animation');
+                    loadModule(index + 1);
+                }, 1000);
+            }
+        }
+
+        // Module 0: Package Structure
+        function toggleTree(el) {
+            const indent = el.nextElementSibling;
+            if (indent && indent.classList.contains('tree-indent')) {
+                indent.style.display = indent.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function showFileInfo(file) {
+            const info = {
+                'package.json': 'The heart of your package. Must include "exports" for dual-mode support!',
+                'exports': 'Modern replacement for "main". Allows conditional exports for CJS/ESM/Types.'
+            };
+            alert(info[file] || 'Click the tree items to explore!');
+        }
+
+        function validatePackageJson() {
+            const content = document.getElementById('packageJsonEditor').innerText;
+            const result = document.getElementById('validationResult');
+            
+            if (content.includes('"exports"') && content.includes('import') && content.includes('require')) {
+                result.innerHTML = '<div class="success-box" style="margin-top: 1rem;">✅ Perfect! You have dual-mode support configured.</div>';
+                state.xp += 50;
+                updateProgress();
+            } else {
+                result.innerHTML = '<div class="error-box" style="margin-top: 1rem;">❌ Missing exports field for dual-mode support!</div>';
+            }
+        }
+
+        function revealPitfall(id) {
+            document.getElementById('pitfall' + id).style.display = 'block';
+            state.xp += 25;
+            updateProgress();
+        }
+
+        // Module 1: Semver
+        function initSemver() {
+            currentVersion = { major: 1, minor: 0, patch: 0 };
+            updateSemverDisplay();
+        }
+
+        function updateSemverDisplay() {
+            document.getElementById('semverDisplay').textContent = 
+                `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`;
+        }
+
+        function bumpVersion(type) {
+            if (type === 'major') {
+                currentVersion.major++;
+                currentVersion.minor = 0;
+                currentVersion.patch = 0;
+            } else if (type === 'minor') {
+                currentVersion.minor++;
+                currentVersion.patch = 0;
+            } else {
+                currentVersion.patch++;
+            }
+            updateSemverDisplay();
+            
+            // Visual feedback
+            document.querySelector('.semver-display').style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                document.querySelector('.semver-display').style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        function selectQuiz(el, isCorrect) {
+            document.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.remove('correct', 'wrong');
+                opt.querySelector('input').checked = false;
+            });
+            
+            el.querySelector('input').checked = true;
+            el.classList.add(isCorrect ? 'correct' : 'wrong');
+            
+            const feedback = document.getElementById('quizFeedback');
+            if (isCorrect) {
+                feedback.innerHTML = '<div class="success-box">✅ Correct! This maintains backward compatibility contract.</div>';
+                state.xp += 100;
+                updateProgress();
+            } else {
+                feedback.innerHTML = '<div class="error-box">❌ Wrong! Changing function signatures breaks existing code.</div>';
+            }
+        }
+
+        // Module 2: Documentation
+        function updateReadme() {
+            const install = document.getElementById('installCmd').value || 'npm install my-package';
+            const quickstart = document.getElementById('quickStart').value || '// Usage example here';
+            
+            document.getElementById('readmePreview').textContent = 
+`# my-package
+
+> A professional utility library
+
+## Installation
+
+\`\`\`bash
+${install}
+\`\`\`
+
+## Quick Start
+
+\`\`\`javascript
+${quickstart}
+\`\`\`
+
+## API Reference
+
+Comprehensive JSDoc documentation included.
+
+## License
+
+MIT © 2025`;
+            
+            state.xp += 50;
+            updateProgress();
+        }
+
+        // Module 3: Publishing
+        function initTerminal() {
+            terminalStep = 0;
+        }
+
+        function handleTerminal(e) {
+            if (e.key !== 'Enter') return;
+            
+            const input = document.getElementById('npmCommand');
+            const cmd = input.value.trim();
+            const content = document.getElementById('terminalContent');
+            
+            if (terminalStep === 0 && cmd === 'npm login') {
+                content.innerHTML += '<div style="color: #0f0;">Logged in as developer</div>';
+                terminalStep = 1;
+                input.value = '';
+                input.placeholder = 'Check version command...';
+                content.innerHTML += '<div style="color: #666; margin-top: 1rem;"># Step 2: Check current version</div>';
+            } else if (terminalStep === 1 && cmd.includes('version')) {
+                content.innerHTML += '<div>1.0.0</div>';
+                terminalStep = 2;
+                input.value = '';
+                input.placeholder = 'Run tests...';
+                content.innerHTML += '<div style="color: #666; margin-top: 1rem;"># Step 3: Verify quality</div>';
+            } else if (terminalStep === 2 && cmd === 'npm test') {
+                content.innerHTML += '<div style="color: var(--success);">Tests passing (12/12)</div>';
+                terminalStep = 3;
+                input.value = '';
+                input.placeholder = 'Final command...';
+                content.innerHTML += '<div style="color: #666; margin-top: 1rem;"># Step 4: Publish (with safety)</div>';
+            } else if (terminalStep === 3 && cmd === 'npm publish --dry-run') {
+                content.innerHTML += '<div style="color: var(--accent);">📦 my-package@1.0.0</div>';
+                content.innerHTML += '<div style="color: var(--success);">✓ File list OK</div>';
+                content.innerHTML += '<div style="color: var(--success);">✓ Total size: 14KB</div>';
+                content.innerHTML += '<div style="color: #666;">Would publish to https://registry.npmjs.org</div>';
+                content.innerHTML += '<div style="color: var(--warning); margin-top: 0.5rem;">Dry run complete. Run without --dry-run to publish.</div>';
+                state.xp += 150;
+                updateProgress();
+                input.disabled = true;
+            } else {
+                content.innerHTML += '<div style="color: var(--error);">Command not recognized for this step</div>';
+            }
+            
+            content.scrollTop = content.scrollHeight;
+        }
+
+        function hintTerminal() {
+            const hints = [
+                'Try: npm login',
+                'Try: npm version',
+                'Try: npm test',
+                'Try: npm publish --dry-run'
+            ];
+            alert('Hint: ' + hints[terminalStep]);
+        }
+
+        function resetTerminal() {
+            initTerminal();
+            document.getElementById('terminalContent').innerHTML = `
+                <div>$ npm whoami</div>
+                <div style="color: var(--error);">npm ERR! code ENEEDAUTH</div>
+                <div style="color: var(--error);">npm ERR! need auth This command requires you to be logged in.</div>
+                <br>
+                <div style="color: #666;"># Step 1: Login (simulated)</div>
+                <div class="terminal-input">
+                    <span class="prompt">$</span>
+                    <input type="text" id="npmCommand" placeholder="Enter npm login command..." style="background: transparent; border: none; color: #0f0; font-family: inherit; outline: none; flex: 1;" onkeypress="handleTerminal(event)">
+                    <span class="cursor"></span>
+                </div>
+            `;
+        }
+
+        function simulateDryRun() {
+            document.getElementById('dryRunResult').innerHTML = `
+                <div class="terminal" style="margin-top: 1rem;">
+                    <div class="terminal-content">
+                        <div style="color: #666;">npm notice === Tarball Contents ===</div>
+                        <div>1.2kB package.json</div>
+                        <div>45B   README.md</div>
+                        <div>2.1kB dist/index.js</div>
+                        <div style="color: var(--error);">3.2MB src/test-data.json  ⚠️ ACCIDENTALLY INCLUDED!</div>
+                        <div style="color: #666; margin-top: 1rem;">npm notice total files: 4</div>
+                    </div>
+                </div>
+                <div class="error-box" style="margin-top: 1rem;">
+                    This is why we use "files" array instead of .npmignore!
+                </div>
+            `;
+        }
+
+        // Module 4: Security
+        function checkSecurity(checkbox) {
+            const boxes = document.querySelectorAll('input[type="checkbox"]');
+            const checked = Array.from(boxes).filter(b => b.checked).length;
+            
+            if (checked === 5) {
+                document.getElementById('securityStatus').style.display = 'block';
+                state.xp += 100;
+                updateProgress();
+            }
+        }
+
+        // Module 5: Final Challenge
+        function checkFinalChallenge() {
+            const content = document.getElementById('finalChallenge').innerText;
+            let score = 0;
+            
+            if (content.includes('@')) {
+                document.getElementById('issue1').innerHTML = '✅ Scoped name (@company/utils)';
+                score++;
+            }
+            if (content.includes('exports') || content.includes('module')) {
+                document.getElementById('issue2').innerHTML = '✅ ESM support added';
+                score++;
+            }
+            if (!content.includes('"*"') && content.includes('lodash')) {
+                document.getElementById('issue3').innerHTML = '✅ Pinned dependency version';
+                score++;
+            }
+            if (content.includes('prepublishOnly')) {
+                document.getElementById('issue4').innerHTML = '✅ prepublishOnly script present';
+                score++;
+            }
+            if (content.includes('files')) {
+                document.getElementById('issue5').innerHTML = '✅ Files array whitelist';
+                score++;
+            }
+            
+            if (score === 5) {
+                document.getElementById('finalResult').innerHTML = 
+                    '<div class="success-box" style="margin-top: 1rem;"><h3>🎉 Perfect! You\'re ready for enterprise development!</h3></div>';
+                document.getElementById('certificateCard').style.display = 'block';
+                state.xp += 500;
+                updateProgress();
+                window.scrollTo(0, document.body.scrollHeight);
+            } else {
+                document.getElementById('finalResult').innerHTML = 
+                    '<div class="warning-box" style="margin-top: 1rem;">Keep fixing! Check the issues above. Score: ' + score + '/5</div>';
+            }
+        }
+
+        // FIX 2: Use DOMContentLoaded to ensure DOM is ready before injecting content
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

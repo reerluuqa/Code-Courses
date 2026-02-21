@@ -1,0 +1,2928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Architecture & System Design Mastery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0e17;--surface:#131926;--surface2:#1a2235;--surface3:#222d42;
+--primary:#6c5ce7;--primary-light:#a29bfe;--accent:#00cec9;--accent2:#fd79a8;
+--success:#00b894;--warning:#fdcb6e;--danger:#e17055;
+--text:#e2e8f0;--text-dim:#8892a8;--text-bright:#fff;
+--border:#2d3748;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.4);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden}
+.app{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;transition:transform .3s}
+.sidebar-header{padding:20px;border-bottom:1px solid var(--border);text-align:center}
+.sidebar-header h2{font-size:1.1rem;color:var(--primary-light);margin-bottom:4px}
+.sidebar-header .subtitle{font-size:.75rem;color:var(--text-dim)}
+.progress-bar-container{margin-top:12px;background:var(--surface3);border-radius:20px;height:8px;overflow:hidden}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:20px;transition:width .5s;width:0%}
+.progress-text{font-size:.7rem;color:var(--text-dim);margin-top:4px}
+.nav-section{padding:12px 0}
+.nav-section-title{padding:8px 20px;font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-dim);font-weight:700}
+.nav-item{padding:10px 20px;cursor:pointer;font-size:.85rem;display:flex;align-items:center;gap:10px;transition:all .2s;border-left:3px solid transparent;color:var(--text-dim)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--surface2);color:var(--primary-light);border-left-color:var(--primary)}
+.nav-item.completed{color:var(--success)}
+.nav-item .icon{width:20px;text-align:center;font-size:1rem}
+.nav-item .checkmark{margin-left:auto;color:var(--success);font-size:.8rem}
+
+/* Main */
+.main{margin-left:280px;flex:1;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+.topbar h1{font-size:1.2rem;color:var(--text-bright)}
+.topbar-actions{display:flex;gap:8px}
+.btn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light);transform:translateY(-1px)}
+.btn-outline{background:transparent;color:var(--primary-light);border:1px solid var(--primary)}
+.btn-outline:hover{background:var(--primary);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:6px 12px;font-size:.75rem}
+.content{padding:32px;max-width:960px;margin:0 auto}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:24px;box-shadow:var(--shadow)}
+.card h2{color:var(--primary-light);font-size:1.4rem;margin-bottom:8px}
+.card h3{color:var(--accent);font-size:1.1rem;margin:20px 0 10px}
+.card h4{color:var(--warning);font-size:.95rem;margin:16px 0 8px}
+.card p{margin-bottom:12px;color:var(--text)}
+.card ul,.card ol{margin:8px 0 16px 24px}
+.card li{margin-bottom:6px;color:var(--text)}
+
+/* Code blocks */
+.code-block{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:20px;margin:12px 0 20px;overflow-x:auto;position:relative;font-size:.82rem;line-height:1.6}
+.code-block code{color:#c9d1d9;font-family:'Fira Code','Cascadia Code',monospace;white-space:pre}
+.code-block .tag{position:absolute;top:8px;right:8px;background:var(--surface3);color:var(--text-dim);padding:2px 8px;border-radius:4px;font-size:.65rem}
+.inline-code{background:var(--surface3);color:var(--accent);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.85em}
+
+/* Concept boxes */
+.concept-box{border-radius:8px;padding:18px;margin:16px 0}
+.concept-box.info{background:rgba(108,92,231,.1);border-left:4px solid var(--primary)}
+.concept-box.tip{background:rgba(0,206,201,.1);border-left:4px solid var(--accent)}
+.concept-box.warning{background:rgba(253,203,110,.1);border-left:4px solid var(--warning)}
+.concept-box.danger{background:rgba(225,112,85,.1);border-left:4px solid var(--danger)}
+.concept-box .label{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.concept-box.info .label{color:var(--primary-light)}
+.concept-box.tip .label{color:var(--accent)}
+.concept-box.warning .label{color:var(--warning)}
+.concept-box.danger .label{color:var(--danger)}
+
+/* Diagrams */
+.diagram{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:24px;margin:16px 0;text-align:center;font-family:monospace;font-size:.8rem;color:var(--accent);line-height:1.8;overflow-x:auto;white-space:pre}
+
+/* Quiz */
+.quiz-container{margin:16px 0}
+.quiz-question{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;margin:12px 0}
+.quiz-question h4{color:var(--text-bright);margin-bottom:12px;font-size:.95rem}
+.quiz-option{display:block;padding:10px 16px;margin:6px 0;background:var(--surface3);border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;font-size:.85rem;color:var(--text)}
+.quiz-option:hover{border-color:var(--primary);background:rgba(108,92,231,.1)}
+.quiz-option.selected{border-color:var(--primary);background:rgba(108,92,231,.15)}
+.quiz-option.correct{border-color:var(--success);background:rgba(0,184,148,.15);color:var(--success)}
+.quiz-option.wrong{border-color:var(--danger);background:rgba(225,112,85,.15);color:var(--danger)}
+.quiz-option.reveal-correct{border-color:var(--success);background:rgba(0,184,148,.1)}
+.quiz-explanation{margin-top:10px;padding:12px;background:rgba(0,206,201,.08);border-radius:6px;font-size:.82rem;color:var(--accent);display:none}
+.quiz-explanation.show{display:block}
+.quiz-score{text-align:center;padding:20px;font-size:1.2rem;color:var(--text-bright)}
+
+/* Exercise */
+.exercise{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;margin:16px 0}
+.exercise h4{color:var(--warning);margin-bottom:8px}
+.exercise textarea{width:100%;min-height:120px;background:#0d1117;color:#c9d1d9;border:1px solid var(--border);border-radius:6px;padding:12px;font-family:monospace;font-size:.82rem;resize:vertical;margin:8px 0}
+.exercise .hint{font-size:.8rem;color:var(--text-dim);margin-top:4px;display:none}
+.exercise .hint.show{display:block}
+.exercise-result{margin-top:8px;padding:10px;border-radius:6px;font-size:.85rem;display:none}
+.exercise-result.show{display:block}
+.exercise-result.pass{background:rgba(0,184,148,.1);color:var(--success);border:1px solid var(--success)}
+.exercise-result.fail{background:rgba(225,112,85,.1);color:var(--danger);border:1px solid var(--danger)}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:8px 16px;background:var(--surface3);border:1px solid var(--border);border-radius:8px 8px 0 0;cursor:pointer;font-size:.8rem;color:var(--text-dim);transition:all .2s}
+.tab.active{background:var(--surface);color:var(--primary-light);border-bottom-color:var(--surface)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Comparison table */
+.comparison-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.82rem}
+.comparison-table th{background:var(--surface3);color:var(--primary-light);padding:10px;text-align:left;border:1px solid var(--border)}
+.comparison-table td{padding:10px;border:1px solid var(--border);color:var(--text)}
+.comparison-table tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+
+/* Cheat sheet */
+.cheat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:16px 0}
+.cheat-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px}
+.cheat-card h4{color:var(--accent);font-size:.9rem;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.cheat-card p,.cheat-card li{font-size:.82rem}
+
+/* Pitfall */
+.pitfall{background:var(--surface2);border:1px solid var(--danger);border-radius:8px;padding:18px;margin:12px 0}
+.pitfall h4{color:var(--danger);font-size:.9rem;margin-bottom:6px}
+.pitfall .wrong-way,.pitfall .right-way{padding:8px 12px;border-radius:6px;margin:8px 0;font-size:.82rem}
+.pitfall .wrong-way{background:rgba(225,112,85,.1);border-left:3px solid var(--danger)}
+.pitfall .right-way{background:rgba(0,184,148,.1);border-left:3px solid var(--success)}
+.pitfall .wrong-way::before{content:"❌ ";} 
+.pitfall .right-way::before{content:"✅ ";}
+
+/* Interactive diagram */
+.interactive-diagram{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:24px;margin:16px 0}
+.arch-visual{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center;margin:16px 0}
+.arch-box{background:var(--surface3);border:2px solid var(--border);border-radius:8px;padding:12px 18px;text-align:center;font-size:.8rem;transition:all .3s;cursor:pointer;min-width:100px}
+.arch-box:hover{border-color:var(--primary);transform:scale(1.05)}
+.arch-box.highlight{border-color:var(--accent);background:rgba(0,206,201,.1)}
+.arch-box .box-title{font-weight:700;color:var(--primary-light);margin-bottom:2px}
+.arch-box .box-sub{color:var(--text-dim);font-size:.7rem}
+.arch-arrow{color:var(--text-dim);font-size:1.2rem}
+.arch-row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .4s ease}
+
+/* Score badge */
+.score-badge{display:inline-flex;align-items:center;gap:4px;background:var(--surface3);padding:4px 12px;border-radius:20px;font-size:.8rem;color:var(--accent)}
+
+/* Mobile */
+.menu-toggle{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:1.2rem}
+@media(max-width:768px){
+.sidebar{transform:translateX(-100%)}
+.sidebar.open{transform:translateX(0)}
+.main{margin-left:0}
+.menu-toggle{display:block}
+.content{padding:16px}
+.card{padding:18px}
+.topbar{padding:12px 16px;padding-left:50px}
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--primary)}
+
+.hidden{display:none!important}
+
+/* Flashcard */
+.flashcard{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:32px;margin:12px 0;text-align:center;cursor:pointer;min-height:150px;display:flex;align-items:center;justify-content:center;transition:all .3s;perspective:1000px}
+.flashcard:hover{border-color:var(--primary)}
+.flashcard .front{font-size:1rem;color:var(--text-bright);font-weight:600}
+.flashcard .back{display:none;font-size:.9rem;color:var(--accent)}
+.flashcard.flipped .front{display:none}
+.flashcard.flipped .back{display:block}
+.flashcard-nav{display:flex;justify-content:center;gap:12px;margin-top:12px}
+</style>
+</head>
+<body>
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+<div class="app">
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-header">
+<h2>🏗️ Architecture & Design</h2>
+<div class="subtitle">JavaScript System Design Mastery</div>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="progressBar"></div></div>
+<div class="progress-text" id="progressText">0% complete</div>
+</div>
+
+<div class="nav-section">
+<div class="nav-section-title">📖 Foundations</div>
+<div class="nav-item active" data-page="intro" onclick="navigateTo('intro')"><span class="icon">🏠</span> Introduction<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="why" onclick="navigateTo('why')"><span class="icon">❓</span> Why Architecture Matters<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="patterns" onclick="navigateTo('patterns')"><span class="icon">🧩</span> Architectural Patterns<span class="checkmark hidden">✓</span></div>
+</div>
+
+<div class="nav-section">
+<div class="nav-section-title">🔬 Core Topics</div>
+<div class="nav-item" data-page="monolith" onclick="navigateTo('monolith')"><span class="icon">🏢</span> Monolith vs Micro<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="microservices" onclick="navigateTo('microservices')"><span class="icon">🔧</span> Microservices Deep Dive<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="communication" onclick="navigateTo('communication')"><span class="icon">📡</span> Service Communication<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="monorepos" onclick="navigateTo('monorepos')"><span class="icon">📦</span> Monorepos<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="scaling" onclick="navigateTo('scaling')"><span class="icon">📈</span> Scaling Strategies<span class="checkmark hidden">✓</span></div>
+</div>
+
+<div class="nav-section">
+<div class="nav-section-title">⚡ Advanced</div>
+<div class="nav-item" data-page="eventdriven" onclick="navigateTo('eventdriven')"><span class="icon">⚡</span> Event-Driven Architecture<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="designpatterns" onclick="navigateTo('designpatterns')"><span class="icon">🎯</span> JS Design Patterns<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="realworld" onclick="navigateTo('realworld')"><span class="icon">🌍</span> Real-World Scenarios<span class="checkmark hidden">✓</span></div>
+</div>
+
+<div class="nav-section">
+<div class="nav-section-title">🎓 Practice & Review</div>
+<div class="nav-item" data-page="pitfalls" onclick="navigateTo('pitfalls')"><span class="icon">⚠️</span> Mistakes & Pitfalls<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="quiz" onclick="navigateTo('quiz')"><span class="icon">📝</span> Master Quiz<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="exercises" onclick="navigateTo('exercises')"><span class="icon">💪</span> Exercises<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="flashcards" onclick="navigateTo('flashcards')"><span class="icon">🃏</span> Flashcards<span class="checkmark hidden">✓</span></div>
+<div class="nav-item" data-page="cheatsheet" onclick="navigateTo('cheatsheet')"><span class="icon">📋</span> Cheat Sheet<span class="checkmark hidden">✓</span></div>
+</div>
+</nav>
+
+<main class="main">
+<div class="topbar">
+<h1 id="pageTitle">Introduction</h1>
+<div class="topbar-actions">
+<span class="score-badge" id="scoreBadge">⭐ 0 XP</span>
+<button class="btn btn-outline btn-sm" onclick="navigatePrev()">← Prev</button>
+<button class="btn btn-primary btn-sm" onclick="navigateNext()">Next →</button>
+</div>
+</div>
+
+<div class="content" id="contentArea">
+<!-- Content injected by JS -->
+</div>
+</main>
+</div>
+
+<script>
+// ===== APP STATE =====
+const state = {
+  currentPage: 'intro',
+  completedPages: new Set(),
+  xp: 0,
+  quizAnswers: {},
+  exerciseResults: {}
+};
+
+const pages = ['intro','why','patterns','monolith','microservices','communication','monorepos','scaling','eventdriven','designpatterns','realworld','pitfalls','quiz','exercises','flashcards','cheatsheet'];
+
+const pageTitles = {
+  intro:'Introduction',why:'Why Architecture Matters',patterns:'Architectural Patterns',
+  monolith:'Monolith vs Microservices',microservices:'Microservices Deep Dive',
+  communication:'Service Communication',monorepos:'Monorepos',scaling:'Scaling Strategies',
+  eventdriven:'Event-Driven Architecture',designpatterns:'JS Design Patterns',
+  realworld:'Real-World Scenarios',pitfalls:'Mistakes & Pitfalls',quiz:'Master Quiz',
+  exercises:'Exercises',flashcards:'Flashcards',cheatsheet:'Cheat Sheet'
+};
+
+// ===== NAVIGATION =====
+function navigateTo(page) {
+  state.currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[page];
+  document.getElementById('contentArea').innerHTML = getPageContent(page);
+  document.getElementById('contentArea').className = 'content fade-in';
+  window.scrollTo(0, 0);
+  markCompleted(page);
+  closeSidebarMobile();
+}
+
+function navigateNext() {
+  const idx = pages.indexOf(state.currentPage);
+  if (idx < pages.length - 1) navigateTo(pages[idx + 1]);
+}
+
+function navigatePrev() {
+  const idx = pages.indexOf(state.currentPage);
+  if (idx > 0) navigateTo(pages[idx - 1]);
+}
+
+function markCompleted(page) {
+  state.completedPages.add(page);
+  const checkmark = document.querySelector(`[data-page="${page}"] .checkmark`);
+  if (checkmark) checkmark.classList.remove('hidden');
+  const navItem = document.querySelector(`[data-page="${page}"]`);
+  if (navItem) navItem.classList.add('completed');
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = Math.round((state.completedPages.size / pages.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% complete';
+}
+
+function addXP(amount) {
+  state.xp += amount;
+  document.getElementById('scoreBadge').textContent = '⭐ ' + state.xp + ' XP';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function closeSidebarMobile() {
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
+
+// ===== PAGE CONTENT =====
+function getPageContent(page) {
+  const content = {
+
+// ============== INTRO ==============
+intro: `
+<div class="card">
+  <h2>🏗️ Architecture & System Design for JavaScript Developers</h2>
+  <p>Welcome! This course will take you from <strong>zero to interview-ready</strong> on architecture and system design — specifically through the lens of a JavaScript/Node.js developer.</p>
+  
+  <div class="concept-box info">
+    <div class="label">What You'll Learn</div>
+    <p>How to design, structure, and scale JavaScript applications from small projects to enterprise-grade systems serving millions of users.</p>
+  </div>
+
+  <h3>🗺️ Course Roadmap</h3>
+  <div class="arch-visual">
+    <div class="arch-box highlight"><div class="box-title">Foundations</div><div class="box-sub">Why it matters</div></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box"><div class="box-title">Patterns</div><div class="box-sub">MVC, Layered, CQRS</div></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box"><div class="box-title">Microservices</div><div class="box-sub">Design & deploy</div></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box"><div class="box-title">Communication</div><div class="box-sub">REST, GraphQL, MQ</div></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box"><div class="box-title">Scale</div><div class="box-sub">Load, cache, CDN</div></div>
+  </div>
+
+  <h3>🎯 Think of Architecture Like Building a City</h3>
+  <p>Imagine you're planning a city. You wouldn't just randomly place buildings. You'd think about:</p>
+  <ul>
+    <li><strong>Roads (Communication)</strong> — How do buildings connect? (APIs, message queues)</li>
+    <li><strong>Districts (Services)</strong> — Group related things together (microservices)</li>
+    <li><strong>Infrastructure (Scaling)</strong> — Can we handle more people? (load balancers, caching)</li>
+    <li><strong>Building Codes (Patterns)</strong> — Rules that ensure quality (design patterns)</li>
+    <li><strong>City Planning (Monorepo)</strong> — One master plan or separate ones? (mono vs poly repo)</li>
+  </ul>
+
+  <div class="concept-box tip">
+    <div class="label">Interview Tip</div>
+    <p>Interviewers don't expect you to know everything. They want to see you <strong>think through tradeoffs</strong>. Every architecture decision is a tradeoff — there is no "perfect" solution.</p>
+  </div>
+</div>
+`,
+
+// ============== WHY ==============
+why: `
+<div class="card">
+  <h2>❓ Why Architecture Matters</h2>
+  <p>When you write a small app, any structure works. But as your app grows, <strong>bad architecture becomes exponentially expensive</strong>.</p>
+
+  <h3>The Real Cost of Bad Architecture</h3>
+  <div class="diagram">
+Day 1:   "Let's just put everything in one file"     ✅ Fast to build
+Month 3: "It's getting hard to find things"           ⚠️ Slower development
+Month 6: "Changing X breaks Y and Z"                  🔥 Bugs everywhere  
+Year 1:  "We need to rewrite everything"              💀 Company loses $$$
+  </div>
+
+  <h3>What Good Architecture Gives You</h3>
+  <table class="comparison-table">
+    <tr><th>Property</th><th>What It Means</th><th>Example</th></tr>
+    <tr><td><strong>Maintainability</strong></td><td>Easy to change and fix</td><td>Add a feature without breaking others</td></tr>
+    <tr><td><strong>Scalability</strong></td><td>Handles growth</td><td>From 100 to 1M users</td></tr>
+    <tr><td><strong>Testability</strong></td><td>Easy to test parts independently</td><td>Unit test a service without DB</td></tr>
+    <tr><td><strong>Team Velocity</strong></td><td>Multiple teams work in parallel</td><td>Team A ships auth, Team B ships payments</td></tr>
+    <tr><td><strong>Resilience</strong></td><td>Fails gracefully</td><td>Payment service down? Cart still works</td></tr>
+  </table>
+
+  <h3>The Key Principle: Separation of Concerns</h3>
+  <p>Every piece of code should have <strong>one reason to change</strong>. This is the foundation of ALL good architecture.</p>
+
+  <div class="code-block"><span class="tag">Bad ❌</span><code>// Everything mixed together
+app.post('/order', async (req, res) => {
+  // Validate input
+  if (!req.body.items) return res.status(400).send('No items');
+  
+  // Business logic
+  const total = req.body.items.reduce((sum, i) => sum + i.price, 0);
+  const tax = total * 0.1;
+  
+  // Database
+  await db.query('INSERT INTO orders...', [total + tax]);
+  
+  // Send email
+  await sendEmail(req.body.email, 'Order confirmed!');
+  
+  // Analytics
+  await trackEvent('order_placed', { total });
+  
+  res.json({ success: true });
+});</code></div>
+
+  <div class="code-block"><span class="tag">Good ✅</span><code>// Each concern is separated
+app.post('/order', 
+  validateOrderInput,              // Validation layer
+  async (req, res) => {
+    const order = await OrderService.create(req.body);  // Business logic
+    await NotificationService.orderConfirmed(order);    // Notifications
+    await AnalyticsService.track('order_placed', order); // Analytics
+    res.json({ success: true, order });
+  }
+);</code></div>
+
+  <div class="concept-box warning">
+    <div class="label">Tradeoff Alert</div>
+    <p><strong>Over-engineering is just as bad as under-engineering.</strong> A todo app doesn't need microservices. Start simple, evolve when needed. This is called <em>"You Ain't Gonna Need It" (YAGNI)</em>.</p>
+  </div>
+</div>
+`,
+
+// ============== PATTERNS ==============
+patterns: `
+<div class="card">
+  <h2>🧩 Architectural Patterns</h2>
+  <p>Architectural patterns are proven blueprints for structuring applications. Think of them as <strong>templates</strong> that solve common structural problems.</p>
+
+  <div class="tabs" id="patternTabs">
+    <div class="tab active" onclick="switchTab('patternTabs','patternContent','mvc')">MVC</div>
+    <div class="tab" onclick="switchTab('patternTabs','patternContent','layered')">Layered</div>
+    <div class="tab" onclick="switchTab('patternTabs','patternContent','cqrs')">CQRS</div>
+    <div class="tab" onclick="switchTab('patternTabs','patternContent','hexagonal')">Hexagonal</div>
+    <div class="tab" onclick="switchTab('patternTabs','patternContent','serverless')">Serverless</div>
+  </div>
+
+  <div id="patternContent">
+    <div class="tab-content active" data-tab="mvc">
+      <h3>MVC — Model View Controller</h3>
+      <p>The most common pattern. Separates data, UI, and logic.</p>
+      <div class="diagram">
+┌──────────┐     ┌──────────────┐     ┌───────────┐
+│   VIEW   │────▶│  CONTROLLER  │────▶│   MODEL   │
+│ (React)  │◀────│  (Express)   │◀────│ (MongoDB) │
+└──────────┘     └──────────────┘     └───────────┘
+  What user       Handles logic        Data + Rules
+  sees             & routing           
+      </div>
+      <div class="code-block"><span class="tag">Express MVC</span><code>// MODEL — data/models/User.js
+class User {
+  constructor(name, email) {
+    this.name = name;
+    this.email = email;
+  }
+  static async findById(id) {
+    return await db.collection('users').findOne({ _id: id });
+  }
+  async save() {
+    return await db.collection('users').insertOne(this);
+  }
+}
+
+// CONTROLLER — controllers/userController.js
+const getUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'Not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// VIEW — routes/userRoutes.js (or React frontend)
+router.get('/users/:id', getUser);
+router.post('/users', createUser);</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="layered">
+      <h3>Layered (N-Tier) Architecture</h3>
+      <p>Organize code into horizontal layers. Each layer only talks to the layer below it.</p>
+      <div class="diagram">
+┌─────────────────────────────────────┐
+│        PRESENTATION LAYER           │  Routes, Controllers
+├─────────────────────────────────────┤
+│         BUSINESS LAYER              │  Services, Use Cases
+├─────────────────────────────────────┤
+│        DATA ACCESS LAYER            │  Repositories, ORM
+├─────────────────────────────────────┤
+│          DATABASE LAYER             │  PostgreSQL, MongoDB
+└─────────────────────────────────────┘
+      </div>
+      <div class="code-block"><span class="tag">Layered Architecture</span><code>// LAYER 1: Route (Presentation)
+router.post('/orders', orderController.create);
+
+// LAYER 2: Controller (Presentation)
+class OrderController {
+  async create(req, res) {
+    const order = await this.orderService.createOrder(req.body);
+    res.status(201).json(order);
+  }
+}
+
+// LAYER 3: Service (Business Logic)
+class OrderService {
+  async createOrder(data) {
+    const total = this.calculateTotal(data.items);
+    if (total > data.user.creditLimit) {
+      throw new Error('Credit limit exceeded');
+    }
+    return this.orderRepository.save({ ...data, total });
+  }
+}
+
+// LAYER 4: Repository (Data Access)
+class OrderRepository {
+  async save(order) {
+    return await Order.create(order); // Mongoose/Sequelize
+  }
+}</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="cqrs">
+      <h3>CQRS — Command Query Responsibility Segregation</h3>
+      <p>Separate <strong>reading data</strong> (queries) from <strong>writing data</strong> (commands). Great for high-scale systems.</p>
+      <div class="diagram">
+                    ┌─────────────┐
+       WRITES ────▶│  COMMAND     │────▶ Write DB
+                    │  HANDLER    │      (Normalized)
+                    └─────────────┘
+                    
+                    ┌─────────────┐
+       READS  ────▶│   QUERY     │────▶ Read DB
+                    │  HANDLER    │      (Denormalized)
+                    └─────────────┘
+      </div>
+      <div class="code-block"><span class="tag">CQRS Pattern</span><code>// COMMAND side — handles writes
+class CreateOrderCommand {
+  constructor(userId, items) {
+    this.userId = userId;
+    this.items = items;
+  }
+}
+
+class CreateOrderHandler {
+  async execute(command) {
+    const order = new Order(command.userId, command.items);
+    await this.writeDb.save(order);
+    // Emit event to sync read model
+    await this.eventBus.emit('OrderCreated', order);
+  }
+}
+
+// QUERY side — handles reads (optimized for reading)
+class GetOrdersQuery {
+  async execute(userId) {
+    // Read from denormalized, fast-read database
+    return await this.readDb.orders
+      .find({ userId })
+      .populate('items')  // Already joined!
+      .lean();
+  }
+}</code></div>
+      <div class="concept-box info">
+        <div class="label">When to Use CQRS</div>
+        <p>When reads vastly outnumber writes (e.g., social media feed). Don't use it for simple CRUD apps — it adds complexity.</p>
+      </div>
+    </div>
+
+    <div class="tab-content" data-tab="hexagonal">
+      <h3>Hexagonal (Ports & Adapters)</h3>
+      <p>Business logic at the center, everything else plugs in via "ports". Makes your core logic framework-agnostic.</p>
+      <div class="diagram">
+         ┌────── ADAPTERS (outside) ──────┐
+         │                                 │
+         │    REST API    CLI    GraphQL    │
+         │       │         │        │      │
+         │   ┌───┴─────────┴────────┴───┐  │
+         │   │     PORTS (interfaces)    │  │
+         │   │   ┌───────────────────┐   │  │
+         │   │   │   BUSINESS CORE   │   │  │
+         │   │   │   (pure logic)    │   │  │
+         │   │   └───────────────────┘   │  │
+         │   │     PORTS (interfaces)    │  │
+         │   └───┬─────────┬────────┬───┘  │
+         │       │         │        │      │
+         │   Postgres   Redis    S3        │
+         │                                 │
+         └─────────────────────────────────┘
+      </div>
+      <div class="code-block"><span class="tag">Hexagonal in JS</span><code>// PORT — interface definition
+// ports/OrderRepository.js (just a contract)
+class OrderRepositoryPort {
+  async save(order) { throw new Error('Not implemented'); }
+  async findById(id) { throw new Error('Not implemented'); }
+}
+
+// CORE — pure business logic (NO framework dependencies)
+class OrderService {
+  constructor(orderRepo, paymentGateway) {
+    this.orderRepo = orderRepo;       // injected port
+    this.paymentGateway = paymentGateway; // injected port
+  }
+  async placeOrder(data) {
+    const order = new Order(data);
+    await this.paymentGateway.charge(order.total);
+    return this.orderRepo.save(order);
+  }
+}
+
+// ADAPTER — concrete implementation
+class MongoOrderRepository extends OrderRepositoryPort {
+  async save(order) {
+    return await OrderModel.create(order);
+  }
+}
+
+// WIRING — composition root
+const orderService = new OrderService(
+  new MongoOrderRepository(),
+  new StripePaymentGateway()
+);</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="serverless">
+      <h3>Serverless Architecture</h3>
+      <p>No servers to manage. Functions run on-demand. Pay per execution.</p>
+      <div class="diagram">
+  Client ──▶ API Gateway ──▶ Lambda Functions ──▶ DynamoDB
+                  │                                    │
+                  ├──▶ Lambda: getUser ────────────────┤
+                  ├──▶ Lambda: createOrder ────────────┤
+                  └──▶ Lambda: processPayment ────────▶│ SQS Queue
+      </div>
+      <div class="code-block"><span class="tag">AWS Lambda</span><code>// serverless function — each is independent
+exports.handler = async (event) => {
+  const { httpMethod, pathParameters, body } = event;
+  
+  if (httpMethod === 'GET') {
+    const user = await db.get(pathParameters.id);
+    return { statusCode: 200, body: JSON.stringify(user) };
+  }
+  
+  if (httpMethod === 'POST') {
+    const data = JSON.parse(body);
+    const result = await db.put(data);
+    return { statusCode: 201, body: JSON.stringify(result) };
+  }
+};</code></div>
+    </div>
+  </div>
+
+  <h3>Pattern Comparison</h3>
+  <table class="comparison-table">
+    <tr><th>Pattern</th><th>Best For</th><th>Complexity</th><th>JS Examples</th></tr>
+    <tr><td>MVC</td><td>Web apps, APIs</td><td>Low</td><td>Express, NestJS</td></tr>
+    <tr><td>Layered</td><td>Enterprise apps</td><td>Medium</td><td>NestJS modules</td></tr>
+    <tr><td>CQRS</td><td>High-read systems</td><td>High</td><td>Event sourcing apps</td></tr>
+    <tr><td>Hexagonal</td><td>Testable, long-lived</td><td>Medium-High</td><td>Clean architecture</td></tr>
+    <tr><td>Serverless</td><td>Variable traffic</td><td>Low-Medium</td><td>AWS Lambda, Vercel</td></tr>
+  </table>
+</div>
+`,
+
+// ============== MONOLITH ==============
+monolith: `
+<div class="card">
+  <h2>🏢 Monolith vs Microservices</h2>
+  <p>The biggest architectural decision: should everything live in one codebase, or should you split into many small services?</p>
+
+  <h3>The Monolith</h3>
+  <p>One application, one codebase, one deployment. <strong>This is where you should start.</strong></p>
+  <div class="diagram">
+┌─────────────────────────────────────────┐
+│              MONOLITH APP               │
+│                                         │
+│  ┌─────────┐ ┌─────────┐ ┌──────────┐  │
+│  │  Auth   │ │ Orders  │ │ Payments │  │
+│  │ Module  │ │ Module  │ │  Module  │  │
+│  └────┬────┘ └────┬────┘ └─────┬────┘  │
+│       │           │            │        │
+│  ┌────┴───────────┴────────────┴────┐   │
+│  │        SHARED DATABASE           │   │
+│  └──────────────────────────────────┘   │
+│                                         │
+│        ONE SERVER / ONE DEPLOY          │
+└─────────────────────────────────────────┘
+  </div>
+
+  <div class="code-block"><span class="tag">Monolith Structure</span><code>my-app/
+├── src/
+│   ├── modules/
+│   │   ├── auth/
+│   │   │   ├── auth.controller.js
+│   │   │   ├── auth.service.js
+│   │   │   └── auth.model.js
+│   │   ├── orders/
+│   │   │   ├── orders.controller.js
+│   │   │   ├── orders.service.js
+│   │   │   └── orders.model.js
+│   │   └── payments/
+│   │       ├── payments.controller.js
+│   │       └── payments.service.js
+│   ├── shared/
+│   │   ├── middleware/
+│   │   ├── utils/
+│   │   └── database.js
+│   └── app.js            ← single entry point
+├── package.json
+└── Dockerfile</code></div>
+
+  <h3>Microservices</h3>
+  <p>Many small, independent services that communicate over the network.</p>
+  <div class="diagram">
+┌──────────┐   HTTP    ┌──────────┐   gRPC   ┌──────────┐
+│   Auth   │◀────────▶│  Orders  │◀────────▶│ Payments │
+│ Service  │           │ Service  │           │ Service  │
+│          │           │          │           │          │
+│ Own DB   │           │ Own DB   │           │ Own DB   │
+└──────────┘           └──────────┘           └──────────┘
+     ▲                      ▲                      ▲
+     │         ┌────────────┤                      │
+     │         │            │                      │
+     └─────────┴────────────┴──────────────────────┘
+                    API Gateway
+                        ▲
+                        │
+                     Client
+  </div>
+
+  <h3>Honest Comparison</h3>
+  <table class="comparison-table">
+    <tr><th>Factor</th><th>Monolith</th><th>Microservices</th></tr>
+    <tr><td>Simplicity</td><td>✅ Simple to develop, test, deploy</td><td>❌ Complex infrastructure</td></tr>
+    <tr><td>Debugging</td><td>✅ Stack trace shows everything</td><td>❌ Distributed tracing needed</td></tr>
+    <tr><td>Scaling</td><td>❌ Scale everything together</td><td>✅ Scale each service independently</td></tr>
+    <tr><td>Team Independence</td><td>❌ Teams step on each other</td><td>✅ Teams own their service</td></tr>
+    <tr><td>Tech Flexibility</td><td>❌ One tech stack</td><td>✅ Each service can use different tech</td></tr>
+    <tr><td>Data Consistency</td><td>✅ Single DB, ACID transactions</td><td>❌ Eventual consistency, saga patterns</td></tr>
+    <tr><td>Deployment Risk</td><td>❌ Deploy everything at once</td><td>✅ Deploy services independently</td></tr>
+    <tr><td>Network Issues</td><td>✅ In-process calls</td><td>❌ Network latency, failures</td></tr>
+  </table>
+
+  <div class="concept-box warning">
+    <div class="label">The Golden Rule</div>
+    <p><strong>"Start with a monolith, extract microservices when you have a reason."</strong><br>
+    — Martin Fowler's "Monolith First" principle. Even Amazon and Netflix started as monoliths!</p>
+  </div>
+
+  <h3>The "Modular Monolith" — Best of Both Worlds</h3>
+  <p>Structure your monolith like microservices internally, but deploy as one unit.</p>
+  <div class="code-block"><span class="tag">Modular Monolith</span><code>// Each module has clear boundaries
+// modules/orders/index.js — this is the PUBLIC API
+module.exports = {
+  createOrder: require('./services/createOrder'),
+  getOrders: require('./services/getOrders'),
+  // Don't expose internal models or helpers!
+};
+
+// Other modules use only the public API:
+const OrderModule = require('../orders');
+const order = await OrderModule.createOrder(data);
+
+// ❌ NEVER do this — breaks module boundaries:
+// const OrderModel = require('../orders/models/Order');</code></div>
+</div>
+`,
+
+// ============== MICROSERVICES ==============
+microservices: `
+<div class="card">
+  <h2>🔧 Microservices Deep Dive</h2>
+  <p>Let's build real microservice patterns in JavaScript/Node.js.</p>
+
+  <h3>Core Principles</h3>
+  <ol>
+    <li><strong>Single Responsibility</strong> — Each service does ONE thing well</li>
+    <li><strong>Own Your Data</strong> — Each service has its own database</li>
+    <li><strong>API Contract</strong> — Services communicate through well-defined APIs</li>
+    <li><strong>Independence</strong> — Deploy, scale, and fail independently</li>
+    <li><strong>Automation</strong> — CI/CD, containerization, monitoring</li>
+  </ol>
+
+  <h3>Service Design Example: E-Commerce</h3>
+  <div class="diagram">
+                         ┌─────────────┐
+                         │ API Gateway  │
+                         │  (Express)   │
+                         └──────┬──────┘
+              ┌─────────────┬───┴───┬─────────────┐
+              ▼             ▼       ▼             ▼
+        ┌──────────┐  ┌─────────┐ ┌─────────┐ ┌──────────┐
+        │  User    │  │ Product │ │  Order  │ │ Payment  │
+        │ Service  │  │ Service │ │ Service │ │ Service  │
+        │ :3001    │  │ :3002   │ │ :3003   │ │ :3004    │
+        └────┬─────┘  └────┬────┘ └────┬────┘ └────┬─────┘
+             │              │           │           │
+        ┌────┴─────┐  ┌────┴────┐ ┌────┴────┐ ┌────┴─────┐
+        │ Users DB │  │Prod. DB │ │Order DB │ │ Pay. DB  │
+        │ (Postgres)│ │(Mongo)  │ │(Postgres)│ │ (Postgres)│
+        └──────────┘  └─────────┘ └─────────┘ └──────────┘
+  </div>
+
+  <div class="code-block"><span class="tag">API Gateway</span><code>// gateway/server.js — routes requests to correct service
+const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
+const app = express();
+
+// Route to correct microservice
+app.use('/api/users', createProxyMiddleware({
+  target: 'http://user-service:3001',
+  changeOrigin: true
+}));
+
+app.use('/api/products', createProxyMiddleware({
+  target: 'http://product-service:3002',
+  changeOrigin: true
+}));
+
+app.use('/api/orders', createProxyMiddleware({
+  target: 'http://order-service:3003',
+  changeOrigin: true
+}));
+
+// Cross-cutting concerns
+app.use(rateLimiter);      // Rate limiting
+app.use(authMiddleware);   // Authentication
+app.use(requestLogger);    // Logging
+
+app.listen(3000);</code></div>
+
+  <div class="code-block"><span class="tag">User Service</span><code>// user-service/server.js
+const express = require('express');
+const app = express();
+
+// This service ONLY handles user operations
+app.get('/api/users/:id', async (req, res) => {
+  const user = await UserModel.findById(req.params.id);
+  res.json(user);
+});
+
+app.post('/api/users', async (req, res) => {
+  const user = await UserModel.create(req.body);
+  // Emit event for other services
+  await messageBroker.publish('user.created', { 
+    userId: user.id, 
+    email: user.email 
+  });
+  res.status(201).json(user);
+});
+
+app.listen(3001);</code></div>
+
+  <h3>The Saga Pattern — Distributed Transactions</h3>
+  <p>In microservices, you can't use regular database transactions across services. The Saga pattern coordinates multi-service operations.</p>
+  
+  <div class="code-block"><span class="tag">Saga Pattern</span><code>// order-service/sagas/createOrderSaga.js
+class CreateOrderSaga {
+  constructor(orderService, paymentService, inventoryService) {
+    this.steps = [
+      {
+        name: 'reserveInventory',
+        execute: (data) => inventoryService.reserve(data.items),
+        compensate: (data) => inventoryService.release(data.items)
+      },
+      {
+        name: 'processPayment',
+        execute: (data) => paymentService.charge(data.userId, data.total),
+        compensate: (data) => paymentService.refund(data.paymentId)
+      },
+      {
+        name: 'createOrder',
+        execute: (data) => orderService.create(data),
+        compensate: (data) => orderService.cancel(data.orderId)
+      }
+    ];
+  }
+
+  async execute(orderData) {
+    const completed = [];
+    
+    try {
+      for (const step of this.steps) {
+        console.log(\`Executing: \${step.name}\`);
+        const result = await step.execute(orderData);
+        completed.push({ step, result });
+        orderData = { ...orderData, ...result };
+      }
+      return { success: true, order: orderData };
+    } catch (error) {
+      // COMPENSATE — undo completed steps in reverse
+      console.error(\`Failed at step. Rolling back...\`);
+      for (const { step, result } of completed.reverse()) {
+        await step.compensate({ ...orderData, ...result });
+      }
+      return { success: false, error: error.message };
+    }
+  }
+}</code></div>
+
+  <h3>Service Discovery & Health Checks</h3>
+  <div class="code-block"><span class="tag">Health Check</span><code>// Every microservice should have a health endpoint
+app.get('/health', async (req, res) => {
+  const health = {
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+    checks: {}
+  };
+
+  // Check database connection
+  try {
+    await db.ping();
+    health.checks.database = 'ok';
+  } catch {
+    health.status = 'degraded';
+    health.checks.database = 'failing';
+  }
+
+  // Check memory
+  const mem = process.memoryUsage();
+  health.checks.memory = {
+    heapUsed: Math.round(mem.heapUsed / 1024 / 1024) + 'MB',
+    heapTotal: Math.round(mem.heapTotal / 1024 / 1024) + 'MB'
+  };
+
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
+});</code></div>
+
+  <h3>Circuit Breaker Pattern</h3>
+  <p>Prevent cascading failures when a downstream service is down.</p>
+  <div class="code-block"><span class="tag">Circuit Breaker</span><code>class CircuitBreaker {
+  constructor(fn, options = {}) {
+    this.fn = fn;
+    this.failureCount = 0;
+    this.threshold = options.threshold || 5;
+    this.timeout = options.timeout || 30000;
+    this.state = 'CLOSED'; // CLOSED = working, OPEN = blocking
+    this.nextAttempt = 0;
+  }
+
+  async call(...args) {
+    if (this.state === 'OPEN') {
+      if (Date.now() < this.nextAttempt) {
+        throw new Error('Circuit breaker is OPEN — service unavailable');
+      }
+      this.state = 'HALF_OPEN'; // Try one request
+    }
+
+    try {
+      const result = await this.fn(...args);
+      this.onSuccess();
+      return result;
+    } catch (err) {
+      this.onFailure();
+      throw err;
+    }
+  }
+
+  onSuccess() {
+    this.failureCount = 0;
+    this.state = 'CLOSED';
+  }
+
+  onFailure() {
+    this.failureCount++;
+    if (this.failureCount >= this.threshold) {
+      this.state = 'OPEN';
+      this.nextAttempt = Date.now() + this.timeout;
+      console.log('Circuit OPENED — stopping requests');
+    }
+  }
+}
+
+// Usage
+const paymentBreaker = new CircuitBreaker(
+  (data) => paymentService.charge(data),
+  { threshold: 3, timeout: 60000 }
+);
+
+try {
+  await paymentBreaker.call({ amount: 99.99 });
+} catch (err) {
+  // Fallback: queue payment for later
+  await paymentQueue.add({ ...data, retryAt: Date.now() });
+}</code></div>
+</div>
+`,
+
+// ============== COMMUNICATION ==============
+communication: `
+<div class="card">
+  <h2>📡 Service Communication</h2>
+  <p>How services talk to each other is one of the most critical design decisions.</p>
+
+  <h3>Two Main Styles</h3>
+  <div class="arch-visual">
+    <div class="arch-box highlight">
+      <div class="box-title">Synchronous</div>
+      <div class="box-sub">Request/Response</div>
+    </div>
+    <span class="arch-arrow">vs</span>
+    <div class="arch-box highlight">
+      <div class="box-title">Asynchronous</div>
+      <div class="box-sub">Events/Messages</div>
+    </div>
+  </div>
+
+  <div class="tabs" id="commTabs">
+    <div class="tab active" onclick="switchTab('commTabs','commContent','rest')">REST</div>
+    <div class="tab" onclick="switchTab('commTabs','commContent','graphql')">GraphQL</div>
+    <div class="tab" onclick="switchTab('commTabs','commContent','grpc')">gRPC</div>
+    <div class="tab" onclick="switchTab('commTabs','commContent','mq')">Message Queues</div>
+    <div class="tab" onclick="switchTab('commTabs','commContent','events')">Event Bus</div>
+  </div>
+
+  <div id="commContent">
+    <div class="tab-content active" data-tab="rest">
+      <h3>REST — The Standard</h3>
+      <p>HTTP-based, JSON payloads. Universally understood.</p>
+      <div class="code-block"><span class="tag">REST Service-to-Service</span><code>// order-service calling user-service via REST
+const axios = require('axios');
+
+class UserServiceClient {
+  constructor() {
+    this.baseURL = process.env.USER_SERVICE_URL || 'http://user-service:3001';
+    this.client = axios.create({
+      baseURL: this.baseURL,
+      timeout: 5000,          // Always set timeouts!
+      headers: { 'X-Service': 'order-service' }
+    });
+  }
+
+  async getUser(userId) {
+    try {
+      const { data } = await this.client.get(\`/api/users/\${userId}\`);
+      return data;
+    } catch (err) {
+      if (err.response?.status === 404) return null;
+      throw new Error(\`User service error: \${err.message}\`);
+    }
+  }
+}
+
+// Usage in order service
+app.post('/api/orders', async (req, res) => {
+  const userClient = new UserServiceClient();
+  const user = await userClient.getUser(req.body.userId);
+  if (!user) return res.status(400).json({ error: 'User not found' });
+  // ... create order
+});</code></div>
+      <div class="concept-box tip">
+        <div class="label">REST Best Practices</div>
+        <ul>
+          <li>Always set <strong>timeouts</strong> (default is infinity!)</li>
+          <li>Implement <strong>retry with exponential backoff</strong></li>
+          <li>Use <strong>idempotency keys</strong> for non-GET requests</li>
+          <li>Version your APIs: <code>/api/v1/users</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tab-content" data-tab="graphql">
+      <h3>GraphQL — Flexible Queries</h3>
+      <p>Client asks for exactly the data it needs. Great as an API Gateway pattern.</p>
+      <div class="code-block"><span class="tag">GraphQL as API Gateway</span><code>const { ApolloServer, gql } = require('apollo-server');
+
+const typeDefs = gql\`
+  type User {
+    id: ID!
+    name: String!
+    orders: [Order!]!   # Resolved from order-service
+  }
+
+  type Order {
+    id: ID!
+    total: Float!
+    items: [Item!]!
+  }
+
+  type Query {
+    user(id: ID!): User
+    order(id: ID!): Order
+  }
+\`;
+
+const resolvers = {
+  Query: {
+    user: (_, { id }) => userService.getUser(id),
+    order: (_, { id }) => orderService.getOrder(id),
+  },
+  User: {
+    // When client asks for user.orders, call order service
+    orders: (user) => orderService.getOrdersByUser(user.id),
+  }
+};
+
+// Client gets EXACTLY what it needs in ONE request:
+// query { user(id: "123") { name orders { total } } }</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="grpc">
+      <h3>gRPC — High Performance</h3>
+      <p>Binary protocol, much faster than REST. Great for internal service-to-service communication.</p>
+      <div class="code-block"><span class="tag">gRPC with Node.js</span><code>// user.proto — Protocol Buffer definition
+syntax = "proto3";
+
+service UserService {
+  rpc GetUser (GetUserRequest) returns (User);
+  rpc CreateUser (CreateUserRequest) returns (User);
+  rpc StreamUsers (StreamRequest) returns (stream User);
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+// server.js — gRPC server
+const grpc = require('@grpc/grpc-js');
+const protoLoader = require('@grpc/proto-loader');
+
+const packageDef = protoLoader.loadSync('user.proto');
+const proto = grpc.loadPackageDefinition(packageDef);
+
+const server = new grpc.Server();
+server.addService(proto.UserService.service, {
+  getUser: async (call, callback) => {
+    const user = await UserModel.findById(call.request.id);
+    callback(null, user);
+  }
+});
+
+server.bindAsync('0.0.0.0:50051', 
+  grpc.ServerCredentials.createInsecure(), () => server.start());</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="mq">
+      <h3>Message Queues — Reliable Async</h3>
+      <p>Producer sends a message to a queue, consumer picks it up later. Messages are persisted, nothing is lost.</p>
+      <div class="diagram">
+Producer ──▶ [ Queue: order_processing ] ──▶ Consumer
+                    │ msg1 │ msg2 │ msg3 │
+                    
+  Order           Messages wait in         Payment
+  Service         queue until consumed      Service
+      </div>
+      <div class="code-block"><span class="tag">RabbitMQ / BullMQ</span><code>// Using BullMQ (Redis-based queue) — very common in Node.js
+const { Queue, Worker } = require('bullmq');
+
+// PRODUCER — order service adds jobs
+const paymentQueue = new Queue('payments', {
+  connection: { host: 'redis', port: 6379 }
+});
+
+app.post('/api/orders', async (req, res) => {
+  const order = await Order.create(req.body);
+  
+  // Don't process payment synchronously!
+  // Add to queue instead
+  await paymentQueue.add('process-payment', {
+    orderId: order.id,
+    amount: order.total,
+    userId: order.userId
+  }, {
+    attempts: 3,            // Retry 3 times on failure
+    backoff: { type: 'exponential', delay: 2000 }
+  });
+
+  res.status(201).json({ order, status: 'payment_pending' });
+});
+
+// CONSUMER — payment service processes jobs
+const worker = new Worker('payments', async (job) => {
+  console.log(\`Processing payment for order \${job.data.orderId}\`);
+  
+  const result = await stripe.charges.create({
+    amount: job.data.amount * 100,
+    currency: 'usd'
+  });
+
+  await Order.updateStatus(job.data.orderId, 'paid');
+  return result;
+}, {
+  connection: { host: 'redis', port: 6379 }
+});
+
+worker.on('completed', (job) => console.log(\`Payment done: \${job.id}\`));
+worker.on('failed', (job, err) => console.error(\`Payment failed: \${err}\`));</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="events">
+      <h3>Event Bus — Pub/Sub</h3>
+      <p>Services publish events, other services subscribe. Fully decoupled.</p>
+      <div class="diagram">
+  ┌──────────┐  "UserCreated"  ┌─────────────────┐
+  │   User   │────────────────▶│                  │
+  │ Service  │                 │    EVENT BUS     │
+  └──────────┘                 │  (Redis/Kafka/   │
+                               │   EventEmitter)  │
+  ┌──────────┐  subscribes     │                  │
+  │  Email   │◀────────────────│                  │
+  │ Service  │                 │                  │
+  └──────────┘                 │                  │
+  ┌──────────┐  subscribes     │                  │
+  │Analytics │◀────────────────│                  │
+  │ Service  │                 └─────────────────┘
+  └──────────┘
+      </div>
+      <div class="code-block"><span class="tag">Event Bus with Redis</span><code>// shared/eventBus.js
+const Redis = require('ioredis');
+
+class EventBus {
+  constructor() {
+    this.publisher = new Redis(process.env.REDIS_URL);
+    this.subscriber = new Redis(process.env.REDIS_URL);
+    this.handlers = new Map();
+  }
+
+  async publish(event, data) {
+    const message = JSON.stringify({
+      event,
+      data,
+      timestamp: Date.now(),
+      source: process.env.SERVICE_NAME
+    });
+    await this.publisher.publish('events', message);
+  }
+
+  subscribe(event, handler) {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, []);
+    }
+    this.handlers.get(event).push(handler);
+  }
+
+  listen() {
+    this.subscriber.subscribe('events');
+    this.subscriber.on('message', (channel, message) => {
+      const { event, data } = JSON.parse(message);
+      const handlers = this.handlers.get(event) || [];
+      handlers.forEach(handler => handler(data));
+    });
+  }
+}
+
+// In user-service:
+eventBus.publish('user.created', { id: user.id, email: user.email });
+
+// In email-service:
+eventBus.subscribe('user.created', async (data) => {
+  await sendWelcomeEmail(data.email);
+});
+eventBus.listen();</code></div>
+    </div>
+  </div>
+
+  <h3>When to Use What?</h3>
+  <table class="comparison-table">
+    <tr><th>Method</th><th>When To Use</th><th>Latency</th><th>Coupling</th></tr>
+    <tr><td>REST</td><td>External APIs, simple CRUD</td><td>Medium</td><td>High</td></tr>
+    <tr><td>GraphQL</td><td>Complex data needs, frontend gateway</td><td>Medium</td><td>Medium</td></tr>
+    <tr><td>gRPC</td><td>Internal service-to-service, streaming</td><td>Low</td><td>Medium</td></tr>
+    <tr><td>Message Queue</td><td>Reliable async, background jobs</td><td>High</td><td>Low</td></tr>
+    <tr><td>Event Bus</td><td>Notifications, many consumers</td><td>Low-Med</td><td>Very Low</td></tr>
+  </table>
+</div>
+`,
+
+// ============== MONOREPOS ==============
+monorepos: `
+<div class="card">
+  <h2>📦 Monorepos</h2>
+  <p>A monorepo is a <strong>single repository containing multiple projects/packages</strong>. Not to be confused with a monolith!</p>
+
+  <div class="concept-box info">
+    <div class="label">Key Insight</div>
+    <p><strong>Monorepo ≠ Monolith</strong>. A monorepo can contain microservices! It's about code organization, not architecture. Google, Facebook, and Microsoft all use monorepos.</p>
+  </div>
+
+  <h3>Monorepo vs Polyrepo</h3>
+  <div class="diagram">
+POLYREPO (multiple repos):              MONOREPO (one repo):
+                                        
+├── repo: frontend/                     ├── my-company/
+│   ├── package.json                    │   ├── packages/
+│   └── src/                            │   │   ├── frontend/
+│                                       │   │   │   ├── package.json
+├── repo: api-gateway/                  │   │   │   └── src/
+│   ├── package.json                    │   │   ├── api-gateway/
+│   └── src/                            │   │   │   ├── package.json
+│                                       │   │   │   └── src/
+├── repo: user-service/                 │   │   ├── user-service/
+│   ├── package.json                    │   │   │   ├── package.json
+│   └── src/                            │   │   │   └── src/
+│                                       │   │   └── shared/
+├── repo: shared-utils/                 │   │       ├── package.json
+│   ├── package.json                    │   │       └── src/
+│   └── src/                            │   ├── package.json
+                                        │   └── turbo.json (or nx.json)
+  </div>
+
+  <table class="comparison-table">
+    <tr><th>Factor</th><th>Monorepo</th><th>Polyrepo</th></tr>
+    <tr><td>Code Sharing</td><td>✅ Import shared packages easily</td><td>❌ Publish to npm, version hell</td></tr>
+    <tr><td>Atomic Changes</td><td>✅ One PR changes frontend + backend</td><td>❌ Coordinate across repos</td></tr>
+    <tr><td>Consistency</td><td>✅ Same linting, testing, tooling</td><td>❌ Each repo drifts</td></tr>
+    <tr><td>CI/CD Speed</td><td>⚠️ Need smart caching (Turborepo)</td><td>✅ Only build what changed</td></tr>
+    <tr><td>Repo Size</td><td>❌ Can get very large</td><td>✅ Small, focused repos</td></tr>
+    <tr><td>Access Control</td><td>❌ Everyone sees everything</td><td>✅ Fine-grained permissions</td></tr>
+  </table>
+
+  <h3>Monorepo Tools</h3>
+  <div class="tabs" id="monoTabs">
+    <div class="tab active" onclick="switchTab('monoTabs','monoContent','turbo')">Turborepo</div>
+    <div class="tab" onclick="switchTab('monoTabs','monoContent','nx')">Nx</div>
+    <div class="tab" onclick="switchTab('monoTabs','monoContent','workspaces')">npm Workspaces</div>
+  </div>
+
+  <div id="monoContent">
+    <div class="tab-content active" data-tab="turbo">
+      <h3>Turborepo (by Vercel)</h3>
+      <p>Fast, simple, great caching. Best for JS/TS projects.</p>
+      <div class="code-block"><span class="tag">Setup</span><code># Create a new turborepo
+npx create-turbo@latest my-monorepo
+
+# Structure:
+my-monorepo/
+├── apps/
+│   ├── web/              # Next.js frontend
+│   │   └── package.json
+│   └── api/              # Express backend
+│       └── package.json
+├── packages/
+│   ├── ui/               # Shared React components
+│   │   └── package.json
+│   ├── database/         # Shared DB utilities
+│   │   └── package.json
+│   └── config/           # Shared ESLint, TS configs
+│       └── package.json
+├── package.json
+└── turbo.json</code></div>
+
+      <div class="code-block"><span class="tag">turbo.json</span><code>{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],   // Build dependencies first
+      "outputs": ["dist/**"]
+    },
+    "test": {
+      "dependsOn": ["build"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {}
+  }
+}
+
+// Run all builds with intelligent caching:
+// npx turbo build      → only rebuilds what changed!
+// npx turbo dev         → runs all dev servers
+// npx turbo test --filter=api  → test only api package</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="nx">
+      <h3>Nx (by Nrwl)</h3>
+      <p>More features, steeper learning curve. Great for enterprise.</p>
+      <div class="code-block"><span class="tag">Nx Setup</span><code># Create Nx workspace
+npx create-nx-workspace@latest my-org
+
+# Generate applications
+nx generate @nx/node:application api
+nx generate @nx/react:application web
+
+# Generate shared libraries
+nx generate @nx/js:library shared-types
+nx generate @nx/js:library data-access
+
+# Smart commands
+nx affected:build    # Only build what's affected by changes
+nx graph             # Visual dependency graph
+nx run-many --target=test --all  # Test everything</code></div>
+    </div>
+
+    <div class="tab-content" data-tab="workspaces">
+      <h3>npm/Yarn/pnpm Workspaces</h3>
+      <p>Built-in, zero dependencies. Good starting point.</p>
+      <div class="code-block"><span class="tag">npm Workspaces</span><code>// root package.json
+{
+  "name": "my-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}
+
+// packages/shared/package.json
+{
+  "name": "@myorg/shared",
+  "version": "1.0.0",
+  "main": "src/index.js"
+}
+
+// apps/api/package.json
+{
+  "name": "@myorg/api",
+  "dependencies": {
+    "@myorg/shared": "*"     // Use workspace version
+  }
+}
+
+// Now in apps/api you can:
+const { validateEmail } = require('@myorg/shared');
+
+// Install all dependencies:
+npm install  // from root — installs everything
+
+// Run script in specific workspace:
+npm run dev --workspace=@myorg/api</code></div>
+    </div>
+  </div>
+
+  <h3>Shared Package Example</h3>
+  <div class="code-block"><span class="tag">packages/shared/src/index.js</span><code>// Shared types, utils, and validation used by ALL services
+
+// Shared validation
+const validateEmail = (email) => /^[^@]+@[^@]+\\.[^@]+$/.test(email);
+
+// Shared error classes
+class AppError extends Error {
+  constructor(message, statusCode = 500) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = true;
+  }
+}
+
+class NotFoundError extends AppError {
+  constructor(resource) {
+    super(\`\${resource} not found\`, 404);
+  }
+}
+
+// Shared response formatter
+const formatResponse = (data, meta = {}) => ({
+  success: true,
+  data,
+  meta: { timestamp: Date.now(), ...meta }
+});
+
+module.exports = { validateEmail, AppError, NotFoundError, formatResponse };
+
+// Used in ANY service:
+// const { NotFoundError, formatResponse } = require('@myorg/shared');</code></div>
+</div>
+`,
+
+// ============== SCALING ==============
+scaling: `
+<div class="card">
+  <h2>📈 Scaling Strategies</h2>
+  <p>How to handle growth from 100 to 10,000,000 users.</p>
+
+  <h3>Scaling 101: Vertical vs Horizontal</h3>
+  <div class="diagram">
+VERTICAL SCALING              HORIZONTAL SCALING
+(bigger machine)              (more machines)
+
+  ┌─────────────┐              ┌──────┐ ┌──────┐ ┌──────┐
+  │             │              │ App  │ │ App  │ │ App  │
+  │   BIGGER    │              │  #1  │ │  #2  │ │  #3  │
+  │   SERVER    │              └──┬───┘ └──┬───┘ └──┬───┘
+  │             │                 │        │        │
+  │  More RAM   │              ┌──┴────────┴────────┴──┐
+  │  More CPU   │              │    LOAD BALANCER      │
+  │             │              └───────────┬───────────┘
+  └─────────────┘                          │
+  💰 Gets expensive fast              ∞ Scale infinitely
+  ⚠️ Has a ceiling                    ✅ Fault tolerant
+  </div>
+
+  <h3>Load Balancing with Node.js</h3>
+  <div class="code-block"><span class="tag">Node.js Cluster</span><code>// cluster.js — use all CPU cores
+const cluster = require('cluster');
+const os = require('os');
+
+if (cluster.isPrimary) {
+  const numCPUs = os.cpus().length;
+  console.log(\`Primary process starting \${numCPUs} workers\`);
+
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
+  }
+
+  cluster.on('exit', (worker) => {
+    console.log(\`Worker \${worker.process.pid} died. Restarting...\`);
+    cluster.fork(); // Auto-restart crashed workers
+  });
+} else {
+  // Each worker runs the Express app
+  const app = require('./app');
+  app.listen(3000, () => {
+    console.log(\`Worker \${process.pid} listening on port 3000\`);
+  });
+}
+
+// In production, use PM2 instead:
+// pm2 start app.js -i max   ← uses all CPU cores</code></div>
+
+  <h3>Caching Layers</h3>
+  <div class="diagram">
+Client ──▶ CDN Cache ──▶ API Gateway ──▶ App Cache (Redis) ──▶ Database
+           (static)        (rate limit)    (dynamic data)      (source of truth)
+
+Miss? ─────────────────────────────────────────────────────▶ Hit DB, cache result
+Hit?  ◀──── Return cached ◀────────────────────────────────── 
+  </div>
+
+  <div class="code-block"><span class="tag">Redis Caching Pattern</span><code>const Redis = require('ioredis');
+const redis = new Redis(process.env.REDIS_URL);
+
+// Cache-aside pattern (most common)
+async function getProduct(id) {
+  const cacheKey = \`product:\${id}\`;
+  
+  // 1. Try cache first
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    console.log('Cache HIT');
+    return JSON.parse(cached);
+  }
+
+  // 2. Cache miss — hit database
+  console.log('Cache MISS');
+  const product = await ProductModel.findById(id);
+  
+  if (product) {
+    // 3. Store in cache with TTL (time to live)
+    await redis.setex(cacheKey, 3600, JSON.stringify(product)); // 1 hour
+  }
+
+  return product;
+}
+
+// Invalidate cache when data changes
+async function updateProduct(id, data) {
+  const product = await ProductModel.findByIdAndUpdate(id, data);
+  await redis.del(\`product:\${id}\`);  // Delete stale cache
+  return product;
+}
+
+// Cache warming — pre-populate cache for hot data
+async function warmCache() {
+  const topProducts = await ProductModel.find().sort({ views: -1 }).limit(100);
+  const pipeline = redis.pipeline();
+  topProducts.forEach(p => {
+    pipeline.setex(\`product:\${p.id}\`, 3600, JSON.stringify(p));
+  });
+  await pipeline.exec();
+}</code></div>
+
+  <h3>Database Scaling</h3>
+  <div class="code-block"><span class="tag">Read Replicas</span><code>// Use read replicas for read-heavy workloads
+const { Sequelize } = require('sequelize');
+
+const sequelize = new Sequelize({
+  dialect: 'postgres',
+  replication: {
+    read: [
+      { host: 'read-replica-1.db.com', username: 'user', password: 'pass' },
+      { host: 'read-replica-2.db.com', username: 'user', password: 'pass' },
+    ],
+    write: {
+      host: 'primary.db.com', username: 'user', password: 'pass'
+    }
+  },
+  pool: {
+    max: 20,
+    idle: 30000
+  }
+});
+
+// Sequelize automatically routes:
+await User.findAll();          // → reads from replica
+await User.create({ ... });   // → writes to primary</code></div>
+
+  <h3>Rate Limiting</h3>
+  <div class="code-block"><span class="tag">Rate Limiter</span><code>// Sliding window rate limiter with Redis
+class RateLimiter {
+  constructor(redis, { maxRequests = 100, windowMs = 60000 } = {}) {
+    this.redis = redis;
+    this.maxRequests = maxRequests;
+    this.windowMs = windowMs;
+  }
+
+  middleware() {
+    return async (req, res, next) => {
+      const key = \`rate:\${req.ip}\`;
+      const now = Date.now();
+      const windowStart = now - this.windowMs;
+
+      // Remove old entries, add new one, count
+      const pipeline = this.redis.pipeline();
+      pipeline.zremrangebyscore(key, 0, windowStart);
+      pipeline.zadd(key, now, \`\${now}-\${Math.random()}\`);
+      pipeline.zcard(key);
+      pipeline.pexpire(key, this.windowMs);
+      
+      const results = await pipeline.exec();
+      const requestCount = results[2][1];
+
+      res.setHeader('X-RateLimit-Limit', this.maxRequests);
+      res.setHeader('X-RateLimit-Remaining', 
+        Math.max(0, this.maxRequests - requestCount));
+
+      if (requestCount > this.maxRequests) {
+        return res.status(429).json({ error: 'Too many requests' });
+      }
+      next();
+    };
+  }
+}
+
+app.use(new RateLimiter(redis, { maxRequests: 100, windowMs: 60000 }).middleware());</code></div>
+</div>
+`,
+
+// ============== EVENT DRIVEN ==============
+eventdriven: `
+<div class="card">
+  <h2>⚡ Event-Driven Architecture</h2>
+  <p>Instead of services directly calling each other, they communicate through <strong>events</strong>. This is the backbone of modern scalable systems.</p>
+
+  <h3>Key Concepts</h3>
+  <div class="arch-visual">
+    <div class="arch-box"><div class="box-title">Event</div><div class="box-sub">Something happened</div></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box highlight"><div class="box-title">Event Broker</div><div class="box-sub">Routes events</div></div>
+    <span class="arch-arrow">→</span>
+    <div class="arch-box"><div class="box-title">Handler</div><div class="box-sub">Reacts to event</div></div>
+  </div>
+
+  <h3>Event Types</h3>
+  <table class="comparison-table">
+    <tr><th>Type</th><th>Description</th><th>Example</th></tr>
+    <tr><td><strong>Domain Event</strong></td><td>Something happened in the business</td><td>OrderPlaced, UserRegistered</td></tr>
+    <tr><td><strong>Integration Event</strong></td><td>Cross-service communication</td><td>PaymentProcessed → Order service</td></tr>
+    <tr><td><strong>Command</strong></td><td>Request to do something</td><td>ProcessPayment, SendEmail</td></tr>
+  </table>
+
+  <div class="code-block"><span class="tag">Event-Driven System</span><code>// shared/events.js — Event definitions
+class DomainEvent {
+  constructor(type, data, metadata = {}) {
+    this.id = crypto.randomUUID();
+    this.type = type;
+    this.data = data;
+    this.metadata = {
+      timestamp: Date.now(),
+      version: 1,
+      source: process.env.SERVICE_NAME,
+      correlationId: metadata.correlationId || crypto.randomUUID(),
+      ...metadata
+    };
+  }
+}
+
+// Event catalog — single source of truth
+const Events = {
+  USER_REGISTERED: 'user.registered',
+  ORDER_PLACED: 'order.placed',
+  ORDER_CANCELLED: 'order.cancelled',
+  PAYMENT_PROCESSED: 'payment.processed',
+  PAYMENT_FAILED: 'payment.failed',
+  INVENTORY_RESERVED: 'inventory.reserved',
+  EMAIL_SENT: 'email.sent'
+};
+
+// Usage:
+const event = new DomainEvent(Events.ORDER_PLACED, {
+  orderId: 'ord_123',
+  userId: 'usr_456',
+  items: [{ productId: 'prod_789', qty: 2 }],
+  total: 59.99
+});</code></div>
+
+  <h3>Event Sourcing</h3>
+  <p>Instead of storing current state, store a <strong>sequence of events</strong>. You can replay them to reconstruct any past state.</p>
+
+  <div class="code-block"><span class="tag">Event Sourcing</span><code>// Instead of: { balance: 150 }
+// Store events:
+const accountEvents = [
+  { type: 'AccountOpened', data: { balance: 0 }, timestamp: '2024-01-01' },
+  { type: 'MoneyDeposited', data: { amount: 200 }, timestamp: '2024-01-15' },
+  { type: 'MoneyWithdrawn', data: { amount: 50 }, timestamp: '2024-02-01' },
+  // Current balance: 0 + 200 - 50 = 150
+];
+
+class BankAccount {
+  constructor() {
+    this.balance = 0;
+    this.events = [];
+    this.version = 0;
+  }
+
+  // Apply event to update state
+  apply(event) {
+    switch (event.type) {
+      case 'AccountOpened':
+        this.balance = event.data.balance;
+        break;
+      case 'MoneyDeposited':
+        this.balance += event.data.amount;
+        break;
+      case 'MoneyWithdrawn':
+        this.balance -= event.data.amount;
+        break;
+    }
+    this.version++;
+    this.events.push(event);
+  }
+
+  // Commands create events
+  deposit(amount) {
+    if (amount <= 0) throw new Error('Amount must be positive');
+    this.apply({ type: 'MoneyDeposited', data: { amount }, timestamp: Date.now() });
+  }
+
+  withdraw(amount) {
+    if (amount > this.balance) throw new Error('Insufficient funds');
+    this.apply({ type: 'MoneyWithdrawn', data: { amount }, timestamp: Date.now() });
+  }
+
+  // Rebuild state from events
+  static fromEvents(events) {
+    const account = new BankAccount();
+    events.forEach(e => account.apply(e));
+    return account;
+  }
+}
+
+// Replay to any point in time!
+const account = BankAccount.fromEvents(storedEvents);
+console.log(account.balance); // 150</code></div>
+
+  <div class="concept-box warning">
+    <div class="label">When NOT to use Event Sourcing</div>
+    <p>Simple CRUD apps, small teams, or when you need strong consistency. Event sourcing adds significant complexity. Use it for audit-heavy, financial, or complex domain systems.</p>
+  </div>
+</div>
+`,
+
+// ============== DESIGN PATTERNS ==============
+designpatterns: `
+<div class="card">
+  <h2>🎯 JavaScript Design Patterns for Architecture</h2>
+  <p>Patterns that matter most in real-world JS system design.</p>
+
+  <h3>1. Repository Pattern</h3>
+  <p>Abstract database operations behind an interface. Swap databases without changing business logic.</p>
+  <div class="code-block"><span class="tag">Repository</span><code>// Abstraction
+class UserRepository {
+  async findById(id) { throw new Error('Not implemented'); }
+  async save(user) { throw new Error('Not implemented'); }
+  async findByEmail(email) { throw new Error('Not implemented'); }
+}
+
+// MongoDB implementation
+class MongoUserRepository extends UserRepository {
+  async findById(id) {
+    return UserModel.findById(id).lean();
+  }
+  async save(user) {
+    return UserModel.create(user);
+  }
+}
+
+// PostgreSQL implementation
+class PgUserRepository extends UserRepository {
+  async findById(id) {
+    const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    return rows[0];
+  }
+}
+
+// Service doesn't know which DB is used
+class UserService {
+  constructor(userRepo) {
+    this.userRepo = userRepo; // Dependency Injection
+  }
+  async getUser(id) {
+    return this.userRepo.findById(id);
+  }
+}
+
+// Easy to swap:
+const service = new UserService(new MongoUserRepository());
+// or: new UserService(new PgUserRepository());</code></div>
+
+  <h3>2. Factory Pattern</h3>
+  <div class="code-block"><span class="tag">Factory</span><code>// Create objects without specifying exact class
+class NotificationFactory {
+  static create(type, data) {
+    switch (type) {
+      case 'email':
+        return new EmailNotification(data);
+      case 'sms':
+        return new SMSNotification(data);
+      case 'push':
+        return new PushNotification(data);
+      case 'slack':
+        return new SlackNotification(data);
+      default:
+        throw new Error(\`Unknown notification type: \${type}\`);
+    }
+  }
+}
+
+// Usage — caller doesn't need to know implementation details
+const notification = NotificationFactory.create('email', {
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  body: 'Thanks for signing up'
+});
+await notification.send();</code></div>
+
+  <h3>3. Observer / EventEmitter Pattern</h3>
+  <div class="code-block"><span class="tag">Observer</span><code>const EventEmitter = require('events');
+
+class OrderSystem extends EventEmitter {
+  async placeOrder(orderData) {
+    const order = await Order.create(orderData);
+    
+    // Emit event — doesn't know or care who's listening
+    this.emit('order:placed', order);
+    
+    return order;
+  }
+}
+
+const orderSystem = new OrderSystem();
+
+// Loosely coupled handlers — add/remove without changing OrderSystem
+orderSystem.on('order:placed', async (order) => {
+  await InventoryService.reserve(order.items);
+});
+
+orderSystem.on('order:placed', async (order) => {
+  await EmailService.sendConfirmation(order.userId, order);
+});
+
+orderSystem.on('order:placed', async (order) => {
+  await AnalyticsService.track('purchase', { value: order.total });
+});</code></div>
+
+  <h3>4. Middleware / Chain of Responsibility</h3>
+  <div class="code-block"><span class="tag">Middleware Pipeline</span><code>// Build your own middleware system (like Express)
+class Pipeline {
+  constructor() {
+    this.middlewares = [];
+  }
+
+  use(fn) {
+    this.middlewares.push(fn);
+    return this; // chainable
+  }
+
+  async execute(context) {
+    let index = 0;
+    
+    const next = async () => {
+      if (index < this.middlewares.length) {
+        const middleware = this.middlewares[index++];
+        await middleware(context, next);
+      }
+    };
+
+    await next();
+    return context;
+  }
+}
+
+// Usage
+const orderPipeline = new Pipeline()
+  .use(async (ctx, next) => {
+    console.log('1. Validating...');
+    if (!ctx.items?.length) throw new Error('No items');
+    await next();
+  })
+  .use(async (ctx, next) => {
+    console.log('2. Calculating total...');
+    ctx.total = ctx.items.reduce((s, i) => s + i.price * i.qty, 0);
+    await next();
+  })
+  .use(async (ctx, next) => {
+    console.log('3. Applying discounts...');
+    if (ctx.promoCode) ctx.total *= 0.9;
+    await next();
+  })
+  .use(async (ctx, next) => {
+    console.log('4. Saving order...');
+    ctx.orderId = 'ord_' + Date.now();
+    await next();
+  });
+
+await orderPipeline.execute({ items: [{ price: 10, qty: 2 }] });</code></div>
+
+  <h3>5. Singleton (Service Registry)</h3>
+  <div class="code-block"><span class="tag">Singleton</span><code>// Database connection — should only exist once
+class Database {
+  constructor() {
+    if (Database.instance) {
+      return Database.instance;
+    }
+    this.connection = null;
+    Database.instance = this;
+  }
+
+  async connect(url) {
+    if (!this.connection) {
+      this.connection = await mongoose.connect(url);
+      console.log('DB connected');
+    }
+    return this.connection;
+  }
+}
+
+// Or simply use module caching (Node.js modules are singletons!)
+// db.js
+let connection = null;
+
+module.exports.getConnection = async () => {
+  if (!connection) {
+    connection = await mongoose.connect(process.env.DB_URL);
+  }
+  return connection;
+};
+
+// Every require('./db') returns the SAME instance</code></div>
+
+  <h3>6. Strategy Pattern</h3>
+  <div class="code-block"><span class="tag">Strategy</span><code>// Swap algorithms at runtime
+const pricingStrategies = {
+  regular: (price) => price,
+  premium: (price) => price * 0.8,        // 20% off
+  employee: (price) => price * 0.5,        // 50% off
+  wholesale: (price, qty) => qty > 100 ? price * 0.6 : price * 0.75,
+};
+
+class PricingService {
+  constructor(strategy = 'regular') {
+    this.strategy = pricingStrategies[strategy];
+  }
+
+  setStrategy(name) {
+    this.strategy = pricingStrategies[name];
+  }
+
+  calculate(price, qty = 1) {
+    return this.strategy(price, qty) * qty;
+  }
+}
+
+const pricing = new PricingService('premium');
+pricing.calculate(100);     // 80
+pricing.setStrategy('wholesale');
+pricing.calculate(100, 200); // 12000</code></div>
+</div>
+`,
+
+// ============== REAL WORLD ==============
+realworld: `
+<div class="card">
+  <h2>🌍 Real-World Architecture Scenarios</h2>
+  <p>Interview-style scenarios you'll encounter. Practice thinking through these.</p>
+
+  <h3>Scenario 1: "Design a URL Shortener"</h3>
+  <div class="concept-box info">
+    <div class="label">Requirements</div>
+    <p>Create short URLs, redirect to original, track click analytics. Handle 10M+ URLs.</p>
+  </div>
+  <div class="diagram">
+Client ──▶ API ──▶ URL Service ──▶ Redis (cache) ──▶ PostgreSQL
+                        │
+                        └──▶ Analytics Queue ──▶ Analytics Worker ──▶ ClickHouse
+  </div>
+  <div class="code-block"><span class="tag">URL Shortener Design</span><code>// Key decisions:
+// 1. ID Generation: Base62 encoding of auto-increment or hash
+// 2. Storage: PostgreSQL for persistence, Redis for hot URLs
+// 3. Analytics: Async via queue (don't slow down redirects)
+
+const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function encode(num) {
+  let result = '';
+  while (num > 0) {
+    result = BASE62[num % 62] + result;
+    num = Math.floor(num / 62);
+  }
+  return result || '0';
+}
+
+// POST /shorten
+app.post('/shorten', async (req, res) => {
+  const { url } = req.body;
+  const id = await db.insertUrl(url);         // Auto-increment ID
+  const shortCode = encode(id);                // 1 → "1", 1000 → "g8"
+  await redis.setex(\`url:\${shortCode}\`, 86400, url); // Cache 24h
+  res.json({ shortUrl: \`https://sho.rt/\${shortCode}\` });
+});
+
+// GET /:code — this must be FAST
+app.get('/:code', async (req, res) => {
+  let url = await redis.get(\`url:\${req.params.code}\`);
+  
+  if (!url) {
+    url = await db.getUrl(req.params.code);    // Cache miss
+    if (url) await redis.setex(\`url:\${req.params.code}\`, 86400, url);
+  }
+  
+  if (!url) return res.status(404).send('Not found');
+  
+  // Track async — don't wait for this
+  analyticsQueue.add('click', { 
+    code: req.params.code, 
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+    timestamp: Date.now()
+  });
+  
+  res.redirect(301, url);
+});</code></div>
+
+  <h3>Scenario 2: "Design a Real-Time Chat"</h3>
+  <div class="diagram">
+Client A ──WebSocket──▶ Chat Server 1 ──▶ Redis Pub/Sub ──▶ Chat Server 2 ──WebSocket──▶ Client B
+                              │                                    │
+                              └────────────▶ MongoDB (persistence) ◀┘
+  </div>
+  <div class="code-block"><span class="tag">Chat Architecture</span><code>const { Server } = require('socket.io');
+const Redis = require('ioredis');
+
+const io = new Server(server, { cors: { origin: '*' } });
+const pub = new Redis();
+const sub = new Redis();
+
+// Subscribe to Redis for cross-server messaging
+sub.subscribe('chat');
+sub.on('message', (channel, message) => {
+  const { room, data } = JSON.parse(message);
+  io.to(room).emit('message', data);  // Broadcast to local clients
+});
+
+io.on('connection', (socket) => {
+  socket.on('join', (room) => {
+    socket.join(room);
+  });
+
+  socket.on('message', async ({ room, text, userId }) => {
+    const message = { userId, text, timestamp: Date.now() };
+    
+    // Persist to DB (async, don't block)
+    MessageModel.create({ room, ...message }).catch(console.error);
+    
+    // Publish to Redis (reaches ALL server instances)
+    pub.publish('chat', JSON.stringify({ room, data: message }));
+  });
+});</code></div>
+
+  <h3>Scenario 3: "Design a Job Queue System"</h3>
+  <div class="code-block"><span class="tag">Job Queue</span><code>// Real-world pattern: delayed jobs, retries, priorities
+class JobQueue {
+  constructor(name, processor, options = {}) {
+    this.name = name;
+    this.processor = processor;
+    this.concurrency = options.concurrency || 5;
+    this.running = 0;
+    this.queue = [];  // In production, use Redis
+  }
+
+  async add(data, options = {}) {
+    const job = {
+      id: crypto.randomUUID(),
+      data,
+      attempts: 0,
+      maxAttempts: options.attempts || 3,
+      priority: options.priority || 0,
+      delay: options.delay || 0,
+      createdAt: Date.now(),
+      status: 'waiting'
+    };
+
+    if (job.delay > 0) {
+      setTimeout(() => this.enqueue(job), job.delay);
+    } else {
+      this.enqueue(job);
+    }
+    return job;
+  }
+
+  enqueue(job) {
+    this.queue.push(job);
+    this.queue.sort((a, b) => b.priority - a.priority);
+    this.process();
+  }
+
+  async process() {
+    while (this.running < this.concurrency && this.queue.length > 0) {
+      const job = this.queue.shift();
+      this.running++;
+      this.executeJob(job).finally(() => {
+        this.running--;
+        this.process();
+      });
+    }
+  }
+
+  async executeJob(job) {
+    job.attempts++;
+    try {
+      job.status = 'active';
+      await this.processor(job);
+      job.status = 'completed';
+    } catch (err) {
+      if (job.attempts < job.maxAttempts) {
+        job.status = 'waiting';
+        const backoff = Math.pow(2, job.attempts) * 1000;
+        setTimeout(() => this.enqueue(job), backoff);
+      } else {
+        job.status = 'failed';
+        console.error(\`Job \${job.id} permanently failed\`);
+      }
+    }
+  }
+}
+
+// Usage
+const emailQueue = new JobQueue('emails', async (job) => {
+  await sendEmail(job.data.to, job.data.subject, job.data.body);
+}, { concurrency: 10 });
+
+emailQueue.add({ to: 'user@test.com', subject: 'Hello' }, { priority: 1 });</code></div>
+</div>
+`,
+
+// ============== PITFALLS ==============
+pitfalls: `
+<div class="card">
+  <h2>⚠️ Common Mistakes & Pitfalls</h2>
+  <p>These are the traps that even experienced developers fall into. Knowing them will set you apart in interviews.</p>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #1: Premature Microservices</h4>
+    <p>Starting with microservices when you don't need them.</p>
+    <div class="wrong-way"><strong>Wrong:</strong> "Let's build 15 microservices for our MVP with 100 users"</div>
+    <div class="right-way"><strong>Right:</strong> "Start with a well-structured monolith. Extract services when a specific module needs independent scaling or a separate team owns it"</div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #2: Distributed Monolith</h4>
+    <p>Microservices that are tightly coupled — the worst of both worlds.</p>
+    <div class="wrong-way"><strong>Wrong:</strong> Services share a database, must deploy together, call each other synchronously in chains</div>
+    <div class="right-way"><strong>Right:</strong> Each service owns its data, can deploy independently, uses async communication where possible</div>
+    <div class="code-block"><span class="tag">Distributed Monolith ❌</span><code>// Order service DIRECTLY queries user database
+const user = await knex('users').where('id', userId).first();  // ❌ Shared DB!
+
+// Order → Payment → Inventory → Notification (sync chain)
+const payment = await paymentService.charge(amount);     // ❌
+const reserved = await inventoryService.reserve(items);  // ❌ 
+await notificationService.send(email);                   // ❌
+// If ANY service is down, EVERYTHING fails</code></div>
+    <div class="code-block"><span class="tag">Proper Microservices ✅</span><code>// Order service calls user service via API
+const user = await userServiceClient.getUser(userId);  // ✅ Own API
+
+// Use events for non-critical downstream actions
+await orderRepo.save(order);
+await eventBus.publish('order.placed', order);  // ✅ Async
+// Payment, inventory, notification react independently</code></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #3: No Timeout on HTTP Calls</h4>
+    <div class="wrong-way"><strong>Wrong:</strong> <code>await axios.get(url)</code> — default timeout is INFINITE</div>
+    <div class="right-way"><strong>Right:</strong> <code>await axios.get(url, { timeout: 5000 })</code> — always set timeouts</div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #4: Chatty Services</h4>
+    <p>Making too many small network calls between services.</p>
+    <div class="wrong-way"><strong>Wrong:</strong> Fetch user, then fetch user's address, then fetch user's preferences (3 calls)</div>
+    <div class="right-way"><strong>Right:</strong> One endpoint: <code>GET /users/123?include=address,preferences</code> or use GraphQL</div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #5: Ignoring Idempotency</h4>
+    <p>Network requests can be retried. If your endpoint isn't idempotent, you'll charge users twice.</p>
+    <div class="code-block"><span class="tag">Idempotency Key</span><code>// Client sends a unique key with each request
+app.post('/payments', async (req, res) => {
+  const idempotencyKey = req.headers['idempotency-key'];
+  
+  // Check if we already processed this request
+  const existing = await redis.get(\`idem:\${idempotencyKey}\`);
+  if (existing) {
+    return res.json(JSON.parse(existing)); // Return cached result
+  }
+
+  // Process payment
+  const result = await stripe.charges.create({ ... });
+  
+  // Cache result for 24 hours
+  await redis.setex(\`idem:\${idempotencyKey}\`, 86400, JSON.stringify(result));
+  
+  res.json(result);
+});</code></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #6: Not Handling Partial Failures</h4>
+    <div class="wrong-way"><strong>Wrong:</strong> Assume all services are always available</div>
+    <div class="right-way"><strong>Right:</strong> Use circuit breakers, fallbacks, graceful degradation. If recommendations service is down, show popular items instead.</div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #7: Shared Mutable State Across Services</h4>
+    <div class="wrong-way"><strong>Wrong:</strong> Two services write to the same database table</div>
+    <div class="right-way"><strong>Right:</strong> Each service owns its data. Other services get data via APIs or events.</div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #8: Cache Stampede</h4>
+    <p>When a popular cache key expires, thousands of requests hit the database simultaneously.</p>
+    <div class="code-block"><span class="tag">Prevention</span><code>// Use a mutex/lock to prevent stampede
+async function getWithLock(key, fetchFn, ttl = 3600) {
+  let data = await redis.get(key);
+  if (data) return JSON.parse(data);
+
+  // Try to acquire lock
+  const lockKey = \`lock:\${key}\`;
+  const acquired = await redis.set(lockKey, '1', 'NX', 'EX', 10);
+  
+  if (acquired) {
+    // We got the lock — fetch and cache
+    data = await fetchFn();
+    await redis.setex(key, ttl, JSON.stringify(data));
+    await redis.del(lockKey);
+    return data;
+  } else {
+    // Someone else is fetching — wait and retry
+    await new Promise(r => setTimeout(r, 100));
+    return getWithLock(key, fetchFn, ttl);
+  }
+}</code></div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #9: Monorepo Without Boundaries</h4>
+    <div class="wrong-way"><strong>Wrong:</strong> Packages import from each other's internal files freely</div>
+    <div class="right-way"><strong>Right:</strong> Each package has a clear public API via index.js. Use eslint rules to enforce boundaries.</div>
+  </div>
+
+  <div class="pitfall">
+    <h4>🚫 Pitfall #10: No Observability</h4>
+    <div class="wrong-way"><strong>Wrong:</strong> <code>console.log('something happened')</code></div>
+    <div class="right-way"><strong>Right:</strong> Structured logging, distributed tracing, health checks, metrics dashboards</div>
+    <div class="code-block"><span class="tag">Structured Logging</span><code>const logger = require('pino')();
+
+// ❌ Bad
+console.log('User created');
+
+// ✅ Good — structured, searchable, traceable
+logger.info({
+  event: 'user.created',
+  userId: user.id,
+  email: user.email,
+  requestId: req.headers['x-request-id'],
+  duration: Date.now() - startTime
+}, 'User created successfully');</code></div>
+  </div>
+</div>
+`,
+
+// ============== QUIZ ==============
+quiz: `
+<div class="card">
+  <h2>📝 Master Quiz — Architecture & System Design</h2>
+  <p>Test your knowledge! 15 questions covering all topics. Click an answer to check.</p>
+
+  <div class="quiz-container" id="quizContainer">
+    ${generateQuizHTML()}
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <button class="btn btn-primary" onclick="scoreQuiz()">Score My Quiz</button>
+    <button class="btn btn-outline" onclick="resetQuiz()">Reset</button>
+    <div class="quiz-score" id="quizScore"></div>
+  </div>
+</div>
+`,
+
+// ============== EXERCISES ==============
+exercises: `
+<div class="card">
+  <h2>💪 Practice Exercises</h2>
+  <p>Complete these exercises to solidify your understanding. Type your answers and check them.</p>
+
+  <div class="exercise" id="ex1">
+    <h4>Exercise 1: Design a Service Architecture</h4>
+    <p>You're building an e-commerce platform. List the microservices you'd create and what each one is responsible for. Also specify which database each would use and why.</p>
+    <textarea id="ex1-answer" placeholder="Example:
+1. User Service - handles auth, profiles (PostgreSQL - relational user data)
+2. Product Service - ...
+3. ..."></textarea>
+    <button class="btn btn-sm btn-primary" onclick="checkExercise(1)">Check Answer</button>
+    <button class="btn btn-sm btn-outline" onclick="toggleHint(1)">Show Hint</button>
+    <div class="hint" id="hint1">Think about: Users, Products/Catalog, Orders, Payments, Inventory, Notifications, Search, Reviews. Each should own its data.</div>
+    <div class="exercise-result" id="ex1-result"></div>
+  </div>
+
+  <div class="exercise" id="ex2">
+    <h4>Exercise 2: Implement a Simple Circuit Breaker</h4>
+    <p>Write a circuit breaker class with CLOSED, OPEN, and HALF_OPEN states. It should open after 3 failures and try again after 5 seconds.</p>
+    <textarea id="ex2-answer" placeholder="class CircuitBreaker {
+  constructor(fn) {
+    // your code here
+  }
+  
+  async call(...args) {
+    // your code here
+  }
+}"></textarea>
+    <button class="btn btn-sm btn-primary" onclick="checkExercise(2)">Check Answer</button>
+    <button class="btn btn-sm btn-outline" onclick="toggleHint(2)">Show Hint</button>
+    <div class="hint" id="hint2">Track: state ('CLOSED'/'OPEN'/'HALF_OPEN'), failureCount, nextAttemptTime. In call(): check if OPEN, try the function, on success reset, on failure increment counter.</div>
+    <div class="exercise-result" id="ex2-result"></div>
+  </div>
+
+  <div class="exercise" id="ex3">
+    <h4>Exercise 3: Cache-Aside Pattern</h4>
+    <p>Implement a function <code>getProduct(id)</code> that first checks Redis cache, then falls back to database, and caches the result for 1 hour.</p>
+    <textarea id="ex3-answer" placeholder="async function getProduct(id) {
+  // 1. Check cache
+  // 2. If miss, query DB
+  // 3. Cache the result
+  // 4. Return
+}"></textarea>
+    <button class="btn btn-sm btn-primary" onclick="checkExercise(3)">Check Answer</button>
+    <button class="btn btn-sm btn-outline" onclick="toggleHint(3)">Show Hint</button>
+    <div class="hint" id="hint3">Use redis.get() to check cache, JSON.parse the result, if null then query DB, use redis.setex(key, 3600, JSON.stringify(data)) to cache.</div>
+    <div class="exercise-result" id="ex3-result"></div>
+  </div>
+
+  <div class="exercise" id="ex4">
+    <h4>Exercise 4: Event-Driven Order Flow</h4>
+    <p>Design the event flow for placing an order. List each event, who publishes it, and who subscribes. Include compensation events for failure cases.</p>
+    <textarea id="ex4-answer" placeholder="1. OrderPlaced (published by: Order Service)
+   - Subscribers: Payment Service, Inventory Service
+2. PaymentProcessed (published by: ...)
+   - Subscribers: ...
+3. (failure case) PaymentFailed → ..."></textarea>
+    <button class="btn btn-sm btn-primary" onclick="checkExercise(4)">Check Answer</button>
+    <button class="btn btn-sm btn-outline" onclick="toggleHint(4)">Show Hint</button>
+    <div class="hint" id="hint4">Flow: OrderPlaced → InventoryReserved → PaymentProcessed → OrderConfirmed → NotificationSent. Failures: PaymentFailed → InventoryReleased → OrderCancelled</div>
+    <div class="exercise-result" id="ex4-result"></div>
+  </div>
+
+  <div class="exercise" id="ex5">
+    <h4>Exercise 5: Monorepo Package Structure</h4>
+    <p>Design the folder structure for a monorepo with: a React frontend, an Express API, a shared types package, and a shared UI component library. Include the root package.json workspaces config.</p>
+    <textarea id="ex5-answer" placeholder="my-monorepo/
+├── apps/
+│   ├── ...
+├── packages/
+│   ├── ...
+├── package.json
+└── turbo.json"></textarea>
+    <button class="btn btn-sm btn-primary" onclick="checkExercise(5)">Check Answer</button>
+    <button class="btn btn-sm btn-outline" onclick="toggleHint(5)">Show Hint</button>
+    <div class="hint" id="hint5">apps/ contains deployable apps (web, api). packages/ contains shared libraries (types, ui, config). Root package.json has "workspaces": ["apps/*", "packages/*"]</div>
+    <div class="exercise-result" id="ex5-result"></div>
+  </div>
+
+  <div class="exercise" id="ex6">
+    <h4>Exercise 6: System Design Interview Question</h4>
+    <p><strong>"Design a notification system that sends email, SMS, and push notifications."</strong><br>Describe: services, communication pattern, how to handle failures, and how to scale.</p>
+    <textarea id="ex6-answer" placeholder="Architecture:
+1. Notification API Service - receives notification requests
+2. ...
+
+Communication: ...
+Failure handling: ...
+Scaling: ..."></textarea>
+    <button class="btn btn-sm btn-primary" onclick="checkExercise(6)">Check Answer</button>
+    <button class="btn btn-sm btn-outline" onclick="toggleHint(6)">Show Hint</button>
+    <div class="hint" id="hint6">Key ideas: API receives request → puts in queue (by type/priority) → workers process (email worker, SMS worker, push worker) → retry with backoff on failure → store delivery status → template engine for message formatting → rate limiting per user</div>
+    <div class="exercise-result" id="ex6-result"></div>
+  </div>
+</div>
+`,
+
+// ============== FLASHCARDS ==============
+flashcards: `
+<div class="card">
+  <h2>🃏 Flashcards — Quick Review</h2>
+  <p>Click a card to flip it. Use these to review before your interview.</p>
+
+  <div id="flashcardArea">
+    <div class="flashcard" onclick="this.classList.toggle('flipped')">
+      <div class="front">What is the difference between a monorepo and a monolith?</div>
+      <div class="back">A <strong>monorepo</strong> is a single repository containing multiple projects/packages — it's about code organization. A <strong>monolith</strong> is a single deployable application — it's about runtime architecture. A monorepo CAN contain microservices.</div>
+    </div>
+  </div>
+
+  <div class="flashcard-nav">
+    <button class="btn btn-outline btn-sm" onclick="prevFlashcard()">← Previous</button>
+    <span id="flashcardCounter" class="score-badge">1 / 12</span>
+    <button class="btn btn-primary btn-sm" onclick="nextFlashcard()">Next →</button>
+  </div>
+</div>
+`,
+
+// ============== CHEATSHEET ==============
+cheatsheet: `
+<div class="card">
+  <h2>📋 Architecture & System Design Cheat Sheet</h2>
+  <p>Print this or keep it open during prep. Covers everything you need.</p>
+
+  <div class="cheat-grid">
+    <div class="cheat-card">
+      <h4>🏗️ Architecture Decision Checklist</h4>
+      <ul>
+        <li>How many users? (100 vs 1M)</li>
+        <li>Read-heavy or write-heavy?</li>
+        <li>How many developers/teams?</li>
+        <li>What's the deployment strategy?</li>
+        <li>What are the consistency requirements?</li>
+        <li>What's the budget?</li>
+        <li>What does the team already know?</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>🧩 Pattern Quick Reference</h4>
+      <ul>
+        <li><strong>MVC</strong> → Standard web apps</li>
+        <li><strong>Layered</strong> → Enterprise, clear separation</li>
+        <li><strong>CQRS</strong> → Read/write optimization</li>
+        <li><strong>Hexagonal</strong> → Testable, swappable deps</li>
+        <li><strong>Event-Driven</strong> → Decoupled, reactive</li>
+        <li><strong>Serverless</strong> → Variable traffic, low ops</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>📡 Communication Patterns</h4>
+      <ul>
+        <li><strong>REST</strong> → Simple, universal, HTTP</li>
+        <li><strong>GraphQL</strong> → Flexible queries, frontend gateway</li>
+        <li><strong>gRPC</strong> → Fast, binary, service-to-service</li>
+        <li><strong>Message Queue</strong> → Reliable async (BullMQ, RabbitMQ)</li>
+        <li><strong>Event Bus</strong> → Pub/Sub, decoupled (Redis, Kafka)</li>
+        <li><strong>WebSocket</strong> → Real-time bidirectional</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>📈 Scaling Checklist</h4>
+      <ul>
+        <li>✅ Add caching (Redis)</li>
+        <li>✅ Use a CDN for static assets</li>
+        <li>✅ Database read replicas</li>
+        <li>✅ Horizontal scaling + load balancer</li>
+        <li>✅ Queue background jobs</li>
+        <li>✅ Rate limiting</li>
+        <li>✅ Database indexing</li>
+        <li>✅ Connection pooling</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>🔧 Microservices Checklist</h4>
+      <ul>
+        <li>✅ Each service owns its database</li>
+        <li>✅ API Gateway for routing</li>
+        <li>✅ Health check endpoints</li>
+        <li>✅ Circuit breakers</li>
+        <li>✅ Distributed tracing</li>
+        <li>✅ Saga pattern for transactions</li>
+        <li>✅ Idempotent operations</li>
+        <li>✅ Timeouts on all network calls</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>📦 Monorepo Tools</h4>
+      <ul>
+        <li><strong>Turborepo</strong> → Simple, fast, Vercel</li>
+        <li><strong>Nx</strong> → Feature-rich, enterprise</li>
+        <li><strong>npm workspaces</strong> → Built-in, basic</li>
+        <li><strong>pnpm workspaces</strong> → Fast, disk efficient</li>
+        <li><strong>Lerna</strong> → Legacy, use Turborepo instead</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>⚠️ Top Pitfalls</h4>
+      <ul>
+        <li>❌ Premature microservices</li>
+        <li>❌ Distributed monolith</li>
+        <li>❌ No timeouts on HTTP calls</li>
+        <li>❌ Chatty services (too many calls)</li>
+        <li>❌ Ignoring idempotency</li>
+        <li>❌ Shared database between services</li>
+        <li>❌ No circuit breakers</li>
+        <li>❌ Cache stampede</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>🎯 Interview Answer Framework</h4>
+      <ol>
+        <li><strong>Clarify requirements</strong> — Ask questions!</li>
+        <li><strong>High-level design</strong> — Draw boxes and arrows</li>
+        <li><strong>Dive deep</strong> — Pick one component</li>
+        <li><strong>Discuss tradeoffs</strong> — "We could also..."</li>
+        <li><strong>Address scaling</strong> — How does it grow?</li>
+        <li><strong>Handle failures</strong> — What breaks?</li>
+      </ol>
+    </div>
+
+    <div class="cheat-card">
+      <h4>🗣️ Key Phrases for Interviews</h4>
+      <ul>
+        <li>"The tradeoff here is..."</li>
+        <li>"We could start with X and evolve to Y"</li>
+        <li>"This gives us loose coupling"</li>
+        <li>"For horizontal scalability..."</li>
+        <li>"To handle partial failures..."</li>
+        <li>"The bottleneck would be..."</li>
+        <li>"We achieve eventual consistency via..."</li>
+        <li>"We can use CQRS if reads >> writes"</li>
+      </ul>
+    </div>
+
+    <div class="cheat-card">
+      <h4>🔢 Numbers to Know</h4>
+      <ul>
+        <li>L1 cache: ~1ns</li>
+        <li>RAM access: ~100ns</li>
+        <li>SSD read: ~100μs</li>
+        <li>Network roundtrip (same DC): ~0.5ms</li>
+        <li>Network roundtrip (cross-continent): ~150ms</li>
+        <li>Redis GET: ~0.1ms</li>
+        <li>PostgreSQL simple query: ~1-5ms</li>
+        <li>HTTP API call: ~50-200ms</li>
+      </ul>
+    </div>
+  </div>
+</div>
+`
+  };
+
+  return content[page] || '<div class="card"><h2>Page not found</h2></div>';
+}
+
+// ===== QUIZ GENERATION =====
+function generateQuizHTML() {
+  const questions = getQuizQuestions();
+  return questions.map((q, i) => `
+    <div class="quiz-question" data-question="${i}">
+      <h4>Q${i+1}. ${q.question}</h4>
+      ${q.options.map((opt, j) => `
+        <div class="quiz-option" data-correct="${j === q.correct}" onclick="selectQuizOption(this, ${i})">
+          ${String.fromCharCode(65+j)}. ${opt}
+        </div>
+      `).join('')}
+      <div class="quiz-explanation" id="explanation-${i}">${q.explanation}</div>
+    </div>
+  `).join('');
+}
+
+function getQuizQuestions() {
+  return [
+    {
+      question: "What is the main difference between a monorepo and a monolith?",
+      options: [
+        "They are the same thing",
+        "Monorepo is about code organization (single repo), monolith is about runtime architecture (single deployment)",
+        "Monorepo means one database, monolith means one server",
+        "Monorepo is faster than monolith"
+      ],
+      correct: 1,
+      explanation: "A monorepo is a single repository that can contain multiple independently deployable services. A monolith is a single deployable unit. You can have microservices in a monorepo!"
+    },
+    {
+      question: "When should you NOT use microservices?",
+      options: [
+        "When you have a small team and a new product",
+        "When you need independent scaling",
+        "When you have 50+ developers",
+        "When you need technology diversity"
+      ],
+      correct: 0,
+      explanation: "Microservices add significant operational complexity. For small teams and new products, a well-structured monolith is almost always better. Start simple, extract later."
+    },
+    {
+      question: "What is a 'distributed monolith'?",
+      options: [
+        "A monolith deployed to multiple servers",
+        "Microservices that are tightly coupled and must deploy together",
+        "A database shared across data centers",
+        "A monolith with a distributed cache"
+      ],
+      correct: 1,
+      explanation: "A distributed monolith has all the complexity of microservices (network, deployment) with none of the benefits (independence). Services share databases or have synchronous call chains."
+    },
+    {
+      question: "What does the Circuit Breaker pattern prevent?",
+      options: [
+        "SQL injection attacks",
+        "Memory leaks",
+        "Cascading failures when a downstream service is down",
+        "Race conditions in concurrent code"
+      ],
+      correct: 2,
+      explanation: "When a downstream service fails, the circuit breaker 'opens' and stops sending requests, preventing cascading failures. After a timeout, it tries again (half-open state)."
+    },
+    {
+      question: "In CQRS, what is the main principle?",
+      options: [
+        "Use the same model for reads and writes",
+        "Separate the read model from the write model",
+        "All queries must be cached",
+        "Commands must be synchronous"
+      ],
+      correct: 1,
+      explanation: "CQRS (Command Query Responsibility Segregation) uses different models optimized for reading vs writing. This allows each to scale and be optimized independently."
+    },
+    {
+      question: "Why is idempotency important in distributed systems?",
+      options: [
+        "It makes code run faster",
+        "Network requests can be retried, and without idempotency you might process the same action twice",
+        "It reduces memory usage",
+        "It's required by HTTP specification"
+      ],
+      correct: 1,
+      explanation: "In distributed systems, requests can be retried due to timeouts, network issues, etc. Idempotent operations produce the same result regardless of how many times they're called."
+    },
+    {
+      question: "Which communication pattern provides the LOWEST coupling between services?",
+      options: [
+        "REST API calls",
+        "gRPC calls",
+        "Event bus (pub/sub)",
+        "GraphQL"
+      ],
+      correct: 2,
+      explanation: "Event bus (pub/sub) provides the lowest coupling because the publisher doesn't know who subscribes, and subscribers don't know who published. Services communicate through events, not direct calls."
+    },
+    {
+      question: "What problem does the Saga pattern solve?",
+      options: [
+        "Database indexing",
+        "Distributed transactions across microservices",
+        "API rate limiting",
+        "Service discovery"
+      ],
+      correct: 1,
+      explanation: "In microservices, you can't use ACID transactions across services. The Saga pattern coordinates multi-service operations with compensating transactions for rollback."
+    },
+    {
+      question: "What is a 'cache stampede'?",
+      options: [
+        "When the cache server runs out of memory",
+        "When many requests hit the database simultaneously after a popular cache key expires",
+        "When cache data becomes corrupted",
+        "When too many items are cached"
+      ],
+      correct: 1,
+      explanation: "When a hot cache key expires, all concurrent requests see a cache miss and hit the database at once, potentially overwhelming it. Prevention: use locks, staggered TTLs, or cache warming."
+    },
+    {
+      question: "Which tool is best for a new JavaScript/TypeScript monorepo?",
+      options: [
+        "Lerna (deprecated approach)",
+        "Turborepo",
+        "Webpack",
+        "Docker Compose"
+      ],
+      correct: 1,
+      explanation: "Turborepo (by Vercel) is the modern choice for JS/TS monorepos. It provides intelligent caching, parallel execution, and is simple to set up. Lerna is largely superseded."
+    },
+    {
+      question: "What is the Hexagonal Architecture's main benefit?",
+      options: [
+        "It's faster than other architectures",
+        "It uses exactly 6 modules",
+        "Business logic is completely independent of frameworks and infrastructure",
+        "It requires hexagonal databases"
+      ],
+      correct: 2,
+      explanation: "Hexagonal (Ports & Adapters) architecture puts business logic at the center with no dependencies on frameworks. External concerns (DB, HTTP, etc.) plug in via adapters, making the core highly testable."
+    },
+    {
+      question: "For a high-traffic read-heavy API, what should you add FIRST?",
+      options: [
+        "More microservices",
+        "A caching layer (Redis)",
+        "GraphQL",
+        "More database servers"
+      ],
+      correct: 1,
+      explanation: "Caching is almost always the highest-impact optimization. Redis can serve cached responses in ~0.1ms vs 1-50ms for database queries. Add caching before making architectural changes."
+    },
+    {
+      question: "What is the correct order for scaling a Node.js application?",
+      options: [
+        "Microservices → Caching → Optimize queries",
+        "Optimize queries → Add caching → Horizontal scaling → Consider microservices",
+        "Add more servers → Add more databases → Rewrite in Go",
+        "Vertical scaling only"
+      ],
+      correct: 1,
+      explanation: "Always optimize what you have first (queries, indexes), then add caching, then scale horizontally, and only then consider splitting into services. Each step is simpler and cheaper than the next."
+    },
+    {
+      question: "What is an API Gateway in microservices?",
+      options: [
+        "A database connection pooler",
+        "A single entry point that routes requests to the appropriate microservice",
+        "A testing framework",
+        "A code generator"
+      ],
+      correct: 1,
+      explanation: "The API Gateway is the single entry point for clients. It handles routing, authentication, rate limiting, and request aggregation, shielding clients from the internal service topology."
+    },
+    {
+      question: "Why should each microservice have its own database?",
+      options: [
+        "To use more disk space",
+        "To ensure loose coupling — services can evolve their data model independently",
+        "Because shared databases are slower",
+        "It's a legal requirement"
+      ],
+      correct: 1,
+      explanation: "Shared databases create tight coupling — changing one service's schema can break other services. Own databases allow independent evolution, different database types per service, and independent scaling."
+    }
+  ];
+}
+
+function selectQuizOption(el, questionIndex) {
+  const questionEl = el.closest('.quiz-question');
+  if (questionEl.classList.contains('answered')) return;
+  
+  questionEl.classList.add('answered');
+  const isCorrect = el.dataset.correct === 'true';
+  
+  if (isCorrect) {
+    el.classList.add('correct');
+    addXP(10);
+  } else {
+    el.classList.add('wrong');
+    questionEl.querySelector('[data-correct="true"]').classList.add('reveal-correct');
+  }
+  
+  document.getElementById(`explanation-${questionIndex}`).classList.add('show');
+  state.quizAnswers[questionIndex] = isCorrect;
+}
+
+function scoreQuiz() {
+  const total = Object.keys(state.quizAnswers).length;
+  const correct = Object.values(state.quizAnswers).filter(Boolean).length;
+  const pct = total > 0 ? Math.round((correct / 15) * 100) : 0;
+  
+  let message = '';
+  if (pct >= 90) message = '🏆 Outstanding! You\'re interview-ready!';
+  else if (pct >= 70) message = '👍 Great job! Review the missed topics.';
+  else if (pct >= 50) message = '📚 Good start! Re-read the lessons and try again.';
+  else message = '💪 Keep studying! Go through each lesson carefully.';
+  
+  document.getElementById('quizScore').innerHTML = 
+    `<div>${correct}/15 correct (${pct}%)</div><div style="font-size:0.9rem;margin-top:4px">${message}</div>`;
+}
+
+function resetQuiz() {
+  state.quizAnswers = {};
+  document.getElementById('quizScore').innerHTML = '';
+  navigateTo('quiz');
+}
+
+// ===== EXERCISE CHECKING =====
+function checkExercise(num) {
+  const answer = document.getElementById(`ex${num}-answer`).value.toLowerCase();
+  const resultEl = document.getElementById(`ex${num}-result`);
+  
+  const checks = {
+    1: () => {
+      const keywords = ['user', 'product', 'order', 'payment'];
+      const found = keywords.filter(k => answer.includes(k));
+      if (found.length >= 3 && answer.length > 100) {
+        return { pass: true, msg: `✅ Great! You identified ${found.length} key services. Good coverage of service responsibilities.` };
+      }
+      return { pass: false, msg: `❌ Try to identify at least 4 core services (user, product, order, payment, inventory, notification). Explain each one's responsibility and database choice.` };
+    },
+    2: () => {
+      const keywords = ['state', 'closed', 'open', 'failure', 'threshold'];
+      const found = keywords.filter(k => answer.includes(k));
+      if (found.length >= 3 && answer.includes('class') || answer.includes('function')) {
+        return { pass: true, msg: '✅ Good implementation! Make sure you handle the HALF_OPEN state for recovery testing.' };
+      }
+      return { pass: false, msg: '❌ Include: state tracking (CLOSED/OPEN/HALF_OPEN), failure counter, threshold check, and timeout for recovery. Check the Microservices lesson for the full implementation.' };
+    },
+    3: () => {
+      const keywords = ['redis', 'cache', 'get', 'set', 'database', 'json'];
+      const found = keywords.filter(k => answer.includes(k));
+      if (found.length >= 3) {
+        return { pass: true, msg: '✅ Correct cache-aside pattern! Remember to also handle cache invalidation when data is updated.' };
+      }
+      return { pass: false, msg: '❌ Steps: 1) redis.get(key), 2) if null → query DB, 3) redis.setex(key, 3600, JSON.stringify(data)), 4) return data. Don\'t forget JSON serialization!' };
+    },
+    4: () => {
+      const keywords = ['event', 'publish', 'subscribe', 'payment', 'order', 'fail'];
+      const found = keywords.filter(k => answer.includes(k));
+      if (found.length >= 4) {
+        return { pass: true, msg: '✅ Excellent event flow! Compensation events for failure cases are crucial for data consistency.' };
+      }
+      return { pass: false, msg: '❌ Map out: OrderPlaced → InventoryReserved → PaymentProcessed → OrderConfirmed. For failures: PaymentFailed → InventoryReleased → OrderCancelled. Include publisher and subscriber for each.' };
+    },
+    5: () => {
+      const keywords = ['apps', 'packages', 'workspace', 'shared', 'package.json'];
+      const found = keywords.filter(k => answer.includes(k));
+      if (found.length >= 3) {
+        return { pass: true, msg: '✅ Good monorepo structure! Remember to configure the build pipeline (turbo.json or nx.json) for efficient builds.' };
+      }
+      return { pass: false, msg: '❌ Structure: apps/ (web, api) + packages/ (shared-types, ui). Root package.json needs "workspaces": ["apps/*", "packages/*"]. Each package has its own package.json.' };
+    },
+    6: () => {
+      const keywords = ['queue', 'worker', 'retry', 'template', 'email', 'sms', 'priority'];
+      const found = keywords.filter(k => answer.includes(k));
+      if (found.length >= 4 && answer.length > 150) {
+        return { pass: true, msg: '✅ Comprehensive design! You covered the key aspects of a notification system. Consider also: user preferences, do-not-disturb, and delivery tracking.' };
+      }
+      return { pass: false, msg: '❌ Key components: Notification API → Priority Queue → Channel Workers (email/SMS/push) → Retry with backoff → Delivery status tracking → Template engine → User preferences. Consider rate limiting per user.' };
+    }
+  };
+
+  const result = checks[num]();
+  resultEl.textContent = result.msg;
+  resultEl.className = `exercise-result show ${result.pass ? 'pass' : 'fail'}`;
+  if (result.pass) addXP(20);
+}
+
+function toggleHint(num) {
+  document.getElementById(`hint${num}`).classList.toggle('show');
+}
+
+// ===== TABS =====
+function switchTab(tabGroupId, contentGroupId, tabName) {
+  const tabGroup = document.getElementById(tabGroupId);
+  const contentGroup = document.getElementById(contentGroupId);
+  
+  tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  contentGroup.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
+  event.target.classList.add('active');
+  contentGroup.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+}
+
+// ===== FLASHCARDS =====
+const flashcards = [
+  { q: "What is the difference between a monorepo and a monolith?", a: "A <strong>monorepo</strong> is a single repository containing multiple projects — it's about code organization. A <strong>monolith</strong> is a single deployable application — it's about runtime architecture. A monorepo CAN contain microservices." },
+  { q: "What is the Circuit Breaker pattern?", a: "A pattern that prevents cascading failures. When a downstream service fails repeatedly, the circuit 'opens' and stops sending requests. After a timeout, it enters 'half-open' state to test if the service recovered." },
+  { q: "What is CQRS?", a: "Command Query Responsibility Segregation — separate the read model (optimized for queries) from the write model (optimized for commands). Great when reads vastly outnumber writes." },
+  { q: "What is the Saga pattern?", a: "A pattern for managing distributed transactions across microservices. Each step has a compensating action for rollback. If step 3 fails, steps 2 and 1 are compensated (undone) in reverse." },
+  { q: "What should you always set on HTTP service-to-service calls?", a: "<strong>Timeouts!</strong> Default timeout is often infinite. A service waiting forever for a response will exhaust connection pools and crash. Always set explicit timeouts (e.g., 5 seconds)." },
+  { q: "What is an API Gateway?", a: "A single entry point for all client requests. It handles routing to microservices, authentication, rate limiting, request aggregation, and protocol translation. Examples: Kong, Express proxy, AWS API Gateway." },
+  { q: "What is the Repository Pattern?", a: "Abstracts data access behind an interface. Your business logic depends on the interface, not the concrete database implementation. This makes it easy to swap databases and write unit tests." },
+  { q: "Name 3 monorepo tools for JavaScript", a: "<strong>Turborepo</strong> (simple, fast caching), <strong>Nx</strong> (feature-rich, enterprise), <strong>npm/pnpm workspaces</strong> (built-in, basic). Lerna is deprecated in favor of these." },
+  { q: "What is Event Sourcing?", a: "Instead of storing current state, you store a sequence of events (facts). State is derived by replaying events. Benefits: full audit trail, time travel, event-driven architecture. Used in financial systems." },
+  { q: "What is a distributed monolith?", a: "The WORST of both worlds: microservices that are tightly coupled. Signs: shared database, synchronized deployments, long chains of synchronous calls. Has all the complexity of microservices with none of the benefits." },
+  { q: "What is the cache-aside pattern?", a: "1) Check cache first. 2) If miss, query database. 3) Store result in cache with TTL. 4) Return data. On update: write to DB first, then invalidate (delete) the cache entry." },
+  { q: "When should you use microservices vs monolith?", a: "<strong>Monolith:</strong> small team, early product, simple domain. <strong>Microservices:</strong> multiple teams, independent scaling needs, different tech requirements per service, organizational boundaries. Always start with a monolith!" },
+];
+
+let currentFlashcard = 0;
+
+function nextFlashcard() {
+  currentFlashcard = (currentFlashcard + 1) % flashcards.length;
+  renderFlashcard();
+}
+
+function prevFlashcard() {
+  currentFlashcard = (currentFlashcard - 1 + flashcards.length) % flashcards.length;
+  renderFlashcard();
+}
+
+function renderFlashcard() {
+  const fc = flashcards[currentFlashcard];
+  const area = document.getElementById('flashcardArea');
+  if (!area) return;
+  area.innerHTML = `
+    <div class="flashcard" onclick="this.classList.toggle('flipped')">
+      <div class="front">${fc.q}</div>
+      <div class="back">${fc.a}</div>
+    </div>
+  `;
+  const counter = document.getElementById('flashcardCounter');
+  if (counter) counter.textContent = `${currentFlashcard + 1} / ${flashcards.length}`;
+}
+
+// ===== INIT =====
+navigateTo('intro');
+</script>
+</body>
+</html>

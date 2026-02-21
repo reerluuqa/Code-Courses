@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express.js Mastery Dojo</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --error: #ef4444;
+            --code-bg: #0d1117;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            height: 100vh;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            background: var(--bg-dark);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--bg-card);
+            border-left-color: var(--accent);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            background: var(--bg-dark);
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .xp-badge {
+            background: var(--bg-card);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Lesson Cards */
+        .lesson-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .lesson-card {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: transform 0.3s, border-color 0.3s;
+            cursor: pointer;
+        }
+
+        .lesson-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+
+        .lesson-card h3 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .difficulty {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .difficulty.easy { background: var(--success); color: white; }
+        .difficulty.medium { background: var(--accent); color: black; }
+        .difficulty.hard { background: var(--error); color: white; }
+
+        /* Code Editor Simulation */
+        .code-workspace {
+            background: var(--code-bg);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin: 1.5rem 0;
+        }
+
+        .code-header {
+            background: #161b22;
+            padding: 0.75rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #27c93f; }
+
+        .filename {
+            margin-left: 1rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .code-editor {
+            padding: 1.5rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            min-height: 300px;
+            white-space: pre;
+            overflow-x: auto;
+            color: #e6edf3;
+        }
+
+        .keyword { color: #ff7b72; }
+        .string { color: #a5d6ff; }
+        .function { color: #d2a8ff; }
+        .comment { color: #8b949e; font-style: italic; }
+        .number { color: #79c0ff; }
+
+        /* Interactive Simulator */
+        .simulator {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border: 2px solid var(--border);
+        }
+
+        .simulator-visual {
+            background: var(--bg-dark);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            min-height: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .middleware-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .middleware-item {
+            background: #1f2937;
+            border: 2px solid var(--border);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .middleware-item.active {
+            border-color: var(--accent);
+            background: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+        }
+
+        .middleware-item.error {
+            border-color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .middleware-item.success {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .arrow-down {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+        }
+
+        /* Quiz Section */
+        .quiz-container {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .quiz-option {
+            background: var(--bg-dark);
+            border: 2px solid var(--border);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Pitfalls Section */
+        .pitfall-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+            border-left: 4px solid var(--error);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .pitfall-card h4 {
+            color: var(--error);
+            margin-bottom: 0.5rem;
+        }
+
+        .solution {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            display: none;
+        }
+
+        .solution.show {
+            display: block;
+        }
+
+        /* Right Panel - Tools */
+        .tools-panel {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            overflow-y: auto;
+            border-left: 1px solid var(--border);
+        }
+
+        .tool-section {
+            margin-bottom: 2rem;
+        }
+
+        .tool-section h4 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .route-tester {
+            background: var(--bg-dark);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 0.25rem;
+            font-family: monospace;
+        }
+
+        button {
+            background: var(--accent);
+            color: black;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        button.secondary {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .http-method {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+
+        .method-get { background: #10b981; color: white; }
+        .method-post { background: #3b82f6; color: white; }
+        .method-put { background: #f59e0b; color: black; }
+        .method-delete { background: #ef4444; color: white; }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .processing {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Console Output */
+        .console-output {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .console-line {
+            margin: 0.25rem 0;
+        }
+
+        .console-error { color: #f87171; }
+        .console-info { color: #60a5fa; }
+        .console-success { color: #34d399; }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 200px 1fr;
+            }
+            .tools-panel { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <span>⚡</span> ExpressDojo
+        </div>
+        
+        <nav id="lessonNav">
+            <div class="nav-item active" data-module="intro">
+                🚀 Introduction
+                <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+            </div>
+            <div class="nav-item" data-module="routing">
+                🛣️ Routing Deep Dive
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="nav-item" data-module="middleware">
+                🥞 Middleware Mastery
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="nav-item locked" data-module="request-response">
+                🔄 Req/Res Cycle
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="nav-item locked" data-module="error-handling">
+                🚨 Error Handling
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="nav-item locked" data-module="api-design">
+                🏗️ API Architecture
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+            <div class="nav-item locked" data-module="interview-traps">
+                🎯 Interview Traps
+                <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            </div>
+        </nav>
+
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Current Streak</div>
+            <div style="font-size: 1.5rem; color: var(--accent); font-weight: bold;">🔥 5 days</div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Dynamic content loaded here -->
+    </main>
+
+    <!-- Right Tools Panel -->
+    <aside class="tools-panel">
+        <div class="tool-section">
+            <h4>🧪 Route Tester</h4>
+            <div class="route-tester">
+                <div class="input-group">
+                    <label>Method</label>
+                    <select id="testMethod">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Path</label>
+                    <input type="text" id="testPath" placeholder="/api/users/123" value="/">
+                </div>
+                <button onclick="testRoute()">Send Request</button>
+            </div>
+            <div id="testResult"></div>
+        </div>
+
+        <div class="tool-section">
+            <h4>📊 Middleware Stack</h4>
+            <div id="miniStack" style="font-size: 0.85rem;">
+                <div style="padding: 0.5rem; background: var(--bg-dark); border-radius: 0.25rem; margin-bottom: 0.5rem;">
+                    1. loggerMiddleware
+                </div>
+                <div style="padding: 0.5rem; background: var(--bg-dark); border-radius: 0.25rem; margin-bottom: 0.5rem;">
+                    2. authMiddleware
+                </div>
+                <div style="padding: 0.5rem; background: var(--bg-dark); border-radius: 0.25rem;">
+                    3. routeHandler
+                </div>
+            </div>
+        </div>
+
+        <div class="tool-section">
+            <h4>⚠️ Common Mistakes</h4>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                <div style="margin-bottom: 0.5rem; cursor: pointer; hover: color: var(--text);" onclick="showPitfall(0)">
+                    → Forgetting next()
+                </div>
+                <div style="margin-bottom: 0.5rem; cursor: pointer;" onclick="showPitfall(1)">
+                    → Async error handling
+                </div>
+                <div style="cursor: pointer;" onclick="showPitfall(2)">
+                    → Middleware order
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+// Course Data Structure
+const courseData = {
+    intro: {
+        title: "Express.js Architecture",
+        subtitle: "Understanding the foundation",
+        content: `
+            <div class="header">
+                <div>
+                    <h1>Welcome to Express Mastery</h1>
+                    <p style="color: var(--text-muted);">Master the most popular Node.js framework</p>
+                </div>
+                <div class="xp-badge">XP: 1,240</div>
+            </div>
+
+            <div class="lesson-grid">
+                <div class="lesson-card" onclick="loadModule('routing')">
+                    <h3>🛣️ Routing Mastery</h3>
+                    <p>Route parameters, query strings, pattern matching, and route-specific middleware.</p>
+                    <span class="difficulty medium">Medium</span>
+                </div>
+                <div class="lesson-card" onclick="loadModule('middleware')">
+                    <h3>🥞 Middleware Patterns</h3>
+                    <p>Application-level, router-level, error-handling, and third-party middleware.</p>
+                    <span class="difficulty hard">Hard</span>
+                </div>
+                <div class="lesson-card" onclick="loadModule('error-handling')">
+                    <h3>🚨 Error Handling</h3>
+                    <p>Synchronous vs asynchronous errors, custom error classes, and centralized handling.</p>
+                    <span class="difficulty hard">Hard</span>
+                </div>
+            </div>
+
+            <div class="simulator">
+                <h3>🎯 Express Lifecycle Simulator</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Watch how a request flows through Express:</p>
+                
+                <div class="simulator-visual" id="lifecycleDemo">
+                    <div class="middleware-stack">
+                        <div class="middleware-item" id="step1">
+                            <div>
+                                <strong>Client Request</strong>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">GET /api/users</div>
+                            </div>
+                            <span class="http-method method-get">GET</span>
+                        </div>
+                        <div class="arrow-down">↓</div>
+                        <div class="middleware-item" id="step2">
+                            <div>
+                                <strong>app.use() - Logger</strong>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Logs request method & time</div>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--accent);">next()</span>
+                        </div>
+                        <div class="arrow-down">↓</div>
+                        <div class="middleware-item" id="step3">
+                            <div>
+                                <strong>app.use() - Body Parser</strong>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">Parses JSON body</div>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--accent);">next()</span>
+                        </div>
+                        <div class="arrow-down">↓</div>
+                        <div class="middleware-item" id="step4">
+                            <div>
+                                <strong>Route Handler</strong>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">GET /api/users</div>
+                            </div>
+                            <span style="font-size: 0.8rem; color: var(--success);">res.json()</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="runLifecycleDemo()">▶️ Run Simulation</button>
+                <div class="console-output" id="lifecycleConsole" style="display: none;"></div>
+            </div>
+        `
+    },
+
+    routing: {
+        title: "Advanced Routing",
+        subtitle: "Route patterns and parameter handling",
+        content: `
+            <div class="header">
+                <div>
+                    <h1>Express Routing Deep Dive</h1>
+                    <p style="color: var(--text-muted);">Route matching, parameters, and regex patterns</p>
+                </div>
+                <button class="secondary" onclick="loadModule('intro')">← Back</button>
+            </div>
+
+            <div class="code-workspace">
+                <div class="code-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                    <span class="filename">routes/users.js</span>
+                </div>
+                <div class="code-editor" contenteditable="true" id="routeCode" spellcheck="false">
+<span class="comment">// Route parameters and regex constraints</span>
+app.<span class="function">get</span>(<span class="string">'/users/:userId'</span>, (req, res) => {
+    <span class="comment">// req.params.userId is available here</span>
+    res.<span class="function">json</span>({ id: req.params.userId });
+});
+
+<span class="comment">// Multiple parameters</span>
+app.<span class="function">get</span>(<span class="string">'/users/:userId/posts/:postId'</span>, (req, res) => {
+    <span class="comment">// Access: req.params.userId, req.params.postId</span>
+});
+
+<span class="comment">// Regex constraint: userId must be digits only</span>
+app.<span class="function">get</span>(<span class="string">'/users/:userId(\\d+)'</span>, (req, res) => {
+    res.<span class="function">send</span>(<span class="string">'Numeric ID only'</span>);
+});
+
+<span class="comment">// Query string handling</span>
+app.<span class="function">get</span>(<span class="string">'/search'</span>, (req, res) => {
+    <span class="comment">// /search?q=express&limit=10</span>
+    <span class="keyword">const</span> { q, limit } = req.query;
+    res.<span class="function">json</span>({ query: q, limit: limit });
+});</div>
+            </div>
+
+            <div class="quiz-container">
+                <h3>🎯 Challenge: Route Matching</h3>
+                <p style="margin-bottom: 1rem;">Which route will handle the request: <code>GET /users/123/posts/456</code>?</p>
+                
+                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                    A) <code>app.get('/users/:id', ...)</code>
+                </div>
+                <div class="quiz-option" onclick="checkAnswer(this, true)">
+                    B) <code>app.get('/users/:userId/posts/:postId', ...)</code>
+                </div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                    C) <code>app.get('/users/123/posts', ...)</code>
+                </div>
+                <div class="quiz-option" onclick="checkAnswer(this, false)">
+                    D) <code>app.get('/users/:id/posts', ...)</code>
+                </div>
+                
+                <div id="quizFeedback" style="margin-top: 1rem; font-weight: bold;"></div>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>⚠️ Common Pitfall: Route Order Matters!</h4>
+                <p>Express matches routes sequentially. Specific routes should come before generic ones.</p>
+                <button onclick="toggleSolution(this)" style="margin-top: 0.5rem; width: auto;">Show Solution</button>
+                <div class="solution">
+                    <strong>❌ Wrong:</strong><br>
+                    <code>app.get('/users/:id', ...)  // catches everything first</code><br>
+                    <code>app.get('/users/new', ...)   // never reached!</code><br><br>
+                    <strong>✅ Correct:</strong><br>
+                    <code>app.get('/users/new', ...)   // specific first</code><br>
+                    <code>app.get('/users/:id', ...)   // generic after</code>
+                </div>
+            </div>
+        `
+    },
+
+    middleware: {
+        title: "Middleware Architecture",
+        subtitle: "The heart of Express",
+        content: `
+            <div class="header">
+                <div>
+                    <h1>Middleware Mastery</h1>
+                    <p style="color: var(--text-muted);">Understanding the middleware chain and next()</p>
+                </div>
+                <button class="secondary" onclick="loadModule('intro')">← Back</button>
+            </div>
+
+            <div class="simulator">
+                <h3>🥞 Interactive Middleware Stack</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1rem;">Click "Execute" to see how middleware flows:</p>
+                
+                <div class="middleware-stack" id="middlewareStack">
+                    <div class="middleware-item" data-type="app" onclick="toggleMiddleware(this)">
+                        <div>
+                            <strong>1. Logger Middleware</strong>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">console.log('Request received')</div>
+                        </div>
+                        <input type="checkbox" checked style="pointer-events: none;">
+                    </div>
+                    <div class="arrow-down">↓</div>
+                    <div class="middleware-item" data-type="app" onclick="toggleMiddleware(this)">
+                        <div>
+                            <strong>2. Authentication</strong>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Verify JWT token</div>
+                        </div>
+                        <input type="checkbox" checked style="pointer-events: none;">
+                    </div>
+                    <div class="arrow-down">↓</div>
+                    <div class="middleware-item" data-type="route" onclick="toggleMiddleware(this)">
+                        <div>
+                            <strong>3. Validation</strong>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">Check req.body</div>
+                        </div>
+                        <input type="checkbox" checked style="pointer-events: none;">
+                    </div>
+                    <div class="arrow-down">↓</div>
+                    <div class="middleware-item" data-type="handler">
+                        <div>
+                            <strong>4. Route Handler</strong>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">res.send('Success')</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem;">
+                    <button onclick="executeMiddleware()">▶️ Execute Stack</button>
+                    <button class="secondary" onclick="resetMiddleware()">Reset</button>
+                </div>
+                
+                <div class="console-output" id="middlewareConsole"></div>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>⚠️ The next() Trap</h4>
+                <p>Forgetting to call next() in non-terminating middleware causes hanging requests.</p>
+                <div class="code-workspace" style="margin-top: 1rem;">
+                    <div class="code-editor">
+<span class="comment">// ❌ BAD: Request hangs forever</span>
+app.<span class="function">use</span>((req, res, next) => {
+    console.<span class="function">log</span>(<span class="string">'Middleware'</span>);
+    <span class="comment">// Forgot next()!</span>
+});
+
+<span class="comment">// ✅ GOOD: Passes control</span>
+app.<span class="function">use</span>((req, res, next) => {
+    console.<span class="function">log</span>(<span class="string">'Middleware'</span>);
+    <span class="function">next</span>(); <span class="comment">// Don't forget me!</span>
+});</div>
+                </div>
+            </div>
+
+            <div class="quiz-container">
+                <h3>🧩 Middleware Ordering Puzzle</h3>
+                <p>Arrange these middleware in the correct order for an API:</p>
+                <ul style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-muted);">
+                    <li>Error Handler</li>
+                    <li>Body Parser</li>
+                    <li>Route Handlers</li>
+                    <li>Authentication</li>
+                </ul>
+                <button onclick="alert('Correct Order: Body Parser → Authentication → Route Handlers → Error Handler')">Check Answer</button>
+            </div>
+        `
+    },
+
+    'error-handling': {
+        title: "Error Handling Patterns",
+        subtitle: "Robust error management",
+        content: `
+            <div class="header">
+                <div>
+                    <h1>Error Handling Excellence</h1>
+                    <p style="color: var(--text-muted);">Async errors, error middleware, and best practices</p>
+                </div>
+                <button class="secondary" onclick="loadModule('intro')">← Back</button>
+            </div>
+
+            <div class="code-workspace">
+                <div class="code-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                    <span class="filename">errorHandler.js</span>
+                </div>
+                <div class="code-editor">
+<span class="comment">// Centralized Error Handling Middleware</span>
+<span class="keyword">const</span> errorHandler = (err, req, res, next) => {
+    console.<span class="function">error</span>(err.stack);
+    
+    <span class="comment">// Operational errors vs Programming errors</span>
+    <span class="keyword">if</span> (err.isOperational) {
+        res.<span class="function">status</span>(err.statusCode).<span class="function">json</span>({
+            status: <span class="string">'error'</span>,
+            message: err.message
+        });
+    } <span class="keyword">else</span> {
+        <span class="comment">// Programming error: don't leak details</span>
+        res.<span class="function">status</span>(500).<span class="function">json</span>({
+            status: <span class="string">'error'</span>,
+            message: <span class="string">'Something went wrong'</span>
+        });
+    }
+};
+
+<span class="comment">// Async wrapper to catch errors</span>
+<span class="keyword">const</span> asyncHandler = (fn) => (req, res, next) => {
+    Promise.<span class="function">resolve</span>(fn(req, res, next)).<span class="function">catch</span>(next);
+};
+
+<span class="comment">// Usage</span>
+app.<span class="function">get</span>(<span class="string">'/user/:id'</span>, asyncHandler(<span class="keyword">async</span> (req, res) => {
+    <span class="keyword">const</span> user = <span class="keyword">await</span> User.<span class="function">findById</span>(req.params.id);
+    <span class="keyword">if</span> (!user) {
+        <span class="keyword">throw</span> <span class="keyword">new</span> AppError(<span class="string">'User not found'</span>, 404);
+    }
+    res.<span class="function">json</span>(user);
+}));</div>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>⚠️ The Async Error Trap</h4>
+                <p>Express 4.x doesn't catch async errors automatically. You MUST handle them.</p>
+                <div class="solution show">
+                    <strong>Solutions:</strong><br>
+                    1. Use try-catch in every async route<br>
+                    2. Use express-async-errors package<br>
+                    3. Use wrapper function (shown above)<br>
+                    4. Upgrade to Express 5 (beta) which handles async automatically
+                </div>
+            </div>
+
+            <div class="simulator">
+                <h3>🎮 Error Flow Simulation</h3>
+                <button onclick="simulateError()">Simulate DB Error</button>
+                <div class="console-output" id="errorConsole"></div>
+            </div>
+        `
+    }
+};
+
+// State Management
+let currentModule = 'intro';
+let xp = 1240;
+let completedLessons = [];
+
+// Initialization
+document.addEventListener('DOMContentLoaded', () => {
+    loadModule('intro');
+    setupNavigation();
+});
+
+function setupNavigation() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            if (!item.classList.contains('locked')) {
+                const module = item.getAttribute('data-module');
+                loadModule(module);
+                
+                // Update active state
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+            }
+        });
+    });
+}
+
+function loadModule(moduleName) {
+    currentModule = moduleName;
+    const content = courseData[moduleName];
+    if (content) {
+        document.getElementById('mainContent').innerHTML = content.content; // ← add .content
+    }
+}
+
+// Lifecycle Demo Animation
+async function runLifecycleDemo() {
+    const steps = ['step1', 'step2', 'step3', 'step4'];
+    const console_output = document.getElementById('lifecycleConsole');
+    console_output.style.display = 'block';
+    console_output.innerHTML = '';
+    
+    const logs = [
+        '<span class="console-info">→ Incoming Request: GET /api/users</span>',
+        '<span class="console-success">✓ Logger: GET /api/users 2024</span>',
+        '<span class="console-success">✓ Body Parser: No body to parse</span>',
+        '<span class="console-success">✓ Route Handler: Sending JSON response</span>',
+        '<span class="console-info">← Response sent (200 OK)</span>'
+    ];
+    
+    for (let i = 0; i < steps.length; i++) {
+        // Reset all
+        steps.forEach(s => document.getElementById(s).classList.remove('active'));
+        
+        // Activate current
+        document.getElementById(steps[i]).classList.add('active');
+        
+        // Add log
+        if (logs[i]) {
+            console_output.innerHTML += `<div class="console-line">${logs[i]}</div>`;
+            console_output.scrollTop = console_output.scrollHeight;
+        }
+        
+        await sleep(800);
+    }
+    
+    // Completion
+    document.getElementById(steps[steps.length - 1]).classList.remove('active');
+    document.getElementById(steps[steps.length - 1]).classList.add('success');
+}
+
+// Middleware Simulator
+let middlewareState = [true, true, true];
+
+function toggleMiddleware(el) {
+    if (el.getAttribute('data-type') === 'handler') return;
+    
+    const index = Array.from(document.querySelectorAll('.middleware-item')).indexOf(el);
+    middlewareState[index] = !middlewareState[index];
+    el.style.opacity = middlewareState[index] ? '1' : '0.4';
+}
+
+async function executeMiddleware() {
+    const console_output = document.getElementById('middlewareConsole');
+    console_output.innerHTML = '';
+    const items = document.querySelectorAll('.middleware-item');
+    
+    for (let i = 0; i < items.length; i++) {
+        if (!middlewareState[i] && i < 3) {
+            console_output.innerHTML += `<div class="console-line">Skipping middleware ${i+1}...</div>`;
+            continue;
+        }
+        
+        items[i].classList.add('active');
+        
+        let msg = '';
+        if (i === 0) msg = '<span class="console-info">[LOGGER]</span> Request received at ' + new Date().toLocaleTimeString();
+        else if (i === 1) msg = '<span class="console-success">[AUTH]</span> Token verified';
+        else if (i === 2) msg = '<span class="console-info">[VALIDATE]</span> Body validated';
+        else if (i === 3) msg = '<span class="console-success">[HANDLER]</span> Sending response';
+        
+        console_output.innerHTML += `<div class="console-line">${msg}</div>`;
+        console_output.scrollTop = console_output.scrollHeight;
+        
+        await sleep(600);
+        items[i].classList.remove('active');
+    }
+}
+
+function resetMiddleware() {
+    document.querySelectorAll('.middleware-item').forEach((el, i) => {
+        el.classList.remove('active');
+        el.style.opacity = '1';
+        middlewareState[i] = true;
+    });
+    document.getElementById('middlewareConsole').innerHTML = '';
+}
+
+// Route Tester
+function testRoute() {
+    const method = document.getElementById('testMethod').value;
+    const path = document.getElementById('testPath').value;
+    const resultDiv = document.getElementById('testResult');
+    
+    resultDiv.innerHTML = '<div class="processing">Processing...</div>';
+    
+    setTimeout(() => {
+        let response = '';
+        if (path === '/') {
+            response = `<span class="console-success">200 OK</span><br>Welcome to Express API`;
+        } else if (path.match(/^\/users\/\d+$/)) {
+            response = `<span class="console-success">200 OK</span><br>{"id": "${path.split('/')[2]}", "name": "John Doe"}`;
+        } else if (path === '/users') {
+            response = `<span class="console-success">200 OK</span><br>[{"id": "1"}, {"id": "2"}]`;
+        } else {
+            response = `<span class="console-error">404 Not Found</span><br>Cannot ${method} ${path}`;
+        }
+        
+        resultDiv.innerHTML = `<div class="console-output">${response}</div>`;
+    }, 500);
+}
+
+// Quiz System
+function checkAnswer(element, isCorrect) {
+    // Reset all options
+    document.querySelectorAll('.quiz-option').forEach(opt => {
+        opt.classList.remove('correct', 'wrong');
+        opt.onclick = null;
+    });
+    
+    if (isCorrect) {
+        element.classList.add('correct');
+        document.getElementById('quizFeedback').innerHTML = '<span style="color: var(--success)">✅ Correct! Express matches the most specific route first.</span>';
+        xp += 50;
+        updateXP();
+    } else {
+        element.classList.add('wrong');
+        document.getElementById('quizFeedback').innerHTML = '<span style="color: var(--error)">❌ Incorrect. Remember that /users/:userId/posts/:postId is more specific than /users/:id</span>';
+    }
+}
+
+function updateXP() {
+    document.querySelector('.xp-badge').textContent = `XP: ${xp}`;
+}
+
+// Pitfalls
+function toggleSolution(btn) {
+    const solution = btn.nextElementSibling;
+    solution.classList.toggle('show');
+    btn.textContent = solution.classList.contains('show') ? 'Hide Solution' : 'Show Solution';
+}
+
+function showPitfall(index) {
+    loadModule('middleware');
+    setTimeout(() => {
+        document.querySelector('.pitfall-card').scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+}
+
+// Error Simulation
+function simulateError() {
+    const console_output = document.getElementById('errorConsole');
+    console_output.innerHTML = `
+        <div class="console-line console-error">Error: connect ECONNREFUSED 127.0.0.1:27017</div>
+        <div class="console-line">    at TCPConnectWrap.afterConnect [as oncomplete] (net.js:1141:16)</div>
+        <div class="console-line console-info">→ Caught by asyncHandler wrapper</div>
+        <div class="console-line console-info">→ Passed to errorHandler middleware</div>
+        <div class="console-line console-success">→ Client receives: { status: 'error', message: 'Database connection failed' }</div>
+    `;
+}
+
+// Utility
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Make contenteditable code editor more realistic
+document.addEventListener('keydown', (e) => {
+    if (e.target.classList.contains('code-editor')) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            document.execCommand('insertText', false, '    ');
+        }
+    }
+});
+</script>
+
+</body>
+</html>

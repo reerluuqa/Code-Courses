@@ -1,0 +1,3717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REST API Design Mastery</title>
+<style>
+    :root {
+        --primary: #6c5ce7;
+        --primary-dark: #5a4bd1;
+        --secondary: #00cec9;
+        --accent: #fd79a8;
+        --success: #00b894;
+        --warning: #fdcb6e;
+        --danger: #e17055;
+        --dark: #2d3436;
+        --darker: #1e272e;
+        --light: #dfe6e9;
+        --lighter: #f5f6fa;
+        --bg: #0a0a1a;
+        --card-bg: #14142b;
+        --card-border: #2a2a4a;
+        --text: #e0e0e0;
+        --text-dim: #8a8a9a;
+        --glow-purple: rgba(108, 92, 231, 0.3);
+        --glow-green: rgba(0, 206, 201, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+    /* Header */
+    .app-header {
+        background: linear-gradient(135deg, var(--darker), var(--card-bg));
+        border-bottom: 1px solid var(--card-border);
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+    }
+
+    .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .logo-icon {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: bold;
+        color: white;
+        box-shadow: 0 4px 15px var(--glow-purple);
+    }
+
+    .logo h1 {
+        font-size: 22px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .logo h1 span {
+        font-weight: 400;
+        font-size: 14px;
+        display: block;
+        background: none;
+        -webkit-text-fill-color: var(--text-dim);
+    }
+
+    /* Progress bar in header */
+    .header-progress {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .xp-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(253, 203, 110, 0.1);
+        border: 1px solid rgba(253, 203, 110, 0.3);
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-weight: 600;
+        color: var(--warning);
+        font-size: 14px;
+    }
+
+    .streak-display {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(232, 67, 147, 0.1);
+        border: 1px solid rgba(232, 67, 147, 0.3);
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-weight: 600;
+        color: var(--accent);
+        font-size: 14px;
+    }
+
+    .overall-progress {
+        width: 200px;
+        height: 8px;
+        background: var(--card-border);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .overall-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        border-radius: 4px;
+        transition: width 0.5s ease;
+        width: 0%;
+    }
+
+    /* Layout */
+    .app-layout {
+        display: flex;
+        min-height: calc(100vh - 85px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 280px;
+        background: var(--card-bg);
+        border-right: 1px solid var(--card-border);
+        padding: 20px 0;
+        position: sticky;
+        top: 85px;
+        height: calc(100vh - 85px);
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    .sidebar-section {
+        margin-bottom: 20px;
+    }
+
+    .sidebar-section-title {
+        padding: 8px 20px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-dim);
+        font-weight: 600;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid transparent;
+        color: var(--text-dim);
+        font-size: 14px;
+    }
+
+    .nav-item:hover {
+        background: rgba(108, 92, 231, 0.1);
+        color: var(--text);
+    }
+
+    .nav-item.active {
+        background: rgba(108, 92, 231, 0.15);
+        border-left-color: var(--primary);
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .nav-item .nav-icon {
+        font-size: 18px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .nav-item .nav-badge {
+        margin-left: auto;
+        background: var(--primary);
+        color: white;
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .nav-item .nav-check {
+        margin-left: auto;
+        color: var(--success);
+        font-size: 16px;
+    }
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        padding: 30px 40px;
+        max-width: 1000px;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; animation: fadeSlide 0.4s ease; }
+
+    @keyframes fadeSlide {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Section Header */
+    .section-header {
+        margin-bottom: 30px;
+    }
+
+    .section-header h2 {
+        font-size: 32px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-header p {
+        color: var(--text-dim);
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    /* Cards */
+    .card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 20px;
+        transition: all 0.3s;
+    }
+
+    .card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 20px var(--glow-purple);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .card-header h3 {
+        font-size: 18px;
+        color: var(--text);
+    }
+
+    .card-header .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .card p, .card li {
+        color: var(--text-dim);
+        line-height: 1.8;
+        font-size: 14px;
+    }
+
+    .card ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .card ul li::before {
+        content: "→ ";
+        color: var(--secondary);
+        font-weight: bold;
+    }
+
+    /* Code blocks */
+    .code-block {
+        background: #0d0d22;
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 20px;
+        margin: 16px 0;
+        overflow-x: auto;
+        position: relative;
+    }
+
+    .code-block pre {
+        font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+        font-size: 13px;
+        line-height: 1.8;
+        color: #e0e0e0;
+        white-space: pre;
+    }
+
+    .code-label {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-dim);
+        background: var(--card-border);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .code-block .comment { color: #636e72; }
+    .code-block .keyword { color: #6c5ce7; }
+    .code-block .string { color: #00b894; }
+    .code-block .method { color: #fd79a8; }
+    .code-block .number { color: #fdcb6e; }
+    .code-block .url { color: #00cec9; }
+    .code-block .status { color: #fdcb6e; }
+
+    /* Method badges */
+    .method-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: monospace;
+        letter-spacing: 1px;
+    }
+
+    .method-get { background: rgba(0, 184, 148, 0.15); color: #00b894; border: 1px solid rgba(0, 184, 148, 0.3); }
+    .method-post { background: rgba(253, 203, 110, 0.15); color: #fdcb6e; border: 1px solid rgba(253, 203, 110, 0.3); }
+    .method-put { background: rgba(108, 92, 231, 0.15); color: #a29bfe; border: 1px solid rgba(108, 92, 231, 0.3); }
+    .method-patch { background: rgba(0, 206, 201, 0.15); color: #00cec9; border: 1px solid rgba(0, 206, 201, 0.3); }
+    .method-delete { background: rgba(225, 112, 85, 0.15); color: #e17055; border: 1px solid rgba(225, 112, 85, 0.3); }
+
+    /* Status code badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        font-family: monospace;
+    }
+
+    .status-1xx { background: rgba(116, 185, 255, 0.15); color: #74b9ff; border: 1px solid rgba(116, 185, 255, 0.3); }
+    .status-2xx { background: rgba(0, 184, 148, 0.15); color: #00b894; border: 1px solid rgba(0, 184, 148, 0.3); }
+    .status-3xx { background: rgba(253, 203, 110, 0.15); color: #fdcb6e; border: 1px solid rgba(253, 203, 110, 0.3); }
+    .status-4xx { background: rgba(225, 112, 85, 0.15); color: #e17055; border: 1px solid rgba(225, 112, 85, 0.3); }
+    .status-5xx { background: rgba(232, 67, 147, 0.15); color: #e84393; border: 1px solid rgba(232, 67, 147, 0.3); }
+
+    /* Interactive elements */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: 0 4px 15px var(--glow-purple);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--glow-purple); }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success), #00a885);
+        color: white;
+    }
+    .btn-success:hover { transform: translateY(-2px); }
+
+    .btn-secondary {
+        background: var(--card-border);
+        color: var(--text);
+    }
+    .btn-secondary:hover { background: #3a3a5a; }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--card-border);
+        color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--darker);
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 20px;
+        overflow-x: auto;
+    }
+
+    .tab {
+        padding: 10px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-dim);
+        transition: all 0.2s;
+        white-space: nowrap;
+        border: none;
+        background: transparent;
+    }
+
+    .tab:hover { color: var(--text); }
+    .tab.active {
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Quiz styles */
+    .quiz-container {
+        margin: 20px 0;
+    }
+
+    .quiz-question {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+    }
+
+    .quiz-question h4 {
+        font-size: 16px;
+        margin-bottom: 4px;
+        color: var(--secondary);
+    }
+
+    .quiz-question .question-text {
+        font-size: 15px;
+        margin-bottom: 16px;
+        line-height: 1.6;
+    }
+
+    .quiz-options {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .quiz-option {
+        padding: 14px 18px;
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        width: 100%;
+    }
+
+    .quiz-option:hover:not(.disabled) {
+        border-color: var(--primary);
+        background: rgba(108, 92, 231, 0.1);
+    }
+
+    .quiz-option .option-letter {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--card-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .quiz-option.correct {
+        border-color: var(--success);
+        background: rgba(0, 184, 148, 0.1);
+    }
+    .quiz-option.correct .option-letter {
+        background: var(--success);
+        color: white;
+    }
+
+    .quiz-option.incorrect {
+        border-color: var(--danger);
+        background: rgba(225, 112, 85, 0.1);
+    }
+    .quiz-option.incorrect .option-letter {
+        background: var(--danger);
+        color: white;
+    }
+
+    .quiz-explanation {
+        margin-top: 12px;
+        padding: 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+        display: none;
+    }
+
+    .quiz-explanation.show { display: block; }
+
+    .quiz-explanation.correct-exp {
+        background: rgba(0, 184, 148, 0.1);
+        border: 1px solid rgba(0, 184, 148, 0.3);
+        color: #55efc4;
+    }
+
+    .quiz-explanation.incorrect-exp {
+        background: rgba(225, 112, 85, 0.1);
+        border: 1px solid rgba(225, 112, 85, 0.3);
+        color: #fab1a0;
+    }
+
+    /* Pitfall cards */
+    .pitfall-card {
+        background: rgba(225, 112, 85, 0.05);
+        border: 1px solid rgba(225, 112, 85, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .pitfall-card::before {
+        content: "⚠️";
+        position: absolute;
+        top: 10px;
+        right: 14px;
+        font-size: 24px;
+        opacity: 0.3;
+    }
+
+    .pitfall-card h4 {
+        color: var(--danger);
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+
+    .pitfall-card .wrong-way, .pitfall-card .right-way {
+        margin: 12px 0;
+        padding: 14px;
+        border-radius: 10px;
+    }
+
+    .pitfall-card .wrong-way {
+        background: rgba(225, 112, 85, 0.08);
+        border-left: 3px solid var(--danger);
+    }
+
+    .pitfall-card .right-way {
+        background: rgba(0, 184, 148, 0.08);
+        border-left: 3px solid var(--success);
+    }
+
+    .pitfall-card .label-wrong {
+        color: var(--danger);
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+    }
+
+    .pitfall-card .label-right {
+        color: var(--success);
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+    }
+
+    /* API Simulator */
+    .api-simulator {
+        background: #0d0d22;
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        overflow: hidden;
+        margin: 20px 0;
+    }
+
+    .api-sim-header {
+        background: var(--darker);
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .api-sim-method {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 12px;
+        font-family: monospace;
+        cursor: pointer;
+        border: none;
+        min-width: 80px;
+    }
+
+    .api-sim-url {
+        flex: 1;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        padding: 8px 14px;
+        color: var(--text);
+        font-family: monospace;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .api-sim-url:focus {
+        border-color: var(--primary);
+    }
+
+    .api-sim-send {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .api-sim-send:hover { background: var(--primary-dark); }
+
+    .api-sim-body {
+        display: flex;
+        min-height: 250px;
+    }
+
+    .api-sim-request, .api-sim-response {
+        flex: 1;
+        padding: 16px;
+    }
+
+    .api-sim-request {
+        border-right: 1px solid var(--card-border);
+    }
+
+    .api-sim-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-dim);
+        margin-bottom: 10px;
+    }
+
+    .api-sim-textarea {
+        width: 100%;
+        min-height: 180px;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        font-family: 'Fira Code', monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        resize: vertical;
+        outline: none;
+    }
+
+    .api-sim-response pre {
+        font-family: 'Fira Code', monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--secondary);
+        white-space: pre-wrap;
+    }
+
+    /* Exercise */
+    .exercise-card {
+        background: linear-gradient(135deg, rgba(108,92,231,0.08), rgba(0,206,201,0.08));
+        border: 1px solid rgba(108, 92, 231, 0.3);
+        border-radius: 16px;
+        padding: 24px;
+        margin: 20px 0;
+    }
+
+    .exercise-card h4 {
+        color: var(--primary);
+        font-size: 16px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .exercise-input {
+        width: 100%;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        color: var(--text);
+        font-family: 'Fira Code', monospace;
+        font-size: 14px;
+        outline: none;
+        margin: 10px 0;
+    }
+
+    .exercise-input:focus {
+        border-color: var(--primary);
+    }
+
+    .exercise-feedback {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        display: none;
+        margin-top: 8px;
+    }
+
+    .exercise-feedback.show { display: block; }
+
+    .exercise-feedback.correct {
+        background: rgba(0, 184, 148, 0.1);
+        border: 1px solid rgba(0, 184, 148, 0.3);
+        color: #55efc4;
+    }
+
+    .exercise-feedback.incorrect {
+        background: rgba(225, 112, 85, 0.1);
+        border: 1px solid rgba(225, 112, 85, 0.3);
+        color: #fab1a0;
+    }
+
+    /* Grid layouts */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 16px;
+    }
+
+    /* Table */
+    .api-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+    }
+
+    .api-table th, .api-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--card-border);
+        font-size: 13px;
+    }
+
+    .api-table th {
+        color: var(--text-dim);
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    .api-table tr:hover td {
+        background: rgba(108, 92, 231, 0.05);
+    }
+
+    /* Tooltip */
+    .tip {
+        background: rgba(0, 206, 201, 0.1);
+        border: 1px solid rgba(0, 206, 201, 0.3);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin: 16px 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #81ecec;
+    }
+
+    .tip::before {
+        content: "💡 ";
+    }
+
+    .warning-box {
+        background: rgba(253, 203, 110, 0.1);
+        border: 1px solid rgba(253, 203, 110, 0.3);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin: 16px 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #ffeaa7;
+    }
+
+    .warning-box::before {
+        content: "⚠️ ";
+    }
+
+    /* Drag and drop */
+    .dnd-container {
+        display: flex;
+        gap: 20px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+
+    .dnd-bucket {
+        flex: 1;
+        min-width: 200px;
+        background: var(--card-bg);
+        border: 2px dashed var(--card-border);
+        border-radius: 12px;
+        padding: 16px;
+        min-height: 150px;
+    }
+
+    .dnd-bucket h5 {
+        font-size: 13px;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+
+    .dnd-item {
+        padding: 10px 14px;
+        background: var(--darker);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        margin-bottom: 6px;
+        cursor: grab;
+        font-size: 13px;
+        font-family: monospace;
+        transition: all 0.2s;
+        user-select: none;
+    }
+
+    .dnd-item:active { cursor: grabbing; }
+    .dnd-item:hover { border-color: var(--primary); }
+
+    .dnd-item.correct-place {
+        border-color: var(--success);
+        background: rgba(0, 184, 148, 0.1);
+    }
+
+    .dnd-item.wrong-place {
+        border-color: var(--danger);
+        background: rgba(225, 112, 85, 0.1);
+    }
+
+    .dnd-source {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0;
+    }
+
+    /* Interactive endpoint builder */
+    .endpoint-builder {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 24px;
+        margin: 20px 0;
+    }
+
+    .endpoint-parts {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+        padding: 16px;
+        background: #0d0d22;
+        border-radius: 10px;
+        margin: 12px 0;
+        font-family: monospace;
+        font-size: 14px;
+        min-height: 50px;
+    }
+
+    .endpoint-part {
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .endpoint-part.fixed {
+        background: var(--card-border);
+        color: var(--text-dim);
+    }
+
+    .endpoint-part.editable {
+        background: rgba(108, 92, 231, 0.2);
+        border: 1px solid var(--primary);
+        color: var(--primary);
+    }
+
+    .endpoint-part.param {
+        background: rgba(0, 206, 201, 0.2);
+        border: 1px solid var(--secondary);
+        color: var(--secondary);
+    }
+
+    /* Comparison table */
+    .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr;
+        gap: 0;
+        margin: 20px 0;
+    }
+
+    .comparison-side {
+        padding: 20px;
+    }
+
+    .comparison-divider {
+        background: var(--card-border);
+    }
+
+    .comparison-title {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Confetti */
+    .confetti-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1000;
+    }
+
+    .confetti-piece {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        top: -10px;
+        animation: confettiFall 3s ease-in-out forwards;
+    }
+
+    @keyframes confettiFall {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Score card */
+    .score-card {
+        background: linear-gradient(135deg, var(--primary), #e84393);
+        border-radius: 16px;
+        padding: 30px;
+        text-align: center;
+        color: white;
+        margin: 20px 0;
+    }
+
+    .score-card h3 {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+
+    .score-card .score-number {
+        font-size: 48px;
+        font-weight: 800;
+    }
+
+    /* Animation classes */
+    .bounce {
+        animation: bounce 0.5s ease;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .shake {
+        animation: shake 0.5s ease;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+
+    /* Status code game */
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    .status-card-flip {
+        aspect-ratio: 1.5;
+        perspective: 1000px;
+        cursor: pointer;
+    }
+
+    .status-card-inner {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transition: transform 0.5s;
+        transform-style: preserve-3d;
+    }
+
+    .status-card-flip.flipped .status-card-inner {
+        transform: rotateY(180deg);
+    }
+
+    .status-card-front, .status-card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .status-card-front {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        font-size: 24px;
+    }
+
+    .status-card-back {
+        background: var(--primary);
+        transform: rotateY(180deg);
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        color: white;
+    }
+
+    .status-card-flip.matched .status-card-inner {
+        transform: rotateY(180deg);
+    }
+
+    .status-card-flip.matched .status-card-back {
+        background: var(--success);
+    }
+
+    /* Resource modeler */
+    .resource-model {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 24px;
+        margin: 20px 0;
+    }
+
+    .resource-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        padding: 30px;
+        flex-wrap: wrap;
+    }
+
+    .resource-box {
+        background: #0d0d22;
+        border: 2px solid var(--primary);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        min-width: 140px;
+    }
+
+    .resource-box h5 {
+        color: var(--primary);
+        margin-bottom: 8px;
+    }
+
+    .resource-box ul {
+        list-style: none;
+        font-size: 12px;
+        color: var(--text-dim);
+    }
+
+    .resource-arrow {
+        color: var(--secondary);
+        font-size: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .sidebar { display: none; }
+        .main-content { padding: 20px; }
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        .status-grid { grid-template-columns: repeat(2, 1fr); }
+        .api-sim-body { flex-direction: column; }
+        .api-sim-request { border-right: none; border-bottom: 1px solid var(--card-border); }
+        .comparison { grid-template-columns: 1fr; }
+        .comparison-divider { height: 1px; width: 100%; }
+    }
+
+    /* Mobile nav toggle */
+    .mobile-nav-toggle {
+        display: none;
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 18px;
+    }
+
+    @media (max-width: 900px) {
+        .mobile-nav-toggle { display: block; }
+        .sidebar.mobile-open {
+            display: block;
+            position: fixed;
+            top: 85px;
+            left: 0;
+            z-index: 99;
+            width: 280px;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+        }
+    }
+
+    /* Highlight flash */
+    .highlight-flash {
+        animation: flash 0.8s ease;
+    }
+
+    @keyframes flash {
+        0%, 100% { background: transparent; }
+        50% { background: rgba(108, 92, 231, 0.2); }
+    }
+
+    /* Accordion */
+    .accordion {
+        margin: 10px 0;
+    }
+    .accordion-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 600;
+        font-size: 14px;
+    }
+    .accordion-header:hover {
+        border-color: var(--primary);
+    }
+    .accordion-header .arrow {
+        transition: transform 0.3s;
+    }
+    .accordion.open .accordion-header .arrow {
+        transform: rotate(180deg);
+    }
+    .accordion-body {
+        display: none;
+        padding: 16px 18px;
+        background: rgba(20,20,43,0.5);
+        border: 1px solid var(--card-border);
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        font-size: 14px;
+        line-height: 1.8;
+        color: var(--text-dim);
+    }
+    .accordion.open .accordion-body {
+        display: block;
+    }
+
+    /* Challenge mode */
+    .challenge-timer {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--accent);
+        text-align: center;
+        margin: 10px 0;
+    }
+
+    .challenge-progress {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        margin: 16px 0;
+    }
+
+    .challenge-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--card-border);
+    }
+
+    .challenge-dot.answered { background: var(--success); }
+    .challenge-dot.wrong { background: var(--danger); }
+    .challenge-dot.current {
+        background: var(--primary);
+        box-shadow: 0 0 10px var(--glow-purple);
+    }
+
+    .hidden { display: none !important; }
+
+    /* Smooth transitions for sections */
+    .section { transition: opacity 0.3s; }
+
+    /* Interactive HTTP flow diagram */
+    .flow-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 30px;
+        flex-wrap: wrap;
+    }
+
+    .flow-step {
+        padding: 16px 20px;
+        border-radius: 12px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        min-width: 120px;
+    }
+
+    .flow-arrow {
+        font-size: 20px;
+        color: var(--text-dim);
+    }
+
+    .selectable-tag {
+        display: inline-block;
+        padding: 6px 14px;
+        border: 1px solid var(--card-border);
+        border-radius: 20px;
+        margin: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+    .selectable-tag:hover {
+        border-color: var(--primary);
+    }
+    .selectable-tag.selected {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+</style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">
+            <button class="mobile-nav-toggle" onclick="toggleMobileNav()">☰</button>
+            <div class="logo-icon">🔌</div>
+            <h1>REST API Mastery<span>Master API Design for Top Companies</span></h1>
+        </div>
+        <div class="header-progress">
+            <div class="xp-display">⭐ <span id="xp-count">0</span> XP</div>
+            <div class="streak-display">🔥 <span id="streak-count">0</span></div>
+            <div class="overall-progress">
+                <div class="overall-progress-fill" id="overall-progress"></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Foundations</div>
+                <div class="nav-item active" onclick="showSection('intro')">
+                    <span class="nav-icon">🏠</span>
+                    <span>Overview</span>
+                </div>
+                <div class="nav-item" onclick="showSection('principles')">
+                    <span class="nav-icon">📐</span>
+                    <span>REST Principles</span>
+                    <span class="nav-check" id="check-principles">✓</span>
+                </div>
+                <div class="nav-item" onclick="showSection('methods')">
+                    <span class="nav-icon">🔧</span>
+                    <span>HTTP Methods</span>
+                    <span class="nav-check" id="check-methods">✓</span>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Core Knowledge</div>
+                <div class="nav-item" onclick="showSection('statuscodes')">
+                    <span class="nav-icon">📊</span>
+                    <span>Status Codes</span>
+                    <span class="nav-check" id="check-statuscodes">✓</span>
+                </div>
+                <div class="nav-item" onclick="showSection('structure')">
+                    <span class="nav-icon">🏗️</span>
+                    <span>API Structure</span>
+                    <span class="nav-check" id="check-structure">✓</span>
+                </div>
+                <div class="nav-item" onclick="showSection('versioning')">
+                    <span class="nav-icon">🔄</span>
+                    <span>API Versioning</span>
+                    <span class="nav-check" id="check-versioning">✓</span>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Practice</div>
+                <div class="nav-item" onclick="showSection('pitfalls')">
+                    <span class="nav-icon">⚠️</span>
+                    <span>Pitfalls & Mistakes</span>
+                    <span class="nav-badge">12</span>
+                </div>
+                <div class="nav-item" onclick="showSection('simulator')">
+                    <span class="nav-icon">🧪</span>
+                    <span>API Simulator</span>
+                </div>
+                <div class="nav-item" onclick="showSection('quiz')">
+                    <span class="nav-icon">🎯</span>
+                    <span>Master Quiz</span>
+                    <span class="nav-badge">25</span>
+                </div>
+                <div class="nav-item" onclick="showSection('challenge')">
+                    <span class="nav-icon">⚡</span>
+                    <span>Speed Challenge</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- ==================== INTRO ==================== -->
+            <div class="section active" id="section-intro">
+                <div class="section-header">
+                    <h2>🔌 REST API Design Mastery</h2>
+                    <p>Master RESTful API design principles that top companies like Google, Meta, and Amazon expect you to know. Build, test, and perfect your understanding through interactive exercises.</p>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card" onclick="showSection('principles')" style="cursor:pointer">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(108,92,231,0.2);color:var(--primary)">📐</div>
+                            <h3>REST Principles</h3>
+                        </div>
+                        <p>The 6 architectural constraints that define REST: Client-Server, Stateless, Cacheable, Uniform Interface, Layered System, Code on Demand.</p>
+                    </div>
+                    <div class="card" onclick="showSection('methods')" style="cursor:pointer">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(0,184,148,0.2);color:var(--success)">🔧</div>
+                            <h3>HTTP Methods</h3>
+                        </div>
+                        <p>Deep dive into GET, POST, PUT, PATCH, DELETE — when to use each, idempotency, and safety guarantees.</p>
+                    </div>
+                    <div class="card" onclick="showSection('statuscodes')" style="cursor:pointer">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(253,203,110,0.2);color:var(--warning)">📊</div>
+                            <h3>Status Codes</h3>
+                        </div>
+                        <p>From 200 OK to 503 Service Unavailable — master the response codes that tell the client what happened.</p>
+                    </div>
+                    <div class="card" onclick="showSection('structure')" style="cursor:pointer">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(232,67,147,0.2);color:var(--accent)">🏗️</div>
+                            <h3>API Structure</h3>
+                        </div>
+                        <p>Design clean, predictable URL structures. Learn resource naming, nesting, filtering, pagination, and query parameters.</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:20px">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(0,206,201,0.2);color:var(--secondary)">🗺️</div>
+                        <h3>Learning Path</h3>
+                    </div>
+                    <div class="flow-diagram">
+                        <div class="flow-step" style="background:rgba(108,92,231,0.2);border:1px solid var(--primary)">REST<br>Principles</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background:rgba(0,184,148,0.2);border:1px solid var(--success)">HTTP<br>Methods</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background:rgba(253,203,110,0.2);border:1px solid var(--warning)">Status<br>Codes</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background:rgba(232,67,147,0.2);border:1px solid var(--accent)">API<br>Structure</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step" style="background:rgba(0,206,201,0.2);border:1px solid var(--secondary)">Versioning<br>& Best Practices</div>
+                    </div>
+                </div>
+
+                <div class="tip">
+                    <strong>Interview Tip:</strong> Companies like Stripe, Twilio, and GitHub are famous for excellent REST API design. Study their APIs as real-world examples alongside this course!
+                </div>
+            </div>
+
+            <!-- ==================== REST PRINCIPLES ==================== -->
+            <div class="section" id="section-principles">
+                <div class="section-header">
+                    <h2>📐 REST Principles</h2>
+                    <p>REST (Representational State Transfer) was defined by Roy Fielding in 2000. It's an architectural style with 6 key constraints.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(108,92,231,0.2);color:var(--primary)">1️⃣</div>
+                        <h3>Client-Server Separation</h3>
+                    </div>
+                    <p>The client (UI/frontend) and server (data/backend) are independent. They communicate only through the API interface. The client doesn't know how data is stored, and the server doesn't know how data is displayed.</p>
+                    <div class="code-block">
+                        <div class="code-label">Example</div>
+<pre><span class="comment">// Client-side: Only cares about the interface</span>
+<span class="keyword">const</span> response = <span class="keyword">await</span> <span class="method">fetch</span>(<span class="string">'/api/users/42'</span>);
+<span class="keyword">const</span> user = <span class="keyword">await</span> response.<span class="method">json</span>();
+
+<span class="comment">// Client doesn't know (or care) if the server uses:</span>
+<span class="comment">//   - PostgreSQL, MongoDB, or a file system</span>
+<span class="comment">//   - Node.js, Python, or Java</span>
+<span class="comment">//   - One server or a cluster of 100</span></pre>
+                    </div>
+                    <div class="tip"><strong>Why it matters:</strong> Teams can work independently. Mobile, web, and IoT clients can all use the same API. The server can be completely rewritten without changing any client.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(0,184,148,0.2);color:var(--success)">2️⃣</div>
+                        <h3>Statelessness</h3>
+                    </div>
+                    <p>Each request from client to server must contain ALL information needed to understand the request. The server does NOT store any client session state between requests.</p>
+                    <div class="comparison">
+                        <div class="comparison-side">
+                            <div class="comparison-title" style="color:var(--danger)">❌ Stateful (Bad)</div>
+                            <div class="code-block">
+<pre><span class="comment">// Request 1: Login</span>
+<span class="method">POST</span> <span class="url">/login</span>
+<span class="comment">// Server: "I remember user #42 is logged in"</span>
+
+<span class="comment">// Request 2: Get data</span>
+<span class="method">GET</span> <span class="url">/my-orders</span>
+<span class="comment">// Server: "Let me check who called..."</span>
+<span class="comment">// Problem: If this hits a different</span>
+<span class="comment">// server, the session is lost!</span></pre>
+                            </div>
+                        </div>
+                        <div class="comparison-divider"></div>
+                        <div class="comparison-side">
+                            <div class="comparison-title" style="color:var(--success)">✅ Stateless (Good)</div>
+                            <div class="code-block">
+<pre><span class="comment">// Every request carries auth token</span>
+<span class="method">GET</span> <span class="url">/api/orders</span>
+<span class="keyword">Authorization</span>: Bearer eyJhbGci...
+
+<span class="comment">// Server validates the token each time</span>
+<span class="comment">// Any server can handle any request</span>
+<span class="comment">// Perfect for load balancing!</span></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(253,203,110,0.2);color:var(--warning)">3️⃣</div>
+                        <h3>Cacheability</h3>
+                    </div>
+                    <p>Responses must define themselves as cacheable or non-cacheable. Proper caching eliminates some client-server interactions, improving scalability and performance.</p>
+                    <div class="code-block">
+                        <div class="code-label">Response Headers</div>
+<pre><span class="method">GET</span> <span class="url">/api/products/42</span>
+
+<span class="comment">// Response headers that control caching:</span>
+<span class="keyword">Cache-Control</span>: <span class="string">max-age=3600</span>           <span class="comment">// Cache for 1 hour</span>
+<span class="keyword">ETag</span>: <span class="string">"v1-abc123"</span>                      <span class="comment">// Version fingerprint</span>
+<span class="keyword">Last-Modified</span>: <span class="string">Thu, 01 Jan 2025 00:00:00 GMT</span>
+
+<span class="comment">// Client can later send:</span>
+<span class="keyword">If-None-Match</span>: <span class="string">"v1-abc123"</span>             <span class="comment">// Returns 304 if unchanged</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(232,67,147,0.2);color:var(--accent)">4️⃣</div>
+                        <h3>Uniform Interface</h3>
+                    </div>
+                    <p>The most fundamental constraint. Four sub-constraints make the API predictable:</p>
+                    <ul>
+                        <li><strong>Resource Identification</strong> — Resources are identified by URIs (<code>/api/users/42</code>)</li>
+                        <li><strong>Resource Manipulation through Representations</strong> — When a client has a representation (JSON), it has enough info to modify/delete the resource</li>
+                        <li><strong>Self-descriptive Messages</strong> — Each message includes enough info to process it (Content-Type, etc.)</li>
+                        <li><strong>HATEOAS</strong> — Hypermedia as the Engine of Application State — responses include links to related actions</li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">HATEOAS Example</div>
+<pre>{
+  <span class="string">"id"</span>: <span class="number">42</span>,
+  <span class="string">"name"</span>: <span class="string">"John Doe"</span>,
+  <span class="string">"email"</span>: <span class="string">"john@example.com"</span>,
+  <span class="string">"_links"</span>: {
+    <span class="string">"self"</span>: { <span class="string">"href"</span>: <span class="url">"/api/users/42"</span> },
+    <span class="string">"orders"</span>: { <span class="string">"href"</span>: <span class="url">"/api/users/42/orders"</span> },
+    <span class="string">"update"</span>: { <span class="string">"href"</span>: <span class="url">"/api/users/42"</span>, <span class="string">"method"</span>: <span class="string">"PUT"</span> },
+    <span class="string">"delete"</span>: { <span class="string">"href"</span>: <span class="url">"/api/users/42"</span>, <span class="string">"method"</span>: <span class="string">"DELETE"</span> }
+  }
+}</pre>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(0,206,201,0.2);color:var(--secondary)">5️⃣</div>
+                            <h3>Layered System</h3>
+                        </div>
+                        <p>A client can't tell whether it's connected to the end server or an intermediary. Layers can include:</p>
+                        <ul>
+                            <li>Load balancers</li>
+                            <li>CDN caches</li>
+                            <li>API gateways</li>
+                            <li>Security layers</li>
+                            <li>Proxy servers</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background:rgba(116,185,255,0.2);color:#74b9ff">6️⃣</div>
+                            <h3>Code on Demand (Optional)</h3>
+                        </div>
+                        <p>Servers can extend client functionality by sending executable code (like JavaScript). This is the only <em>optional</em> constraint.</p>
+                        <ul>
+                            <li>Server can send JS to run on client</li>
+                            <li>Reduces pre-built client features</li>
+                            <li>Example: Server-sent form validation logic</li>
+                            <li>Rarely used in modern REST APIs</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Principles Exercise -->
+                <div class="exercise-card">
+                    <h4>🏋️ Exercise: Match the Principle</h4>
+                    <p style="color:var(--text-dim);font-size:14px;margin-bottom:16px">For each scenario, type the REST principle it violates (type: stateless, client-server, cacheable, uniform, or layered).</p>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>1.</strong> Server stores user session in memory between requests:</p>
+                        <input class="exercise-input" id="princ-ex-1" placeholder="Type the principle this violates..." onkeydown="if(event.key==='Enter')checkPrincipleEx(1)">
+                        <div class="exercise-feedback" id="princ-fb-1"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>2.</strong> The API uses <code>/getUsers</code> and <code>/deleteUser?id=5</code> instead of standard resources:</p>
+                        <input class="exercise-input" id="princ-ex-2" placeholder="Type the principle this violates..." onkeydown="if(event.key==='Enter')checkPrincipleEx(2)">
+                        <div class="exercise-feedback" id="princ-fb-2"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>3.</strong> Frontend code directly queries the database instead of going through the API:</p>
+                        <input class="exercise-input" id="princ-ex-3" placeholder="Type the principle this violates..." onkeydown="if(event.key==='Enter')checkPrincipleEx(3)">
+                        <div class="exercise-feedback" id="princ-fb-3"></div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkAllPrincipleEx()">Check All Answers</button>
+                </div>
+
+                <div class="card" style="border-color:var(--success);">
+                    <h3 style="color:var(--success);margin-bottom:12px">✅ Section Complete Checklist</h3>
+                    <p>Can you explain each of these to an interviewer?</p>
+                    <ul>
+                        <li>Why statelessness enables horizontal scaling</li>
+                        <li>How HATEOAS makes APIs self-documenting</li>
+                        <li>What caching headers to use and when</li>
+                        <li>Why client-server separation enables multiple clients</li>
+                    </ul>
+                    <button class="btn btn-success" style="margin-top:12px" onclick="completeSection('principles')">✓ Mark as Complete</button>
+                </div>
+            </div>
+
+            <!-- ==================== HTTP METHODS ==================== -->
+            <div class="section" id="section-methods">
+                <div class="section-header">
+                    <h2>🔧 HTTP Methods</h2>
+                    <p>HTTP methods (also called verbs) define the action to perform on a resource. Choosing the right method is essential for a proper REST API.</p>
+                </div>
+
+                <div class="tabs" id="method-tabs">
+                    <button class="tab active" onclick="showMethodTab('get')">GET</button>
+                    <button class="tab" onclick="showMethodTab('post')">POST</button>
+                    <button class="tab" onclick="showMethodTab('put')">PUT</button>
+                    <button class="tab" onclick="showMethodTab('patch')">PATCH</button>
+                    <button class="tab" onclick="showMethodTab('delete')">DELETE</button>
+                    <button class="tab" onclick="showMethodTab('compare')">Compare All</button>
+                </div>
+
+                <!-- GET Tab -->
+                <div class="method-tab active" id="method-get">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="method-badge method-get">GET</span>
+                            <h3>Retrieve Resources</h3>
+                        </div>
+                        <p><strong>Purpose:</strong> Retrieve a resource or a collection of resources.<br>
+                        <strong>Safe:</strong> ✅ Yes — does NOT modify data.<br>
+                        <strong>Idempotent:</strong> ✅ Yes — calling it N times gives the same result.<br>
+                        <strong>Request body:</strong> ❌ Should not have one.</p>
+
+                        <div class="code-block">
+                            <div class="code-label">Examples</div>
+<pre><span class="comment">// Get all users (collection)</span>
+<span class="method">GET</span> <span class="url">/api/v1/users</span>
+<span class="comment">// Response: 200 OK + array of users</span>
+
+<span class="comment">// Get a single user (resource)</span>
+<span class="method">GET</span> <span class="url">/api/v1/users/42</span>
+<span class="comment">// Response: 200 OK + user object</span>
+
+<span class="comment">// Get with query parameters (filtering)</span>
+<span class="method">GET</span> <span class="url">/api/v1/users?role=admin&sort=name&page=2</span>
+<span class="comment">// Response: 200 OK + filtered, sorted, paginated users</span>
+
+<span class="comment">// Get nested resources</span>
+<span class="method">GET</span> <span class="url">/api/v1/users/42/orders</span>
+<span class="comment">// Response: 200 OK + orders for user 42</span></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">JavaScript Fetch</div>
+<pre><span class="comment">// Fetching a collection</span>
+<span class="keyword">const</span> response = <span class="keyword">await</span> <span class="method">fetch</span>(<span class="string">'/api/v1/users'</span>, {
+  method: <span class="string">'GET'</span>,
+  headers: {
+    <span class="string">'Accept'</span>: <span class="string">'application/json'</span>,
+    <span class="string">'Authorization'</span>: <span class="string">'Bearer token123'</span>
+  }
+});
+
+<span class="keyword">if</span> (response.ok) {
+  <span class="keyword">const</span> users = <span class="keyword">await</span> response.<span class="method">json</span>();
+  console.<span class="method">log</span>(users);
+} <span class="keyword">else if</span> (response.status === <span class="number">404</span>) {
+  console.<span class="method">log</span>(<span class="string">'Resource not found'</span>);
+}</pre>
+                        </div>
+                        <div class="tip"><strong>Key point for interviews:</strong> GET should NEVER modify data. If you need to mark something as "read," use PATCH or PUT, not GET.</div>
+                    </div>
+                </div>
+
+                <!-- POST Tab -->
+                <div class="method-tab" id="method-post" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="method-badge method-post">POST</span>
+                            <h3>Create Resources</h3>
+                        </div>
+                        <p><strong>Purpose:</strong> Create a new resource (server assigns the ID).<br>
+                        <strong>Safe:</strong> ❌ No — it modifies data.<br>
+                        <strong>Idempotent:</strong> ❌ No — calling it N times creates N resources.<br>
+                        <strong>Request body:</strong> ✅ Yes — contains the new resource data.</p>
+
+                        <div class="code-block">
+                            <div class="code-label">Examples</div>
+<pre><span class="comment">// Create a new user</span>
+<span class="method">POST</span> <span class="url">/api/v1/users</span>
+<span class="keyword">Content-Type</span>: application/json
+
+{
+  <span class="string">"name"</span>: <span class="string">"Jane Doe"</span>,
+  <span class="string">"email"</span>: <span class="string">"jane@example.com"</span>,
+  <span class="string">"role"</span>: <span class="string">"developer"</span>
+}
+
+<span class="comment">// Response: 201 Created</span>
+<span class="keyword">Location</span>: /api/v1/users/43
+{
+  <span class="string">"id"</span>: <span class="number">43</span>,
+  <span class="string">"name"</span>: <span class="string">"Jane Doe"</span>,
+  <span class="string">"email"</span>: <span class="string">"jane@example.com"</span>,
+  <span class="string">"role"</span>: <span class="string">"developer"</span>,
+  <span class="string">"createdAt"</span>: <span class="string">"2025-01-15T10:30:00Z"</span>
+}</pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">JavaScript Fetch</div>
+<pre><span class="keyword">const</span> newUser = {
+  name: <span class="string">'Jane Doe'</span>,
+  email: <span class="string">'jane@example.com'</span>,
+  role: <span class="string">'developer'</span>
+};
+
+<span class="keyword">const</span> response = <span class="keyword">await</span> <span class="method">fetch</span>(<span class="string">'/api/v1/users'</span>, {
+  method: <span class="string">'POST'</span>,
+  headers: {
+    <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>,
+    <span class="string">'Authorization'</span>: <span class="string">'Bearer token123'</span>
+  },
+  body: JSON.<span class="method">stringify</span>(newUser)
+});
+
+<span class="keyword">if</span> (response.status === <span class="number">201</span>) {
+  <span class="keyword">const</span> created = <span class="keyword">await</span> response.<span class="method">json</span>();
+  <span class="keyword">const</span> location = response.headers.<span class="method">get</span>(<span class="string">'Location'</span>);
+  console.<span class="method">log</span>(<span class="string">'Created at:'</span>, location);
+}</pre>
+                        </div>
+                        <div class="warning-box"><strong>Common mistake:</strong> Returning 200 OK instead of 201 Created. Always use 201 and include a Location header pointing to the new resource.</div>
+                    </div>
+                </div>
+
+                <!-- PUT Tab -->
+                <div class="method-tab" id="method-put" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="method-badge method-put">PUT</span>
+                            <h3>Replace Resource (Full Update)</h3>
+                        </div>
+                        <p><strong>Purpose:</strong> Replace an entire resource. Client sends the COMPLETE new version.<br>
+                        <strong>Safe:</strong> ❌ No.<br>
+                        <strong>Idempotent:</strong> ✅ Yes — calling it N times yields the same result.<br>
+                        <strong>Request body:</strong> ✅ Yes — contains the FULL resource.</p>
+
+                        <div class="code-block">
+                            <div class="code-label">Full Replacement</div>
+<pre><span class="comment">// Replace user 42 entirely</span>
+<span class="method">PUT</span> <span class="url">/api/v1/users/42</span>
+<span class="keyword">Content-Type</span>: application/json
+
+{
+  <span class="string">"name"</span>: <span class="string">"Jane Smith"</span>,
+  <span class="string">"email"</span>: <span class="string">"jane.smith@example.com"</span>,
+  <span class="string">"role"</span>: <span class="string">"lead"</span>,
+  <span class="string">"bio"</span>: <span class="string">"Updated bio"</span>
+}
+
+<span class="comment">// ⚠️ Any field NOT included gets removed/nulled!</span>
+<span class="comment">// If the original had "phone": "555-0100",</span>
+<span class="comment">// it's gone now because we didn't include it.</span>
+
+<span class="comment">// Response: 200 OK (or 204 No Content)</span></pre>
+                        </div>
+                        <div class="warning-box"><strong>PUT vs PATCH confusion</strong> is one of the most common interview questions. PUT replaces the ENTIRE resource. If you send a PUT without a field, that field should be removed. Use PATCH for partial updates.</div>
+                    </div>
+                </div>
+
+                <!-- PATCH Tab -->
+                <div class="method-tab" id="method-patch" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="method-badge method-patch">PATCH</span>
+                            <h3>Partial Update</h3>
+                        </div>
+                        <p><strong>Purpose:</strong> Partially update a resource. Send ONLY the fields that change.<br>
+                        <strong>Safe:</strong> ❌ No.<br>
+                        <strong>Idempotent:</strong> ⚠️ Not guaranteed (depends on implementation).<br>
+                        <strong>Request body:</strong> ✅ Yes — only changed fields.</p>
+
+                        <div class="code-block">
+                            <div class="code-label">Partial Update</div>
+<pre><span class="comment">// Only update the email of user 42</span>
+<span class="method">PATCH</span> <span class="url">/api/v1/users/42</span>
+<span class="keyword">Content-Type</span>: application/json
+
+{
+  <span class="string">"email"</span>: <span class="string">"newemail@example.com"</span>
+}
+
+<span class="comment">// Only the email changes!</span>
+<span class="comment">// All other fields remain untouched.</span>
+<span class="comment">// Response: 200 OK + updated resource</span></pre>
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">Why PATCH isn't always idempotent</div>
+<pre><span class="comment">// This PATCH IS idempotent:</span>
+<span class="method">PATCH</span> <span class="url">/api/users/42</span>
+{ <span class="string">"name"</span>: <span class="string">"Jane"</span> }  <span class="comment">// Always sets name to "Jane"</span>
+
+<span class="comment">// This PATCH is NOT idempotent:</span>
+<span class="method">PATCH</span> <span class="url">/api/posts/10</span>
+{ <span class="string">"views"</span>: <span class="string">"increment"</span> }  <span class="comment">// Each call adds +1</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE Tab -->
+                <div class="method-tab" id="method-delete" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="method-badge method-delete">DELETE</span>
+                            <h3>Remove Resource</h3>
+                        </div>
+                        <p><strong>Purpose:</strong> Delete a resource.<br>
+                        <strong>Safe:</strong> ❌ No.<br>
+                        <strong>Idempotent:</strong> ✅ Yes — deleting something twice has the same end state.<br>
+                        <strong>Request body:</strong> ⚠️ Generally should not have one.</p>
+
+                        <div class="code-block">
+                            <div class="code-label">Examples</div>
+<pre><span class="comment">// Delete user 42</span>
+<span class="method">DELETE</span> <span class="url">/api/v1/users/42</span>
+<span class="comment">// Response: 204 No Content (success, no body)</span>
+<span class="comment">// OR: 200 OK + the deleted resource</span>
+
+<span class="comment">// Idempotent behavior:</span>
+<span class="method">DELETE</span> <span class="url">/api/v1/users/42</span>  <span class="comment">// 204 - deleted</span>
+<span class="method">DELETE</span> <span class="url">/api/v1/users/42</span>  <span class="comment">// 404 - already gone (same end state)</span>
+
+<span class="comment">// Some APIs return 204 even on second call</span>
+<span class="comment">// Both approaches are valid</span></pre>
+                        </div>
+                        <div class="tip"><strong>Soft Delete Pattern:</strong> Many production APIs don't actually delete records. They set a <code>deletedAt</code> timestamp. The resource is filtered from GET results but can be restored. This is a PATCH internally but exposed as DELETE to clients.</div>
+                    </div>
+                </div>
+
+                <!-- Compare Tab -->
+                <div class="method-tab" id="method-compare" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚡ Complete Comparison</h3>
+                        </div>
+                        <table class="api-table">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>CRUD</th>
+                                    <th>Safe</th>
+                                    <th>Idempotent</th>
+                                    <th>Request Body</th>
+                                    <th>Success Code</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="method-badge method-get">GET</span></td>
+                                    <td>Read</td>
+                                    <td>✅</td>
+                                    <td>✅</td>
+                                    <td>❌</td>
+                                    <td><span class="status-badge status-2xx">200</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="method-badge method-post">POST</span></td>
+                                    <td>Create</td>
+                                    <td>❌</td>
+                                    <td>❌</td>
+                                    <td>✅</td>
+                                    <td><span class="status-badge status-2xx">201</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="method-badge method-put">PUT</span></td>
+                                    <td>Replace</td>
+                                    <td>❌</td>
+                                    <td>✅</td>
+                                    <td>✅</td>
+                                    <td><span class="status-badge status-2xx">200</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="method-badge method-patch">PATCH</span></td>
+                                    <td>Update</td>
+                                    <td>❌</td>
+                                    <td>⚠️</td>
+                                    <td>✅</td>
+                                    <td><span class="status-badge status-2xx">200</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="method-badge method-delete">DELETE</span></td>
+                                    <td>Delete</td>
+                                    <td>❌</td>
+                                    <td>✅</td>
+                                    <td>❌</td>
+                                    <td><span class="status-badge status-2xx">204</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="tip"><strong>Idempotent</strong> = Making the same request N times has the same effect as making it once. GET, PUT, DELETE are idempotent. POST is not (creates duplicate resources). PATCH depends on the operation.</div>
+                        <div class="tip"><strong>Safe</strong> = The method doesn't modify the resource. Only GET (and HEAD/OPTIONS) are safe methods.</div>
+                    </div>
+                </div>
+
+                <!-- Methods Exercise -->
+                <div class="exercise-card">
+                    <h4>🏋️ Exercise: Choose the Right Method</h4>
+                    <p style="color:var(--text-dim);font-size:14px;margin-bottom:16px">What HTTP method should be used for each scenario?</p>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>1.</strong> Retrieve a list of all blog posts:</p>
+                        <input class="exercise-input" id="method-ex-1" placeholder="Type: GET, POST, PUT, PATCH, or DELETE" onkeydown="if(event.key==='Enter')checkMethodEx(1)">
+                        <div class="exercise-feedback" id="method-fb-1"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>2.</strong> Change only the title of a blog post (keep everything else):</p>
+                        <input class="exercise-input" id="method-ex-2" placeholder="Type: GET, POST, PUT, PATCH, or DELETE" onkeydown="if(event.key==='Enter')checkMethodEx(2)">
+                        <div class="exercise-feedback" id="method-fb-2"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>3.</strong> Create a new comment on a post:</p>
+                        <input class="exercise-input" id="method-ex-3" placeholder="Type: GET, POST, PUT, PATCH, or DELETE" onkeydown="if(event.key==='Enter')checkMethodEx(3)">
+                        <div class="exercise-feedback" id="method-fb-3"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>4.</strong> Replace a user profile with a completely new set of data:</p>
+                        <input class="exercise-input" id="method-ex-4" placeholder="Type: GET, POST, PUT, PATCH, or DELETE" onkeydown="if(event.key==='Enter')checkMethodEx(4)">
+                        <div class="exercise-feedback" id="method-fb-4"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>5.</strong> Remove a product from the catalog:</p>
+                        <input class="exercise-input" id="method-ex-5" placeholder="Type: GET, POST, PUT, PATCH, or DELETE" onkeydown="if(event.key==='Enter')checkMethodEx(5)">
+                        <div class="exercise-feedback" id="method-fb-5"></div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkAllMethodEx()">Check All Answers</button>
+                </div>
+
+                <button class="btn btn-success" onclick="completeSection('methods')">✓ Mark Methods as Complete</button>
+            </div>
+
+            <!-- ==================== STATUS CODES ==================== -->
+            <div class="section" id="section-statuscodes">
+                <div class="section-header">
+                    <h2>📊 HTTP Status Codes</h2>
+                    <p>Status codes tell the client what happened with their request. Knowing when to use each one separates good APIs from great ones.</p>
+                </div>
+
+                <div class="tabs" id="status-tabs">
+                    <button class="tab active" onclick="showStatusTab('2xx')">2xx Success</button>
+                    <button class="tab" onclick="showStatusTab('3xx')">3xx Redirect</button>
+                    <button class="tab" onclick="showStatusTab('4xx')">4xx Client Error</button>
+                    <button class="tab" onclick="showStatusTab('5xx')">5xx Server Error</button>
+                    <button class="tab" onclick="showStatusTab('game')">🎮 Match Game</button>
+                </div>
+
+                <!-- 2xx Tab -->
+                <div class="status-tab active" id="status-2xx">
+                    <div class="card">
+                        <h3 style="color:var(--success);margin-bottom:16px">✅ 2xx — Success</h3>
+                        <table class="api-table">
+                            <thead><tr><th>Code</th><th>Name</th><th>When to Use</th><th>Body?</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="status-badge status-2xx">200</span></td>
+                                    <td>OK</td>
+                                    <td>General success. GET returns data, PUT/PATCH return updated resource</td>
+                                    <td>✅ Yes</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-2xx">201</span></td>
+                                    <td>Created</td>
+                                    <td>A new resource was created (POST). Include <code>Location</code> header</td>
+                                    <td>✅ Created resource</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-2xx">204</span></td>
+                                    <td>No Content</td>
+                                    <td>Success but no body to return (DELETE, or PUT with no response body)</td>
+                                    <td>❌ No</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="code-block">
+                            <div class="code-label">Examples in practice</div>
+<pre><span class="comment">// 200 OK — Successful GET</span>
+<span class="method">GET</span> <span class="url">/api/users/42</span> → <span class="status">200</span> { id: 42, name: "John" }
+
+<span class="comment">// 201 Created — Successful POST</span>
+<span class="method">POST</span> <span class="url">/api/users</span> → <span class="status">201</span> { id: 43, name: "Jane" }
+  <span class="keyword">Location</span>: /api/users/43
+
+<span class="comment">// 204 No Content — Successful DELETE</span>
+<span class="method">DELETE</span> <span class="url">/api/users/42</span> → <span class="status">204</span> (empty body)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3xx Tab -->
+                <div class="status-tab" id="status-3xx" style="display:none">
+                    <div class="card">
+                        <h3 style="color:var(--warning);margin-bottom:16px">↗️ 3xx — Redirection</h3>
+                        <table class="api-table">
+                            <thead><tr><th>Code</th><th>Name</th><th>When to Use</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="status-badge status-3xx">301</span></td>
+                                    <td>Moved Permanently</td>
+                                    <td>Resource has a new permanent URL. Clients should update bookmarks.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-3xx">302</span></td>
+                                    <td>Found (Temporary)</td>
+                                    <td>Resource temporarily at different URL. Keep using original URL.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-3xx">304</span></td>
+                                    <td>Not Modified</td>
+                                    <td>Resource hasn't changed since last request. Use your cached version.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="code-block">
+<pre><span class="comment">// 301 — API version deprecated</span>
+<span class="method">GET</span> <span class="url">/api/v1/users</span> → <span class="status">301</span>
+<span class="keyword">Location</span>: /api/v2/users
+
+<span class="comment">// 304 — Cache still valid</span>
+<span class="method">GET</span> <span class="url">/api/products/5</span>
+<span class="keyword">If-None-Match</span>: "etag-abc"
+→ <span class="status">304</span> (use your cached copy)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4xx Tab -->
+                <div class="status-tab" id="status-4xx" style="display:none">
+                    <div class="card">
+                        <h3 style="color:var(--danger);margin-bottom:16px">❌ 4xx — Client Errors</h3>
+                        <table class="api-table">
+                            <thead><tr><th>Code</th><th>Name</th><th>When to Use</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">400</span></td>
+                                    <td>Bad Request</td>
+                                    <td>Malformed syntax, invalid data, missing required fields</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">401</span></td>
+                                    <td>Unauthorized</td>
+                                    <td>No authentication provided, or token expired/invalid</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">403</span></td>
+                                    <td>Forbidden</td>
+                                    <td>Authenticated but lacks permission (admin-only endpoint)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">404</span></td>
+                                    <td>Not Found</td>
+                                    <td>Resource doesn't exist at this URL</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">405</span></td>
+                                    <td>Method Not Allowed</td>
+                                    <td>HTTP method not supported (DELETE on read-only resource)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">409</span></td>
+                                    <td>Conflict</td>
+                                    <td>Conflicts with current state (duplicate email, version conflict)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">422</span></td>
+                                    <td>Unprocessable Entity</td>
+                                    <td>Valid syntax but semantic errors (email format wrong)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-4xx">429</span></td>
+                                    <td>Too Many Requests</td>
+                                    <td>Rate limit exceeded. Include <code>Retry-After</code> header</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="warning-box">
+                            <strong>401 vs 403 — the #1 confusion:</strong><br>
+                            • <strong>401</strong> = "Who are you?" (not logged in / bad token)<br>
+                            • <strong>403</strong> = "I know who you are, but you can't do this" (insufficient permissions)
+                        </div>
+
+                        <div class="code-block">
+                            <div class="code-label">Error Response Best Practice</div>
+<pre><span class="comment">// Always return structured error responses!</span>
+{
+  <span class="string">"error"</span>: {
+    <span class="string">"code"</span>: <span class="string">"VALIDATION_ERROR"</span>,
+    <span class="string">"message"</span>: <span class="string">"Invalid request data"</span>,
+    <span class="string">"details"</span>: [
+      {
+        <span class="string">"field"</span>: <span class="string">"email"</span>,
+        <span class="string">"message"</span>: <span class="string">"Must be a valid email address"</span>
+      },
+      {
+        <span class="string">"field"</span>: <span class="string">"age"</span>,
+        <span class="string">"message"</span>: <span class="string">"Must be a positive integer"</span>
+      }
+    ],
+    <span class="string">"timestamp"</span>: <span class="string">"2025-01-15T10:30:00Z"</span>,
+    <span class="string">"requestId"</span>: <span class="string">"req_abc123"</span>
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5xx Tab -->
+                <div class="status-tab" id="status-5xx" style="display:none">
+                    <div class="card">
+                        <h3 style="color:var(--accent);margin-bottom:16px">💥 5xx — Server Errors</h3>
+                        <table class="api-table">
+                            <thead><tr><th>Code</th><th>Name</th><th>When It Happens</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="status-badge status-5xx">500</span></td>
+                                    <td>Internal Server Error</td>
+                                    <td>Unhandled exception, bug in server code</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-5xx">502</span></td>
+                                    <td>Bad Gateway</td>
+                                    <td>Proxy/gateway received invalid response from upstream</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-5xx">503</span></td>
+                                    <td>Service Unavailable</td>
+                                    <td>Server temporarily down (maintenance, overloaded)</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="status-badge status-5xx">504</span></td>
+                                    <td>Gateway Timeout</td>
+                                    <td>Upstream server didn't respond in time</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="tip"><strong>Never expose internal errors to clients.</strong> A 500 response should include a generic message and a request ID for debugging, never a stack trace or database details.</div>
+                    </div>
+                </div>
+
+                <!-- Match Game Tab -->
+                <div class="status-tab" id="status-game" style="display:none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🎮 Status Code Match Game</h3>
+                        </div>
+                        <p style="margin-bottom:16px;color:var(--text-dim)">Match each scenario with the correct status code. Click a scenario, then click the matching code!</p>
+                        <div id="match-game-container"></div>
+                        <div style="margin-top:16px;text-align:center">
+                            <span id="match-score" style="font-size:18px;font-weight:700;color:var(--secondary)">Score: 0/8</span>
+                            <button class="btn btn-secondary btn-sm" style="margin-left:12px" onclick="initMatchGame()">Reset Game</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" style="margin-top:12px" onclick="completeSection('statuscodes')">✓ Mark Status Codes as Complete</button>
+            </div>
+
+            <!-- ==================== API STRUCTURE ==================== -->
+            <div class="section" id="section-structure">
+                <div class="section-header">
+                    <h2>🏗️ API Structure & URL Design</h2>
+                    <p>Well-designed URLs are intuitive, predictable, and consistent. Master these patterns and you'll design APIs that developers love.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📋 The Golden Rules of URL Design</h3>
+                    </div>
+                    <table class="api-table">
+                        <thead><tr><th>Rule</th><th>Bad ❌</th><th>Good ✅</th></tr></thead>
+                        <tbody>
+                            <tr><td>Use nouns, not verbs</td><td><code>/getUsers</code></td><td><code>/users</code></td></tr>
+                            <tr><td>Use plural nouns</td><td><code>/user/42</code></td><td><code>/users/42</code></td></tr>
+                            <tr><td>Use lowercase</td><td><code>/Users/42</code></td><td><code>/users/42</code></td></tr>
+                            <tr><td>Use hyphens, not underscores</td><td><code>/blog_posts</code></td><td><code>/blog-posts</code></td></tr>
+                            <tr><td>No trailing slashes</td><td><code>/users/</code></td><td><code>/users</code></td></tr>
+                            <tr><td>No file extensions</td><td><code>/users.json</code></td><td><code>/users</code> + Accept header</td></tr>
+                            <tr><td>Use hierarchy for relationships</td><td><code>/getOrdersForUser?id=42</code></td><td><code>/users/42/orders</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🧱 Resource Hierarchy Patterns</h3>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Complete CRUD for a Blog API</div>
+<pre><span class="comment">// ===== POSTS =====</span>
+<span class="method">GET</span>    <span class="url">/api/v1/posts</span>              <span class="comment">// List all posts</span>
+<span class="method">GET</span>    <span class="url">/api/v1/posts/42</span>           <span class="comment">// Get post 42</span>
+<span class="method">POST</span>   <span class="url">/api/v1/posts</span>              <span class="comment">// Create a new post</span>
+<span class="method">PUT</span>    <span class="url">/api/v1/posts/42</span>           <span class="comment">// Replace post 42</span>
+<span class="method">PATCH</span>  <span class="url">/api/v1/posts/42</span>           <span class="comment">// Update post 42 partially</span>
+<span class="method">DELETE</span> <span class="url">/api/v1/posts/42</span>           <span class="comment">// Delete post 42</span>
+
+<span class="comment">// ===== NESTED: Comments on Posts =====</span>
+<span class="method">GET</span>    <span class="url">/api/v1/posts/42/comments</span>      <span class="comment">// All comments on post 42</span>
+<span class="method">GET</span>    <span class="url">/api/v1/posts/42/comments/7</span>    <span class="comment">// Comment 7 on post 42</span>
+<span class="method">POST</span>   <span class="url">/api/v1/posts/42/comments</span>      <span class="comment">// Add comment to post 42</span>
+<span class="method">DELETE</span> <span class="url">/api/v1/posts/42/comments/7</span>    <span class="comment">// Delete comment 7</span>
+
+<span class="comment">// ===== Avoid deep nesting (max 2 levels) =====</span>
+<span class="comment">// ❌ /users/42/posts/10/comments/7/likes</span>
+<span class="comment">// ✅ /comments/7/likes</span></pre>
+                    </div>
+                    <div class="warning-box"><strong>Nesting depth rule:</strong> Never go more than 2 levels deep. If you need <code>/users/42/posts/10/comments</code>, consider if <code>/posts/10/comments</code> or <code>/comments?postId=10</code> works better.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔍 Filtering, Sorting, Pagination & Search</h3>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">Query Parameters</div>
+<pre><span class="comment">// Filtering</span>
+<span class="method">GET</span> <span class="url">/api/v1/products?category=electronics&inStock=true</span>
+<span class="method">GET</span> <span class="url">/api/v1/orders?status=pending&minTotal=100</span>
+
+<span class="comment">// Sorting</span>
+<span class="method">GET</span> <span class="url">/api/v1/products?sort=price</span>         <span class="comment">// ascending</span>
+<span class="method">GET</span> <span class="url">/api/v1/products?sort=-price</span>        <span class="comment">// descending (- prefix)</span>
+<span class="method">GET</span> <span class="url">/api/v1/products?sort=-rating,price</span> <span class="comment">// multi-sort</span>
+
+<span class="comment">// Pagination (offset-based)</span>
+<span class="method">GET</span> <span class="url">/api/v1/products?page=3&limit=20</span>
+
+<span class="comment">// Pagination (cursor-based — better for large datasets)</span>
+<span class="method">GET</span> <span class="url">/api/v1/products?cursor=eyJpZCI6MTAwfQ&limit=20</span>
+
+<span class="comment">// Search</span>
+<span class="method">GET</span> <span class="url">/api/v1/products?q=wireless+headphones</span>
+
+<span class="comment">// Field selection (sparse fieldsets)</span>
+<span class="method">GET</span> <span class="url">/api/v1/users?fields=id,name,email</span></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">Paginated Response Structure</div>
+<pre>{
+  <span class="string">"data"</span>: [
+    { <span class="string">"id"</span>: <span class="number">1</span>, <span class="string">"name"</span>: <span class="string">"Wireless Headphones"</span> },
+    { <span class="string">"id"</span>: <span class="number">2</span>, <span class="string">"name"</span>: <span class="string">"Bluetooth Speaker"</span> }
+  ],
+  <span class="string">"meta"</span>: {
+    <span class="string">"total"</span>: <span class="number">150</span>,
+    <span class="string">"page"</span>: <span class="number">3</span>,
+    <span class="string">"limit"</span>: <span class="number">20</span>,
+    <span class="string">"totalPages"</span>: <span class="number">8</span>
+  },
+  <span class="string">"links"</span>: {
+    <span class="string">"self"</span>: <span class="url">"/api/v1/products?page=3&limit=20"</span>,
+    <span class="string">"first"</span>: <span class="url">"/api/v1/products?page=1&limit=20"</span>,
+    <span class="string">"prev"</span>: <span class="url">"/api/v1/products?page=2&limit=20"</span>,
+    <span class="string">"next"</span>: <span class="url">"/api/v1/products?page=4&limit=20"</span>,
+    <span class="string">"last"</span>: <span class="url">"/api/v1/products?page=8&limit=20"</span>
+  }
+}</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🎭 Special Actions / Non-CRUD Operations</h3>
+                    </div>
+                    <p>Sometimes you need actions that don't map cleanly to CRUD. Here are common patterns:</p>
+                    <div class="code-block">
+<pre><span class="comment">// Pattern 1: Sub-resource action</span>
+<span class="method">POST</span> <span class="url">/api/v1/orders/42/cancel</span>        <span class="comment">// Cancel an order</span>
+<span class="method">POST</span> <span class="url">/api/v1/users/42/deactivate</span>    <span class="comment">// Deactivate user</span>
+<span class="method">POST</span> <span class="url">/api/v1/posts/42/publish</span>       <span class="comment">// Publish a draft</span>
+
+<span class="comment">// Pattern 2: Use PATCH with state change</span>
+<span class="method">PATCH</span> <span class="url">/api/v1/orders/42</span>
+{ <span class="string">"status"</span>: <span class="string">"cancelled"</span> }
+
+<span class="comment">// Pattern 3: Batch operations</span>
+<span class="method">POST</span> <span class="url">/api/v1/emails/batch-send</span>
+{ <span class="string">"ids"</span>: [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>] }
+
+<span class="comment">// Pattern 4: Search as a resource</span>
+<span class="method">POST</span> <span class="url">/api/v1/search</span>
+{ <span class="string">"query"</span>: <span class="string">"headphones"</span>, <span class="string">"filters"</span>: { ... } }</pre>
+                    </div>
+                </div>
+
+                <!-- Structure Exercise -->
+                <div class="exercise-card">
+                    <h4>🏋️ Exercise: Fix These URLs</h4>
+                    <p style="color:var(--text-dim);font-size:14px;margin-bottom:16px">Rewrite each URL following REST best practices:</p>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>1.</strong> <code>GET /getAllUsers</code></p>
+                        <input class="exercise-input" id="url-ex-1" placeholder="Rewrite the URL..." onkeydown="if(event.key==='Enter')checkUrlEx(1)">
+                        <div class="exercise-feedback" id="url-fb-1"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>2.</strong> <code>POST /deleteUser?id=42</code></p>
+                        <input class="exercise-input" id="url-ex-2" placeholder="Rewrite using the correct method and URL..." onkeydown="if(event.key==='Enter')checkUrlEx(2)">
+                        <div class="exercise-feedback" id="url-fb-2"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>3.</strong> <code>GET /User_Profile/42/get_orders</code></p>
+                        <input class="exercise-input" id="url-ex-3" placeholder="Rewrite the URL..." onkeydown="if(event.key==='Enter')checkUrlEx(3)">
+                        <div class="exercise-feedback" id="url-fb-3"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>4.</strong> <code>PUT /createProduct</code></p>
+                        <input class="exercise-input" id="url-ex-4" placeholder="Rewrite using the correct method and URL..." onkeydown="if(event.key==='Enter')checkUrlEx(4)">
+                        <div class="exercise-feedback" id="url-fb-4"></div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkAllUrlEx()">Check All Answers</button>
+                </div>
+
+                <button class="btn btn-success" onclick="completeSection('structure')">✓ Mark as Complete</button>
+            </div>
+
+            <!-- ==================== VERSIONING ==================== -->
+            <div class="section" id="section-versioning">
+                <div class="section-header">
+                    <h2>🔄 API Versioning</h2>
+                    <p>APIs evolve. Breaking changes are inevitable. Versioning lets you update your API while keeping existing clients working.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>❓ When Do You Need Versioning?</h3>
+                    </div>
+                    <p>Version your API when you make <strong>breaking changes</strong>:</p>
+                    <ul>
+                        <li>Removing a field from responses</li>
+                        <li>Changing a field's data type (string → number)</li>
+                        <li>Renaming a field or endpoint</li>
+                        <li>Changing the meaning of a status code for an endpoint</li>
+                        <li>Requiring a new mandatory field in requests</li>
+                    </ul>
+                    <div class="tip"><strong>Non-breaking changes</strong> (no version bump needed): Adding new optional fields, adding new endpoints, adding new optional query parameters, fixing bugs.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(108,92,231,0.2);color:var(--primary)">1️⃣</div>
+                        <h3>URL Path Versioning (Most Popular)</h3>
+                    </div>
+                    <div class="code-block">
+<pre><span class="method">GET</span> <span class="url">/api/v1/users</span>
+<span class="method">GET</span> <span class="url">/api/v2/users</span>
+<span class="method">GET</span> <span class="url">/api/v3/users</span></pre>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <p style="color:var(--success);font-weight:700;margin-bottom:6px">✅ Advantages</p>
+                            <ul><li>Simple and visible</li><li>Easy to route</li><li>Easy to test in browser</li><li>Used by Twitter, Facebook, Google</li></ul>
+                        </div>
+                        <div>
+                            <p style="color:var(--danger);font-weight:700;margin-bottom:6px">❌ Disadvantages</p>
+                            <ul><li>URL pollution</li><li>Not truly RESTful (URI should identify a resource, not a version)</li><li>Clients must update URLs</li></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(0,184,148,0.2);color:var(--success)">2️⃣</div>
+                        <h3>Header Versioning</h3>
+                    </div>
+                    <div class="code-block">
+<pre><span class="comment">// Custom header</span>
+<span class="method">GET</span> <span class="url">/api/users</span>
+<span class="keyword">API-Version</span>: <span class="number">2</span>
+
+<span class="comment">// Or using Accept header (content negotiation)</span>
+<span class="method">GET</span> <span class="url">/api/users</span>
+<span class="keyword">Accept</span>: <span class="string">application/vnd.myapi.v2+json</span></pre>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <p style="color:var(--success);font-weight:700;margin-bottom:6px">✅ Advantages</p>
+                            <ul><li>Clean URLs</li><li>Most RESTful approach</li><li>Used by GitHub API</li></ul>
+                        </div>
+                        <div>
+                            <p style="color:var(--danger);font-weight:700;margin-bottom:6px">❌ Disadvantages</p>
+                            <ul><li>Harder to test in browser</li><li>Can be missed/forgotten</li><li>More complex client code</li></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(253,203,110,0.2);color:var(--warning)">3️⃣</div>
+                        <h3>Query Parameter Versioning</h3>
+                    </div>
+                    <div class="code-block">
+<pre><span class="method">GET</span> <span class="url">/api/users?version=2</span>
+<span class="method">GET</span> <span class="url">/api/users?v=2</span></pre>
+                    </div>
+                    <div class="grid-2">
+                        <div>
+                            <p style="color:var(--success);font-weight:700;margin-bottom:6px">✅ Advantages</p>
+                            <ul><li>Easy to add</li><li>Optional (can default)</li><li>Easy to test</li></ul>
+                        </div>
+                        <div>
+                            <p style="color:var(--danger);font-weight:700;margin-bottom:6px">❌ Disadvantages</p>
+                            <ul><li>Easy to forget</li><li>Complicates caching</li><li>Mixes routing with query logic</li></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background:rgba(232,67,147,0.2);color:var(--accent)">4️⃣</div>
+                        <h3>Subdomain Versioning</h3>
+                    </div>
+                    <div class="code-block">
+<pre><span class="method">GET</span> <span class="url">https://v1.api.example.com/users</span>
+<span class="method">GET</span> <span class="url">https://v2.api.example.com/users</span></pre>
+                    </div>
+                    <p style="margin-top:12px;color:var(--text-dim);font-size:14px">Used by some large-scale APIs. Allows different infrastructure per version but adds DNS complexity.</p>
+                </div>
+
+                <div class="card" style="border-color:var(--secondary)">
+                    <h3 style="margin-bottom:16px">🏆 Best Practices for Versioning</h3>
+                    <ul>
+                        <li><strong>Use URL path versioning</strong> for simplicity — it's the industry standard</li>
+                        <li><strong>Only use major versions</strong> (v1, v2, v3) — don't do v1.2.3</li>
+                        <li><strong>Set a deprecation policy</strong> — give 6-12 months notice before removing old versions</li>
+                        <li><strong>Return deprecation headers</strong>: <code>Sunset: Sat, 01 Jan 2026 00:00:00 GMT</code></li>
+                        <li><strong>Support at most 2-3 versions</strong> simultaneously</li>
+                        <li><strong>Document migration guides</strong> between versions</li>
+                        <li><strong>Default to latest stable version</strong> if no version specified</li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">Deprecation Response Headers</div>
+<pre><span class="method">GET</span> <span class="url">/api/v1/users</span>
+
+<span class="keyword">Deprecation</span>: <span class="string">true</span>
+<span class="keyword">Sunset</span>: <span class="string">Sat, 01 Jun 2026 00:00:00 GMT</span>
+<span class="keyword">Link</span>: &lt;/api/v2/users&gt;; rel="successor-version"</pre>
+                    </div>
+                </div>
+
+                <!-- Versioning Exercise -->
+                <div class="exercise-card">
+                    <h4>🏋️ Exercise: Versioning Decisions</h4>
+                    <p style="color:var(--text-dim);font-size:14px;margin-bottom:16px">For each change, would you need a new API version? Type "yes" or "no":</p>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>1.</strong> Adding a new optional field "nickname" to user responses:</p>
+                        <input class="exercise-input" id="ver-ex-1" placeholder="yes or no" onkeydown="if(event.key==='Enter')checkVerEx(1)">
+                        <div class="exercise-feedback" id="ver-fb-1"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>2.</strong> Renaming the "name" field to "fullName":</p>
+                        <input class="exercise-input" id="ver-ex-2" placeholder="yes or no" onkeydown="if(event.key==='Enter')checkVerEx(2)">
+                        <div class="exercise-feedback" id="ver-fb-2"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>3.</strong> Changing the "age" field from a number to a string:</p>
+                        <input class="exercise-input" id="ver-ex-3" placeholder="yes or no" onkeydown="if(event.key==='Enter')checkVerEx(3)">
+                        <div class="exercise-feedback" id="ver-fb-3"></div>
+                    </div>
+
+                    <div style="margin-bottom:16px">
+                        <p style="font-size:14px;margin-bottom:6px"><strong>4.</strong> Adding a new endpoint <code>GET /api/v1/analytics</code>:</p>
+                        <input class="exercise-input" id="ver-ex-4" placeholder="yes or no" onkeydown="if(event.key==='Enter')checkVerEx(4)">
+                        <div class="exercise-feedback" id="ver-fb-4"></div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="checkAllVerEx()">Check All Answers</button>
+                </div>
+
+                <button class="btn btn-success" onclick="completeSection('versioning')">✓ Mark as Complete</button>
+            </div>
+
+            <!-- ==================== PITFALLS ==================== -->
+            <div class="section" id="section-pitfalls">
+                <div class="section-header">
+                    <h2>⚠️ Common Pitfalls & Mistakes</h2>
+                    <p>These are the mistakes that cost candidates jobs. Learn them here so you don't make them in interviews or production.</p>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #1: Using Verbs in URLs</h4>
+                    <p style="color:var(--text-dim);font-size:14px">The HTTP method IS the verb. The URL should be a noun (resource).</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong</div>
+                        <code>GET /getUsers</code><br>
+                        <code>POST /createUser</code><br>
+                        <code>POST /deleteUser/42</code><br>
+                        <code>GET /getUserOrders/42</code>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct</div>
+                        <code>GET /users</code><br>
+                        <code>POST /users</code><br>
+                        <code>DELETE /users/42</code><br>
+                        <code>GET /users/42/orders</code>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #2: Returning Wrong Status Codes</h4>
+                    <p style="color:var(--text-dim);font-size:14px">The biggest one: always returning 200 with an error in the body.</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong — "200 OK" with error</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre>HTTP/1.1 <span class="status">200 OK</span>
+{
+  <span class="string">"success"</span>: <span class="keyword">false</span>,
+  <span class="string">"error"</span>: <span class="string">"User not found"</span>
+}</pre>
+                        </div>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct — Proper status code</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre>HTTP/1.1 <span class="status">404 Not Found</span>
+{
+  <span class="string">"error"</span>: {
+    <span class="string">"code"</span>: <span class="string">"USER_NOT_FOUND"</span>,
+    <span class="string">"message"</span>: <span class="string">"User with ID 42 not found"</span>
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #3: Not Using Pagination</h4>
+                    <p style="color:var(--text-dim);font-size:14px">Returning all records at once destroys performance and can crash clients.</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong</div>
+                        <code>GET /users</code> → Returns 50,000 users 💀
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct</div>
+                        <code>GET /users?page=1&limit=25</code> → Returns 25 users + pagination metadata
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #4: Confusing PUT and PATCH</h4>
+                    <p style="color:var(--text-dim);font-size:14px">PUT replaces everything. PATCH updates only what you send.</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong — Using PUT for partial update</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre><span class="method">PUT</span> <span class="url">/users/42</span>
+{ <span class="string">"email"</span>: <span class="string">"new@email.com"</span> }
+<span class="comment">// This DELETES name, role, and all other fields!</span></pre>
+                        </div>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct — Use PATCH for partial update</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre><span class="method">PATCH</span> <span class="url">/users/42</span>
+{ <span class="string">"email"</span>: <span class="string">"new@email.com"</span> }
+<span class="comment">// Only the email changes. Everything else stays.</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #5: Inconsistent Naming</h4>
+                    <p style="color:var(--text-dim);font-size:14px">Pick one style and stick with it across the entire API.</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong — Mixed styles</div>
+                        <code>/api/Users</code> (PascalCase)<br>
+                        <code>/api/blog_posts</code> (snake_case)<br>
+                        <code>/api/order-items</code> (kebab-case)<br>
+                        JSON: <code>{ "firstName": ..., "last_name": ..., "Email": ... }</code>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct — Consistent style</div>
+                        URLs: kebab-case → <code>/api/blog-posts</code><br>
+                        JSON fields: camelCase → <code>{ "firstName": ..., "lastName": ..., "email": ... }</code>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #6: Not Using HTTPS</h4>
+                    <p style="color:var(--text-dim);font-size:14px">Always use HTTPS. HTTP sends data in plain text — anyone can read tokens, passwords, and user data.</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Never</div>
+                        <code>http://api.example.com/users</code>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Always</div>
+                        <code>https://api.example.com/users</code>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #7: Exposing Internal IDs / Implementation Details</h4>
+                    <p style="color:var(--text-dim);font-size:14px">Don't leak database details through your API.</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong</div>
+                        <code>{ "id": 1, "mysql_row_id": 42, "_mongoId": "507f1f77bcf86cd799439011" }</code><br>
+                        Stack traces in error responses<br>
+                        SQL error messages in responses
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct</div>
+                        <code>{ "id": "usr_a1b2c3d4", "requestId": "req_xyz789" }</code><br>
+                        Use UUIDs or prefixed IDs<br>
+                        Generic error messages + request ID for debugging
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #8: Using GET with a Request Body</h4>
+                    <p style="color:var(--text-dim);font-size:14px">While technically allowed by HTTP, GET requests should NOT have a body. Many servers, proxies, and libraries ignore or strip it.</p>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre><span class="method">GET</span> <span class="url">/api/search</span>
+{ <span class="string">"query"</span>: <span class="string">"headphones"</span>, <span class="string">"filters"</span>: {...} }</pre>
+                        </div>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct — Use query params or POST for complex searches</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre><span class="method">GET</span> <span class="url">/api/search?q=headphones&category=audio</span>
+<span class="comment">// or for complex queries:</span>
+<span class="method">POST</span> <span class="url">/api/search</span>
+{ <span class="string">"query"</span>: <span class="string">"headphones"</span>, <span class="string">"filters"</span>: {...} }</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #9: Returning 200 for Created Resources</h4>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong</div>
+                        <code>POST /users → 200 OK</code>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct</div>
+                        <code>POST /users → 201 Created + Location header</code>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #10: Not Handling Idempotency for Payment APIs</h4>
+                    <p style="color:var(--text-dim);font-size:14px">If a network error occurs during POST /payments, retrying could charge twice!</p>
+                    <div class="right-way">
+                        <div class="label-right">✅ Solution — Idempotency Keys</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre><span class="method">POST</span> <span class="url">/api/payments</span>
+<span class="keyword">Idempotency-Key</span>: <span class="string">"pay_unique_abc123"</span>
+
+<span class="comment">// Server checks: "Have I seen this key before?"</span>
+<span class="comment">// If yes → return the original response</span>
+<span class="comment">// If no → process the payment</span>
+<span class="comment">// Used by Stripe, PayPal, and most payment APIs</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #11: Not Rate Limiting</h4>
+                    <p style="color:var(--text-dim);font-size:14px">Without rate limits, one client can take down your entire API.</p>
+                    <div class="right-way">
+                        <div class="label-right">✅ Include Rate Limit Headers</div>
+                        <div class="code-block" style="margin:8px 0">
+<pre><span class="keyword">X-RateLimit-Limit</span>: <span class="number">100</span>          <span class="comment">// Max requests per window</span>
+<span class="keyword">X-RateLimit-Remaining</span>: <span class="number">45</span>      <span class="comment">// Requests remaining</span>
+<span class="keyword">X-RateLimit-Reset</span>: <span class="number">1642000000</span>   <span class="comment">// Unix timestamp for reset</span>
+
+<span class="comment">// When exceeded:</span>
+<span class="status">429 Too Many Requests</span>
+<span class="keyword">Retry-After</span>: <span class="number">30</span>                  <span class="comment">// Seconds to wait</span></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pitfall-card">
+                    <h4>Pitfall #12: Deeply Nested URLs</h4>
+                    <div class="wrong-way">
+                        <div class="label-wrong">❌ Wrong — Too deep</div>
+                        <code>/api/v1/companies/5/departments/3/teams/7/members/42/tasks</code>
+                    </div>
+                    <div class="right-way">
+                        <div class="label-right">✅ Correct — Flatten with query params</div>
+                        <code>/api/v1/tasks?memberId=42</code><br>
+                        <code>/api/v1/members/42/tasks</code> (max 2 levels)
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== API SIMULATOR ==================== -->
+            <div class="section" id="section-simulator">
+                <div class="section-header">
+                    <h2>🧪 API Simulator</h2>
+                    <p>Practice making API calls! This simulated server responds to RESTful requests against a users/posts database.</p>
+                </div>
+
+                <div class="api-simulator">
+                    <div class="api-sim-header">
+                        <select class="api-sim-method" id="sim-method" style="background:var(--success);color:white;padding:8px;border-radius:6px">
+                            <option value="GET" style="background:var(--darker)">GET</option>
+                            <option value="POST" style="background:var(--darker)">POST</option>
+                            <option value="PUT" style="background:var(--darker)">PUT</option>
+                            <option value="PATCH" style="background:var(--darker)">PATCH</option>
+                            <option value="DELETE" style="background:var(--darker)">DELETE</option>
+                        </select>
+                        <input class="api-sim-url" id="sim-url" value="/api/v1/users" placeholder="/api/v1/...">
+                        <button class="api-sim-send" onclick="sendSimRequest()">Send →</button>
+                    </div>
+                    <div class="api-sim-body">
+                        <div class="api-sim-request">
+                            <div class="api-sim-label">Request Body (JSON)</div>
+                            <textarea class="api-sim-textarea" id="sim-request-body" placeholder='{ "name": "Jane", "email": "jane@example.com" }'></textarea>
+                        </div>
+                        <div class="api-sim-response">
+                            <div class="api-sim-label">Response <span id="sim-status-display"></span></div>
+                            <pre id="sim-response-body" style="color:var(--secondary)">Click "Send" to make a request!
+
+Available endpoints:
+  GET    /api/v1/users
+  GET    /api/v1/users/:id
+  POST   /api/v1/users
+  PUT    /api/v1/users/:id
+  PATCH  /api/v1/users/:id
+  DELETE /api/v1/users/:id
+  GET    /api/v1/posts
+  GET    /api/v1/users/:id/posts</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exercise-card">
+                    <h4>🏋️ Simulator Challenges</h4>
+                    <p style="color:var(--text-dim);font-size:14px;margin-bottom:12px">Complete these tasks using the simulator above:</p>
+                    <div id="sim-challenges">
+                        <div class="sim-challenge" data-index="0">
+                            <label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer">
+                                <input type="checkbox" id="sim-ch-0" onchange="checkSimChallenge()">
+                                <span>1. Get the list of all users</span>
+                            </label>
+                        </div>
+                        <div class="sim-challenge" data-index="1">
+                            <label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer">
+                                <input type="checkbox" id="sim-ch-1" onchange="checkSimChallenge()">
+                                <span>2. Get user with ID 2</span>
+                            </label>
+                        </div>
+                        <div class="sim-challenge" data-index="2">
+                            <label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer">
+                                <input type="checkbox" id="sim-ch-2" onchange="checkSimChallenge()">
+                                <span>3. Create a new user with name and email</span>
+                            </label>
+                        </div>
+                        <div class="sim-challenge" data-index="3">
+                            <label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer">
+                                <input type="checkbox" id="sim-ch-3" onchange="checkSimChallenge()">
+                                <span>4. Update only the email of user 1 (partial update)</span>
+                            </label>
+                        </div>
+                        <div class="sim-challenge" data-index="4">
+                            <label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer">
+                                <input type="checkbox" id="sim-ch-4" onchange="checkSimChallenge()">
+                                <span>5. Delete user 3</span>
+                            </label>
+                        </div>
+                        <div class="sim-challenge" data-index="5">
+                            <label style="display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer">
+                                <input type="checkbox" id="sim-ch-5" onchange="checkSimChallenge()">
+                                <span>6. Try to GET a user that doesn't exist (observe the 404)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== MASTER QUIZ ==================== -->
+            <div class="section" id="section-quiz">
+                <div class="section-header">
+                    <h2>🎯 Master Quiz</h2>
+                    <p>Test your knowledge with 25 questions covering everything you've learned. Aim for 100%!</p>
+                </div>
+
+                <div id="quiz-progress-bar" style="margin-bottom:20px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                        <span style="font-size:13px;color:var(--text-dim)">Progress</span>
+                        <span style="font-size:13px;color:var(--text-dim)" id="quiz-progress-text">0 / 25</span>
+                    </div>
+                    <div class="overall-progress" style="width:100%">
+                        <div class="overall-progress-fill" id="quiz-progress-fill" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <div id="quiz-questions-container"></div>
+
+                <div id="quiz-results" class="hidden">
+                    <div class="score-card">
+                        <h3>Quiz Complete!</h3>
+                        <div class="score-number" id="quiz-final-score">0%</div>
+                        <p id="quiz-final-message"></p>
+                    </div>
+                    <button class="btn btn-primary" onclick="resetQuiz()" style="margin-top:12px">🔄 Retake Quiz</button>
+                </div>
+            </div>
+
+            <!-- ==================== SPEED CHALLENGE ==================== -->
+            <div class="section" id="section-challenge">
+                <div class="section-header">
+                    <h2>⚡ Speed Challenge</h2>
+                    <p>Answer 10 rapid-fire questions as fast as you can! Your time is recorded.</p>
+                </div>
+
+                <div id="challenge-start-screen">
+                    <div class="card" style="text-align:center;padding:40px">
+                        <h3 style="font-size:24px;margin-bottom:16px">🏁 Ready?</h3>
+                        <p style="color:var(--text-dim);margin-bottom:24px">10 questions. Clock is ticking. How fast can you go?</p>
+                        <button class="btn btn-primary" onclick="startChallenge()" style="font-size:18px;padding:14px 30px">Start Challenge ⚡</button>
+                    </div>
+                </div>
+
+                <div id="challenge-active-screen" class="hidden">
+                    <div class="challenge-timer" id="challenge-timer">0:00</div>
+                    <div class="challenge-progress" id="challenge-dots"></div>
+                    <div id="challenge-question-container"></div>
+                </div>
+
+                <div id="challenge-result-screen" class="hidden">
+                    <div class="score-card">
+                        <h3>⚡ Challenge Complete!</h3>
+                        <div class="score-number" id="challenge-score">0/10</div>
+                        <p id="challenge-time-display"></p>
+                    </div>
+                    <div id="challenge-review"></div>
+                    <button class="btn btn-primary" onclick="startChallenge()" style="margin-top:16px">🔄 Try Again</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="confetti-container" id="confetti-container"></div>
+
+<script>
+// ==================== STATE ====================
+const state = {
+    xp: 0,
+    streak: 0,
+    completedSections: new Set(),
+    quizAnswered: new Set(),
+    quizCorrect: 0,
+    totalSections: 5
+};
+
+// ==================== NAVIGATION ====================
+function showSection(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    const section = document.getElementById('section-' + id);
+    if (section) section.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick')?.includes(id)) {
+            n.classList.add('active');
+        }
+    });
+
+    // Close mobile nav
+    document.getElementById('sidebar').classList.remove('mobile-open');
+
+    // Init special sections
+    if (id === 'quiz') initQuiz();
+    if (id === 'statuscodes') {
+        const gameTab = document.getElementById('status-game');
+        if (gameTab && gameTab.style.display !== 'none') initMatchGame();
+    }
+}
+
+function toggleMobileNav() {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+// ==================== METHOD TABS ====================
+function showMethodTab(tab) {
+    document.querySelectorAll('.method-tab').forEach(t => {
+        t.style.display = 'none';
+        t.classList.remove('active');
+    });
+    document.querySelectorAll('#method-tabs .tab').forEach(t => t.classList.remove('active'));
+
+    const target = document.getElementById('method-' + tab);
+    if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
+
+    document.querySelectorAll('#method-tabs .tab').forEach(t => {
+        if (t.textContent.toLowerCase().includes(tab) || (tab === 'compare' && t.textContent.includes('Compare'))) {
+            t.classList.add('active');
+        }
+    });
+}
+
+// ==================== STATUS TABS ====================
+function showStatusTab(tab) {
+    document.querySelectorAll('.status-tab').forEach(t => {
+        t.style.display = 'none';
+        t.classList.remove('active');
+    });
+    document.querySelectorAll('#status-tabs .tab').forEach(t => t.classList.remove('active'));
+
+    const target = document.getElementById('status-' + tab);
+    if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
+
+    document.querySelectorAll('#status-tabs .tab').forEach(t => {
+        if (t.textContent.toLowerCase().includes(tab) || (tab === 'game' && t.textContent.includes('Game'))) {
+            t.classList.add('active');
+        }
+    });
+
+    if (tab === 'game') initMatchGame();
+}
+
+// ==================== XP & PROGRESS ====================
+function addXP(amount) {
+    state.xp += amount;
+    document.getElementById('xp-count').textContent = state.xp;
+    document.getElementById('xp-count').parentElement.classList.add('bounce');
+    setTimeout(() => document.getElementById('xp-count').parentElement.classList.remove('bounce'), 500);
+}
+
+function incrementStreak() {
+    state.streak++;
+    document.getElementById('streak-count').textContent = state.streak;
+}
+
+function resetStreak() {
+    state.streak = 0;
+    document.getElementById('streak-count').textContent = 0;
+}
+
+function updateOverallProgress() {
+    const pct = (state.completedSections.size / state.totalSections) * 100;
+    document.getElementById('overall-progress').style.width = pct + '%';
+}
+
+function completeSection(name) {
+    if (!state.completedSections.has(name)) {
+        state.completedSections.add(name);
+        addXP(100);
+        updateOverallProgress();
+
+        const check = document.getElementById('check-' + name);
+        if (check) {
+            check.style.display = 'inline';
+            check.style.color = 'var(--success)';
+        }
+
+        showConfetti();
+    }
+}
+
+// ==================== CONFETTI ====================
+function showConfetti() {
+    const container = document.getElementById('confetti-container');
+    const colors = ['#6c5ce7', '#00cec9', '#fd79a8', '#fdcb6e', '#00b894', '#e17055'];
+
+    for (let i = 0; i < 50; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 0.5 + 's';
+        piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        piece.style.width = (6 + Math.random() * 8) + 'px';
+        piece.style.height = (6 + Math.random() * 8) + 'px';
+        container.appendChild(piece);
+    }
+
+    setTimeout(() => { container.innerHTML = ''; }, 3500);
+}
+
+// ==================== PRINCIPLE EXERCISES ====================
+const principleAnswers = {
+    1: { answer: 'stateless', explanation: 'Storing session in server memory violates statelessness. Use tokens instead.' },
+    2: { answer: 'uniform', explanation: 'The Uniform Interface constraint requires standard resource-based URLs, not RPC-style verb endpoints.' },
+    3: { answer: 'client-server', explanation: 'Client-Server separation means the frontend must never directly access the database.' }
+};
+
+function checkPrincipleEx(num) {
+    const input = document.getElementById('princ-ex-' + num);
+    const fb = document.getElementById('princ-fb-' + num);
+    const val = input.value.trim().toLowerCase();
+    const correct = principleAnswers[num].answer;
+
+    if (val.includes(correct) || val === correct) {
+        fb.className = 'exercise-feedback show correct';
+        fb.textContent = '✅ Correct! ' + principleAnswers[num].explanation;
+        addXP(10);
+        incrementStreak();
+    } else {
+        fb.className = 'exercise-feedback show incorrect';
+        fb.textContent = '❌ Not quite. The answer is "' + correct + '". ' + principleAnswers[num].explanation;
+        resetStreak();
+    }
+}
+
+function checkAllPrincipleEx() {
+    for (let i = 1; i <= 3; i++) checkPrincipleEx(i);
+}
+
+// ==================== METHOD EXERCISES ====================
+const methodAnswers = {
+    1: { answer: 'get', explanation: 'GET retrieves resources without modifying them.' },
+    2: { answer: 'patch', explanation: 'PATCH is for partial updates — changing only specific fields.' },
+    3: { answer: 'post', explanation: 'POST creates a new resource.' },
+    4: { answer: 'put', explanation: 'PUT replaces an entire resource with new data.' },
+    5: { answer: 'delete', explanation: 'DELETE removes a resource.' }
+};
+
+function checkMethodEx(num) {
+    const input = document.getElementById('method-ex-' + num);
+    const fb = document.getElementById('method-fb-' + num);
+    const val = input.value.trim().toLowerCase();
+    const correct = methodAnswers[num].answer;
+
+    if (val === correct) {
+        fb.className = 'exercise-feedback show correct';
+        fb.textContent = '✅ Correct! ' + methodAnswers[num].explanation;
+        addXP(10);
+        incrementStreak();
+    } else {
+        fb.className = 'exercise-feedback show incorrect';
+        fb.textContent = '❌ Not quite. The answer is "' + correct.toUpperCase() + '". ' + methodAnswers[num].explanation;
+        resetStreak();
+    }
+}
+
+function checkAllMethodEx() {
+    for (let i = 1; i <= 5; i++) checkMethodEx(i);
+}
+
+// ==================== URL EXERCISES ====================
+const urlAnswers = {
+    1: { answers: ['get /users', '/users'], explanation: 'Use the noun "users" and let GET be the verb.' },
+    2: { answers: ['delete /users/42', 'delete /api/users/42'], explanation: 'Use DELETE method + resource path. No query params for the ID.' },
+    3: { answers: ['/users/42/orders', 'get /users/42/orders'], explanation: 'Lowercase, no underscores, use path hierarchy for relationships.' },
+    4: { answers: ['post /products', 'post /api/products'], explanation: 'POST creates new resources. PUT replaces existing ones.' }
+};
+
+function checkUrlEx(num) {
+    const input = document.getElementById('url-ex-' + num);
+    const fb = document.getElementById('url-fb-' + num);
+    const val = input.value.trim().toLowerCase();
+    const data = urlAnswers[num];
+
+    const isCorrect = data.answers.some(a => val.includes(a));
+
+    if (isCorrect) {
+        fb.className = 'exercise-feedback show correct';
+        fb.textContent = '✅ Correct! ' + data.explanation;
+        addXP(10);
+        incrementStreak();
+    } else {
+        fb.className = 'exercise-feedback show incorrect';
+        fb.textContent = '❌ Expected something like: "' + data.answers[0] + '". ' + data.explanation;
+        resetStreak();
+    }
+}
+
+function checkAllUrlEx() {
+    for (let i = 1; i <= 4; i++) checkUrlEx(i);
+}
+
+// ==================== VERSIONING EXERCISES ====================
+const verAnswers = {
+    1: { answer: 'no', explanation: 'Adding an optional field is a non-breaking change. Existing clients simply ignore it.' },
+    2: { answer: 'yes', explanation: 'Renaming a field breaks all existing clients expecting the old name.' },
+    3: { answer: 'yes', explanation: 'Changing a data type is a breaking change — clients parsing a number will crash on a string.' },
+    4: { answer: 'no', explanation: 'Adding a new endpoint is non-breaking. No existing client relies on it yet.' }
+};
+
+function checkVerEx(num) {
+    const input = document.getElementById('ver-ex-' + num);
+    const fb = document.getElementById('ver-fb-' + num);
+    const val = input.value.trim().toLowerCase();
+    const correct = verAnswers[num].answer;
+
+    if (val === correct) {
+        fb.className = 'exercise-feedback show correct';
+        fb.textContent = '✅ Correct! ' + verAnswers[num].explanation;
+        addXP(10);
+        incrementStreak();
+    } else {
+        fb.className = 'exercise-feedback show incorrect';
+        fb.textContent = '❌ The answer is "' + correct + '". ' + verAnswers[num].explanation;
+        resetStreak();
+    }
+}
+
+function checkAllVerEx() {
+    for (let i = 1; i <= 4; i++) checkVerEx(i);
+}
+
+// ==================== STATUS CODE MATCH GAME ====================
+let matchGameState = { selected: null, score: 0, matched: 0 };
+
+const matchPairs = [
+    { scenario: 'Successfully retrieved a list of users', code: '200', codeName: 'OK' },
+    { scenario: 'New resource created via POST', code: '201', codeName: 'Created' },
+    { scenario: 'Resource deleted, nothing to return', code: '204', codeName: 'No Content' },
+    { scenario: 'Invalid JSON in request body', code: '400', codeName: 'Bad Request' },
+    { scenario: 'No auth token provided', code: '401', codeName: 'Unauthorized' },
+    { scenario: 'User exists but lacks admin role', code: '403', codeName: 'Forbidden' },
+    { scenario: 'User with that ID doesn\'t exist', code: '404', codeName: 'Not Found' },
+    { scenario: 'Unhandled exception on server', code: '500', codeName: 'Internal Error' }
+];
+
+function initMatchGame() {
+    matchGameState = { selected: null, score: 0, matched: 0 };
+    const container = document.getElementById('match-game-container');
+    if (!container) return;
+
+    const scenarios = [...matchPairs].sort(() => Math.random() - 0.5);
+    const codes = [...matchPairs].sort(() => Math.random() - 0.5);
+
+    container.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+                <h5 style="color:var(--text-dim);margin-bottom:10px;font-size:12px;text-transform:uppercase;letter-spacing:1px">Scenarios</h5>
+                ${scenarios.map((p, i) => `
+                    <div class="dnd-item match-scenario" data-code="${p.code}" onclick="selectMatchItem(this,'scenario')" style="margin-bottom:8px">
+                        ${p.scenario}
+                    </div>
+                `).join('')}
+            </div>
+            <div>
+                <h5 style="color:var(--text-dim);margin-bottom:10px;font-size:12px;text-transform:uppercase;letter-spacing:1px">Status Codes</h5>
+                ${codes.map((p, i) => `
+                    <div class="dnd-item match-code" data-code="${p.code}" onclick="selectMatchItem(this,'code')" style="margin-bottom:8px">
+                        <span class="status-badge status-${p.code[0]}xx">${p.code}</span> ${p.codeName}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('match-score').textContent = 'Score: 0/8';
+}
+
+function selectMatchItem(el, type) {
+    if (el.classList.contains('correct-place')) return;
+
+    if (!matchGameState.selected) {
+        matchGameState.selected = { el, type, code: el.dataset.code };
+        el.style.borderColor = 'var(--primary)';
+        el.style.background = 'rgba(108,92,231,0.15)';
+    } else {
+        if (matchGameState.selected.type === type) {
+            // Same type clicked, switch selection
+            matchGameState.selected.el.style.borderColor = 'var(--card-border)';
+            matchGameState.selected.el.style.background = 'var(--darker)';
+            matchGameState.selected = { el, type, code: el.dataset.code };
+            el.style.borderColor = 'var(--primary)';
+            el.style.background = 'rgba(108,92,231,0.15)';
+        } else {
+            // Different type, check match
+            const prev = matchGameState.selected;
+            if (prev.code === el.dataset.code) {
+                // Correct match!
+                prev.el.classList.add('correct-place');
+                el.classList.add('correct-place');
+                prev.el.style.borderColor = 'var(--success)';
+                prev.el.style.background = 'rgba(0,184,148,0.1)';
+                el.style.borderColor = 'var(--success)';
+                el.style.background = 'rgba(0,184,148,0.1)';
+                matchGameState.score++;
+                matchGameState.matched++;
+                addXP(15);
+                incrementStreak();
+                document.getElementById('match-score').textContent = `Score: ${matchGameState.score}/8`;
+
+                if (matchGameState.matched === 8) {
+                    showConfetti();
+                    addXP(50);
+                }
+            } else {
+                // Wrong match
+                prev.el.classList.add('wrong-place');
+                el.classList.add('wrong-place');
+                resetStreak();
+                setTimeout(() => {
+                    prev.el.classList.remove('wrong-place');
+                    el.classList.remove('wrong-place');
+                    prev.el.style.borderColor = 'var(--card-border)';
+                    prev.el.style.background = 'var(--darker)';
+                    el.style.borderColor = 'var(--card-border)';
+                    el.style.background = 'var(--darker)';
+                }, 800);
+            }
+            matchGameState.selected = null;
+        }
+    }
+}
+
+// ==================== API SIMULATOR ====================
+let simDB = {
+    users: [
+        { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'admin', createdAt: '2024-06-15T10:00:00Z' },
+        { id: 2, name: 'Bob Smith', email: 'bob@example.com', role: 'developer', createdAt: '2024-07-20T14:30:00Z' },
+        { id: 3, name: 'Carol Williams', email: 'carol@example.com', role: 'designer', createdAt: '2024-08-10T09:15:00Z' }
+    ],
+    posts: [
+        { id: 1, userId: 1, title: 'Getting Started with REST', body: 'REST is an architectural style...', createdAt: '2024-09-01T08:00:00Z' },
+        { id: 2, userId: 1, title: 'HTTP Methods Explained', body: 'There are 5 main HTTP methods...', createdAt: '2024-09-05T12:00:00Z' },
+        { id: 3, userId: 2, title: 'Status Codes Guide', body: 'Status codes communicate results...', createdAt: '2024-09-10T16:00:00Z' }
+    ],
+    nextUserId: 4,
+    nextPostId: 4
+};
+
+function sendSimRequest() {
+    const method = document.getElementById('sim-method').value;
+    const url = document.getElementById('sim-url').value.trim();
+    const bodyStr = document.getElementById('sim-request-body').value.trim();
+    let body = null;
+
+    if (bodyStr && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+        try {
+            body = JSON.parse(bodyStr);
+        } catch (e) {
+            displaySimResponse(400, { error: { code: 'INVALID_JSON', message: 'Request body is not valid JSON: ' + e.message } });
+            return;
+        }
+    }
+
+    // Route matching
+    const usersMatch = url.match(/^\/api\/v1\/users$/);
+    const userMatch = url.match(/^\/api\/v1\/users\/(\d+)$/);
+    const userPostsMatch = url.match(/^\/api\/v1\/users\/(\d+)\/posts$/);
+    const postsMatch = url.match(/^\/api\/v1\/posts$/);
+    const postMatch = url.match(/^\/api\/v1\/posts\/(\d+)$/);
+
+    if (method === 'GET' && usersMatch) {
+        displaySimResponse(200, { data: simDB.users, meta: { total: simDB.users.length } });
+    } else if (method === 'GET' && userMatch) {
+        const user = simDB.users.find(u => u.id === parseInt(userMatch[1]));
+        if (user) {
+            displaySimResponse(200, {
+                data: user,
+                _links: {
+                    self: `/api/v1/users/${user.id}`,
+                    posts: `/api/v1/users/${user.id}/posts`
+                }
+            });
+        } else {
+            displaySimResponse(404, { error: { code: 'NOT_FOUND', message: `User ${userMatch[1]} not found` } });
+        }
+    } else if (method === 'POST' && usersMatch) {
+        if (!body || !body.name || !body.email) {
+            displaySimResponse(400, { error: { code: 'VALIDATION_ERROR', message: 'name and email are required', details: [
+                ...(!body?.name ? [{ field: 'name', message: 'Required field' }] : []),
+                ...(!body?.email ? [{ field: 'email', message: 'Required field' }] : [])
+            ]}});
+            return;
+        }
+        const dup = simDB.users.find(u => u.email === body.email);
+        if (dup) {
+            displaySimResponse(409, { error: { code: 'CONFLICT', message: `Email ${body.email} already exists` } });
+            return;
+        }
+        const newUser = { id: simDB.nextUserId++, ...body, createdAt: new Date().toISOString() };
+        simDB.users.push(newUser);
+        displaySimResponse(201, { data: newUser, _links: { self: `/api/v1/users/${newUser.id}` } }, { Location: `/api/v1/users/${newUser.id}` });
+    } else if (method === 'PUT' && userMatch) {
+        const idx = simDB.users.findIndex(u => u.id === parseInt(userMatch[1]));
+        if (idx === -1) {
+            displaySimResponse(404, { error: { code: 'NOT_FOUND', message: `User ${userMatch[1]} not found` } });
+            return;
+        }
+        if (!body || !body.name || !body.email) {
+            displaySimResponse(400, { error: { code: 'VALIDATION_ERROR', message: 'PUT requires complete resource (name, email)' } });
+            return;
+        }
+        simDB.users[idx] = { id: simDB.users[idx].id, ...body, updatedAt: new Date().toISOString() };
+        displaySimResponse(200, { data: simDB.users[idx] });
+    } else if (method === 'PATCH' && userMatch) {
+        const idx = simDB.users.findIndex(u => u.id === parseInt(userMatch[1]));
+        if (idx === -1) {
+            displaySimResponse(404, { error: { code: 'NOT_FOUND', message: `User ${userMatch[1]} not found` } });
+            return;
+        }
+        if (!body) {
+            displaySimResponse(400, { error: { code: 'EMPTY_BODY', message: 'PATCH requires a body with fields to update' } });
+            return;
+        }
+        simDB.users[idx] = { ...simDB.users[idx], ...body, updatedAt: new Date().toISOString() };
+        displaySimResponse(200, { data: simDB.users[idx] });
+    } else if (method === 'DELETE' && userMatch) {
+        const idx = simDB.users.findIndex(u => u.id === parseInt(userMatch[1]));
+        if (idx === -1) {
+            displaySimResponse(404, { error: { code: 'NOT_FOUND', message: `User ${userMatch[1]} not found` } });
+            return;
+        }
+        simDB.users.splice(idx, 1);
+        displaySimResponse(204, null);
+    } else if (method === 'GET' && userPostsMatch) {
+        const userId = parseInt(userPostsMatch[1]);
+        const user = simDB.users.find(u => u.id === userId);
+        if (!user) {
+            displaySimResponse(404, { error: { code: 'NOT_FOUND', message: `User ${userId} not found` } });
+            return;
+        }
+        const posts = simDB.posts.filter(p => p.userId === userId);
+        displaySimResponse(200, { data: posts, meta: { total: posts.length, userId } });
+    } else if (method === 'GET' && postsMatch) {
+        displaySimResponse(200, { data: simDB.posts, meta: { total: simDB.posts.length } });
+    } else if (method === 'GET' && postMatch) {
+        const post = simDB.posts.find(p => p.id === parseInt(postMatch[1]));
+        if (post) {
+            displaySimResponse(200, { data: post });
+        } else {
+            displaySimResponse(404, { error: { code: 'NOT_FOUND', message: `Post ${postMatch[1]} not found` } });
+        }
+    } else if (['POST','PUT','PATCH','DELETE'].includes(method) && (usersMatch || userMatch) === null && (postsMatch || postMatch) === null) {
+        displaySimResponse(404, { error: { code: 'ENDPOINT_NOT_FOUND', message: `No route matches ${method} ${url}` } });
+    } else {
+        displaySimResponse(405, { error: { code: 'METHOD_NOT_ALLOWED', message: `${method} is not supported on ${url}` } });
+    }
+}
+
+function displaySimResponse(status, body, headers = {}) {
+    const statusDisplay = document.getElementById('sim-status-display');
+    const responseBody = document.getElementById('sim-response-body');
+
+    let statusClass = 'status-' + String(status)[0] + 'xx';
+    let statusText = {
+        200: 'OK', 201: 'Created', 204: 'No Content',
+        400: 'Bad Request', 401: 'Unauthorized', 403: 'Forbidden',
+        404: 'Not Found', 405: 'Method Not Allowed', 409: 'Conflict',
+        422: 'Unprocessable Entity', 500: 'Internal Server Error'
+    }[status] || '';
+
+    statusDisplay.innerHTML = `<span class="status-badge ${statusClass}">${status} ${statusText}</span>`;
+
+    let output = `HTTP/1.1 ${status} ${statusText}\nContent-Type: application/json\n`;
+    Object.entries(headers).forEach(([k, v]) => { output += `${k}: ${v}\n`; });
+    output += `Date: ${new Date().toUTCString()}\n`;
+    output += `\n`;
+
+    if (status === 204) {
+        output += '(No Content)';
+    } else if (body) {
+        output += JSON.stringify(body, null, 2);
+    }
+
+    responseBody.textContent = output;
+}
+
+function checkSimChallenge() {
+    let completed = 0;
+    for (let i = 0; i < 6; i++) {
+        if (document.getElementById('sim-ch-' + i)?.checked) completed++;
+    }
+    if (completed === 6) {
+        addXP(50);
+        showConfetti();
+    }
+}
+
+// ==================== MASTER QUIZ ====================
+const quizQuestions = [
+    { q: "What does REST stand for?", options: ["Remote Execution of Server Tasks", "Representational State Transfer", "Resource Exchange Standard Technology", "Reliable Endpoint Service Transport"], correct: 1, explanation: "REST = Representational State Transfer, defined by Roy Fielding in his 2000 PhD dissertation." },
+    { q: "Which HTTP method is both SAFE and IDEMPOTENT?", options: ["POST", "PUT", "GET", "PATCH"], correct: 2, explanation: "GET is the only method among these that is both safe (doesn't modify data) and idempotent (same result every time)." },
+    { q: "What status code should a POST return when creating a resource?", options: ["200 OK", "201 Created", "204 No Content", "202 Accepted"], correct: 1, explanation: "201 Created is the correct status code for successful resource creation. Include a Location header." },
+    { q: "What's the correct URL pattern for getting user 42's orders?", options: ["/getOrdersByUser/42", "/users/42/orders", "/orders?userId=42", "Both B and C are acceptable"], correct: 3, explanation: "Both /users/42/orders (nested) and /orders?userId=42 (query param) are valid REST patterns. Option A uses a verb in the URL." },
+    { q: "Which status code means 'authenticated but not authorized'?", options: ["401", "403", "405", "409"], correct: 1, explanation: "403 Forbidden = 'I know who you are, but you can't do this.' 401 = 'Who are you?'" },
+    { q: "PUT vs PATCH: which one is for partial updates?", options: ["PUT", "PATCH", "Both can be used", "Neither"], correct: 1, explanation: "PATCH is for partial updates. PUT replaces the entire resource." },
+    { q: "Which REST constraint is OPTIONAL?", options: ["Statelessness", "Code on Demand", "Uniform Interface", "Cacheability"], correct: 1, explanation: "Code on Demand is the only optional REST constraint. It allows servers to send executable code to clients." },
+    { q: "What's wrong with GET /deleteUser/42?", options: ["GET should not modify data", "Uses a verb in URL", "Should use singular 'user'", "All of the above"], correct: 3, explanation: "All three: GET must be safe (not delete), URLs should use nouns (not verbs), and resource names should be plural." },
+    { q: "What does HATEOAS mean?", options: ["HTTP Application Transfer Engine Over API Service", "Hypermedia As The Engine Of Application State", "High Availability Transport Engine Over Application Stack", "Hypertext API Transfer Engine Of Application State"], correct: 1, explanation: "HATEOAS = Hypermedia As The Engine Of Application State. Responses include links to related actions." },
+    { q: "Which versioning strategy is most commonly used?", options: ["Header versioning", "URL path versioning", "Query parameter versioning", "Subdomain versioning"], correct: 1, explanation: "URL path versioning (/api/v1/...) is the industry standard. Used by Google, Twitter, Facebook, etc." },
+    { q: "What status code for rate limiting?", options: ["403 Forbidden", "408 Request Timeout", "429 Too Many Requests", "503 Service Unavailable"], correct: 2, explanation: "429 Too Many Requests is specifically for rate limiting. Include Retry-After header." },
+    { q: "Is POST idempotent?", options: ["Yes", "No", "It depends on implementation", "Only with an idempotency key"], correct: 1, explanation: "POST is NOT idempotent by definition. Calling it twice creates two resources. However, idempotency keys can make it behave idempotently." },
+    { q: "Which URL format is correct?", options: ["/api/v1/blog_posts", "/api/v1/BlogPosts", "/api/v1/blog-posts", "/api/v1/blogPosts"], correct: 2, explanation: "Use lowercase with hyphens (kebab-case) for URLs. Reserve camelCase for JSON field names." },
+    { q: "What should DELETE /users/42 return on success?", options: ["200 with the deleted user", "201 Created", "204 No Content", "Both A and C are acceptable"], correct: 3, explanation: "Both 200 (with deleted resource) and 204 (no body) are valid. 204 is more common." },
+    { q: "What's wrong with this response?\nPOST /users → 200 OK", options: ["Should be 201 Created", "Should include Location header", "Both A and B", "Nothing, this is fine"], correct: 2, explanation: "POST creating a resource should return 201 Created with a Location header pointing to the new resource." },
+    { q: "Which is NOT a REST constraint?", options: ["Statelessness", "Client-Server", "Transactions", "Cacheability"], correct: 2, explanation: "Transactions is not a REST constraint. The 6 constraints are: Client-Server, Stateless, Cacheable, Uniform Interface, Layered System, Code on Demand." },
+    { q: "How deep should URL nesting go?", options: ["Maximum 1 level", "Maximum 2 levels", "Maximum 3 levels", "No limit"], correct: 1, explanation: "Best practice: max 2 levels. Instead of /users/1/posts/2/comments, use /posts/2/comments or /comments?postId=2." },
+    { q: "What does 'stateless' mean in REST?", options: ["No database state", "Server stores no client session between requests", "Client can't maintain state", "No state changes allowed"], correct: 1, explanation: "Each request must contain all info needed. The server doesn't remember previous requests from the same client." },
+    { q: "Which is a breaking change requiring a new API version?", options: ["Adding a new endpoint", "Adding an optional field to response", "Renaming an existing field", "Fixing a bug in validation"], correct: 2, explanation: "Renaming a field breaks existing clients. Adding endpoints/fields is non-breaking." },
+    { q: "What header tells clients about caching?", options: ["X-Cache", "Cache-Control", "Content-Cache", "Cache-Policy"], correct: 1, explanation: "Cache-Control is the standard header. Example: Cache-Control: max-age=3600" },
+    { q: "409 Conflict is used when...", options: ["Two servers conflict", "Request conflicts with current resource state", "HTTP version conflict", "API version conflict"], correct: 1, explanation: "409 = request conflicts with current state. Example: trying to create a user with a duplicate email." },
+    { q: "What's the purpose of ETag header?", options: ["Error tracking", "Resource version fingerprint for caching", "Entity tagging for security", "Endpoint tracking"], correct: 1, explanation: "ETag provides a version fingerprint. Clients send If-None-Match to check if their cached copy is current." },
+    { q: "Best practice for JSON field names?", options: ["snake_case", "PascalCase", "camelCase", "kebab-case"], correct: 2, explanation: "camelCase is the JavaScript/JSON convention. Use it consistently across all response fields." },
+    { q: "What should happen if you GET a deleted resource?", options: ["200 with null", "204 No Content", "404 Not Found", "410 Gone"], correct: 2, explanation: "404 Not Found is standard. 410 Gone is technically more precise (it existed but was deleted) but 404 is more common." },
+    { q: "Which header should accompany a 201 response?", options: ["Content-Location", "Location", "Created-At", "Resource-URL"], correct: 1, explanation: "Location header with the URL of the newly created resource. Example: Location: /api/v1/users/43" }
+];
+
+let quizInitialized = false;
+
+function initQuiz() {
+    if (quizInitialized) return;
+    quizInitialized = true;
+
+    const container = document.getElementById('quiz-questions-container');
+    container.innerHTML = '';
+
+    quizQuestions.forEach((q, i) => {
+        const letters = ['A', 'B', 'C', 'D'];
+        container.innerHTML += `
+            <div class="quiz-question" id="quiz-q-${i}">
+                <h4>Question ${i + 1} of ${quizQuestions.length}</h4>
+                <p class="question-text">${q.q}</p>
+                <div class="quiz-options">
+                    ${q.options.map((opt, j) => `
+                        <button class="quiz-option" id="quiz-opt-${i}-${j}" onclick="answerQuiz(${i},${j})">
+                            <span class="option-letter">${letters[j]}</span>
+                            <span>${opt}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="quiz-explanation" id="quiz-exp-${i}">${q.explanation}</div>
+            </div>
+        `;
+    });
+}
+
+function answerQuiz(qIdx, optIdx) {
+    if (state.quizAnswered.has(qIdx)) return;
+    state.quizAnswered.add(qIdx);
+
+    const q = quizQuestions[qIdx];
+    const correct = optIdx === q.correct;
+
+    // Disable all options
+    q.options.forEach((_, j) => {
+        const optEl = document.getElementById(`quiz-opt-${qIdx}-${j}`);
+        optEl.classList.add('disabled');
+        optEl.style.pointerEvents = 'none';
+
+        if (j === q.correct) {
+            optEl.classList.add('correct');
+        } else if (j === optIdx && !correct) {
+            optEl.classList.add('incorrect');
+        }
+    });
+
+    // Show explanation
+    const expEl = document.getElementById(`quiz-exp-${qIdx}`);
+    expEl.classList.add('show');
+    expEl.classList.add(correct ? 'correct-exp' : 'incorrect-exp');
+    expEl.innerHTML = (correct ? '✅ ' : '❌ ') + q.explanation;
+
+    if (correct) {
+        state.quizCorrect++;
+        addXP(20);
+        incrementStreak();
+    } else {
+        resetStreak();
+    }
+
+    // Update progress
+    const pct = (state.quizAnswered.size / quizQuestions.length) * 100;
+    document.getElementById('quiz-progress-fill').style.width = pct + '%';
+    document.getElementById('quiz-progress-text').textContent = `${state.quizAnswered.size} / ${quizQuestions.length}`;
+
+    // Check completion
+    if (state.quizAnswered.size === quizQuestions.length) {
+        const scorePct = Math.round((state.quizCorrect / quizQuestions.length) * 100);
+        document.getElementById('quiz-final-score').textContent = scorePct + '%';
+
+        let msg = '';
+        if (scorePct === 100) msg = '🏆 PERFECT! You\'re ready for any REST API interview!';
+        else if (scorePct >= 80) msg = '🎉 Great job! Review the missed questions and try again.';
+        else if (scorePct >= 60) msg = '👍 Good start. Review the sections and retake the quiz.';
+        else msg = '📚 Keep studying! Go through each section carefully.';
+
+        document.getElementById('quiz-final-message').textContent = msg;
+        document.getElementById('quiz-results').classList.remove('hidden');
+
+        if (scorePct >= 80) showConfetti();
+    }
+}
+
+function resetQuiz() {
+    quizInitialized = false;
+    state.quizAnswered.clear();
+    state.quizCorrect = 0;
+    document.getElementById('quiz-results').classList.add('hidden');
+    document.getElementById('quiz-progress-fill').style.width = '0%';
+    document.getElementById('quiz-progress-text').textContent = '0 / 25';
+    initQuiz();
+}
+
+// ==================== SPEED CHALLENGE ====================
+let challengeState = {
+    questions: [],
+    current: 0,
+    correct: 0,
+    answers: [],
+    timer: null,
+    seconds: 0
+};
+
+const challengePool = [
+    { q: "HTTP method to create a resource?", options: ["GET", "POST", "PUT", "PATCH"], correct: 1 },
+    { q: "Status code for 'Not Found'?", options: ["400", "401", "403", "404"], correct: 3 },
+    { q: "Is DELETE idempotent?", options: ["Yes", "No"], correct: 0 },
+    { q: "Is POST safe?", options: ["Yes", "No"], correct: 1 },
+    { q: "Correct URL: /users or /user?", options: ["/users (plural)", "/user (singular)"], correct: 0 },
+    { q: "PUT is for ___ updates", options: ["Partial", "Full/Complete"], correct: 1 },
+    { q: "PATCH is for ___ updates", options: ["Partial", "Full/Complete"], correct: 0 },
+    { q: "201 Created goes with which method?", options: ["GET", "POST", "DELETE", "PATCH"], correct: 1 },
+    { q: "Status code for rate limiting?", options: ["401", "403", "429", "503"], correct: 2 },
+    { q: "Most popular versioning approach?", options: ["Header", "URL path", "Query param", "Subdomain"], correct: 1 },
+    { q: "401 means...", options: ["Not authenticated", "Not authorized", "Not found", "Server error"], correct: 0 },
+    { q: "403 means...", options: ["Not authenticated", "Not authorized/forbidden", "Not found", "Bad request"], correct: 1 },
+    { q: "204 No Content is common for?", options: ["GET", "POST", "PUT", "DELETE"], correct: 3 },
+    { q: "Use ___ in URLs", options: ["camelCase", "PascalCase", "kebab-case", "snake_case"], correct: 2 },
+    { q: "Use ___ for JSON fields", options: ["camelCase", "PascalCase", "kebab-case", "snake_case"], correct: 0 },
+    { q: "Which is NOT a REST constraint?", options: ["Stateless", "Cacheable", "Atomic", "Layered"], correct: 2 },
+    { q: "Max recommended URL nesting depth?", options: ["1", "2", "3", "5"], correct: 1 },
+    { q: "409 Conflict is for?", options: ["Version conflict", "Duplicate resource", "Both", "Neither"], correct: 2 },
+    { q: "GET should have a request body?", options: ["Yes", "No"], correct: 1 },
+    { q: "Which header points to new resource?", options: ["Content-Location", "Location", "Resource-URL", "Link"], correct: 1 }
+];
+
+function startChallenge() {
+    // Pick 10 random questions
+    const shuffled = [...challengePool].sort(() => Math.random() - 0.5);
+    challengeState.questions = shuffled.slice(0, 10);
+    challengeState.current = 0;
+    challengeState.correct = 0;
+    challengeState.answers = [];
+    challengeState.seconds = 0;
+
+    document.getElementById('challenge-start-screen').classList.add('hidden');
+    document.getElementById('challenge-result-screen').classList.add('hidden');
+    document.getElementById('challenge-active-screen').classList.remove('hidden');
+
+    // Create dots
+    const dotsEl = document.getElementById('challenge-dots');
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+        dotsEl.innerHTML += `<div class="challenge-dot" id="ch-dot-${i}"></div>`;
+    }
+    document.getElementById('ch-dot-0').classList.add('current');
+
+    // Start timer
+    if (challengeState.timer) clearInterval(challengeState.timer);
+    challengeState.timer = setInterval(() => {
+        challengeState.seconds++;
+        const min = Math.floor(challengeState.seconds / 60);
+        const sec = challengeState.seconds % 60;
+        document.getElementById('challenge-timer').textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+    }, 1000);
+
+    showChallengeQuestion();
+}
+
+function showChallengeQuestion() {
+    const q = challengeState.questions[challengeState.current];
+    const letters = ['A', 'B', 'C', 'D'];
+
+    document.getElementById('challenge-question-container').innerHTML = `
+        <div class="quiz-question">
+            <h4>Question ${challengeState.current + 1} of 10</h4>
+            <p class="question-text">${q.q}</p>
+            <div class="quiz-options">
+                ${q.options.map((opt, j) => `
+                    <button class="quiz-option" onclick="answerChallenge(${j})">
+                        <span class="option-letter">${letters[j]}</span>
+                        <span>${opt}</span>
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function answerChallenge(optIdx) {
+    const q = challengeState.questions[challengeState.current];
+    const correct = optIdx === q.correct;
+
+    challengeState.answers.push({ question: q, selected: optIdx, correct });
+
+    const dot = document.getElementById('ch-dot-' + challengeState.current);
+    dot.classList.remove('current');
+
+    if (correct) {
+        challengeState.correct++;
+        dot.classList.add('answered');
+        addXP(10);
+    } else {
+        dot.classList.add('wrong');
+    }
+
+    challengeState.current++;
+
+    if (challengeState.current >= 10) {
+        endChallenge();
+    } else {
+        document.getElementById('ch-dot-' + challengeState.current).classList.add('current');
+        showChallengeQuestion();
+    }
+}
+
+function endChallenge() {
+    clearInterval(challengeState.timer);
+
+    document.getElementById('challenge-active-screen').classList.add('hidden');
+    document.getElementById('challenge-result-screen').classList.remove('hidden');
+
+    const min = Math.floor(challengeState.seconds / 60);
+    const sec = challengeState.seconds % 60;
+
+    document.getElementById('challenge-score').textContent = `${challengeState.correct}/10`;
+    document.getElementById('challenge-time-display').textContent = `⏱️ Time: ${min}:${sec.toString().padStart(2, '0')}`;
+
+    // Review
+    const review = document.getElementById('challenge-review');
+    review.innerHTML = '<h3 style="margin:20px 0 12px">Review</h3>';
+    challengeState.answers.forEach((a, i) => {
+        const letters = ['A', 'B', 'C', 'D'];
+        review.innerHTML += `
+            <div class="card" style="padding:14px;margin-bottom:8px;border-color:${a.correct ? 'var(--success)' : 'var(--danger)'}">
+                <p style="font-size:14px"><strong>${i + 1}. ${a.question.q}</strong></p>
+                <p style="font-size:13px;color:${a.correct ? 'var(--success)' : 'var(--danger)'}">
+                    Your answer: ${letters[a.selected]} — ${a.question.options[a.selected]}
+                    ${!a.correct ? ` | Correct: ${letters[a.question.correct]} — ${a.question.options[a.question.correct]}` : ''}
+                </p>
+            </div>
+        `;
+    });
+
+    if (challengeState.correct >= 8) showConfetti();
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Hide completion checks initially
+    document.querySelectorAll('.nav-check').forEach(el => el.style.display = 'none');
+
+    // Update method select color
+    const methodSelect = document.getElementById('sim-method');
+    if (methodSelect) {
+        const colors = { GET: '#00b894', POST: '#fdcb6e', PUT: '#a29bfe', PATCH: '#00cec9', DELETE: '#e17055' };
+        methodSelect.addEventListener('change', function() {
+            this.style.background = colors[this.value] || '#00b894';
+            this.style.color = this.value === 'POST' ? '#2d3436' : 'white';
+        });
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPM Package Publishing Mastery</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --bg-card: #1c2333;
+  --accent: #e04a2e;
+  --accent-light: #ff6b4a;
+  --accent-glow: rgba(224, 74, 46, 0.3);
+  --green: #3fb950;
+  --yellow: #d29922;
+  --blue: #58a6ff;
+  --purple: #bc8cff;
+  --red: #f85149;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #484f58;
+  --border: #30363d;
+  --font-mono: 'Courier New', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+body { font-family: var(--font-sans); background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; overflow-x: hidden; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.app-container { display: flex; min-height: 100vh; }
+.sidebar { width: 300px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 0; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; z-index: 100; transition: transform 0.3s ease; }
+.sidebar-header { padding: 24px 20px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary)); }
+.sidebar-header h1 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.sidebar-header h1 .npm-icon { background: var(--accent); color: white; padding: 3px 6px; border-radius: 4px; font-size: 12px; font-weight: 800; }
+.sidebar-header .subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.progress-container { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.progress-bar { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light)); border-radius: 3px; transition: width 0.5s ease; width: 0%; }
+.xp-display { text-align: center; padding: 12px; margin: 8px 20px; background: var(--bg-tertiary); border-radius: var(--radius); font-size: 13px; color: var(--yellow); border: 1px solid rgba(210, 153, 34, 0.2); }
+.nav-section { padding: 12px 0; }
+.nav-section-title { padding: 8px 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 600; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 20px; cursor: pointer; transition: all 0.2s; font-size: 14px; color: var(--text-secondary); border-left: 3px solid transparent; }
+.nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.nav-item.active { background: rgba(224, 74, 46, 0.08); color: var(--accent-light); border-left-color: var(--accent); }
+.nav-item.completed .nav-icon { background: var(--green); color: white; border-color: var(--green); }
+.nav-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 13px; background: var(--bg-tertiary); border: 1px solid var(--border); flex-shrink: 0; }
+.nav-badge { margin-left: auto; font-size: 10px; padding: 2px 8px; border-radius: 10px; background: var(--bg-tertiary); color: var(--text-muted); }
+.nav-badge.quiz { background: rgba(188, 140, 255, 0.15); color: var(--purple); }
+.nav-badge.exercise { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+.nav-badge.pitfall { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+.main-content { margin-left: 300px; flex: 1; padding: 40px; max-width: 900px; }
+.section { display: none; animation: fadeSlideIn 0.4s ease; }
+.section.active { display: block; }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.section-header { margin-bottom: 32px; }
+.section-header .breadcrumb { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+.section-header h2 { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--text-primary), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.section-header .section-desc { color: var(--text-secondary); font-size: 16px; margin-top: 8px; }
+h3 { font-size: 22px; margin: 32px 0 16px; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+h4 { font-size: 17px; margin: 24px 0 12px; color: var(--blue); }
+p { margin-bottom: 16px; color: var(--text-secondary); font-size: 15px; }
+.code-block { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius); margin: 16px 0 24px; overflow: hidden; }
+.code-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+.copy-btn { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+.copy-btn:hover { border-color: var(--accent); color: var(--accent-light); }
+.copy-btn.copied { border-color: var(--green); color: var(--green); }
+pre { padding: 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.8; color: var(--text-primary); }
+.kw { color: var(--purple); }
+.str { color: #a5d6ff; }
+.num { color: #79c0ff; }
+.cm { color: var(--text-muted); font-style: italic; }
+.fn { color: #d2a8ff; }
+.prop { color: #7ee787; }
+.type { color: #ff7b72; }
+.tag { color: var(--green); }
+.info-card { padding: 20px 20px 20px 56px; border-radius: var(--radius); margin: 20px 0; position: relative; border: 1px solid; }
+.info-card::before { position: absolute; left: 18px; top: 20px; font-size: 20px; }
+.info-card.tip { background: rgba(63, 185, 80, 0.06); border-color: rgba(63, 185, 80, 0.2); }
+.info-card.tip::before { content: '💡'; }
+.info-card.tip .card-title { color: var(--green); }
+.info-card.warning { background: rgba(210, 153, 34, 0.06); border-color: rgba(210, 153, 34, 0.2); }
+.info-card.warning::before { content: '⚠️'; }
+.info-card.warning .card-title { color: var(--yellow); }
+.info-card.danger { background: rgba(248, 81, 73, 0.06); border-color: rgba(248, 81, 73, 0.2); }
+.info-card.danger::before { content: '🚫'; }
+.info-card.danger .card-title { color: var(--red); }
+.info-card.info { background: rgba(88, 166, 255, 0.06); border-color: rgba(88, 166, 255, 0.2); }
+.info-card.info::before { content: '📘'; }
+.info-card.info .card-title { color: var(--blue); }
+.card-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.info-card p { margin-bottom: 8px; font-size: 14px; }
+.info-card p:last-child { margin-bottom: 0; }
+.terminal { background: #000; border-radius: var(--radius); margin: 16px 0 24px; overflow: hidden; border: 1px solid #333; }
+.terminal-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #1a1a1a; border-bottom: 1px solid #333; }
+.terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+.terminal-dot.red { background: #ff5f56; }
+.terminal-dot.yellow { background: #ffbd2e; }
+.terminal-dot.green { background: #27c93f; }
+.terminal-title { margin-left: 8px; font-size: 12px; color: #666; font-family: var(--font-mono); }
+.terminal-body { padding: 16px; font-family: var(--font-mono); font-size: 13px; line-height: 1.8; min-height: 60px; }
+.terminal-line { display: flex; flex-wrap: wrap; }
+.terminal-prompt { color: var(--green); margin-right: 8px; user-select: none; }
+.terminal-cmd { color: #fff; }
+.terminal-output { color: #888; display: block; }
+.terminal-output.success { color: var(--green); }
+.terminal-output.error { color: var(--red); }
+.terminal-output.warn { color: var(--yellow); }
+.terminal-input { background: transparent; border: none; color: #fff; font-family: var(--font-mono); font-size: 13px; outline: none; flex: 1; caret-color: var(--green); }
+.quiz-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; margin: 24px 0; }
+.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.quiz-question-num { font-size: 12px; color: var(--purple); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.quiz-score { font-size: 13px; color: var(--text-secondary); }
+.quiz-question { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; line-height: 1.5; white-space: pre-line; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option { display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--bg-tertiary); border: 2px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all 0.2s; font-size: 14px; color: var(--text-secondary); }
+.quiz-option:hover:not(.disabled) { border-color: var(--accent); background: rgba(224, 74, 46, 0.05); color: var(--text-primary); }
+.quiz-option .option-letter { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: var(--bg-primary); font-weight: 700; font-size: 12px; flex-shrink: 0; border: 1px solid var(--border); }
+.quiz-option.correct { border-color: var(--green); background: rgba(63, 185, 80, 0.08); color: var(--green); }
+.quiz-option.correct .option-letter { background: var(--green); color: #000; border-color: var(--green); }
+.quiz-option.incorrect { border-color: var(--red); background: rgba(248, 81, 73, 0.08); color: var(--red); }
+.quiz-option.incorrect .option-letter { background: var(--red); color: #fff; border-color: var(--red); }
+.quiz-explanation { margin-top: 16px; padding: 16px; background: rgba(88, 166, 255, 0.06); border: 1px solid rgba(88, 166, 255, 0.15); border-radius: var(--radius); font-size: 14px; color: var(--text-secondary); display: none; }
+.quiz-explanation.show { display: block; }
+.quiz-nav { display: flex; justify-content: space-between; margin-top: 20px; }
+.exercise-container { background: var(--bg-card); border: 2px solid var(--border); border-radius: var(--radius-lg); margin: 24px 0; overflow: hidden; }
+.exercise-header { display: flex; align-items: center; gap: 12px; padding: 18px 24px; background: rgba(63, 185, 80, 0.05); border-bottom: 1px solid var(--border); }
+.exercise-header h4 { margin: 0; color: var(--green); font-size: 16px; }
+.exercise-header .difficulty { margin-left: auto; font-size: 11px; padding: 3px 10px; border-radius: 10px; }
+.difficulty.easy { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+.difficulty.medium { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+.exercise-body { padding: 24px; }
+.exercise-prompt { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; }
+.exercise-editor textarea { width: 100%; min-height: 200px; background: #000; border: 1px solid #333; border-radius: var(--radius); padding: 16px; color: #e6edf3; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+.exercise-editor textarea:focus { border-color: var(--accent); }
+.exercise-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.btn { padding: 10px 22px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; display: inline-flex; align-items: center; gap: 8px; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-light); box-shadow: 0 0 20px var(--accent-glow); }
+.btn-secondary { background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--text-muted); color: var(--text-primary); }
+.btn-small { padding: 6px 14px; font-size: 12px; }
+.exercise-result { margin-top: 16px; padding: 14px 18px; border-radius: var(--radius); font-size: 14px; display: none; }
+.exercise-result.show { display: flex; align-items: flex-start; gap: 10px; }
+.exercise-result.pass { background: rgba(63, 185, 80, 0.08); border: 1px solid rgba(63, 185, 80, 0.2); color: var(--green); }
+.exercise-result.fail { background: rgba(248, 81, 73, 0.08); border: 1px solid rgba(248, 81, 73, 0.2); color: var(--red); }
+.pitfall-card { background: var(--bg-card); border: 1px solid rgba(248, 81, 73, 0.2); border-radius: var(--radius-lg); margin: 20px 0; overflow: hidden; }
+.pitfall-header { display: flex; align-items: center; gap: 10px; padding: 14px 20px; background: rgba(248, 81, 73, 0.05); border-bottom: 1px solid rgba(248, 81, 73, 0.1); font-weight: 600; font-size: 15px; color: var(--red); cursor: pointer; transition: background 0.2s; }
+.pitfall-header:hover { background: rgba(248, 81, 73, 0.08); }
+.pitfall-header .toggle { margin-left: auto; transition: transform 0.3s; }
+.pitfall-header.open .toggle { transform: rotate(180deg); }
+.pitfall-body { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease; }
+.pitfall-body.open { max-height: 2000px; padding: 20px; }
+.pitfall-wrong, .pitfall-right { margin: 12px 0; padding: 12px 16px; border-radius: var(--radius); font-size: 13px; }
+.pitfall-wrong { background: rgba(248, 81, 73, 0.06); border-left: 3px solid var(--red); }
+.pitfall-right { background: rgba(63, 185, 80, 0.06); border-left: 3px solid var(--green); }
+.pitfall-wrong .label { color: var(--red); font-weight: 600; font-size: 12px; margin-bottom: 6px; }
+.pitfall-right .label { color: var(--green); font-weight: 600; font-size: 12px; margin-bottom: 6px; }
+.pitfall-wrong pre, .pitfall-right pre { background: transparent; padding: 8px 0; color: var(--text-secondary); font-size: 12px; }
+.semver-playground { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; margin: 24px 0; }
+.semver-display { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 24px 0; }
+.semver-part { text-align: center; padding: 16px 24px; border-radius: var(--radius); min-width: 100px; }
+.semver-part .number { font-size: 42px; font-weight: 800; font-family: var(--font-mono); transition: transform 0.2s; }
+.semver-part .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+.semver-part.major { background: rgba(248, 81, 73, 0.1); border: 1px solid rgba(248, 81, 73, 0.2); }
+.semver-part.major .number, .semver-part.major .label { color: var(--red); }
+.semver-part.minor { background: rgba(210, 153, 34, 0.1); border: 1px solid rgba(210, 153, 34, 0.2); }
+.semver-part.minor .number, .semver-part.minor .label { color: var(--yellow); }
+.semver-part.patch { background: rgba(63, 185, 80, 0.1); border: 1px solid rgba(63, 185, 80, 0.2); }
+.semver-part.patch .number, .semver-part.patch .label { color: var(--green); }
+.semver-dot { font-size: 36px; font-weight: 800; color: var(--text-muted); padding-bottom: 24px; }
+.semver-buttons { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+.semver-btn { padding: 10px 20px; border: 2px solid; background: transparent; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s; }
+.semver-btn.major-btn { border-color: var(--red); color: var(--red); }
+.semver-btn.major-btn:hover { background: rgba(248, 81, 73, 0.1); }
+.semver-btn.minor-btn { border-color: var(--yellow); color: var(--yellow); }
+.semver-btn.minor-btn:hover { background: rgba(210, 153, 34, 0.1); }
+.semver-btn.patch-btn { border-color: var(--green); color: var(--green); }
+.semver-btn.patch-btn:hover { background: rgba(63, 185, 80, 0.1); }
+.semver-btn.reset-btn { border-color: var(--border); color: var(--text-muted); }
+.semver-history { margin-top: 20px; max-height: 200px; overflow-y: auto; font-family: var(--font-mono); font-size: 13px; }
+.semver-entry { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 4px; margin: 4px 0; background: rgba(0,0,0,0.2); }
+.semver-entry .version { color: var(--blue); font-weight: 600; min-width: 80px; }
+.semver-entry .reason { color: var(--text-secondary); font-size: 12px; }
+.checklist { margin: 16px 0; }
+.checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-secondary); }
+.checklist-item:last-child { border-bottom: none; }
+.checklist-checkbox { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; margin-top: 2px; }
+.checklist-checkbox.checked { background: var(--green); border-color: var(--green); }
+.checklist-checkbox.checked::after { content: '✓'; color: #000; font-size: 12px; font-weight: 800; }
+.file-tree { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin: 16px 0; font-family: var(--font-mono); font-size: 13px; line-height: 2; }
+.file-tree .folder { color: var(--blue); }
+.file-tree .file { color: var(--text-secondary); }
+.file-tree .important { color: var(--yellow); font-weight: 600; }
+.file-tree .indent { padding-left: 20px; display: block; }
+.file-tree .indent2 { padding-left: 40px; display: block; }
+.file-tree .indent3 { padding-left: 60px; display: block; }
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; overflow-x: auto; }
+.tab-btn { padding: 12px 20px; background: transparent; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.comparison-card { padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); }
+.comparison-card.do { border-color: rgba(63, 185, 80, 0.3); background: rgba(63, 185, 80, 0.03); }
+.comparison-card.dont { border-color: rgba(248, 81, 73, 0.3); background: rgba(248, 81, 73, 0.03); }
+.comparison-card .card-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.comparison-card.do .card-label { color: var(--green); }
+.comparison-card.dont .card-label { color: var(--red); }
+.section-nav { display: flex; justify-content: space-between; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
+.achievement-toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: var(--bg-card); border: 1px solid var(--green); border-radius: var(--radius); display: flex; align-items: center; gap: 12px; z-index: 1000; box-shadow: 0 8px 32px rgba(0,0,0,0.6); transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.achievement-toast.show { transform: translateX(0); }
+.achievement-toast .ach-icon { font-size: 28px; }
+.achievement-toast .ach-text { font-size: 14px; font-weight: 600; color: var(--green); }
+.achievement-toast .ach-desc { font-size: 12px; color: var(--text-secondary); }
+.achievement-toast .xp-gain { color: var(--yellow); font-weight: 700; font-size: 13px; }
+.workflow-steps { position: relative; padding-left: 30px; margin: 20px 0; }
+.workflow-steps::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.workflow-step { position: relative; padding: 16px 0 24px 24px; }
+.workflow-step::before { content: ''; position: absolute; left: -22px; top: 20px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg-tertiary); border: 2px solid var(--accent); }
+.workflow-step .step-title { font-weight: 600; font-size: 16px; color: var(--text-primary); margin-bottom: 8px; }
+.workflow-step .step-desc { font-size: 14px; color: var(--text-secondary); }
+code:not(pre code) { background: var(--bg-tertiary); padding: 2px 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 13px; color: var(--accent-light); border: 1px solid var(--border); }
+ul, ol { margin: 12px 0 16px 20px; color: var(--text-secondary); font-size: 14px; }
+li { margin: 6px 0; }
+.mobile-toggle { display: none; position: fixed; top: 12px; left: 12px; z-index: 200; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px; border-radius: var(--radius); cursor: pointer; font-size: 20px; }
+.json-builder { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; margin: 20px 0; }
+.json-field { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: center; margin: 10px 0; }
+.json-field label { font-size: 13px; font-family: var(--font-mono); color: var(--green); }
+.json-field input, .json-field select { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 4px; padding: 8px 12px; color: var(--text-primary); font-size: 13px; font-family: var(--font-mono); outline: none; }
+.json-field input:focus, .json-field select:focus { border-color: var(--accent); }
+.json-preview { margin-top: 16px; background: #000; border-radius: var(--radius); padding: 16px; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; color: var(--text-primary); white-space: pre; overflow-x: auto; border: 1px solid #333; }
+.streak-bar { display: flex; gap: 4px; justify-content: center; padding: 8px 20px; }
+.streak-dot { width: 24px; height: 6px; border-radius: 3px; background: var(--bg-tertiary); transition: background 0.3s; }
+.streak-dot.filled { background: var(--accent); }
+@media (max-width: 768px) {
+  .mobile-toggle { display: block; }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 20px; padding-top: 60px; }
+  .comparison-grid { grid-template-columns: 1fr; }
+  .semver-display { flex-wrap: wrap; }
+  .json-field { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+<div class="achievement-toast" id="achievementToast">
+  <span class="ach-icon">🏆</span>
+  <div>
+    <div class="ach-text" id="achTitle">Achievement!</div>
+    <div class="ach-desc" id="achDesc">You did something great!</div>
+    <div class="xp-gain" id="achXP">+50 XP</div>
+  </div>
+</div>
+
+<div class="app-container">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1><span class="npm-icon">npm</span> Package Publishing</h1>
+      <div class="subtitle">Complete Mastery Course</div>
+    </div>
+    <div class="progress-container">
+      <div class="progress-label"><span>Course Progress</span><span id="progressPercent">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="xp-display">⭐ <span id="totalXP">0</span> XP Earned</div>
+    <div class="streak-bar" id="streakBar">
+      <div class="streak-dot"></div><div class="streak-dot"></div><div class="streak-dot"></div>
+      <div class="streak-dot"></div><div class="streak-dot"></div><div class="streak-dot"></div><div class="streak-dot"></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Getting Started</div>
+      <div class="nav-item active" data-section="welcome" onclick="navigateTo('welcome')">
+        <span class="nav-icon">🚀</span><span>Welcome &amp; Overview</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Core Concepts</div>
+      <div class="nav-item" data-section="creating" onclick="navigateTo('creating')">
+        <span class="nav-icon">📦</span><span>Creating Packages</span>
+      </div>
+      <div class="nav-item" data-section="structure" onclick="navigateTo('structure')">
+        <span class="nav-icon">🏗️</span><span>Package Structure</span>
+      </div>
+      <div class="nav-item" data-section="packagejson" onclick="navigateTo('packagejson')">
+        <span class="nav-icon">📄</span><span>package.json Deep Dive</span>
+      </div>
+      <div class="nav-item" data-section="semver" onclick="navigateTo('semver')">
+        <span class="nav-icon">🔢</span><span>Semantic Versioning</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Documentation</div>
+      <div class="nav-item" data-section="documentation" onclick="navigateTo('documentation')">
+        <span class="nav-icon">📝</span><span>Writing Great Docs</span>
+      </div>
+      <div class="nav-item" data-section="readme" onclick="navigateTo('readme')">
+        <span class="nav-icon">📖</span><span>README Mastery</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Publishing</div>
+      <div class="nav-item" data-section="publishing" onclick="navigateTo('publishing')">
+        <span class="nav-icon">🚢</span><span>Publishing Workflow</span>
+      </div>
+      <div class="nav-item" data-section="advanced" onclick="navigateTo('advanced')">
+        <span class="nav-icon">⚡</span><span>Advanced Topics</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-title">Practice</div>
+      <div class="nav-item" data-section="quiz1" onclick="navigateTo('quiz1')">
+        <span class="nav-icon">❓</span><span>Quiz: Fundamentals</span><span class="nav-badge quiz">Quiz</span>
+      </div>
+      <div class="nav-item" data-section="exercise1" onclick="navigateTo('exercise1')">
+        <span class="nav-icon">💪</span><span>Build package.json</span><span class="nav-badge exercise">Exercise</span>
+      </div>
+      <div class="nav-item" data-section="quiz2" onclick="navigateTo('quiz2')">
+        <span class="nav-icon">❓</span><span>Quiz: SemVer &amp; Publish</span><span class="nav-badge quiz">Quiz</span>
+      </div>
+      <div class="nav-item" data-section="exercise2" onclick="navigateTo('exercise2')">
+        <span class="nav-icon">💪</span><span>Write a README</span><span class="nav-badge exercise">Exercise</span>
+      </div>
+      <div class="nav-item" data-section="pitfalls" onclick="navigateTo('pitfalls')">
+        <span class="nav-icon">💣</span><span>Mistakes &amp; Pitfalls</span><span class="nav-badge pitfall">Danger</span>
+      </div>
+      <div class="nav-item" data-section="exercise3" onclick="navigateTo('exercise3')">
+        <span class="nav-icon">💪</span><span>Terminal Simulator</span><span class="nav-badge exercise">Exercise</span>
+      </div>
+      <div class="nav-item" data-section="final" onclick="navigateTo('final')">
+        <span class="nav-icon">🎓</span><span>Final Challenge</span><span class="nav-badge quiz">Final</span>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- WELCOME -->
+    <div class="section active" id="section-welcome">
+      <div class="section-header">
+        <div class="breadcrumb">Getting Started</div>
+        <h2>Welcome to NPM Package Publishing Mastery</h2>
+        <p class="section-desc">Learn to create, document, and publish professional npm packages that developers love to use.</p>
+      </div>
+      <div class="info-card info">
+        <div class="card-title">What You'll Master</div>
+        <p>By completing this course, you'll have the skills to publish production-ready npm packages that follow industry best practices — exactly what top companies look for.</p>
+      </div>
+      <h3>📋 Course Roadmap</h3>
+      <div class="workflow-steps">
+        <div class="workflow-step"><div class="step-title">1. Creating Packages</div><div class="step-desc">Initialize, configure, and structure your npm package from scratch.</div></div>
+        <div class="workflow-step"><div class="step-title">2. Package Structure</div><div class="step-desc">Learn the anatomy of a professional package — what goes where and why.</div></div>
+        <div class="workflow-step"><div class="step-title">3. package.json Deep Dive</div><div class="step-desc">Master every field in package.json and know when to use each one.</div></div>
+        <div class="workflow-step"><div class="step-title">4. Semantic Versioning</div><div class="step-desc">Understand SemVer rules, ranges, and how to version like a pro.</div></div>
+        <div class="workflow-step"><div class="step-title">5. Documentation</div><div class="step-desc">Write README files and API docs that make your package shine.</div></div>
+        <div class="workflow-step"><div class="step-title">6. Publishing Workflow</div><div class="step-desc">The complete flow from local dev to live on npm, including CI/CD.</div></div>
+        <div class="workflow-step"><div class="step-title">7. Quizzes, Exercises &amp; Pitfalls</div><div class="step-desc">Hands-on practice, common mistakes to avoid, and a final challenge.</div></div>
+      </div>
+      <div class="info-card tip">
+        <div class="card-title">Pro Tip</div>
+        <p>Complete every quiz and exercise to earn XP. Track your progress in the sidebar. Aim for 100% completion!</p>
+      </div>
+      <div class="section-nav">
+        <div></div>
+        <button class="btn btn-primary" onclick="navigateTo('creating')">Start Learning →</button>
+      </div>
+    </div>
+
+    <!-- CREATING PACKAGES -->
+    <div class="section" id="section-creating">
+      <div class="section-header">
+        <div class="breadcrumb">Core Concepts</div>
+        <h2>Creating NPM Packages</h2>
+        <p class="section-desc">Everything starts with <code>npm init</code>. Let's build your first package from the ground up.</p>
+      </div>
+      <h3>🎯 Initializing a New Package</h3>
+      <h4>Method 1: Interactive Setup</h4>
+      <div class="terminal">
+        <div class="terminal-bar"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><span class="terminal-title">terminal — npm init</span></div>
+        <div class="terminal-body">
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">mkdir my-awesome-lib &amp;&amp; cd my-awesome-lib</span></div>
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm init</span></div>
+          <span class="terminal-output">package name: (my-awesome-lib)</span>
+          <span class="terminal-output">version: (1.0.0)</span>
+          <span class="terminal-output">description: A blazing fast utility library</span>
+          <span class="terminal-output success">✅ package.json created!</span>
+        </div>
+      </div>
+      <h4>Method 2: Quick Setup (Skip Prompts)</h4>
+      <div class="terminal">
+        <div class="terminal-bar"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><span class="terminal-title">terminal — npm init -y</span></div>
+        <div class="terminal-body">
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm init -y</span></div>
+          <span class="terminal-output success">Wrote to /my-awesome-lib/package.json</span>
+        </div>
+      </div>
+      <div class="info-card tip">
+        <div class="card-title">When to use which?</div>
+        <p>Use <code>npm init</code> when creating a package you plan to publish. Use <code>npm init -y</code> for quick prototypes.</p>
+      </div>
+      <h3>📛 Naming Your Package</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📋 Naming Rules</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cm">// ✅ Valid package names</span>
+<span class="str">"my-package"</span>       <span class="cm">// lowercase with hyphens</span>
+<span class="str">"my_package"</span>       <span class="cm">// underscores OK</span>
+<span class="str">"@myorg/mypackage"</span> <span class="cm">// scoped package</span>
+
+<span class="cm">// ❌ Invalid package names</span>
+<span class="str">"My-Package"</span>       <span class="cm">// no uppercase</span>
+<span class="str">".my-package"</span>      <span class="cm">// can't start with . or _</span>
+<span class="str">"my package"</span>       <span class="cm">// no spaces</span></pre>
+      </div>
+      <div class="info-card warning">
+        <div class="card-title">Name Squatting</div>
+        <p>Before choosing a name, always check if it's taken: run <code>npm search your-name</code> or visit npmjs.com. Picking a similar name to a popular package can confuse users.</p>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('welcome')">← Welcome</button>
+        <button class="btn btn-primary" onclick="navigateTo('structure')">Package Structure →</button>
+      </div>
+    </div>
+
+    <!-- PACKAGE STRUCTURE -->
+    <div class="section" id="section-structure">
+      <div class="section-header">
+        <div class="breadcrumb">Core Concepts</div>
+        <h2>Package Structure</h2>
+        <p class="section-desc">A well-organized package is easier to maintain, contribute to, and trust.</p>
+      </div>
+      <h3>🗂️ The Ideal Package Layout</h3>
+      <div class="file-tree">
+        <span class="folder">📦 my-awesome-lib/</span>
+        <span class="indent important">📄 package.json</span>
+        <span class="indent important">📄 README.md</span>
+        <span class="indent file">📄 LICENSE</span>
+        <span class="indent file">📄 CHANGELOG.md</span>
+        <span class="indent file">📄 .gitignore</span>
+        <span class="indent file">📄 .npmignore</span>
+        <span class="indent folder">📁 src/</span>
+        <span class="indent2 file">📄 index.js</span>
+        <span class="indent2 file">📄 utils.js</span>
+        <span class="indent folder">📁 dist/</span>
+        <span class="indent folder">📁 test/</span>
+        <span class="indent2 file">📄 index.test.js</span>
+        <span class="indent folder">📁 examples/</span>
+        <span class="indent2 file">📄 basic-usage.js</span>
+      </div>
+      <h3>📄 Key Files Explained</h3>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-files', 0)">package.json</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-files', 1)">Entry Points</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-files', 2)">.npmignore</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-files', 3)">LICENSE</button>
+      </div>
+      <div class="tab-content active" data-tabgroup="tab-files">
+        <p><code>package.json</code> is the heart of your package. The <code>name</code> and <code>version</code> fields are the absolute minimum required for publishing.</p>
+        <div class="info-card info"><div class="card-title">Required for publishing</div><p>Without package.json, npm won't recognize your directory as a package.</p></div>
+      </div>
+      <div class="tab-content" data-tabgroup="tab-files">
+        <p>Your package needs clear entry points so consumers know what they're importing:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="file-name">📄 package.json — entry points</span></div>
+          <pre>{
+  <span class="prop">"main"</span>: <span class="str">"dist/index.cjs.js"</span>,
+  <span class="prop">"module"</span>: <span class="str">"dist/index.esm.js"</span>,
+  <span class="prop">"exports"</span>: {
+    <span class="prop">"."</span>: {
+      <span class="prop">"import"</span>: <span class="str">"./dist/index.esm.js"</span>,
+      <span class="prop">"require"</span>: <span class="str">"./dist/index.cjs.js"</span>
+    }
+  },
+  <span class="prop">"types"</span>: <span class="str">"dist/index.d.ts"</span>
+}</pre>
+        </div>
+      </div>
+      <div class="tab-content" data-tabgroup="tab-files">
+        <p><code>.npmignore</code> controls which files are excluded. Better approach: use the <code>"files"</code> whitelist in package.json:</p>
+        <div class="code-block">
+          <div class="code-header"><span class="file-name">📄 package.json — files whitelist</span></div>
+          <pre>{
+  <span class="prop">"files"</span>: [
+    <span class="str">"dist/"</span>,
+    <span class="str">"README.md"</span>,
+    <span class="str">"LICENSE"</span>
+  ]
+}</pre>
+        </div>
+      </div>
+      <div class="tab-content" data-tabgroup="tab-files">
+        <p>Always include a LICENSE file. Most popular choices:</p>
+        <ul>
+          <li><strong>MIT</strong> — Most permissive, most popular. Use this by default.</li>
+          <li><strong>Apache 2.0</strong> — Like MIT but includes patent protection.</li>
+          <li><strong>ISC</strong> — Simplified MIT. npm's default.</li>
+          <li><strong>GPL</strong> — Copyleft. Users of your code must also open-source theirs.</li>
+        </ul>
+        <div class="info-card warning"><div class="card-title">No License = No Permission</div><p>If you don't include a license, your code is technically "all rights reserved." Many companies cannot legally use unlicensed packages.</p></div>
+      </div>
+      <h3>📦 Preview What Gets Published</h3>
+      <div class="terminal">
+        <div class="terminal-bar"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><span class="terminal-title">terminal — preview package</span></div>
+        <div class="terminal-body">
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm pack --dry-run</span></div>
+          <span class="terminal-output">npm notice 📦 my-awesome-lib@1.0.0</span>
+          <span class="terminal-output">npm notice 1.2kB  dist/index.js</span>
+          <span class="terminal-output">npm notice 2.8kB  README.md</span>
+          <span class="terminal-output success">npm notice total files: 3</span>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('creating')">← Creating Packages</button>
+        <button class="btn btn-primary" onclick="navigateTo('packagejson')">package.json Deep Dive →</button>
+      </div>
+    </div>
+
+    <!-- PACKAGE.JSON DEEP DIVE -->
+    <div class="section" id="section-packagejson">
+      <div class="section-header">
+        <div class="breadcrumb">Core Concepts</div>
+        <h2>package.json Deep Dive</h2>
+        <p class="section-desc">Master every field in package.json — what it does, why it matters, and when to use it.</p>
+      </div>
+      <h3>🔑 Essential Fields</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 package.json — Complete Example</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>{
+  <span class="prop">"name"</span>: <span class="str">"@yourorg/super-utils"</span>,
+  <span class="prop">"version"</span>: <span class="str">"2.1.0"</span>,
+  <span class="prop">"description"</span>: <span class="str">"Lightning-fast utility functions"</span>,
+  <span class="prop">"keywords"</span>: [<span class="str">"utils"</span>, <span class="str">"helpers"</span>],
+  <span class="prop">"author"</span>: <span class="str">"Jane Developer &lt;jane@example.com&gt;"</span>,
+  <span class="prop">"license"</span>: <span class="str">"MIT"</span>,
+  <span class="prop">"main"</span>: <span class="str">"dist/index.cjs.js"</span>,
+  <span class="prop">"module"</span>: <span class="str">"dist/index.esm.js"</span>,
+  <span class="prop">"types"</span>: <span class="str">"dist/index.d.ts"</span>,
+  <span class="prop">"files"</span>: [<span class="str">"dist"</span>, <span class="str">"README.md"</span>, <span class="str">"LICENSE"</span>],
+  <span class="prop">"scripts"</span>: {
+    <span class="prop">"build"</span>: <span class="str">"rollup -c"</span>,
+    <span class="prop">"test"</span>: <span class="str">"jest --coverage"</span>,
+    <span class="prop">"prepublishOnly"</span>: <span class="str">"npm run lint &amp;&amp; npm test &amp;&amp; npm run build"</span>
+  },
+  <span class="prop">"dependencies"</span>: {},
+  <span class="prop">"devDependencies"</span>: {
+    <span class="prop">"jest"</span>: <span class="str">"^29.0.0"</span>,
+    <span class="prop">"rollup"</span>: <span class="str">"^4.0.0"</span>
+  },
+  <span class="prop">"peerDependencies"</span>: {
+    <span class="prop">"react"</span>: <span class="str">"&gt;=16.8.0"</span>
+  },
+  <span class="prop">"engines"</span>: {
+    <span class="prop">"node"</span>: <span class="str">"&gt;=16.0.0"</span>
+  }
+}</pre>
+      </div>
+      <h3>🔍 Dependency Types Explained</h3>
+      <div class="comparison-grid">
+        <div class="comparison-card do">
+          <div class="card-label">dependencies</div>
+          <p style="font-size:13px;">Packages your library needs at runtime. Installed when someone <code>npm install</code>s your package.</p>
+        </div>
+        <div class="comparison-card dont">
+          <div class="card-label">devDependencies</div>
+          <p style="font-size:13px;">Only for development — testing, building, linting. NOT installed when someone installs your package.</p>
+        </div>
+      </div>
+      <h4>peerDependencies — The Tricky One</h4>
+      <p>Used when your package works alongside another package but shouldn't install its own copy. Common for plugins and framework extensions:</p>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 React component library package.json</span></div>
+        <pre><span class="prop">"peerDependencies"</span>: {
+  <span class="prop">"react"</span>: <span class="str">"^17.0.0 || ^18.0.0"</span>,
+  <span class="prop">"react-dom"</span>: <span class="str">"^17.0.0 || ^18.0.0"</span>
+},
+<span class="prop">"devDependencies"</span>: {
+  <span class="prop">"react"</span>: <span class="str">"^18.2.0"</span>
+}</pre>
+      </div>
+      <h3>🧪 Interactive package.json Builder</h3>
+      <div class="json-builder">
+        <div class="json-field"><label>"name":</label><input type="text" id="pjName" value="my-awesome-lib" oninput="updateJsonPreview()"></div>
+        <div class="json-field"><label>"version":</label><input type="text" id="pjVersion" value="1.0.0" oninput="updateJsonPreview()"></div>
+        <div class="json-field"><label>"description":</label><input type="text" id="pjDesc" value="A useful library" oninput="updateJsonPreview()"></div>
+        <div class="json-field"><label>"main":</label><input type="text" id="pjMain" value="dist/index.js" oninput="updateJsonPreview()"></div>
+        <div class="json-field"><label>"license":</label>
+          <select id="pjLicense" onchange="updateJsonPreview()">
+            <option value="MIT">MIT</option><option value="ISC">ISC</option><option value="Apache-2.0">Apache-2.0</option><option value="GPL-3.0">GPL-3.0</option>
+          </select>
+        </div>
+        <div class="json-field"><label>"author":</label><input type="text" id="pjAuthor" value="Your Name" oninput="updateJsonPreview()"></div>
+        <div class="json-field"><label>"keywords":</label><input type="text" id="pjKeywords" value="util, helpers" placeholder="comma separated" oninput="updateJsonPreview()"></div>
+        <div class="json-preview" id="jsonPreview"></div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('structure')">← Package Structure</button>
+        <button class="btn btn-primary" onclick="navigateTo('semver')">Semantic Versioning →</button>
+      </div>
+    </div>
+
+    <!-- SEMANTIC VERSIONING -->
+    <div class="section" id="section-semver">
+      <div class="section-header">
+        <div class="breadcrumb">Core Concepts</div>
+        <h2>Semantic Versioning (SemVer)</h2>
+        <p class="section-desc">The language of software evolution. Master versioning to communicate changes clearly.</p>
+      </div>
+      <h3>🔢 The Three Numbers</h3>
+      <p>Every version follows the pattern <strong>MAJOR.MINOR.PATCH</strong>:</p>
+      <div class="semver-playground">
+        <div class="semver-display">
+          <div class="semver-part major"><div class="number" id="svMajor">1</div><div class="label">Major</div></div>
+          <div class="semver-dot">.</div>
+          <div class="semver-part minor"><div class="number" id="svMinor">4</div><div class="label">Minor</div></div>
+          <div class="semver-dot">.</div>
+          <div class="semver-part patch"><div class="number" id="svPatch">2</div><div class="label">Patch</div></div>
+        </div>
+        <div class="semver-buttons">
+          <button class="semver-btn major-btn" onclick="bumpVersion('major')">🔴 Bump Major</button>
+          <button class="semver-btn minor-btn" onclick="bumpVersion('minor')">🟡 Bump Minor</button>
+          <button class="semver-btn patch-btn" onclick="bumpVersion('patch')">🟢 Bump Patch</button>
+          <button class="semver-btn reset-btn" onclick="resetVersion()">↺ Reset</button>
+        </div>
+        <div class="semver-history" id="semverHistory">
+          <div class="semver-entry"><span class="version">1.4.2</span><span class="reason">← Starting version</span></div>
+        </div>
+      </div>
+      <h3>📏 When to Bump What</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📋 SemVer Decision Guide</span></div>
+        <pre><span class="cm">// 🟢 PATCH (1.4.2 → 1.4.3)</span>
+<span class="cm">// Bug fixes that don't change the API</span>
+<span class="cm">// - Fixed a typo in error message</span>
+<span class="cm">// - Fixed edge case that caused crash</span>
+
+<span class="cm">// 🟡 MINOR (1.4.2 → 1.5.0)</span>
+<span class="cm">// New features that are backward compatible</span>
+<span class="cm">// - Added new function: formatDate()</span>
+<span class="cm">// - Added optional parameter to existing function</span>
+
+<span class="cm">// 🔴 MAJOR (1.4.2 → 2.0.0)</span>
+<span class="cm">// Breaking changes — existing code might break</span>
+<span class="cm">// - Removed a function</span>
+<span class="cm">// - Changed function signature</span>
+<span class="cm">// - Changed return type</span></pre>
+      </div>
+      <h3>🎯 Version Ranges</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📋 Version Range Syntax</span></div>
+        <pre><span class="cm">// Caret ^ (most common)</span>
+<span class="str">"lodash"</span>: <span class="str">"^4.17.0"</span>   <span class="cm">// ≥4.17.0 and &lt;5.0.0</span>
+
+<span class="cm">// Tilde ~</span>
+<span class="str">"lodash"</span>: <span class="str">"~4.17.0"</span>   <span class="cm">// ≥4.17.0 and &lt;4.18.0</span>
+
+<span class="cm">// OR ranges</span>
+<span class="str">"react"</span>: <span class="str">"^16.8.0 || ^17.0.0 || ^18.0.0"</span></pre>
+      </div>
+      <div class="info-card danger">
+        <div class="card-title">The 0.x.x Trap</div>
+        <p>For versions before 1.0.0, caret behaves differently: <code>^0.2.3</code> means <code>≥0.2.3</code> and <code>&lt;0.3.0</code> (not <code>&lt;1.0.0</code>). This catches many developers off guard!</p>
+      </div>
+      <h3>🛠️ npm version Command</h3>
+      <div class="terminal">
+        <div class="terminal-bar"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><span class="terminal-title">terminal — version bumping</span></div>
+        <div class="terminal-body">
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm version patch</span></div>
+          <span class="terminal-output success">v1.4.3</span>
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm version minor</span></div>
+          <span class="terminal-output success">v1.5.0</span>
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm version major</span></div>
+          <span class="terminal-output success">v2.0.0</span>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('packagejson')">← package.json</button>
+        <button class="btn btn-primary" onclick="navigateTo('documentation')">Documentation →</button>
+      </div>
+    </div>
+
+    <!-- DOCUMENTATION -->
+    <div class="section" id="section-documentation">
+      <div class="section-header">
+        <div class="breadcrumb">Documentation</div>
+        <h2>Writing Great Documentation</h2>
+        <p class="section-desc">Documentation is the difference between a package with 10 downloads and one with 10,000.</p>
+      </div>
+      <h3>📊 Documentation Hierarchy</h3>
+      <div class="workflow-steps">
+        <div class="workflow-step"><div class="step-title">README.md — The Front Door</div><div class="step-desc">First thing people see. Must answer: What is it? How do I install it? How do I use it?</div></div>
+        <div class="workflow-step"><div class="step-title">API Reference — The Manual</div><div class="step-desc">Every function, every parameter, every return value.</div></div>
+        <div class="workflow-step"><div class="step-title">CHANGELOG.md — The History</div><div class="step-desc">What changed in each version. Users need this to decide whether to upgrade.</div></div>
+        <div class="workflow-step"><div class="step-title">CONTRIBUTING.md — The Invitation</div><div class="step-desc">How others can help. Setup instructions, coding standards, PR process.</div></div>
+        <div class="workflow-step"><div class="step-title">Examples/ — The Cookbook</div><div class="step-desc">Working code examples showing real-world usage patterns.</div></div>
+      </div>
+      <h3>📝 JSDoc — Self-Documenting Code</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 src/validators.js</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cm">/**
+ * Validates an email address.
+ *
+ * @param {string} email - The email address to validate
+ * @returns {boolean} True if the email is valid
+ * @throws {TypeError} If email is not a string
+ *
+ * @example
+ * validateEmail('user@example.com');  // true
+ * validateEmail('invalid-email');     // false
+ */</span>
+<span class="kw">export function</span> <span class="fn">validateEmail</span>(email) {
+  <span class="kw">if</span> (<span class="kw">typeof</span> email !== <span class="str">'string'</span>) {
+    <span class="kw">throw new</span> <span class="type">TypeError</span>(<span class="str">'Email must be a string'</span>);
+  }
+  <span class="kw">const</span> regex = <span class="str">/^[^\s@]+@[^\s@]+\.[^\s@]+$/</span>;
+  <span class="kw">return</span> regex.<span class="fn">test</span>(email);
+}</pre>
+      </div>
+      <h3>📜 CHANGELOG Best Practices</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 CHANGELOG.md</span></div>
+        <pre><span class="tag"># Changelog</span>
+
+<span class="tag">## [2.1.0] - 2024-01-15</span>
+
+<span class="tag">### Added</span>
+- formatCurrency() function with locale support
+- TypeScript type definitions
+
+<span class="tag">### Fixed</span>
+- validateEmail() now correctly handles "+" in local part
+
+<span class="tag">### Changed</span>
+- Minimum Node.js version is now 16 (was 14)
+
+<span class="tag">## [2.0.0] - 2024-01-01</span>
+
+<span class="tag">### ⚠️ BREAKING CHANGES</span>
+- Removed legacyFormat()
+- parse() now returns null instead of undefined</pre>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('semver')">← Semantic Versioning</button>
+        <button class="btn btn-primary" onclick="navigateTo('readme')">README Mastery →</button>
+      </div>
+    </div>
+
+    <!-- README MASTERY -->
+    <div class="section" id="section-readme">
+      <div class="section-header">
+        <div class="breadcrumb">Documentation</div>
+        <h2>README Mastery</h2>
+        <p class="section-desc">Your README is your package's resume. A great README converts browsers into users.</p>
+      </div>
+      <h3>🏆 The Perfect README Checklist</h3>
+      <div class="checklist">
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Package name &amp; badges</strong> — Name, npm version, build status, coverage, license</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>One-line description</strong> — What it does in one sentence</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Features list</strong> — Bullet points of key features</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Installation</strong> — npm/yarn/pnpm install commands</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Quick start / Basic usage</strong> — Minimal working example</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>API reference</strong> — All functions with parameters and return values</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Advanced examples</strong> — Real-world usage patterns</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Contributing guide</strong> — How to contribute</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>License</strong> — License type</div></div>
+      </div>
+      <div class="comparison-grid">
+        <div class="comparison-card do">
+          <div class="card-label">✅ DO</div>
+          <ul style="font-size:13px;">
+            <li>Show working code examples</li>
+            <li>Include install instructions</li>
+            <li>Add badges for trust signals</li>
+            <li>Show expected output in comments</li>
+            <li>Mention browser/Node support</li>
+          </ul>
+        </div>
+        <div class="comparison-card dont">
+          <div class="card-label">❌ DON'T</div>
+          <ul style="font-size:13px;">
+            <li>Write walls of text without code</li>
+            <li>Skip installation instructions</li>
+            <li>Assume users know your API</li>
+            <li>Leave the default npm init README</li>
+            <li>Forget to update after changes</li>
+          </ul>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('documentation')">← Documentation</button>
+        <button class="btn btn-primary" onclick="navigateTo('publishing')">Publishing Workflow →</button>
+      </div>
+    </div>
+
+    <!-- PUBLISHING WORKFLOW -->
+    <div class="section" id="section-publishing">
+      <div class="section-header">
+        <div class="breadcrumb">Publishing</div>
+        <h2>Publishing Workflow</h2>
+        <p class="section-desc">The complete journey from local code to a live package on npm.</p>
+      </div>
+      <h3>📋 Pre-Publish Checklist</h3>
+      <div class="checklist">
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>npm account created</strong> — Sign up at npmjs.com and verify email</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Logged in</strong> — Run <code>npm login</code> in your terminal</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Package name available</strong> — Check on npmjs.com</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Tests pass</strong> — <code>npm test</code> exits cleanly</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>README is ready</strong> — Complete with examples</div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>LICENSE file exists</strong></div></div>
+        <div class="checklist-item"><div class="checklist-checkbox" onclick="toggleChecklist(this)"></div><div><strong>Dry run checked</strong> — <code>npm pack --dry-run</code> shows correct files</div></div>
+      </div>
+      <h3>🚢 The Publishing Flow</h3>
+      <div class="terminal">
+        <div class="terminal-bar"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><span class="terminal-title">terminal — first publish</span></div>
+        <div class="terminal-body">
+          <span class="terminal-output warn">Step 1: Login to npm</span>
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm login</span></div>
+          <span class="terminal-output success">Logged in as your-username</span>
+          <span class="terminal-output warn">Step 2: Verify what will be published</span>
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm pack --dry-run</span></div>
+          <span class="terminal-output">npm notice 📦 my-awesome-lib@1.0.0</span>
+          <span class="terminal-output warn">Step 3: Publish!</span>
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm publish</span></div>
+          <span class="terminal-output success">+ my-awesome-lib@1.0.0</span>
+          <span class="terminal-output warn">For scoped packages (public):</span>
+          <div class="terminal-line"><span class="terminal-prompt">$</span><span class="terminal-cmd">npm publish --access public</span></div>
+        </div>
+      </div>
+      <h3>⚙️ Lifecycle Scripts</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 package.json — lifecycle scripts</span></div>
+        <pre>{
+  <span class="prop">"scripts"</span>: {
+    <span class="cm">// Runs BEFORE npm version</span>
+    <span class="prop">"preversion"</span>: <span class="str">"npm run lint &amp;&amp; npm test"</span>,
+
+    <span class="cm">// Runs AFTER npm version (version already bumped)</span>
+    <span class="prop">"version"</span>: <span class="str">"npm run build &amp;&amp; git add -A"</span>,
+
+    <span class="cm">// Runs AFTER npm version commit</span>
+    <span class="prop">"postversion"</span>: <span class="str">"git push &amp;&amp; git push --tags"</span>,
+
+    <span class="cm">// Runs BEFORE npm publish</span>
+    <span class="prop">"prepublishOnly"</span>: <span class="str">"npm run lint &amp;&amp; npm test &amp;&amp; npm run build"</span>,
+
+    <span class="prop">"build"</span>: <span class="str">"rollup -c"</span>,
+    <span class="prop">"test"</span>: <span class="str">"jest --coverage"</span>,
+    <span class="prop">"lint"</span>: <span class="str">"eslint src/"</span>
+  }
+}</pre>
+      </div>
+      <div class="info-card tip">
+        <div class="card-title">Safety Net</div>
+        <p>The <code>prepublishOnly</code> script is your last line of defense. If linting or tests fail, the publish is aborted. Always set this up!</p>
+      </div>
+      <div class="info-card danger">
+        <div class="card-title">Unpublishing is Restricted!</div>
+        <p>You can only unpublish within <strong>72 hours</strong> of publishing. After that, the version is permanent. Use <code>npm deprecate</code> instead when possible.</p>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('readme')">← README Mastery</button>
+        <button class="btn btn-primary" onclick="navigateTo('advanced')">Advanced Topics →</button>
+      </div>
+    </div>
+
+    <!-- ADVANCED TOPICS -->
+    <div class="section" id="section-advanced">
+      <div class="section-header">
+        <div class="breadcrumb">Publishing</div>
+        <h2>Advanced Topics</h2>
+        <p class="section-desc">Level up with CI/CD publishing, monorepo strategies, and security best practices.</p>
+      </div>
+      <h3>🤖 Automated Publishing with GitHub Actions</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 .github/workflows/publish.yml</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>name: Publish to npm
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}</pre>
+      </div>
+      <div class="info-card info">
+        <div class="card-title">Setting up NPM_TOKEN</div>
+        <p>1. Go to npmjs.com → Access Tokens → Generate New Token (Automation type)<br>
+        2. In GitHub repo → Settings → Secrets → New Repository Secret<br>
+        3. Name: <code>NPM_TOKEN</code>, Value: paste your token</p>
+      </div>
+      <h3>📦 Dual Package (CJS + ESM)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 package.json — dual package</span></div>
+        <pre>{
+  <span class="prop">"name"</span>: <span class="str">"my-awesome-lib"</span>,
+  <span class="prop">"type"</span>: <span class="str">"module"</span>,
+  <span class="prop">"main"</span>: <span class="str">"./dist/index.cjs"</span>,
+  <span class="prop">"module"</span>: <span class="str">"./dist/index.mjs"</span>,
+  <span class="prop">"types"</span>: <span class="str">"./dist/index.d.ts"</span>,
+  <span class="prop">"exports"</span>: {
+    <span class="prop">"."</span>: {
+      <span class="prop">"types"</span>: <span class="str">"./dist/index.d.ts"</span>,
+      <span class="prop">"import"</span>: <span class="str">"./dist/index.mjs"</span>,
+      <span class="prop">"require"</span>: <span class="str">"./dist/index.cjs"</span>
+    }
+  }
+}</pre>
+      </div>
+      <h3>🏗️ Monorepo Publishing</h3>
+      <div class="file-tree">
+        <span class="folder">📦 my-org-packages/</span>
+        <span class="indent file">📄 package.json (workspace root)</span>
+        <span class="indent folder">📁 packages/</span>
+        <span class="indent2 folder">📁 core/ → @myorg/core</span>
+        <span class="indent2 folder">📁 utils/ → @myorg/utils</span>
+        <span class="indent2 folder">📁 cli/ → @myorg/cli</span>
+      </div>
+      <div class="code-block">
+        <div class="code-header"><span class="file-name">📄 Root package.json — workspaces</span></div>
+        <pre>{
+  <span class="prop">"name"</span>: <span class="str">"my-org-packages"</span>,
+  <span class="prop">"private"</span>: <span class="kw">true</span>,
+  <span class="prop">"workspaces"</span>: [<span class="str">"packages/*"</span>]
+}</pre>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('publishing')">← Publishing</button>
+        <button class="btn btn-primary" onclick="navigateTo('quiz1')">Test Your Knowledge →</button>
+      </div>
+    </div>
+
+    <!-- QUIZ 1 -->
+    <div class="section" id="section-quiz1">
+      <div class="section-header">
+        <div class="breadcrumb">Practice</div>
+        <h2>Quiz: Package Fundamentals</h2>
+        <p class="section-desc">Test your understanding of package creation, structure, and package.json.</p>
+      </div>
+      <div class="quiz-container" id="quiz1">
+        <div class="quiz-header">
+          <span class="quiz-question-num" id="q1-num">Question 1 of 8</span>
+          <span class="quiz-score" id="q1-score">Score: 0/0</span>
+        </div>
+        <div class="quiz-question" id="q1-question"></div>
+        <div class="quiz-options" id="q1-options"></div>
+        <div class="quiz-explanation" id="q1-explanation"></div>
+        <div class="quiz-nav">
+          <button class="btn btn-secondary btn-small" id="q1-prev" onclick="quizNav('quiz1', -1)" style="visibility:hidden">← Previous</button>
+          <button class="btn btn-primary btn-small" id="q1-next" onclick="quizNav('quiz1', 1)" style="display:none">Next →</button>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('advanced')">← Advanced Topics</button>
+        <button class="btn btn-primary" onclick="navigateTo('exercise1')">Build package.json →</button>
+      </div>
+    </div>
+
+    <!-- EXERCISE 1 -->
+    <div class="section" id="section-exercise1">
+      <div class="section-header">
+        <div class="breadcrumb">Practice</div>
+        <h2>Exercise: Build a package.json</h2>
+      </div>
+      <div class="exercise-container">
+        <div class="exercise-header">
+          <span class="exercise-icon">🏋️</span>
+          <h4>Create package.json</h4>
+          <span class="difficulty medium">Medium</span>
+        </div>
+        <div class="exercise-body">
+          <div class="exercise-prompt">
+            <p>Create a valid <code>package.json</code> for a scoped package called <code>@utils/string-helpers</code> with:</p>
+            <ul>
+              <li>Version 1.2.0</li>
+              <li>Description: "String manipulation utilities"</li>
+              <li>Main entry point at "dist/index.js"</li>
+              <li>MIT license</li>
+              <li>A test script that runs "jest"</li>
+              <li>A "files" array that includes only "dist" folder</li>
+              <li>Keywords: "string", "utils"</li>
+            </ul>
+          </div>
+          <div class="exercise-editor">
+            <textarea id="exercise1-editor" spellcheck="false" placeholder="Type your package.json here...">{
+
+}</textarea>
+          </div>
+          <div class="exercise-actions">
+            <button class="btn btn-primary" onclick="checkExercise1()">✓ Check Answer</button>
+            <button class="btn btn-secondary" onclick="showHint('exercise1')">💡 Show Hint</button>
+            <button class="btn btn-secondary" onclick="showSolution('exercise1')">👁️ Show Solution</button>
+          </div>
+          <div class="exercise-result" id="exercise1-result"></div>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('quiz1')">← Quiz</button>
+        <button class="btn btn-primary" onclick="navigateTo('quiz2')">SemVer Quiz →</button>
+      </div>
+    </div>
+
+    <!-- QUIZ 2 -->
+    <div class="section" id="section-quiz2">
+      <div class="section-header">
+        <div class="breadcrumb">Practice</div>
+        <h2>Quiz: SemVer &amp; Publishing</h2>
+        <p class="section-desc">Test your knowledge of semantic versioning and the publishing workflow.</p>
+      </div>
+      <div class="quiz-container" id="quiz2">
+        <div class="quiz-header">
+          <span class="quiz-question-num" id="q2-num">Question 1 of 8</span>
+          <span class="quiz-score" id="q2-score">Score: 0/0</span>
+        </div>
+        <div class="quiz-question" id="q2-question"></div>
+        <div class="quiz-options" id="q2-options"></div>
+        <div class="quiz-explanation" id="q2-explanation"></div>
+        <div class="quiz-nav">
+          <button class="btn btn-secondary btn-small" id="q2-prev" onclick="quizNav('quiz2', -1)" style="visibility:hidden">← Previous</button>
+          <button class="btn btn-primary btn-small" id="q2-next" onclick="quizNav('quiz2', 1)" style="display:none">Next →</button>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('exercise1')">← Exercise</button>
+        <button class="btn btn-primary" onclick="navigateTo('exercise2')">Write a README →</button>
+      </div>
+    </div>
+
+    <!-- EXERCISE 2 -->
+    <div class="section" id="section-exercise2">
+      <div class="section-header">
+        <div class="breadcrumb">Practice</div>
+        <h2>Exercise: Write a README</h2>
+      </div>
+      <div class="exercise-container">
+        <div class="exercise-header">
+          <span class="exercise-icon">📝</span>
+          <h4>Write README.md for "fast-slug"</h4>
+          <span class="difficulty medium">Medium</span>
+        </div>
+        <div class="exercise-body">
+          <div class="exercise-prompt">
+            <p>Write a README for a package called <strong>fast-slug</strong> that converts strings to URL-friendly slugs. Include:</p>
+            <ul>
+              <li>Package title with a brief tagline</li>
+              <li>Installation instructions (npm &amp; yarn)</li>
+              <li>Basic usage example with code</li>
+              <li>API reference for the <code>slugify(text, options?)</code> function</li>
+              <li>License section</li>
+            </ul>
+          </div>
+          <div class="exercise-editor">
+            <textarea id="exercise2-editor" spellcheck="false" placeholder="# fast-slug&#10;&#10;..."></textarea>
+          </div>
+          <div class="exercise-actions">
+            <button class="btn btn-primary" onclick="checkExercise2()">✓ Check Answer</button>
+            <button class="btn btn-secondary" onclick="showHint('exercise2')">💡 Show Hint</button>
+            <button class="btn btn-secondary" onclick="showSolution('exercise2')">👁️ Show Solution</button>
+          </div>
+          <div class="exercise-result" id="exercise2-result"></div>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('quiz2')">← SemVer Quiz</button>
+        <button class="btn btn-primary" onclick="navigateTo('pitfalls')">Common Pitfalls →</button>
+      </div>
+    </div>
+
+    <!-- PITFALLS -->
+    <div class="section" id="section-pitfalls">
+      <div class="section-header">
+        <div class="breadcrumb">Practice</div>
+        <h2>Common Mistakes &amp; Pitfalls</h2>
+        <p class="section-desc">Learn from others' mistakes. These are the most common issues that trip up package authors.</p>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #1: Publishing node_modules or Secrets<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Accidentally publishing <code>node_modules</code>, <code>.env</code> files, or API keys to npm.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>// No .npmignore, no "files" field
+// Everything gets published including .env and node_modules</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>// package.json — whitelist approach (safest)
+{ "files": ["dist", "README.md", "LICENSE"] }
+// ALWAYS run: npm pack --dry-run</pre></div>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #2: Forgetting to Build Before Publishing<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Publishing source files instead of compiled output, or forgetting to rebuild after changes.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>// Running npm publish without building first
+// Users get stale or missing dist/ files</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>// package.json
+{ "scripts": { "prepublishOnly": "npm run build && npm test" } }
+// Build runs AUTOMATICALLY before every publish</pre></div>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #3: Wrong Dependency Type<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Putting dev-only packages in <code>dependencies</code> bloats install size. Putting runtime packages in <code>devDependencies</code> breaks production.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>{ "dependencies": {
+  "jest": "^29.0.0",   // Testing tool in deps!
+  "eslint": "^8.0.0"  // Linter in deps!
+} }</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>{ "dependencies": {},  // Only runtime packages
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0"
+  }
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #4: Not Specifying engines<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Your package uses modern JS features but doesn't specify the minimum Node.js version. Users on old Node get cryptic errors.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>{ /* No engines field — user on Node 10 gets syntax errors */ }</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>{ "engines": { "node": ">=16.0.0" } }</pre></div>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #5: Publishing Without Testing<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Rushing to publish without running tests. Once published, broken code is live for everyone.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>// "I just changed one line, it should be fine"
+// npm version patch && npm publish
+// 💥 Published broken code</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>{ "scripts": {
+  "preversion": "npm test",
+  "prepublishOnly": "npm test && npm run build"
+} }
+// Tests MUST pass before version bump or publish</pre></div>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #6: Incorrect "main" Entry Point<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Setting "main" to a file that doesn't exist or points to TypeScript source instead of compiled JS.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>{ "main": "src/index.ts" }  // TypeScript source! Users can't run this</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>{ "main": "dist/index.js",
+  "files": ["dist"],
+  "scripts": { "prepublishOnly": "npm run build" }
+}
+// Verify with: npm pack --dry-run</pre></div>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #7: SemVer Breaking Changes Without Major Bump<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Changing default behavior or renaming a function in a minor or patch release breaks consumers.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>// v1.3.0: Changed return format of formatDate() by default
+// Users' code breaks but they only expected non-breaking changes</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>// Changed default behavior → MAJOR bump (v2.0.0)
+// Added optional parameter → MINOR bump (v1.3.0)
+// Bug fix only → PATCH bump (v1.2.1)</pre></div>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pitfall-header" onclick="togglePitfall(this)"><span>💣</span> #8: Forgetting --access public for Scoped Packages<span class="toggle">▼</span></div>
+        <div class="pitfall-body">
+          <p>Scoped packages (<code>@org/name</code>) default to private on npm. Publishing without <code>--access public</code> fails or creates a private package.</p>
+          <div class="pitfall-wrong"><div class="label">❌ WRONG</div><pre>// npm publish
+// Error: You must sign up for private packages</pre></div>
+          <div class="pitfall-right"><div class="label">✅ RIGHT</div><pre>// npm publish --access public
+// Or set permanently in package.json:
+{ "publishConfig": { "access": "public" } }</pre></div>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('exercise2')">← README Exercise</button>
+        <button class="btn btn-primary" onclick="navigateTo('exercise3')">Terminal Simulator →</button>
+      </div>
+    </div>
+
+    <!-- EXERCISE 3: TERMINAL SIMULATOR -->
+    <div class="section" id="section-exercise3">
+      <div class="section-header">
+        <div class="breadcrumb">Practice</div>
+        <h2>Terminal Simulator</h2>
+        <p class="section-desc">Practice npm commands in this interactive terminal.</p>
+      </div>
+      <div class="exercise-container">
+        <div class="exercise-header">
+          <span class="exercise-icon">💻</span>
+          <h4>npm Command Practice</h4>
+          <span class="difficulty easy">Interactive</span>
+        </div>
+        <div class="exercise-body">
+          <div class="exercise-prompt">
+            <p>Complete each task by typing the correct npm command. <strong id="termTaskText">Task 1: Initialize a new package with default settings (skip prompts).</strong></p>
+          </div>
+          <div class="terminal" style="min-height: 250px;">
+            <div class="terminal-bar"><div class="terminal-dot red"></div><div class="terminal-dot yellow"></div><div class="terminal-dot green"></div><span class="terminal-title">interactive terminal</span></div>
+            <div class="terminal-body" id="terminalOutput">
+              <span class="terminal-output warn">📋 Task 1/6: Initialize a new package with default settings</span>
+            </div>
+            <div style="padding: 0 16px 16px; display:flex; align-items:center;">
+              <span class="terminal-prompt" style="font-family:var(--font-mono);font-size:13px;">$</span>
+              <input type="text" class="terminal-input" id="terminalInput" style="margin-left:8px;" placeholder="Type command here..." autocomplete="off" onkeydown="handleTerminalInput(event)">
+            </div>
+          </div>
+          <div class="exercise-actions">
+            <button class="btn btn-secondary btn-small" onclick="resetTerminal()">↺ Reset</button>
+            <span style="font-size:13px;color:var(--text-muted);" id="termProgress">Progress: 0/6</span>
+          </div>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('pitfalls')">← Pitfalls</button>
+        <button class="btn btn-primary" onclick="navigateTo('final')">Final Challenge →</button>
+      </div>
+    </div>
+
+    <!-- FINAL CHALLENGE -->
+    <div class="section" id="section-final">
+      <div class="section-header">
+        <div class="breadcrumb">Practice</div>
+        <h2>🎓 Final Challenge</h2>
+        <p class="section-desc">Put everything together. Answer these comprehensive questions to prove your mastery.</p>
+      </div>
+      <div class="quiz-container" id="quizFinal">
+        <div class="quiz-header">
+          <span class="quiz-question-num" id="qF-num">Question 1 of 10</span>
+          <span class="quiz-score" id="qF-score">Score: 0/0</span>
+        </div>
+        <div class="quiz-question" id="qF-question"></div>
+        <div class="quiz-options" id="qF-options"></div>
+        <div class="quiz-explanation" id="qF-explanation"></div>
+        <div class="quiz-nav">
+          <button class="btn btn-secondary btn-small" id="qF-prev" onclick="quizNav('quizFinal', -1)" style="visibility:hidden">← Previous</button>
+          <button class="btn btn-primary btn-small" id="qF-next" onclick="quizNav('quizFinal', 1)" style="display:none">Next →</button>
+        </div>
+      </div>
+      <div id="finalResults" style="display:none;">
+        <div class="info-card tip">
+          <div class="card-title">🎉 Course Complete!</div>
+          <p id="finalResultsText">You've completed the NPM Package Publishing Mastery course!</p>
+        </div>
+      </div>
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="navigateTo('exercise3')">← Terminal Simulator</button>
+        <button class="btn btn-primary" onclick="navigateTo('welcome')">🏠 Back to Home</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// STATE
+const state = { xp: 0, completedSections: new Set(), streak: 0, currentSection: 'welcome' };
+const SECTIONS = ['welcome','creating','structure','packagejson','semver','documentation','readme','publishing','advanced','quiz1','exercise1','quiz2','exercise2','pitfalls','exercise3','final'];
+
+// NAVIGATION
+function navigateTo(sectionId) {
+  state.currentSection = sectionId;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const section = document.getElementById('section-' + sectionId);
+  if (section) { section.classList.add('active'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  const navItem = document.querySelector('.nav-item[data-section="' + sectionId + '"]');
+  if (navItem) navItem.classList.add('active');
+  markVisited(sectionId);
+  document.getElementById('sidebar').classList.remove('open');
+  if (sectionId === 'quiz1') initQuiz('quiz1');
+  if (sectionId === 'quiz2') initQuiz('quiz2');
+  if (sectionId === 'final') initQuiz('quizFinal');
+}
+
+function markVisited(sectionId) {
+  const idx = SECTIONS.indexOf(sectionId);
+  if (idx > 0) {
+    const prev = SECTIONS[idx - 1];
+    if (!state.completedSections.has(prev)) {
+      state.completedSections.add(prev);
+      const navItem = document.querySelector('.nav-item[data-section="' + prev + '"]');
+      if (navItem) navItem.classList.add('completed');
+      updateProgress();
+    }
+  }
+}
+
+function updateProgress() {
+  const pct = Math.round((state.completedSections.size / SECTIONS.length) * 100);
+  document.getElementById('progressPercent').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+// XP SYSTEM
+function addXP(amount, reason) {
+  state.xp += amount;
+  state.streak++;
+  document.getElementById('totalXP').textContent = state.xp;
+  const dots = document.querySelectorAll('.streak-dot');
+  dots.forEach((d, i) => d.classList.toggle('filled', i < Math.min(state.streak, dots.length)));
+  const toast = document.getElementById('achievementToast');
+  document.getElementById('achTitle').textContent = '+' + amount + ' XP';
+  document.getElementById('achDesc').textContent = reason;
+  document.getElementById('achXP').textContent = 'Total: ' + state.xp + ' XP';
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// QUIZ DATA
+const quizData = {
+  quiz1: [
+    { q: "What are the TWO required fields in package.json?", opts: ['"name" and "version"', '"name" and "main"', '"name" and "description"', '"version" and "license"'], correct: 0, explain: 'The "name" and "version" fields are the only absolutely required fields. Together they form a unique identifier for your package on npm.' },
+    { q: 'Which command initializes a package with all defaults, skipping prompts?', opts: ['npm init --defaults', 'npm init -y', 'npm create --quick', 'npm init --skip'], correct: 1, explain: '"npm init -y" (or --yes) accepts all defaults and creates package.json instantly.' },
+    { q: 'What is the purpose of the "files" field in package.json?', opts: ['Lists all files in the project', 'Specifies which files to include when published to npm', 'Lists files to ignore in git', 'Defines file permissions'], correct: 1, explain: 'The "files" field is a whitelist of files/directories to include in the published package.' },
+    { q: 'Which package name is INVALID?', opts: ['"my-package"', '"@scope/my-pkg"', '"My-Package"', '"my_package"'], correct: 2, explain: 'npm package names cannot contain uppercase letters. "My-Package" is invalid.' },
+    { q: 'Where should "jest" be listed if it\'s only used for testing?', opts: ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'], correct: 1, explain: 'Testing tools go in devDependencies. They\'re only needed during development, not at runtime.' },
+    { q: 'What does "npm pack --dry-run" do?', opts: ['Publishes the package as a test', 'Shows what files would be included without creating a tarball', 'Creates a backup of the package', 'Runs tests before packaging'], correct: 1, explain: '"npm pack --dry-run" previews the tarball contents. Essential to verify you\'re not accidentally including secrets.' },
+    { q: 'When should you use peerDependencies?', opts: ['For all dependencies your package uses', 'When your package is a plugin/extension for another package', 'For testing dependencies', 'For optional features'], correct: 1, explain: 'peerDependencies tell npm: "My package works with X, but the consumer should install X themselves." Common for React component libraries, Babel plugins, etc.' },
+    { q: 'What does the "exports" field provide that "main" doesn\'t?', opts: ['Nothing, they\'re identical', 'Conditional exports (import vs require) and subpath exports', 'Automatic TypeScript support', 'Faster module loading'], correct: 1, explain: 'The "exports" field provides conditional exports, subpath exports, and encapsulation. It\'s the modern replacement for "main".' }
+  ],
+  quiz2: [
+    { q: 'What does version "^1.4.2" mean?', opts: ['Exactly version 1.4.2', '>=1.4.2 and <2.0.0', '>=1.4.2 and <1.5.0', 'Any version starting with 1'], correct: 1, explain: 'The caret (^) allows changes that do not modify the left-most non-zero digit. ^1.4.2 means >=1.4.2 and <2.0.0.' },
+    { q: 'You rename a function parameter. Which version bump is needed?', opts: ['Patch', 'Minor', 'Major', 'No bump needed'], correct: 2, explain: 'Renaming a parameter is a BREAKING CHANGE — code using named/destructured parameters will break. This requires a MAJOR version bump.' },
+    { q: 'What happens if you run "npm publish" on a scoped package without --access public?', opts: ['It publishes publicly by default', 'It fails or publishes as private (requires paid plan)', 'It asks you to confirm', 'It publishes to a private registry'], correct: 1, explain: 'Scoped packages default to private on npm. Without --access public, you\'ll get an error or it publishes privately.' },
+    { q: 'Which lifecycle script runs automatically BEFORE npm publish?', opts: ['preversion', 'prepublishOnly', 'postpublish', 'prebuild'], correct: 1, explain: '"prepublishOnly" runs right before npm publish. Use it to run tests and build — if it fails, publish is aborted.' },
+    { q: 'What does "~1.4.2" (tilde) mean?', opts: ['>=1.4.2 and <2.0.0', '>=1.4.2 and <1.5.0', 'Exactly 1.4.2', '>=1.4.2 and <1.4.3'], correct: 1, explain: 'The tilde (~) allows patch-level changes only. ~1.4.2 means >=1.4.2 and <1.5.0.' },
+    { q: 'You add a new optional parameter to an existing function. What bump?', opts: ['Major', 'Minor', 'Patch', 'No bump needed'], correct: 1, explain: 'Adding an optional parameter is backward compatible — existing code still works. This is a MINOR bump.' },
+    { q: 'What is the purpose of "npm deprecate"?', opts: ['Deletes the package permanently', 'Marks a version with a warning but keeps it available', 'Prevents any new installs', 'Transfers ownership'], correct: 1, explain: 'npm deprecate marks a version with a warning during install. Preferred over unpublishing — it doesn\'t break existing users.' },
+    { q: 'What does "^0.2.3" resolve to?', opts: ['>=0.2.3 and <1.0.0', '>=0.2.3 and <0.3.0', '>=0.2.3 and <0.2.4', 'Exactly 0.2.3'], correct: 1, explain: 'The 0.x.x trap! For versions <1.0.0, ^ is more restrictive. ^0.2.3 means >=0.2.3 and <0.3.0 (not <1.0.0).' }
+  ],
+  quizFinal: [
+    { q: 'You discover a security vulnerability in your function. No API changes, just a fix. What version bump?', opts: ['Major', 'Minor', 'Patch', 'Pre-release'], correct: 2, explain: 'A bug/security fix with no API changes is a PATCH bump. Same inputs produce same outputs, just safer.' },
+    { q: "What's the recommended way to ensure sensitive files aren't published?", opts: ['Using .gitignore only', 'Using the "files" whitelist in package.json', 'Deleting files before publishing', 'Using a private npm account'], correct: 1, explain: 'The "files" field is the safest approach — explicitly whitelist what should be published. Always verify with npm pack --dry-run.' },
+    { q: "What's wrong with this package.json?\n{ \"name\": \"utils\", \"main\": \"src/index.ts\" }", opts: ['Missing version field', 'TypeScript source as main AND missing version', 'Name is too short', 'Missing license field'], correct: 1, explain: 'Two problems: 1) Missing required "version" field. 2) "main" points to TypeScript source — users cannot run .ts files.' },
+    { q: 'What does "npm version minor -m \'feat: add new helpers\'" do?', opts: ['Only updates package.json version', 'Bumps minor version, creates git commit, and creates git tag', 'Publishes a minor update to npm', 'Creates a new branch'], correct: 1, explain: '"npm version minor -m ..." bumps the version in package.json, creates a git commit with the message, and creates a git tag.' },
+    { q: 'Which CHANGELOG entry indicates a MAJOR version bump is needed?', opts: ['Added: new formatDate() function', 'Fixed: edge case in validateEmail()', 'Changed: parse() now returns null instead of undefined', 'Added: optional locale parameter'], correct: 2, explain: 'Changing a return type (undefined → null) is a breaking change. Code checking "if (result === undefined)" would break.' },
+    { q: 'What is the correct order of publishing lifecycle scripts?', opts: ['prepublish → publish → postpublish', 'preversion → version → postversion → prepublishOnly → publish', 'prepublishOnly → prepack → publish → postpublish', 'prebuild → build → prepublishOnly → publish'], correct: 2, explain: 'When you run npm publish, the order is: prepublishOnly → prepack → (pack) → publish → postpublish.' },
+    { q: "You're building a React component library. Where should React go?", opts: ['dependencies only', 'devDependencies only', 'peerDependencies AND devDependencies', 'peerDependencies only'], correct: 2, explain: 'React should be in peerDependencies (tells consumers they need React) AND devDependencies (so you can use React during development).' },
+    { q: "What does 'npm publish --tag next' do?", opts: ['Publishes to a different registry', 'Publishes with dist-tag "next" instead of "latest"', 'Schedules the publish for later', 'Creates a preview without publishing'], correct: 1, explain: 'The --tag flag sets a dist-tag. Users running "npm install pkg" get the "latest" tag. "npm install pkg@next" gets the next version.' },
+    { q: 'How long after publishing can you unpublish a package version?', opts: ['24 hours', '48 hours', '72 hours', 'You can never unpublish'], correct: 2, explain: 'npm allows unpublishing within 72 hours. After that, the version is permanent. Use "npm deprecate" instead.' },
+    { q: 'What\'s the purpose of "publishConfig" in package.json?', opts: ['Configures the build process', 'Sets publish-time defaults like access level and registry URL', 'Controls who can install the package', 'Defines deployment targets'], correct: 1, explain: '"publishConfig" sets defaults for npm publish. Common: { "publishConfig": { "access": "public" } } — saves you from typing --access public every time.' }
+  ]
+};
+
+// QUIZ STATE & LOGIC
+const quizState = {};
+
+function initQuiz(quizId) {
+  if (quizState[quizId] && quizState[quizId].initialized) return;
+  quizState[quizId] = { current: 0, score: 0, answered: new Array(quizData[quizId].length).fill(null), initialized: true };
+  renderQuizQuestion(quizId);
+}
+
+function getPrefix(quizId) {
+  if (quizId === 'quiz1') return 'q1';
+  if (quizId === 'quiz2') return 'q2';
+  return 'qF';
+}
+
+function renderQuizQuestion(quizId) {
+  const qs = quizState[quizId];
+  const data = quizData[quizId];
+  const q = data[qs.current];
+  const prefix = getPrefix(quizId);
+  const letters = ['A','B','C','D'];
+
+  document.getElementById(prefix + '-num').textContent = 'Question ' + (qs.current + 1) + ' of ' + data.length;
+  const answered = qs.answered.filter(a => a !== null).length;
+  document.getElementById(prefix + '-score').textContent = 'Score: ' + qs.score + '/' + answered;
+  document.getElementById(prefix + '-question').textContent = q.q;
+
+  const opts = document.getElementById(prefix + '-options');
+  opts.innerHTML = q.opts.map(function(opt, i) {
+    let cls = 'quiz-option';
+    if (qs.answered[qs.current] !== null) {
+      cls += ' disabled';
+      if (i === q.correct) cls += ' correct';
+      else if (qs.answered[qs.current] === i) cls += ' incorrect';
+    }
+    return '<div class="' + cls + '" onclick="answerQuiz(\'' + quizId + '\',' + i + ')">' +
+      '<span class="option-letter">' + letters[i] + '</span><span>' + opt + '</span></div>';
+  }).join('');
+
+  const expl = document.getElementById(prefix + '-explanation');
+  if (qs.answered[qs.current] !== null) {
+    expl.innerHTML = '<strong>Explanation:</strong> ' + q.explain;
+    expl.classList.add('show');
+  } else {
+    expl.classList.remove('show');
+  }
+
+  const prevBtn = document.getElementById(prefix + '-prev');
+  const nextBtn = document.getElementById(prefix + '-next');
+  prevBtn.style.visibility = qs.current > 0 ? 'visible' : 'hidden';
+  nextBtn.style.display = qs.answered[qs.current] !== null ? 'inline-flex' : 'none';
+  nextBtn.textContent = qs.current === data.length - 1 ? 'Finish ✓' : 'Next →';
+}
+
+function answerQuiz(quizId, idx) {
+  const qs = quizState[quizId];
+  if (qs.answered[qs.current] !== null) return;
+  qs.answered[qs.current] = idx;
+  if (idx === quizData[quizId][qs.current].correct) {
+    qs.score++;
+    addXP(quizId === 'quizFinal' ? 25 : 15, 'Correct answer!');
+  }
+  renderQuizQuestion(quizId);
+}
+
+function quizNav(quizId, dir) {
+  const qs = quizState[quizId];
+  const len = quizData[quizId].length;
+  if (dir === 1 && qs.current === len - 1) {
+    completeSection(quizId);
+    if (quizId === 'quizFinal') {
+      document.getElementById('finalResults').style.display = 'block';
+      const pct = Math.round((qs.score / len) * 100);
+      document.getElementById('finalResultsText').textContent = 'You scored ' + qs.score + '/' + len + ' (' + pct + '%). ' +
+        (pct >= 80 ? '🏆 Excellent! You\'re ready to publish professional packages!' : pct >= 60 ? '👍 Good job! Review the sections you missed.' : '📚 Keep studying! Review the material and try again.');
+      addXP(100, 'Completed Final Challenge!');
+    }
+    return;
+  }
+  qs.current = Math.max(0, Math.min(len - 1, qs.current + dir));
+  renderQuizQuestion(quizId);
+}
+
+function completeSection(sectionId) {
+  if (!state.completedSections.has(sectionId)) {
+    state.completedSections.add(sectionId);
+    const nav = document.querySelector('.nav-item[data-section="' + sectionId + '"]');
+    if (nav) nav.classList.add('completed');
+    updateProgress();
+  }
+}
+
+// EXERCISES
+function checkExercise1() {
+  const input = document.getElementById('exercise1-editor').value.trim();
+  const result = document.getElementById('exercise1-result');
+  const errors = [];
+  try {
+    const p = JSON.parse(input);
+    if (p.name !== '@utils/string-helpers') errors.push('Name should be "@utils/string-helpers"');
+    if (p.version !== '1.2.0') errors.push('Version should be "1.2.0"');
+    if (!p.description || !p.description.toLowerCase().includes('string')) errors.push('Description should mention "string"');
+    if (p.main !== 'dist/index.js') errors.push('Main should be "dist/index.js"');
+    if (p.license !== 'MIT') errors.push('License should be "MIT"');
+    if (!p.scripts || p.scripts.test !== 'jest') errors.push('Test script should run "jest"');
+    if (!p.files || !p.files.includes('dist')) errors.push('Files should include "dist"');
+    if (!p.keywords || !p.keywords.includes('string') || !p.keywords.includes('utils')) errors.push('Keywords should include "string" and "utils"');
+  } catch (e) { errors.push('Invalid JSON! Check your syntax.'); }
+
+  if (errors.length === 0) {
+    result.className = 'exercise-result show pass';
+    result.innerHTML = '✅ <div><strong>Perfect!</strong> Your package.json is valid and complete.</div>';
+    addXP(50, 'Completed package.json exercise!');
+    completeSection('exercise1');
+  } else {
+    result.className = 'exercise-result show fail';
+    result.innerHTML = '❌ <div><strong>Not quite!</strong><ul>' + errors.map(e => '<li>' + e + '</li>').join('') + '</ul></div>';
+  }
+}
+
+function checkExercise2() {
+  const input = document.getElementById('exercise2-editor').value.trim().toLowerCase();
+  const result = document.getElementById('exercise2-result');
+  const checks = {
+    title: input.includes('fast-slug') && input.includes('#'),
+    install: input.includes('npm install') || input.includes('npm i'),
+    yarn: input.includes('yarn add'),
+    usage: input.includes('slugify') && input.includes('```'),
+    api: input.includes('slugify') && (input.includes('param') || input.includes('option') || input.includes('text')),
+    license: input.includes('license') || input.includes('mit')
+  };
+  const passed = Object.values(checks).filter(Boolean).length;
+  const total = Object.keys(checks).length;
+
+  if (passed >= 5) {
+    result.className = 'exercise-result show pass';
+    result.innerHTML = '✅ <div><strong>Great README!</strong> You covered ' + passed + '/' + total + ' key sections!</div>';
+    addXP(50, 'Wrote a professional README!');
+    completeSection('exercise2');
+  } else {
+    const missing = [];
+    if (!checks.title) missing.push('Package title (# fast-slug)');
+    if (!checks.install) missing.push('npm install instructions');
+    if (!checks.yarn) missing.push('yarn install instructions');
+    if (!checks.usage) missing.push('Code example using slugify');
+    if (!checks.api) missing.push('API reference');
+    if (!checks.license) missing.push('License section');
+    result.className = 'exercise-result show fail';
+    result.innerHTML = '❌ <div><strong>' + passed + '/' + total + ' sections found.</strong> Missing:<ul>' + missing.map(m => '<li>' + m + '</li>').join('') + '</ul></div>';
+  }
+}
+
+function showHint(id) {
+  const hints = {
+    exercise1: 'Start with required fields: "name" and "version". Then add "description", "main", "license", "scripts" (with "test": "jest"), "files": ["dist"], and "keywords": ["string", "utils"]. The name is a scoped package starting with @utils/',
+    exercise2: 'Structure: # fast-slug (title), ## Installation (npm + yarn commands), ## Usage (code block with slugify()), ## API (function parameters), ## License'
+  };
+  const result = document.getElementById(id + '-result');
+  result.className = 'exercise-result show';
+  result.style.background = 'rgba(88,166,255,0.08)';
+  result.style.border = '1px solid rgba(88,166,255,0.2)';
+  result.style.color = 'var(--blue)';
+  result.innerHTML = '💡 <div><strong>Hint:</strong> ' + hints[id] + '</div>';
+}
+
+function showSolution(id) {
+  const solutions = {
+    exercise1: '{\n  "name": "@utils/string-helpers",\n  "version": "1.2.0",\n  "description": "String manipulation utilities",\n  "main": "dist/index.js",\n  "license": "MIT",\n  "scripts": {\n    "test": "jest"\n  },\n  "files": [\n    "dist"\n  ],\n  "keywords": [\n    "string",\n    "utils"\n  ]\n}',
+    exercise2: '# fast-slug\n\n> Convert any string to a URL-friendly slug. Fast and lightweight.\n\n## Installation\n\n```bash\nnpm install fast-slug\n# or\nyarn add fast-slug\n```\n\n## Usage\n\n```javascript\nimport { slugify } from \'fast-slug\';\n\nslugify(\'Hello World!\'); // => \'hello-world\'\n```\n\n## API\n\n### slugify(text, options?)\n\n| Parameter | Type | Description |\n|-----------|------|-------------|\n| text | string | The text to slugify |\n| options | object | Optional config |\n\nReturns: `string`\n\n## License\n\nMIT'
+  };
+  document.getElementById(id + '-editor').value = solutions[id];
+}
+
+// SEMVER PLAYGROUND
+let sv = { major: 1, minor: 4, patch: 2 };
+let svHistory = [{ version: '1.4.2', reason: 'Starting version' }];
+
+function bumpVersion(type) {
+  const old = sv.major + '.' + sv.minor + '.' + sv.patch;
+  let reason = '';
+  if (type === 'major') { sv.major++; sv.minor = 0; sv.patch = 0; reason = 'BREAKING CHANGE'; }
+  else if (type === 'minor') { sv.minor++; sv.patch = 0; reason = 'New feature'; }
+  else { sv.patch++; reason = 'Bug fix'; }
+  const newV = sv.major + '.' + sv.minor + '.' + sv.patch;
+  document.getElementById('svMajor').textContent = sv.major;
+  document.getElementById('svMinor').textContent = sv.minor;
+  document.getElementById('svPatch').textContent = sv.patch;
+  const el = document.getElementById('sv' + type.charAt(0).toUpperCase() + type.slice(1));
+  el.style.transform = 'scale(1.3)';
+  setTimeout(() => el.style.transform = 'scale(1)', 200);
+  svHistory.unshift({ version: newV, reason: old + ' → ' + newV + ': ' + reason });
+  renderSvHistory();
+}
+
+function resetVersion() {
+  sv = { major: 1, minor: 4, patch: 2 };
+  svHistory = [{ version: '1.4.2', reason: 'Starting version' }];
+  document.getElementById('svMajor').textContent = 1;
+  document.getElementById('svMinor').textContent = 4;
+  document.getElementById('svPatch').textContent = 2;
+  renderSvHistory();
+}
+
+function renderSvHistory() {
+  document.getElementById('semverHistory').innerHTML = svHistory.map(h =>
+    '<div class="semver-entry"><span class="version">' + h.version + '</span><span class="reason">' + h.reason + '</span></div>'
+  ).join('');
+}
+
+// TABS
+function switchTab(e, group, idx) {
+  const btn = e.target;
+  btn.parentElement.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  btn.closest('.section').querySelectorAll('.tab-content[data-tabgroup="' + group + '"]').forEach((c, i) => {
+    c.classList.toggle('active', i === idx);
+  });
+}
+
+// PITFALLS
+function togglePitfall(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// CHECKLIST
+function toggleChecklist(el) { el.classList.toggle('checked'); }
+
+// COPY CODE
+function copyCode(btn) {
+  const text = btn.closest('.code-block').querySelector('pre').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// PACKAGE.JSON BUILDER
+function updateJsonPreview() {
+  const name = document.getElementById('pjName').value;
+  const version = document.getElementById('pjVersion').value;
+  const desc = document.getElementById('pjDesc').value;
+  const main = document.getElementById('pjMain').value;
+  const license = document.getElementById('pjLicense').value;
+  const author = document.getElementById('pjAuthor').value;
+  const keywords = document.getElementById('pjKeywords').value.split(',').map(k => k.trim()).filter(Boolean);
+  const json = { name, version, description: desc, main, scripts: { test: 'echo "Error: no test specified" && exit 1' }, keywords, author, license };
+  document.getElementById('jsonPreview').textContent = JSON.stringify(json, null, 2);
+}
+
+// TERMINAL SIMULATOR
+const terminalTasks = [
+  { task: 'Initialize a new package with default settings (skip prompts).', expected: ['npm init -y', 'npm init --yes'], response: 'Wrote to /project/package.json\n{ "name": "project", "version": "1.0.0" ... }' },
+  { task: 'Log in to your npm account.', expected: ['npm login', 'npm adduser'], response: 'Username: your-username\nLogged in as your-username on https://registry.npmjs.org/' },
+  { task: 'Preview what files would be included in the published package.', expected: ['npm pack --dry-run'], response: 'npm notice 📦 project@1.0.0\nnpm notice === Tarball Contents ===\nnpm notice 1.2kB dist/index.js\nnpm notice total files: 3' },
+  { task: 'Bump the version for a bug fix.', expected: ['npm version patch'], response: 'v1.0.1' },
+  { task: 'Publish a scoped package publicly.', expected: ['npm publish --access public', 'npm publish --access=public'], response: '+ @yourorg/project@1.0.1\n🎉 Published successfully!' },
+  { task: 'Deprecate version 1.0.0 with a message.', expected: ['npm deprecate project@1.0.0', 'npm deprecate @yourorg/project@1.0.0'], matchPartial: true, response: '✅ Version 1.0.0 has been deprecated.' }
+];
+let termTaskIdx = 0;
+
+function handleTerminalInput(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('terminalInput');
+  const output = document.getElementById('terminalOutput');
+  const cmd = input.value.trim();
+  if (!cmd) return;
+
+  const line = document.createElement('div');
+  line.className = 'terminal-line';
+  line.innerHTML = '<span class="terminal-prompt">$</span><span class="terminal-cmd">' + escapeHTML(cmd) + '</span>';
+  output.appendChild(line);
+
+  const task = terminalTasks[termTaskIdx];
+  const isCorrect = task.matchPartial
+    ? task.expected.some(exp => cmd.toLowerCase().startsWith(exp.toLowerCase()))
+    : task.expected.some(exp => cmd.toLowerCase() === exp.toLowerCase());
+
+  if (isCorrect) {
+    const resp = document.createElement('span');
+    resp.className = 'terminal-output success';
+    resp.textContent = task.response;
+    output.appendChild(resp);
+    termTaskIdx++;
+    document.getElementById('termProgress').textContent = 'Progress: ' + termTaskIdx + '/' + terminalTasks.length;
+    if (termTaskIdx < terminalTasks.length) {
+      const next = document.createElement('span');
+      next.className = 'terminal-output warn';
+      next.textContent = '\n📋 Task ' + (termTaskIdx + 1) + '/' + terminalTasks.length + ': ' + terminalTasks[termTaskIdx].task;
+      output.appendChild(next);
+      document.getElementById('termTaskText').textContent = 'Task ' + (termTaskIdx + 1) + ': ' + terminalTasks[termTaskIdx].task;
+    } else {
+      const done = document.createElement('span');
+      done.className = 'terminal-output success';
+      done.textContent = '\n🎉 All tasks completed! You\'ve mastered the essential npm commands!';
+      output.appendChild(done);
+      addXP(75, 'Completed Terminal Simulator!');
+      completeSection('exercise3');
+    }
+    addXP(10, 'Correct npm command!');
+  } else {
+    const err = document.createElement('span');
+    err.className = 'terminal-output error';
+    err.textContent = '❌ Not quite. Hint: the command starts with "npm"';
+    output.appendChild(err);
+  }
+  input.value = '';
+  output.scrollTop = output.scrollHeight;
+}
+
+function resetTerminal() {
+  termTaskIdx = 0;
+  document.getElementById('terminalOutput').innerHTML = '<span class="terminal-output warn">📋 Task 1/' + terminalTasks.length + ': ' + terminalTasks[0].task + '</span>';
+  document.getElementById('termTaskText').textContent = 'Task 1: ' + terminalTasks[0].task;
+  document.getElementById('termProgress').textContent = 'Progress: 0/' + terminalTasks.length;
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// KEYBOARD NAVIGATION
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const idx = SECTIONS.indexOf(state.currentSection);
+  if (e.key === 'ArrowRight' && idx < SECTIONS.length - 1) navigateTo(SECTIONS[idx + 1]);
+  else if (e.key === 'ArrowLeft' && idx > 0) navigateTo(SECTIONS[idx - 1]);
+});
+
+// INIT
+document.addEventListener('DOMContentLoaded', function() {
+  updateJsonPreview();
+  updateProgress();
+});
+</script>
+</body>
+</html>

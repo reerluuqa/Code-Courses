@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST API Mastery Lab</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --light: #f3f4f6;
+            --code-bg: #1e293b;
+            --text: #374151;
+            --border: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: var(--dark);
+            color: white;
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        nav {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            list-style: none;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .nav-tab:hover {
+            background: var(--light);
+        }
+
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-tab.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        .code-block {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(255,255,255,0.1);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .method-get { color: #10b981; font-weight: bold; }
+        .method-post { color: #f59e0b; font-weight: bold; }
+        .method-put { color: #3b82f6; font-weight: bold; }
+        .method-patch { color: #8b5cf6; font-weight: bold; }
+        .method-delete { color: #ef4444; font-weight: bold; }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .comparison { grid-template-columns: 1fr; }
+        }
+
+        .comparison-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid;
+        }
+
+        .good { border-color: var(--success); background: #f0fdf4; }
+        .bad { border-color: var(--danger); background: #fef2f2; }
+
+        .quiz-option {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            text-align: left;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        .quiz-option.wrong {
+            border-color: var(--danger);
+            background: #fef2f2;
+        }
+
+        .quiz-option:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .interactive-area {
+            border: 2px dashed var(--border);
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            min-height: 200px;
+        }
+
+        .draggable-item {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 0.375rem;
+            cursor: move;
+            user-select: none;
+        }
+
+        .drop-zone {
+            min-height: 60px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.375rem;
+            margin: 0.5rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+
+        .drop-zone.drag-over {
+            background: #dbeafe;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .exercise-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 0.375rem;
+            font-family: monospace;
+            margin: 0.5rem 0;
+        }
+
+        .feedback {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .pitfall-card {
+            border-left: 4px solid var(--danger);
+            background: #fff1f2;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+
+        .tip-card {
+            border-left: 4px solid var(--warning);
+            background: #fffbeb;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 0.375rem 0.375rem 0;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .status-item {
+            padding: 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .status-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        .http-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .client, .server {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-weight: bold;
+        }
+
+        .client { background: #dbeafe; color: #1e40af; }
+        .server { background: #dcfce7; color: #166534; }
+
+        .arrow {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            position: relative;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .versioning-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .versioning-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+
+        .version-node {
+            background: white;
+            border: 2px solid var(--primary);
+            padding: 1rem;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .version-node:hover {
+            transform: scale(1.1);
+            background: var(--primary);
+            color: white;
+        }
+
+        .score-board {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+            z-index: 50;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container header-content">
+        <div class="logo">
+            <span>🚀</span>
+            <div>
+                <div>REST API Mastery Lab</div>
+                <small style="opacity: 0.8; font-size: 0.875rem;">From Junior to Principal Engineer</small>
+            </div>
+        </div>
+        <div>
+            <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">Overall Progress</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="overallProgress"></div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav>
+    <div class="container">
+        <ul class="nav-tabs" id="navTabs">
+            <li class="nav-tab active" onclick="showSection('intro')">🎯 Mission</li>
+            <li class="nav-tab" onclick="showSection('principles')">📐 Principles</li>
+            <li class="nav-tab" onclick="showSection('methods')">🛠️ HTTP Methods</li>
+            <li class="nav-tab" onclick="showSection('status')">📊 Status Codes</li>
+            <li class="nav-tab" onclick="showSection('design')">🏗️ API Design</li>
+            <li class="nav-tab" onclick="showSection('versioning')">🔢 Versioning</li>
+            <li class="nav-tab" onclick="showSection('pitfalls')">⚠️ Anti-Patterns</li>
+            <li class="nav-tab" onclick="showSection('challenge')">🏆 Challenge</li>
+        </ul>
+    </div>
+</nav>
+
+<main class="container">
+
+    <!-- Intro Section -->
+    <section id="intro" class="section active">
+        <div class="card">
+            <h1>Welcome to the REST API Dojo</h1>
+            <p style="font-size: 1.125rem; margin: 1rem 0;">
+                You're here because you want to master REST API design at a level that impresses 
+                <strong>FAANG</strong> and top-tier tech companies. This isn't just about knowing 
+                GET vs POST—it's about designing systems that scale.
+            </p>
+            
+            <div class="tip-card">
+                <strong>🎓 Learning Strategy:</strong> Complete each section's exercises before moving forward. 
+                The "Challenge" section simulates real interview questions from competitive companies.
+            </div>
+
+            <h3>What You'll Master:</h3>
+            <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                <li>Richardson Maturity Model (Level 0-3)</li>
+                <li>Idempotency & Safety in distributed systems</li>
+                <li>HTTP Status Code semantics (when to use 409 vs 422?)</li>
+                <li>Resource modeling and URI design</li>
+                <li>Versioning strategies without breaking clients</li>
+                <li>Caching, Content Negotiation, and HATEOAS</li>
+            </ul>
+
+            <button class="btn btn-primary" onclick="showSection('principles')">
+                Start Training →
+            </button>
+        </div>
+
+        <div class="card">
+            <h3>Your Current Stats</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
+                    <div style="font-size: 2rem; font-weight: bold; color: var(--primary);" id="scoreDisplay">0</div>
+                    <div>Points Earned</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
+                    <div style="font-size: 2rem; font-weight: bold; color: var(--success);" id="completedDisplay">0/7</div>
+                    <div>Sections Completed</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Principles Section -->
+    <section id="principles" class="section">
+        <div class="card">
+            <div class="card-header">
+                <h2>REST Architectural Constraints</h2>
+                <span class="badge badge-info">Foundation</span>
+            </div>
+            
+            <p>REST isn't just "JSON over HTTP." It's an architectural style defined by Roy Fielding with <strong>six constraints</strong>. Violate these, and you're not building REST—you're building RPC.</p>
+
+            <div style="margin: 1.5rem 0;">
+                <h4>1. Client-Server Architecture</h4>
+                <div class="http-visual">
+                    <div class="client">Client</div>
+                    <div class="arrow"></div>
+                    <div class="server">Server</div>
+                </div>
+                <p>Separation of concerns allows components to evolve independently. The client knows nothing about data storage, and the server knows nothing about the UI.</p>
+            </div>
+
+            <div style="margin: 1.5rem 0;">
+                <h4>2. Statelessness</h4>
+                <div class="code-block">
+                    <div class="code-label">ANTI-PATTERN</div>
+                    // Server storing session state
+                    app.post('/login', (req, res) => {
+                        req.session.userId = user.id; // Violates statelessness!
+                    });
+                </div>
+                <p>Each request must contain all information needed to understand it. 
+                <strong>Interview Tip:</strong> This enables horizontal scaling—any server can handle any request.</p>
+            </div>
+
+            <div style="margin: 1.5rem 0;">
+                <h4>3. Cacheability</h4>
+                <p>Responses must implicitly or explicitly define themselves as cacheable or not. This eliminates interactions, improving scalability and performance.</p>
+            </div>
+
+            <div style="margin: 1.5rem 0;">
+                <h4>4. Uniform Interface</h4>
+                <ul style="margin-left: 1.5rem;">
+                    <li><strong>Resource Identification:</strong> /users/123 (not /getUser.php?id=123)</li>
+                    <li><strong>Manipulation through representations:</strong> Modify resources via their representations</li>
+                    <li><strong>Self-descriptive messages:</strong> MIME types, HTTP methods</li>
+                    <li><strong>HATEOAS:</strong> Hypermedia as the Engine of Application State</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <strong>💡 Principal Engineer Insight:</strong> Most APIs claiming to be "RESTful" are actually Level 2 on the Richardson Maturity Model. True REST (Level 3) requires HATEOAS, which many modern APIs skip for simplicity—but you should know it for interviews.
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Exercise: Identify Violations</h3>
+            <p>Which constraint does each scenario violate?</p>
+            
+            <div id="constraintQuiz">
+                <div style="margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 0.375rem;">
+                    <p><strong>Scenario 1:</strong> API requires clients to send a session cookie with user preferences.</p>
+                    <select class="exercise-input" id="constraint1">
+                        <option value="">Select constraint...</option>
+                        <option value="stateless">Statelessness</option>
+                        <option value="uniform">Uniform Interface</option>
+                        <option value="client-server">Client-Server</option>
+                    </select>
+                    <div class="feedback" id="feedback1"></div>
+                </div>
+
+                <div style="margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 0.375rem;">
+                    <p><strong>Scenario 2:</strong> Server returns HTML instead of JSON when Accept: application/json is sent.</p>
+                    <select class="exercise-input" id="constraint2">
+                        <option value="">Select constraint...</option>
+                        <option value="stateless">Statelessness</option>
+                        <option value="uniform">Uniform Interface</option>
+                        <option value="cache">Cacheability</option>
+                    </select>
+                    <div class="feedback" id="feedback2"></div>
+                </div>
+
+                <button class="btn btn-primary" onclick="checkConstraints()">Check Answers</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- HTTP Methods Section -->
+    <section id="methods" class="section">
+        <div class="card">
+            <div class="card-header">
+                <h2>HTTP Methods Deep Dive</h2>
+                <span class="badge badge-warning">Critical</span>
+            </div>
+
+            <p>Using the wrong method is a dead giveaway of junior-level API design. Let's master the semantics.</p>
+
+            <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                <thead>
+                    <tr style="background: var(--dark); color: white;">
+                        <th style="padding: 0.75rem; text-align: left;">Method</th>
+                        <th style="padding: 0.75rem; text-align: left;">Safe</th>
+                        <th style="padding: 0.75rem; text-align: left;">Idempotent</th>
+                        <th style="padding: 0.75rem; text-align: left;">Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 0.75rem;"><span class="method-get">GET</span></td>
+                        <td style="padding: 0.75rem;">✅ Yes</td>
+                        <td style="padding: 0.75rem;">✅ Yes</td>
+                        <td style="padding: 0.75rem;">Retrieve representation</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 0.75rem;"><span class="method-post">POST</span></td>
+                        <td style="padding: 0.75rem;">❌ No</td>
+                        <td style="padding: 0.75rem;">❌ No</td>
+                        <td style="padding: 0.75rem;">Create subordinate resource</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 0.75rem;"><span class="method-put">PUT</span></td>
+                        <td style="padding: 0.75rem;">❌ No</td>
+                        <td style="padding: 0.75rem;">✅ Yes</td>
+                        <td style="padding: 0.75rem;">Full resource replacement</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 0.75rem;"><span class="method-patch">PATCH</span></td>
+                        <td style="padding: 0.75rem;">❌ No</td>
+                        <td style="padding: 0.75rem;">⚠️ Usually</td>
+                        <td style="padding: 0.75rem;">Partial modification</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.75rem;"><span class="method-delete">DELETE</span></td>
+                        <td style="padding: 0.75rem;">❌ No</td>
+                        <td style="padding: 0.75rem;">✅ Yes</td>
+                        <td style="padding: 0.75rem;">Remove resource</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pitfall-card">
+                <strong>🚨 Common Interview Trap:</strong> 
+                "Is PATCH idempotent?" The answer: <em>It depends on the implementation.</em> 
+                If you PATCH <code>{"count": 5}</code> to set it to 5, it's idempotent. 
+                If you PATCH <code>{"op": "increment"}</code>, it's not. Know the difference!
+            </div>
+
+            <h3>Interactive: Method Matcher</h3>
+            <p>Drag the correct HTTP method to each scenario:</p>
+            
+            <div style="margin: 1rem 0;">
+                <div class="draggable-item" draggable="true" ondragstart="drag(event)" data-method="GET">GET</div>
+                <div class="draggable-item" draggable="true" ondragstart="drag(event)" data-method="POST">POST</div>
+                <div class="draggable-item" draggable="true" ondragstart="drag(event)" data-method="PUT">PUT</div>
+                <div class="draggable-item" draggable="true" ondragstart="drag(event)" data-method="PATCH">PATCH</div>
+                <div class="draggable-item" draggable="true" ondragstart="drag(event)" data-method="DELETE">DELETE</div>
+            </div>
+
+            <div id="methodDropZones">
+                <div style="margin: 1rem 0;">
+                    <p><strong>Scenario:</strong> Upload a new profile picture</p>
+                    <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)" data-answer="POST" ondragleave="dragLeave(event)">
+                        Drop method here
+                    </div>
+                </div>
+                <div style="margin: 1rem 0;">
+                    <p><strong>Scenario:</strong> Update only the user's email address</p>
+                    <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)" data-answer="PATCH" ondragleave="dragLeave(event)">
+                        Drop method here
+                    </div>
+                </div>
+                <div style="margin: 1rem 0;">
+                    <p><strong>Scenario:</strong> Replace entire user resource with new data</p>
+                    <div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)" data-answer="PUT" ondragleave="dragLeave(event)">
+                        Drop method here
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="checkMethodDrops()">Verify Answers</button>
+            <div class="feedback" id="methodFeedback"></div>
+        </div>
+
+        <div class="card">
+            <h3>Idempotency in Distributed Systems</h3>
+            <p>This is where senior engineers shine. In distributed systems, requests may timeout or retry. Idempotency ensures safety.</p>
+            
+            <div class="comparison">
+                <div class="comparison-box bad">
+                    <strong>❌ Non-Idempotent (Dangerous)</strong>
+                    <div class="code-block" style="margin-top: 0.5rem;">
+POST /charge-credit-card
+{
+  "amount": 100,
+  "card": "1234"
+}
+// Retrying this creates multiple charges!
+                    </div>
+                </div>
+                <div class="comparison-box good">
+                    <strong>✅ Idempotent (Safe)</strong>
+                    <div class="code-block" style="margin-top: 0.5rem;">
+POST /payments
+Idempotency-Key: uuid-v4-here
+{
+  "amount": 100,
+  "card": "1234"
+}
+// Retry safe! Server checks key.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Status Codes Section -->
+    <section id="status" class="section">
+        <div class="card">
+            <div class="card-header">
+                <h2>HTTP Status Codes Mastery</h2>
+                <span class="badge badge-success">Interview Favorite</span>
+            </div>
+
+            <p>Using 200 OK for errors is the #1 sign of an immature API. Let's fix that.</p>
+
+            <div class="status-grid">
+                <div class="status-item" onclick="showStatusDetail('2xx')">
+                    <h4 style="color: var(--success);">2xx Success</h4>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">200, 201, 204, 206...</p>
+                </div>
+                <div class="status-item" onclick="showStatusDetail('3xx')">
+                    <h4 style="color: var(--warning);">3xx Redirection</h4>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">301, 302, 304...</p>
+                </div>
+                <div class="status-item" onclick="showStatusDetail('4xx')">
+                    <h4 style="color: var(--danger);">4xx Client Error</h4>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">400, 401, 403, 404, 409, 422...</p>
+                </div>
+                <div class="status-item" onclick="showStatusDetail('5xx')">
+                    <h4 style="color: #7f1d1d;">5xx Server Error</h4>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">500, 502, 503, 504...</p>
+                </div>
+            </div>
+
+            <div id="statusDetail" style="margin-top: 1.5rem;">
+                <h4>Select a category above to see detailed breakdowns</h4>
+            </div>
+
+            <div class="pitfall-card">
+                <strong>⚠️ Critical Distinction:</strong><br>
+                <strong>401 Unauthorized:</strong> You didn't provide credentials (or they're invalid).<br>
+                <strong>403 Forbidden:</strong> I know who you are, but you're not allowed here.<br>
+                <em>Many developers use 401 when they mean 403!</em>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Status Code Detective</h3>
+            <p>Choose the most appropriate status code for each scenario:</p>
+
+            <div id="statusQuiz">
+                <div style="margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border-radius: 0.5rem;">
+                    <p style="margin-bottom: 1rem;"><strong>Scenario 1:</strong> Client attempts to create a user with an email that already exists.</p>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">400 Bad Request</button>
+                    <button class="quiz-option" onclick="checkStatus(this, true)">409 Conflict</button>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">422 Unprocessable Entity</button>
+                    <div class="feedback"></div>
+                </div>
+
+                <div style="margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border-radius: 0.5rem;">
+                    <p style="margin-bottom: 1rem;"><strong>Scenario 2:</strong> Request succeeded, but there's no content to return (e.g., deleted resource).</p>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">200 OK (with empty body)</button>
+                    <button class="quiz-option" onclick="checkStatus(this, true)">204 No Content</button>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">404 Not Found</button>
+                    <div class="feedback"></div>
+                </div>
+
+                <div style="margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border-radius: 0.5rem;">
+                    <p style="margin-bottom: 1rem;"><strong>Scenario 3:</strong> Syntax error in request JSON (malformed).</p>
+                    <button class="quiz-option" onclick="checkStatus(this, true)">400 Bad Request</button>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">422 Unprocessable Entity</button>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">500 Internal Server Error</button>
+                    <div class="feedback"></div>
+                </div>
+
+                <div style="margin: 1.5rem 0; padding: 1.5rem; background: #f8fafc; border-radius: 0.5rem;">
+                    <p style="margin-bottom: 1rem;"><strong>Scenario 4:</strong> Valid JSON, but business rule violation (e.g., username contains profanity).</p>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">400 Bad Request</button>
+                    <button class="quiz-option" onclick="checkStatus(this, true)">422 Unprocessable Entity</button>
+                    <button class="quiz-option" onclick="checkStatus(this, false)">403 Forbidden</button>
+                    <div class="feedback"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Design Section -->
+    <section id="design" class="section">
+        <div class="card">
+            <div class="card-header">
+                <h2>Resource Modeling & URI Design</h2>
+                <span class="badge badge-info">Architecture</span>
+            </div>
+
+            <h3>Nouns, Not Verbs</h3>
+            <div class="comparison">
+                <div class="comparison-box bad">
+                    <strong>RPC Style (Bad)</strong>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>/getUser</li>
+                        <li>/createOrder</li>
+                        <li>/deleteProduct</li>
+                    </ul>
+                </div>
+                <div class="comparison-box good">
+                    <strong>RESTful (Good)</strong>
+                    <ul style="margin-top: 0.5rem; margin-left: 1rem;">
+                        <li>GET /users/123</li>
+                        <li>POST /orders</li>
+                        <li>DELETE /products/456</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>Resource Nesting (The Golden Rule)</h3>
+            <p>Limit nesting to <strong>one level deep</strong>. Deeper nesting creates tight coupling.</p>
+            
+            <div class="code-block">
+                <div class="code-label">ACCEPTABLE</div>
+                /users/123/orders          // List user's orders
+                /users/123/orders/456      // Specific order (but prefer /orders/456)
+            </div>
+
+            <div class="code-block">
+                <div class="code-label">TOO DEEP - Refactor!</div>
+                /users/123/orders/456/products/789/reviews/321
+                // Better: /reviews/321?product=789
+            </div>
+
+            <h3>Filtering, Sorting, Pagination</h3>
+            <div class="code-block">
+GET /products?category=electronics&sort=-price&page=2&limit=20
+
+// Headers for pagination metadata:
+Link: <https://api.example.com/products?page=3>; rel="next",
+      <https://api.example.com/products?page=10>; rel="last"
+X-Total-Count: 200
+            </div>
+
+            <div class="tip-card">
+                <strong>💡 Pro Tip:</strong> Use <code>-</code> prefix for descending sort. 
+                Comma-separate multiple sort fields: <code>?sort=-created_at,name</code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Exercise: Design the URI</h3>
+            <p>Design RESTful endpoints for an e-commerce system:</p>
+            
+            <div style="margin: 1rem 0;">
+                <label><strong>Task:</strong> Endpoint to get all reviews written by user 123</label>
+                <input type="text" class="exercise-input" id="uri1" placeholder="/...">
+                <div class="feedback" id="uriFeedback1"></div>
+            </div>
+
+            <div style="margin: 1rem 0;">
+                <label><strong>Task:</strong> Endpoint to update the status of order 456 (partial update)</label>
+                <input type="text" class="exercise-input" id="uri2" placeholder="METHOD /...">
+                <div class="feedback" id="uriFeedback2"></div>
+            </div>
+
+            <button class="btn btn-primary" onclick="checkURIs()">Validate Design</button>
+        </div>
+    </section>
+
+    <!-- Versioning Section -->
+    <section id="versioning" class="section">
+        <div class="card">
+            <div class="card-header">
+                <h2>API Versioning Strategies</h2>
+                <span class="badge badge-warning">Senior Level</span>
+            </div>
+
+            <p>Breaking changes are inevitable. How you handle them defines your API's maturity.</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                <div style="border: 2px solid var(--border); padding: 1rem; border-radius: 0.5rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;">URL Versioning</h4>
+                    <div class="code-block" style="margin: 0.5rem 0;">
+                        /v1/users
+                        /v2/users
+                    </div>
+                    <ul style="font-size: 0.875rem; margin-left: 1rem;">
+                        <li>✅ Simple, explicit</li>
+                        <li>✅ Easy to test</li>
+                        <li>❌ Violates "Cool URIs don't change"</li>
+                        <li>❌ Resource identity tied to version</li>
+                    </ul>
+                </div>
+
+                <div style="border: 2px solid var(--border); padding: 1rem; border-radius: 0.5rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;">Header Versioning</h4>
+                    <div class="code-block" style="margin: 0.5rem 0;">
+                        Accept: application/json;version=2
+                        // or
+                        API-Version: 2
+                    </div>
+                    <ul style="font-size: 0.875rem; margin-left: 1rem;">
+                        <li>✅ URIs stay clean</li>
+                        <li>✅ Logical separation</li>
+                        <li>❌ Harder to test in browser</li>
+                        <li>❌ Caching complications</li>
+                    </ul>
+                </div>
+
+                <div style="border: 2px solid var(--border); padding: 1rem; border-radius: 0.5rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;">Content Negotiation</h4>
+                    <div class="code-block" style="margin: 0.5rem 0;">
+                        Accept: application/vnd.api.v2+json
+                    </div>
+                    <ul style="font-size: 0.875rem; margin-left: 1rem;">
+                        <li>✅ Pure REST (HATEOAS friendly)</li>
+                        <li>✅ Media type driven</li>
+                        <li>❌ Verbose</li>
+                        <li>❌ Complex for clients</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="tip-card">
+                <strong>🎯 Recommendation:</strong> Use <strong>URL versioning</strong> for public APIs (easiest for consumers) 
+                or <strong>Header versioning</strong> for internal microservices. Avoid mixing strategies!
+            </div>
+
+            <h3>Breaking vs Non-Breaking Changes</h3>
+            <table style="width: 100%; margin: 1rem 0; border-collapse: collapse;">
+                <tr style="background: var(--dark); color: white;">
+                    <th style="padding: 0.75rem; text-align: left;">Non-Breaking (Minor)</th>
+                    <th style="padding: 0.75rem; text-align: left;">Breaking (Major)</th>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.75rem;">Adding new fields</td>
+                    <td style="padding: 0.75rem;">Removing/renaming fields</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.75rem;">Adding new endpoints</td>
+                    <td style="padding: 0.75rem;">Changing field types</td>
+                </tr>
+                <tr>
+                    <td style="padding: 0.75rem;">Adding optional parameters</td>
+                    <td style="padding: 0.75rem;">Changing authentication</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Deprecation Strategy</h3>
+            <p>How to sunset an API version gracefully:</p>
+            
+            <div class="code-block">
+                <div class="code-label">Response Headers</div>
+Sunset: Sat, 31 Dec 2024 23:59:59 GMT
+Deprecation: true
+Link: <https://api.example.com/docs/v2>; rel="successor-version"
+            </div>
+
+            <button class="btn btn-primary" onclick="completeSection('versioning')">Mark as Complete</button>
+        </div>
+    </section>
+
+    <!-- Pitfalls Section -->
+    <section id="pitfalls" class="section">
+        <div class="card">
+            <div class="card-header">
+                <h2>Anti-Patterns & Pitfalls</h2>
+                <span class="badge badge-danger">Avoid These</span>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>1. The "404 for Auth" Trap</h4>
+                <p>Returning 404 when user lacks permission (security through obscurity). 
+                This confuses clients—use 403 instead.</p>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>2. Chatty APIs</h4>
+                <p>Requiring 5 requests to load a page. Use expansion/query parameters:</p>
+                <div class="code-block">
+GET /users/123?embed=orders,reviews,profile
+                </div>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>3. Ignoring Partial Failures</h4>
+                <p>In batch operations, if 2 out of 10 items fail, return 207 Multi-Status:</p>
+                <div class="code-block">
+{
+  "results": [
+    {"status": 201, "id": "item1"},
+    {"status": 400, "error": "Invalid price"}
+  ]
+}
+                </div>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>4. Pagination Offsets</h4>
+                <p>Using <code>?page=5000&limit=20</code> in large datasets causes database skip-scan. 
+                Use cursor-based pagination instead:</p>
+                <div class="code-block">
+GET /items?cursor=eyJpZCI6MTIzfQ==&limit=20
+// Returns next_cursor for following page
+                </div>
+            </div>
+
+            <div class="pitfall-card">
+                <h4>5. Ignoring Caching Headers</h4>
+                <p>Not using ETag or Last-Modified forces clients to refetch unchanged data.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Quick Reflex Test</h3>
+            <p>What's wrong with this request/response?</p>
+            
+            <div class="code-block">
+                <div class="code-label">Spot the Issues</div>
+POST /createUser HTTP/1.1
+Content-Type: application/json
+
+{"name": "John", "role": "admin"}
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"success": true, "error": null, "data": {"id": 123}}
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <label><input type="checkbox" class="pitfall-check" value="1"> Using verb in URL (/createUser)</label><br>
+                <label><input type="checkbox" class="pitfall-check" value="2"> 200 instead of 201 for creation</label><br>
+                <label><input type="checkbox" class="pitfall-check" value="3"> Wrapping response in envelope (success/error/data)</label><br>
+                <label><input type="checkbox" class="pitfall-check" value="4"> Missing Location header for created resource</label><br>
+                <label><input type="checkbox" class="pitfall-check" value="5"> Using POST instead of PUT for known ID</label>
+            </div>
+
+            <button class="btn btn-primary" onclick="checkPitfalls()" style="margin-top: 1rem;">Check Analysis</button>
+            <div class="feedback" id="pitfallFeedback"></div>
+        </div>
+    </section>
+
+    <!-- Challenge Section -->
+    <section id="challenge" class="section">
+        <div class="card">
+            <div class="card-header">
+                <h2>🏆 Final Challenge: Design a Netflix-like API</h2>
+                <span class="badge badge-success">Interview Simulation</span>
+            </div>
+
+            <p><strong>Scenario:</strong> Design a REST API for a streaming service. Requirements:</p>
+            <ul style="margin: 1rem 0; margin-left: 1.5rem;">
+                <li>Browse movies by genre, rating, release year</li>
+                <li>User watchlist (add/remove)</li>
+                <li>Resume playback (save progress)</li>
+                <li>Rate movies (1-5 stars)</li>
+                <li>View viewing history</li>
+            </ul>
+
+            <div style="background: #f0fdf4; border: 2px solid var(--success); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+                <strong>Task:</strong> Design the endpoint structure. Consider:
+                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                    <li>Resource relationships (Users ↔ Movies ↔ Ratings)</li>
+                    <li>Which endpoints need authentication?</li>
+                    <li>How to handle the "resume playback" state?</li>
+                    <li>Pagination for large catalogs</li>
+                </ul>
+            </div>
+
+            <textarea class="exercise-input" id="apiDesign" rows="10" placeholder="// Design your endpoints here
+// Example format:
+GET /movies?genre=action&year=2023
+POST /users/{id}/watchlist
+..."></textarea>
+
+            <button class="btn btn-success" onclick="submitChallenge()" style="margin-top: 1rem;">
+                Submit Design Review
+            </button>
+
+            <div id="challengeFeedback" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="card" id="certificate" style="display: none; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h2>🎉 Mastery Achieved!</h2>
+            <p style="font-size: 1.25rem; margin: 1rem 0;">You've completed the REST API Mastery Lab</p>
+            <div style="font-size: 3rem; margin: 1rem 0;">📜</div>
+            <p>You're now prepared to discuss REST API design at the level expected by top-tier engineering organizations.</p>
+            <button class="btn" onclick="location.reload()" style="margin-top: 1rem; background: white; color: #764ba2;">
+                Restart Training
+            </button>
+        </div>
+    </section>
+
+</main>
+
+<div class="score-board">
+    <div style="font-weight: bold; margin-bottom: 0.5rem;">Score: <span id="score">0</span></div>
+    <div style="font-size: 0.875rem; color: #6b7280;">Keep going!</div>
+</div>
+
+<script>
+    // State Management
+    let score = 0;
+    let completedSections = new Set();
+    const totalSections = 7;
+
+    function updateProgress() {
+        const percent = (completedSections.size / totalSections) * 100;
+        document.getElementById('overallProgress').style.width = percent + '%';
+        document.getElementById('score').textContent = score;
+        document.getElementById('scoreDisplay').textContent = score;
+        document.getElementById('completedDisplay').textContent = `${completedSections.size}/${totalSections}`;
+        
+        // Unlock sections progressively
+        const tabs = document.querySelectorAll('.nav-tab');
+        tabs.forEach((tab, index) => {
+            if (index <= completedSections.size) {
+                tab.classList.remove('locked');
+            }
+        });
+    }
+
+    function showSection(sectionId) {
+        // Hide all sections
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        
+        // Show target
+        document.getElementById(sectionId).classList.add('active');
+        event.target.classList.add('active');
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+    }
+
+    function addPoints(points) {
+        score += points;
+        updateProgress();
+        
+        // Visual feedback
+        const scoreBoard = document.querySelector('.score-board');
+        scoreBoard.style.transform = 'scale(1.1)';
+        setTimeout(() => scoreBoard.style.transform = 'scale(1)', 200);
+    }
+
+    function completeSection(section) {
+        completedSections.add(section);
+        updateProgress();
+        alert(`✅ Section completed! +50 points`);
+        addPoints(50);
+    }
+
+    // Constraint Quiz
+    function checkConstraints() {
+        const c1 = document.getElementById('constraint1').value;
+        const c2 = document.getElementById('constraint2').value;
+        let correct = 0;
+
+        const fb1 = document.getElementById('feedback1');
+        const fb2 = document.getElementById('feedback2');
+
+        if (c1 === 'stateless') {
+            fb1.textContent = '✅ Correct! Storing session state on the server violates statelessness.';
+            fb1.className = 'feedback show';
+            fb1.style.background = '#f0fdf4';
+            fb1.style.color = '#166534';
+            correct++;
+        } else if (c1) {
+            fb1.textContent = '❌ Incorrect. Think about where the state is stored.';
+            fb1.className = 'feedback show';
+            fb1.style.background = '#fef2f2';
+            fb1.style.color = '#991b1b';
+        }
+
+        if (c2 === 'uniform') {
+            fb2.textContent = '✅ Correct! Not respecting the Accept header violates the Uniform Interface constraint.';
+            fb2.className = 'feedback show';
+            fb2.style.background = '#f0fdf4';
+            fb2.style.color = '#166534';
+            correct++;
+        } else if (c2) {
+            fb2.textContent = '❌ Incorrect. This is about the contract between client and server.';
+            fb2.className = 'feedback show';
+            fb2.style.background = '#fef2f2';
+            fb2.style.color = '#991b1b';
+        }
+
+        if (correct === 2) {
+            addPoints(20);
+            completeSection('principles');
+        }
+    }
+
+    // Drag and Drop for Methods
+    function allowDrop(ev) {
+        ev.preventDefault();
+        ev.target.classList.add('drag-over');
+    }
+
+    function dragLeave(ev) {
+        ev.target.classList.remove('drag-over');
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("method", ev.target.getAttribute('data-method'));
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        ev.target.classList.remove('drag-over');
+        const data = ev.dataTransfer.getData("method");
+        ev.target.textContent = data;
+        ev.target.setAttribute('data-selected', data);
+        ev.target.style.borderColor = 'var(--primary)';
+        ev.target.style.background = '#eff6ff';
+    }
+
+    function checkMethodDrops() {
+        const zones = document.querySelectorAll('.drop-zone');
+        let correct = 0;
+        
+        zones.forEach(zone => {
+            const selected = zone.getAttribute('data-selected');
+            const expected = zone.getAttribute('data-answer');
+            
+            if (selected === expected) {
+                zone.style.borderColor = 'var(--success)';
+                zone.style.background = '#f0fdf4';
+                correct++;
+            } else {
+                zone.style.borderColor = 'var(--danger)';
+                zone.style.background = '#fef2f2';
+            }
+        });
+
+        const feedback = document.getElementById('methodFeedback');
+        if (correct === 3) {
+            feedback.textContent = '🎉 Perfect! You understand HTTP semantics.';
+            feedback.className = 'feedback show';
+            feedback.style.background = '#f0fdf4';
+            feedback.style.color = '#166534';
+            addPoints(30);
+            completeSection('methods');
+        } else {
+            feedback.textContent = '❌ Some methods are incorrect. Remember: PUT replaces entirely, PATCH updates partially.';
+            feedback.className = 'feedback show';
+            feedback.style.background = '#fef2f2';
+            feedback.style.color = '#991b1b';
+        }
+    }
+
+    // Status Code Detail View
+    function showStatusDetail(category) {
+        const detail = document.getElementById('statusDetail');
+        const data = {
+            '2xx': `
+                <h4>2xx Success Codes</h4>
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li><strong>200 OK:</strong> General success. Use for GET, PUT, DELETE.</li>
+                    <li><strong>201 Created:</strong> Resource created successfully. Include Location header.</li>
+                    <li><strong>202 Accepted:</strong> Request accepted for async processing (e.g., video transcoding).</li>
+                    <li><strong>204 No Content:</strong> Success, nothing to return. Perfect for DELETE.</li>
+                    <li><strong>206 Partial Content:</strong> Range requests (video streaming).</li>
+                </ul>
+            `,
+            '3xx': `
+                <h4>3xx Redirection</h4>
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li><strong>301 Moved Permanently:</strong> Resource relocated permanently. Update bookmarks.</li>
+                    <li><strong>302 Found:</strong> Temporary redirect (use 307/308 instead in modern APIs).</li>
+                    <li><strong>304 Not Modified:</strong> Cache validation succeeded. Saves bandwidth.</li>
+                    <li><strong>307/308:</strong> Modern temporary/permanent redirects that preserve method.</li>
+                </ul>
+            `,
+            '4xx': `
+                <h4>4xx Client Errors</h4>
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li><strong>400 Bad Request:</strong> Malformed syntax or validation errors.</li>
+                    <li><strong>401 Unauthorized:</strong> Missing or invalid authentication.</li>
+                    <li><strong>403 Forbidden:</strong> Authenticated, but not authorized for this resource.</li>
+                    <li><strong>404 Not Found:</strong> Resource doesn't exist (don't use for auth!).</li>
+                    <li><strong>409 Conflict:</strong> Resource conflict (e.g., duplicate email).</li>
+                    <li><strong>410 Gone:</strong> Resource existed but is permanently gone (better than 404).</li>
+                    <li><strong>422 Unprocessable:</strong> Semantic errors (valid JSON, bad business logic).</li>
+                    <li><strong>429 Too Many Requests:</strong> Rate limiting.</li>
+                </ul>
+            `,
+            '5xx': `
+                <h4>5xx Server Errors</h4>
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li><strong>500 Internal Error:</strong> Unexpected server error (your fault).</li>
+                    <li><strong>502 Bad Gateway:</strong> Upstream server returned invalid response.</li>
+                    <li><strong>503 Service Unavailable:</strong> Server overloaded or down for maintenance.</li>
+                    <li><strong>504 Gateway Timeout:</strong> Upstream server didn't respond in time.</li>
+                </ul>
+                <div class="tip-card" style="margin-top: 1rem;">
+                    <strong>Key Insight:</strong> 5xx errors are always the server's fault. Never return 500 for client errors!
+                </div>
+            `
+        };
+        detail.innerHTML = data[category];
+    }
+
+    // Status Quiz
+    function checkStatus(btn, isCorrect) {
+        const container = btn.parentElement;
+        const buttons = container.querySelectorAll('.quiz-option');
+        const feedback = container.querySelector('.feedback');
+        
+        buttons.forEach(b => b.disabled = true);
+        
+        if (isCorrect) {
+            btn.classList.add('correct');
+            feedback.textContent = '✅ Correct! This is the most precise semantic choice.';
+            feedback.className = 'feedback show';
+            feedback.style.background = '#f0fdf4';
+            feedback.style.color = '#166534';
+            addPoints(10);
+        } else {
+            btn.classList.add('wrong');
+            feedback.textContent = '❌ Not the best choice. Think about the specific semantics.';
+            feedback.className = 'feedback show';
+            feedback.style.background = '#fef2f2';
+            feedback.style.color = '#991b1b';
+            
+            // Highlight correct one
+            buttons.forEach(b => {
+                if (b.onclick.toString().includes('true')) {
+                    b.classList.add('correct');
+                }
+            });
+        }
+        
+        // Check if all answered
+        const allAnswered = document.querySelectorAll('#statusQuiz .quiz-option.correct, #statusQuiz .quiz-option.wrong').length === 4;
+        if (allAnswered) {
+            setTimeout(() => completeSection('status'), 1000);
+        }
+    }
+
+    // URI Design Exercise
+    function checkURIs() {
+        const uri1 = document.getElementById('uri1').value.trim().toLowerCase();
+        const uri2 = document.getElementById('uri2').value.trim().toUpperCase();
+        
+        let score = 0;
+        
+        // Task 1: /users/123/reviews or /reviews?user=123
+        const fb1 = document.getElementById('uriFeedback1');
+        if (uri1.includes('/users/123/reviews') || uri1.includes('/reviews?user=123')) {
+            fb1.textContent = '✅ Good! Either nested or query parameter works here.';
+            fb1.className = 'feedback show';
+            fb1.style.background = '#f0fdf4';
+            score++;
+        } else {
+            fb1.textContent = '❌ Consider: /users/123/reviews or /reviews?user=123';
+            fb1.className = 'feedback show';
+            fb1.style.background = '#fef2f2';
+        }
+        
+        // Task 2: PATCH /orders/456
+        const fb2 = document.getElementById('uriFeedback2');
+        if (uri2.includes('PATCH') && uri2.includes('/ORDERS/456')) {
+            fb2.textContent = '✅ Correct! PATCH for partial updates.';
+            fb2.className = 'feedback show';
+            fb2.style.background = '#f0fdf4';
+            score++;
+        } else if (uri2.includes('PUT')) {
+            fb2.textContent = '⚠️ PUT works but PATCH is more appropriate for partial updates.';
+            fb2.className = 'feedback show';
+            fb2.style.background = '#fef3c7';
+            score += 0.5;
+        } else {
+            fb2.textContent = '❌ Hint: PATCH /orders/456';
+            fb2.className = 'feedback show';
+            fb2.style.background = '#fef2f2';
+        }
+        
+        if (score >= 1.5) {
+            addPoints(20);
+            completeSection('design');
+        }
+    }
+
+    // Pitfalls Check
+    function checkPitfalls() {
+        const checks = document.querySelectorAll('.pitfall-check:checked');
+        const values = Array.from(checks).map(c => c.value);
+        const feedback = document.getElementById('pitfallFeedback');
+        
+        // Correct answers: 1, 2, 3, 4 (5 is not applicable here)
+        const correct = ['1', '2', '3', '4'];
+        const selected = values.sort();
+        
+        if (JSON.stringify(selected) === JSON.stringify(correct)) {
+            feedback.textContent = '🎯 Excellent! You spotted all the issues. This is principal-level attention to detail.';
+            feedback.className = 'feedback show';
+            feedback.style.background = '#f0fdf4';
+            feedback.style.color = '#166534';
+            addPoints(40);
+            completeSection('pitfalls');
+        } else {
+            feedback.textContent = '❌ Keep looking! There are exactly 4 issues in that request/response.';
+            feedback.className = 'feedback show';
+            feedback.style.background = '#fef2f2';
+            feedback.style.color = '#991b1b';
+        }
+    }
+
+    // Challenge Review
+    function submitChallenge() {
+        const design = document.getElementById('apiDesign').value.toLowerCase();
+        const feedback = document.getElementById('challengeFeedback');
+        
+        let issues = [];
+        let positives = [];
+        
+        // Check for good practices
+        if (design.includes('movies') && !design.includes('getmovies')) positives.push('✅ Resource-based naming');
+        if (design.includes('?') || design.includes('cursor') || design.includes('page')) positives.push('✅ Pagination consideration');
+        if (design.includes('patch')) positives.push('✅ Using PATCH for partial updates');
+        if (design.includes('201')) positives.push('✅ Proper status codes');
+        if (design.includes('watchlist')) positives.push('✅ Resource modeling for watchlist');
+        
+        // Check for issues
+        if (design.includes('get') || design.includes('create') || design.includes('delete')) {
+            issues.push('❌ Avoid verbs in URLs (RPC style)');
+        }
+        if (!design.includes('auth') && !design.includes('401')) {
+            issues.push('⚠️ Consider authentication markers');
+        }
+        if (!design.includes('cursor') && !design.includes('offset')) {
+            issues.push('⚠️ Consider pagination strategy for large catalogs');
+        }
+        
+        let html = '<div style="background: #f8fafc; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">';
+        html += '<h4>Design Review:</h4>';
+        
+        if (positives.length > 0) {
+            html += '<div style="margin: 0.5rem 0;"><strong>Strengths:</strong><ul>';
+            positives.forEach(p => html += `<li>${p}</li>`);
+            html += '</ul></div>';
+        }
+        
+        if (issues.length > 0) {
+            html += '<div style="margin: 0.5rem 0;"><strong>Areas to improve:</strong><ul>';
+            issues.forEach(i => html += `<li>${i}</li>`);
+            html += '</ul></div>';
+        } else {
+            html += '<p style="color: var(--success); font-weight: bold; margin-top: 1rem;">🎉 Outstanding design! This is senior-level work.</p>';
+        }
+        
+        html += '</div>';
+        
+        // Sample solution
+        html += `
+        <div style="margin-top: 1.5rem; padding: 1rem; background: #1e293b; color: #e2e8f0; border-radius: 0.5rem; overflow-x: auto;">
+            <div style="color: #94a3b8; margin-bottom: 0.5rem;">// Sample High-Quality Design:</div>
+            <pre style="margin: 0;">
+// Discovery & Browse
+GET /movies?genre=sci-fi&year=2023&page[cursor]=abc123&limit=20
+GET /movies/{id}
+GET /movies/{id}/recommendations
+
+// User Watchlist (sub-resource)
+GET /users/{id}/watchlist
+POST /users/{id}/watchlist  { "movie_id": "..." }
+DELETE /users/{id}/watchlist/{movie_id}
+
+// Playback State (singleton resource)
+GET /users/{id}/playback/{movie_id}
+PATCH /users/{id}/playback/{movie_id}  { "position": 3600 }
+
+// Ratings
+POST /movies/{id}/ratings  { "value": 5 }
+GET /movies/{id}/ratings/average
+
+// History
+GET /users/{id}/history?page=1</pre>
+        </div>
+        `;
+        
+        feedback.innerHTML = html;
+        
+        if (issues.length <= 1 && positives.length >= 3) {
+            addPoints(100);
+            completeSection('challenge');
+            document.getElementById('certificate').style.display = 'block';
+            document.getElementById('certificate').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // Initialize
+    updateProgress();
+    
+    // Load saved progress
+    if (localStorage.getItem('restMasteryScore')) {
+        score = parseInt(localStorage.getItem('restMasteryScore'));
+        const saved = localStorage.getItem('restMasteryCompleted');
+        if (saved) {
+            completedSections = new Set(JSON.parse(saved));
+        }
+        updateProgress();
+    }
+
+    // Save on unload
+    window.onbeforeunload = function() {
+        localStorage.setItem('restMasteryScore', score);
+        localStorage.setItem('restMasteryCompleted', JSON.stringify([...completedSections]));
+    };
+</script>
+
+</body>
+</html>

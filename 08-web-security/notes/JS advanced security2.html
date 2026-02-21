@@ -1,0 +1,3114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web Performance Optimization - Master Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --primary: #6C63FF;
+    --secondary: #FF6584;
+    --success: #2ECC71;
+    --warning: #F39C12;
+    --danger: #E74C3C;
+    --dark: #1A1A2E;
+    --darker: #0F0F1A;
+    --card: #16213E;
+    --card2: #0F3460;
+    --text: #E0E0FF;
+    --text-dim: #9999BB;
+    --border: #2A2A4A;
+    --code-bg: #0D1117;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--darker);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, var(--dark) 0%, var(--card2) 100%);
+    padding: 20px;
+    text-align: center;
+    border-bottom: 2px solid var(--primary);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(108,99,255,0.3);
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 5px; }
+
+  /* NAV */
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 15px 20px;
+    background: var(--dark);
+    border-bottom: 1px solid var(--border);
+    justify-content: center;
+  }
+
+  nav button {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-dim);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  nav button:hover, nav button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(108,99,255,0.4);
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+
+  .card:hover { border-color: var(--primary); }
+
+  .card h2 {
+    font-size: 1.4rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card h3 {
+    font-size: 1.1rem;
+    color: var(--secondary);
+    margin: 15px 0 10px;
+  }
+
+  .card p { color: var(--text-dim); margin-bottom: 10px; }
+
+  /* CODE BLOCKS */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 12px 0;
+    position: relative;
+    font-size: 0.85rem;
+  }
+
+  code {
+    font-family: 'Fira Code', 'Courier New', monospace;
+    color: #79C0FF;
+    font-size: 0.85rem;
+  }
+
+  pre code { color: #E6EDF3; }
+
+  .keyword { color: #FF7B72; }
+  .string { color: #A5D6FF; }
+  .comment { color: #8B949E; font-style: italic; }
+  .func { color: #D2A8FF; }
+  .number { color: #79C0FF; }
+  .tag { color: #7EE787; }
+
+  /* COPY BUTTON */
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 12px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: var(--primary); color: white; }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 2px;
+  }
+
+  .badge-blue { background: rgba(108,99,255,0.2); color: var(--primary); border: 1px solid var(--primary); }
+  .badge-red { background: rgba(231,76,60,0.2); color: var(--danger); border: 1px solid var(--danger); }
+  .badge-green { background: rgba(46,204,113,0.2); color: var(--success); border: 1px solid var(--success); }
+  .badge-yellow { background: rgba(243,156,18,0.2); color: var(--warning); border: 1px solid var(--warning); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+
+  /* METRIC CARD */
+  .metric-card {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+
+  .metric-card .metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .metric-card .metric-label { color: var(--text-dim); font-size: 0.85rem; margin-top: 5px; }
+
+  /* ALERT BOXES */
+  .alert {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin: 12px 0;
+    border-left: 4px solid;
+    font-size: 0.9rem;
+  }
+
+  .alert-info { background: rgba(108,99,255,0.1); border-color: var(--primary); color: var(--text); }
+  .alert-warn { background: rgba(243,156,18,0.1); border-color: var(--warning); color: var(--text); }
+  .alert-danger { background: rgba(231,76,60,0.1); border-color: var(--danger); color: var(--text); }
+  .alert-success { background: rgba(46,204,113,0.1); border-color: var(--success); color: var(--text); }
+
+  /* QUIZ */
+  .quiz-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+  }
+
+  .quiz-card h3 { color: var(--text); margin-bottom: 15px; font-size: 1rem; }
+
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+
+  .quiz-option {
+    padding: 12px 18px;
+    background: var(--dark);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+    text-align: left;
+    font-size: 0.9rem;
+  }
+
+  .quiz-option:hover { border-color: var(--primary); background: rgba(108,99,255,0.1); }
+  .quiz-option.correct { border-color: var(--success); background: rgba(46,204,113,0.15); color: var(--success); }
+  .quiz-option.wrong { border-color: var(--danger); background: rgba(231,76,60,0.15); color: var(--danger); }
+  .quiz-option:disabled { cursor: not-allowed; }
+
+  .quiz-feedback {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  .quiz-score {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 20px;
+    color: var(--primary);
+  }
+
+  /* EXERCISE */
+  .exercise-area {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 12px 0;
+  }
+
+  .exercise-area textarea {
+    width: 100%;
+    min-height: 180px;
+    background: transparent;
+    border: none;
+    color: #E6EDF3;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    padding: 15px;
+    resize: vertical;
+    outline: none;
+    tab-size: 2;
+  }
+
+  .exercise-controls {
+    display: flex;
+    gap: 10px;
+    padding: 10px 15px;
+    background: var(--dark);
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #5A52D5; box-shadow: 0 0 15px rgba(108,99,255,0.4); }
+  .btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--primary); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-warning { background: var(--warning); color: white; }
+
+  .output-area {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+    min-height: 60px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--success);
+    white-space: pre-wrap;
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    transition: width 0.5s ease;
+  }
+
+  /* TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 12px 0;
+  }
+
+  th {
+    background: var(--card2);
+    color: var(--primary);
+    padding: 12px;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  tr:hover td { background: rgba(108,99,255,0.05); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 8px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+  }
+
+  .tab-btn.active, .tab-btn:hover {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CHEAT SHEET */
+  .cheat-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .cheat-item:last-child { border-bottom: none; }
+
+  .cheat-key {
+    background: var(--code-bg);
+    color: var(--primary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    min-width: 120px;
+    border: 1px solid var(--border);
+  }
+
+  .cheat-desc { color: var(--text-dim); font-size: 0.85rem; flex: 1; }
+
+  /* VISUAL DEMO */
+  .demo-box {
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 10px 0;
+  }
+
+  .cache-visual {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+  }
+
+  .cache-node {
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    text-align: center;
+    min-width: 80px;
+  }
+
+  .cache-arrow {
+    color: var(--primary);
+    font-size: 1.2rem;
+  }
+
+  /* PITFALLS */
+  .pitfall-card {
+    background: rgba(231,76,60,0.08);
+    border: 1px solid rgba(231,76,60,0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+  }
+
+  .pitfall-card h3 { color: var(--danger); margin-bottom: 8px; }
+  .pitfall-card .fix { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .pitfall-card .fix h4 { color: var(--success); margin-bottom: 8px; }
+
+  /* INTERACTIVE DEMO */
+  .perf-meter {
+    position: relative;
+    height: 30px;
+    background: var(--dark);
+    border-radius: 15px;
+    overflow: hidden;
+    margin: 10px 0;
+    border: 1px solid var(--border);
+  }
+
+  .perf-fill {
+    height: 100%;
+    border-radius: 15px;
+    transition: width 1s ease, background 0.5s;
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* ANIMATION */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in { animation: fadeIn 0.4s ease; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .pulse { animation: pulse 1s infinite; }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dashed var(--text-dim);
+  }
+
+  .tooltip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card2);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    border: 1px solid var(--border);
+    z-index: 10;
+  }
+
+  .tooltip:hover::after { opacity: 1; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.3rem; }
+    nav button { font-size: 0.75rem; padding: 6px 12px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .cache-visual { flex-direction: column; }
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .section-header h2 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .section-header p { color: var(--text-dim); margin-top: 8px; }
+
+  /* QUIZ COUNTER */
+  .quiz-counter {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .counter-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    text-align: center;
+    flex: 1;
+  }
+
+  .counter-box .num { font-size: 1.8rem; font-weight: 700; }
+  .counter-box .lbl { font-size: 0.75rem; color: var(--text-dim); }
+
+  /* LOADING ANIMATION */
+  .loading-bar {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    margin: 10px 0;
+  }
+
+  .loading-block {
+    height: 20px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--border) 25%, var(--card2) 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* FLOWCHART */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 15px 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: var(--dark);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+  }
+
+  .flow-step .step-num {
+    width: 28px;
+    height: 28px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .flow-connector {
+    width: 3px;
+    height: 20px;
+    background: var(--primary);
+    margin-left: 29px;
+    opacity: 0.5;
+  }
+
+  /* INTERACTIVE SLIDER */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    outline: none;
+    margin: 10px 0;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(108,99,255,0.5);
+  }
+
+  /* TOGGLE */
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    cursor: pointer;
+  }
+
+  .toggle {
+    width: 46px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .toggle.on { background: var(--primary); }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: left 0.3s;
+  }
+
+  .toggle.on::after { left: 24px; }
+
+  /* COMPARE TABLE */
+  .compare-good { color: var(--success); }
+  .compare-bad { color: var(--danger); }
+
+  /* CONFETTI STYLE FOR CORRECT */
+  .celebrate {
+    animation: celebrate 0.6s ease;
+  }
+
+  @keyframes celebrate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--dark); }
+  ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Web Performance Optimization</h1>
+  <p>Master Caching • CDN • Image Optimization • Lazy Loading • Resource Hints</p>
+</header>
+
+<nav id="mainNav">
+  <button class="active" onclick="showSection('basics')">🏠 Basics</button>
+  <button onclick="showSection('caching')">💾 Caching</button>
+  <button onclick="showSection('cdn')">🌐 CDN</button>
+  <button onclick="showSection('images')">🖼️ Images</button>
+  <button onclick="showSection('lazyload')">⏳ Lazy Loading</button>
+  <button onclick="showSection('hints')">💡 Resource Hints</button>
+  <button onclick="showSection('exercises')">🏋️ Exercises</button>
+  <button onclick="showSection('quiz')">🧠 Quiz</button>
+  <button onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+  <button onclick="showSection('cheatsheet')">📋 Cheat Sheet</button>
+</nav>
+
+<main>
+
+<!-- ============ BASICS ============ -->
+<section id="basics" class="section active fade-in">
+  <div class="section-header">
+    <h2>Why Performance Matters</h2>
+    <p>The foundation every senior engineer needs to understand</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="metric-card">
+      <div class="metric-value">53%</div>
+      <div class="metric-label">Users abandon sites that take<br>3+ seconds to load</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">1s</div>
+      <div class="metric-label">Amazon loses $1.6B/year per<br>second of extra load time</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">100ms</div>
+      <div class="metric-label">Walmart increased revenue 1%<br>for every 100ms improvement</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧠 The Mental Model (Simple Version First)</h2>
+    <p>Think of web performance like a restaurant:</p>
+
+    <div class="grid-2" style="margin-top:15px">
+      <div style="background:var(--dark);border-radius:10px;padding:20px;border:1px solid var(--border)">
+        <h3>🍽️ Without Optimization</h3>
+        <p>Every customer asks "What's on the menu?" → waiter runs to kitchen → chef cooks the list → waiter returns.<br><br>
+        Every. Single. Time.</p>
+        <p style="margin-top:10px;color:var(--danger)">❌ Slow, wasteful, expensive</p>
+      </div>
+      <div style="background:var(--dark);border-radius:10px;padding:20px;border:1px solid var(--border)">
+        <h3>⚡ With Optimization</h3>
+        <p><strong>Cache:</strong> Print menus and keep at tables<br>
+        <strong>CDN:</strong> Open restaurants in every city<br>
+        <strong>Lazy load:</strong> Only bring food when ordered<br>
+        <strong>Resource hints:</strong> Pre-prepare popular dishes</p>
+        <p style="margin-top:10px;color:var(--success)">✅ Fast, efficient, scalable</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 Core Web Vitals - What Google Measures</h2>
+    <p>These metrics directly affect your SEO ranking and user experience:</p>
+
+    <div style="margin-top:15px">
+      <div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <strong>LCP - Largest Contentful Paint</strong>
+          <span class="badge badge-green">Target: &lt; 2.5s</span>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:8px">How fast does the main content appear? (hero image, main text block)</p>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:70%"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <strong>FID/INP - Interaction to Next Paint</strong>
+          <span class="badge badge-green">Target: &lt; 200ms</span>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:8px">How quickly does the page respond to user clicks?</p>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:85%"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <strong>CLS - Cumulative Layout Shift</strong>
+          <span class="badge badge-green">Target: &lt; 0.1</span>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:8px">How stable is the page layout? (things jumping around)</p>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:55%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗺️ Performance Optimization Map</h2>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div>
+          <strong>Browser makes request</strong>
+          <span class="badge badge-blue" style="margin-left:10px">DNS → TCP → TLS → HTTP</span>
+        </div>
+      </div>
+      <div class="flow-connector"></div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div>
+          <strong>Resource Hints</strong> → Tell browser what to prepare next
+          <span class="badge badge-yellow" style="margin-left:10px">preconnect, prefetch, preload</span>
+        </div>
+      </div>
+      <div class="flow-connector"></div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div>
+          <strong>CDN intercepts</strong> → Serves from nearest edge server
+          <span class="badge badge-green" style="margin-left:10px">Reduces latency</span>
+        </div>
+      </div>
+      <div class="flow-connector"></div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div>
+          <strong>Cache check</strong> → Is this cached? Serve instantly!
+          <span class="badge badge-blue" style="margin-left:10px">Cache-Control headers</span>
+        </div>
+      </div>
+      <div class="flow-connector"></div>
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div>
+          <strong>Assets served</strong> → Optimized images, lazy loaded content
+          <span class="badge badge-yellow" style="margin-left:10px">WebP, lazy, async</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🛠️ Your Performance Toolkit</h2>
+    <div class="grid-2">
+      <div>
+        <h3>Measurement Tools</h3>
+        <div class="cheat-item"><div class="cheat-key">Lighthouse</div><div class="cheat-desc">Built into Chrome DevTools - full audit</div></div>
+        <div class="cheat-item"><div class="cheat-key">WebPageTest</div><div class="cheat-desc">Real browser testing from worldwide locations</div></div>
+        <div class="cheat-item"><div class="cheat-key">Chrome DevTools</div><div class="cheat-desc">Network, Performance, Coverage tabs</div></div>
+        <div class="cheat-item"><div class="cheat-key">PageSpeed Insights</div><div class="cheat-desc">Google's official Core Web Vitals tool</div></div>
+      </div>
+      <div>
+        <h3>JavaScript APIs</h3>
+        <div class="cheat-item"><div class="cheat-key">Performance API</div><div class="cheat-desc">performance.now(), performance.mark()</div></div>
+        <div class="cheat-item"><div class="cheat-key">PerformanceObserver</div><div class="cheat-desc">Observe LCP, FID, CLS in real time</div></div>
+        <div class="cheat-item"><div class="cheat-key">Navigation Timing</div><div class="cheat-desc">Full page load timing breakdown</div></div>
+        <div class="cheat-item"><div class="cheat-key">Resource Timing</div><div class="cheat-desc">Individual asset load times</div></div>
+      </div>
+    </div>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Measure performance in JavaScript</span>
+<span class="keyword">const</span> observer = <span class="keyword">new</span> <span class="func">PerformanceObserver</span>((list) => {
+  <span class="keyword">for</span> (<span class="keyword">const</span> entry <span class="keyword">of</span> list.<span class="func">getEntries</span>()) {
+    console.<span class="func">log</span>(<span class="string">`LCP: ${entry.startTime}ms`</span>);
+  }
+});
+observer.<span class="func">observe</span>({ entryTypes: [<span class="string">'largest-contentful-paint'</span>] });
+
+<span class="comment">// Measure custom code performance</span>
+performance.<span class="func">mark</span>(<span class="string">'myFunction-start'</span>);
+<span class="func">myHeavyFunction</span>();
+performance.<span class="func">mark</span>(<span class="string">'myFunction-end'</span>);
+performance.<span class="func">measure</span>(<span class="string">'myFunction'</span>, <span class="string">'myFunction-start'</span>, <span class="string">'myFunction-end'</span>);
+
+<span class="keyword">const</span> [measure] = performance.<span class="func">getEntriesByName</span>(<span class="string">'myFunction'</span>);
+console.<span class="func">log</span>(<span class="string">`Duration: ${measure.duration}ms`</span>);</code></pre>
+  </div>
+</section>
+
+<!-- ============ CACHING ============ -->
+<section id="caching" class="section fade-in">
+  <div class="section-header">
+    <h2>💾 Caching Strategies</h2>
+    <p>Store and reuse resources intelligently</p>
+  </div>
+
+  <div class="card">
+    <h2>🧊 Cache-Control Header - The Master Control</h2>
+    <p>This single header controls how browsers and CDNs cache your resources:</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab(this,'tab-cc-1')">Directives</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-cc-2')">Examples</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-cc-3')">Strategy Guide</button>
+    </div>
+
+    <div id="tab-cc-1" class="tab-content active">
+      <table>
+        <tr><th>Directive</th><th>Meaning</th><th>Use Case</th></tr>
+        <tr><td><code>max-age=31536000</code></td><td>Cache for 1 year</td><td>Versioned assets (JS, CSS with hash)</td></tr>
+        <tr><td><code>no-cache</code></td><td>Always revalidate with server</td><td>HTML files</td></tr>
+        <tr><td><code>no-store</code></td><td>Never cache</td><td>Sensitive data (banking, auth)</td></tr>
+        <tr><td><code>public</code></td><td>CDN can cache this</td><td>Static public assets</td></tr>
+        <tr><td><code>private</code></td><td>Only browser can cache</td><td>User-specific responses</td></tr>
+        <tr><td><code>stale-while-revalidate</code></td><td>Serve stale while fetching fresh</td><td>API responses</td></tr>
+        <tr><td><code>immutable</code></td><td>Never check for updates</td><td>Content-hashed assets</td></tr>
+      </table>
+    </div>
+
+    <div id="tab-cc-2" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Server-side (Node.js/Express) - setting cache headers</span>
+
+<span class="comment">// 1. Static assets with content hash - cache forever</span>
+app.<span class="func">use</span>(<span class="string">'/static'</span>, express.<span class="func">static</span>(<span class="string">'public'</span>, {
+  maxAge: <span class="string">'1y'</span>,                <span class="comment">// Cache for 1 year</span>
+  immutable: <span class="keyword">true</span>               <span class="comment">// Don't check for updates</span>
+}));
+<span class="comment">// Cache-Control: public, max-age=31536000, immutable</span>
+
+<span class="comment">// 2. HTML pages - always validate</span>
+app.<span class="func">get</span>(<span class="string">'/'</span>, (req, res) => {
+  res.<span class="func">setHeader</span>(<span class="string">'Cache-Control'</span>, <span class="string">'no-cache'</span>);
+  res.<span class="func">sendFile</span>(<span class="string">'index.html'</span>);
+});
+
+<span class="comment">// 3. API with stale-while-revalidate</span>
+app.<span class="func">get</span>(<span class="string">'/api/news'</span>, (req, res) => {
+  res.<span class="func">setHeader</span>(
+    <span class="string">'Cache-Control'</span>,
+    <span class="string">'public, max-age=60, stale-while-revalidate=600'</span>
+  );
+  <span class="comment">// Serve fresh for 60s, serve stale for 10min while fetching fresh</span>
+  res.<span class="func">json</span>(getNews());
+});
+
+<span class="comment">// 4. User-specific data</span>
+app.<span class="func">get</span>(<span class="string">'/api/profile'</span>, (req, res) => {
+  res.<span class="func">setHeader</span>(<span class="string">'Cache-Control'</span>, <span class="string">'private, max-age=300'</span>);
+  <span class="comment">// Only browser caches, not CDN</span>
+  res.<span class="func">json</span>(getUserProfile(req.user));
+});</code></pre>
+    </div>
+
+    <div id="tab-cc-3" class="tab-content">
+      <div class="grid-2">
+        <div>
+          <h3>Asset Type → Cache Strategy</h3>
+          <div class="cheat-item">
+            <div class="cheat-key">.html</div>
+            <div class="cheat-desc"><code>no-cache</code> — Always fresh, small files</div>
+          </div>
+          <div class="cheat-item">
+            <div class="cheat-key">main.abc123.js</div>
+            <div class="cheat-desc"><code>max-age=31536000, immutable</code> — Hashed filename</div>
+          </div>
+          <div class="cheat-item">
+            <div class="cheat-key">API responses</div>
+            <div class="cheat-desc"><code>max-age=60, swr=600</code> — Short cache, long stale</div>
+          </div>
+          <div class="cheat-item">
+            <div class="cheat-key">Images</div>
+            <div class="cheat-desc"><code>max-age=86400, public</code> — 1 day for static</div>
+          </div>
+          <div class="cheat-item">
+            <div class="cheat-key">Auth tokens</div>
+            <div class="cheat-desc"><code>no-store</code> — Never cache!</div>
+          </div>
+        </div>
+        <div>
+          <div class="alert alert-info">
+            <strong>💡 The Cache Busting Trick:</strong><br>
+            Set <code>max-age=31536000</code> AND use a hash in the filename.<br>
+            When code changes → filename changes → browser fetches new file.<br>
+            <code>app.js</code> → <code>app.abc123.js</code>
+          </div>
+          <div class="alert alert-warn">
+            <strong>⚠️ no-cache vs no-store:</strong><br>
+            <code>no-cache</code> = "Always check with server but you CAN store it"<br>
+            <code>no-store</code> = "NEVER store this anywhere, ever"
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ Service Worker Caching</h2>
+    <p>Programmable cache that runs in a separate thread — enables offline support:</p>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// service-worker.js</span>
+<span class="keyword">const</span> CACHE_NAME = <span class="string">'my-app-v1'</span>;
+<span class="keyword">const</span> STATIC_ASSETS = [
+  <span class="string">'/'</span>,
+  <span class="string">'/styles/main.css'</span>,
+  <span class="string">'/scripts/app.js'</span>,
+  <span class="string">'/offline.html'</span>
+];
+
+<span class="comment">// INSTALL: cache static assets</span>
+self.<span class="func">addEventListener</span>(<span class="string">'install'</span>, (event) => {
+  event.<span class="func">waitUntil</span>(
+    caches.<span class="func">open</span>(CACHE_NAME).<span class="func">then</span>((cache) => cache.<span class="func">addAll</span>(STATIC_ASSETS))
+  );
+  self.<span class="func">skipWaiting</span>(); <span class="comment">// Activate immediately</span>
+});
+
+<span class="comment">// ACTIVATE: clean old caches</span>
+self.<span class="func">addEventListener</span>(<span class="string">'activate'</span>, (event) => {
+  event.<span class="func">waitUntil</span>(
+    caches.<span class="func">keys</span>().<span class="func">then</span>((keys) =>
+      Promise.<span class="func">all</span>(
+        keys
+          .<span class="func">filter</span>((key) => key !== CACHE_NAME)
+          .<span class="func">map</span>((key) => caches.<span class="func">delete</span>(key))
+      )
+    )
+  );
+});
+
+<span class="comment">// FETCH: serve from cache (Cache-First strategy)</span>
+self.<span class="func">addEventListener</span>(<span class="string">'fetch'</span>, (event) => {
+  event.<span class="func">respondWith</span>(
+    caches.<span class="func">match</span>(event.request).<span class="func">then</span>((cached) => {
+      <span class="comment">// Return cache hit OR fetch and cache</span>
+      <span class="keyword">return</span> cached || fetch(event.request).<span class="func">then</span>((response) => {
+        <span class="keyword">const</span> clone = response.<span class="func">clone</span>(); <span class="comment">// Clone! Response is a stream</span>
+        caches.<span class="func">open</span>(CACHE_NAME).<span class="func">then</span>((cache) => {
+          cache.<span class="func">put</span>(event.request, clone);
+        });
+        <span class="keyword">return</span> response;
+      });
+    })
+  );
+});</code></pre>
+
+    <div style="margin-top:15px">
+      <h3>Caching Strategies Compared</h3>
+      <div class="grid-2">
+        <div>
+          <div class="alert alert-info">
+            <strong>Cache First</strong><br>
+            Check cache → serve if found → fetch if not<br>
+            <em>Best for: Static assets, app shells</em>
+          </div>
+          <div class="alert alert-info">
+            <strong>Network First</strong><br>
+            Try network → fallback to cache if offline<br>
+            <em>Best for: API calls, dynamic content</em>
+          </div>
+        </div>
+        <div>
+          <div class="alert alert-info">
+            <strong>Stale While Revalidate</strong><br>
+            Serve cache instantly → update cache in background<br>
+            <em>Best for: News feeds, non-critical updates</em>
+          </div>
+          <div class="alert alert-info">
+            <strong>Cache Only</strong><br>
+            Only serve from cache — fail if not cached<br>
+            <em>Best for: Offline-only resources</em>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Network First (for API calls)</span>
+<span class="keyword">async function</span> <span class="func">networkFirst</span>(request) {
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="func">fetch</span>(request);
+    <span class="keyword">const</span> cache = <span class="keyword">await</span> caches.<span class="func">open</span>(CACHE_NAME);
+    cache.<span class="func">put</span>(request, response.<span class="func">clone</span>());
+    <span class="keyword">return</span> response;
+  } <span class="keyword">catch</span> {
+    <span class="keyword">return</span> caches.<span class="func">match</span>(request); <span class="comment">// Fallback to cache</span>
+  }
+}
+
+<span class="comment">// Stale While Revalidate</span>
+<span class="keyword">async function</span> <span class="func">staleWhileRevalidate</span>(request) {
+  <span class="keyword">const</span> cached = <span class="keyword">await</span> caches.<span class="func">match</span>(request);
+  <span class="keyword">const</span> fetchPromise = <span class="func">fetch</span>(request).<span class="func">then</span>((response) => {
+    caches.<span class="func">open</span>(CACHE_NAME).<span class="func">then</span>((cache) => cache.<span class="func">put</span>(request, response.<span class="func">clone</span>()));
+    <span class="keyword">return</span> response;
+  });
+  <span class="keyword">return</span> cached || fetchPromise; <span class="comment">// Serve cache immediately if available</span>
+}</code></pre>
+  </div>
+
+  <div class="card">
+    <h2>🔧 ETag & Conditional Requests</h2>
+    <p>Let the browser validate cached content without downloading if unchanged:</p>
+
+    <div class="demo-box">
+      <h3>How ETags Work</h3>
+      <div class="cache-visual">
+        <div class="cache-node" style="background:rgba(108,99,255,0.2);border:1px solid var(--primary)">
+          Browser<br><small>Cache: ETag "abc123"</small>
+        </div>
+        <div class="cache-arrow">→<br><small>If-None-Match: "abc123"</small></div>
+        <div class="cache-node" style="background:rgba(46,204,113,0.2);border:1px solid var(--success)">
+          Server<br><small>File unchanged?</small>
+        </div>
+        <div class="cache-arrow">→<br><small>304 Not Modified</small></div>
+        <div class="cache-node" style="background:rgba(108,99,255,0.2);border:1px solid var(--primary)">
+          Browser<br><small>Use cached version!</small>
+        </div>
+      </div>
+      <p style="font-size:0.8rem;color:var(--text-dim);margin-top:10px">
+        ✅ No data transferred if file hasn't changed — saves bandwidth!
+      </p>
+    </div>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Express - implementing ETags properly</span>
+<span class="keyword">const</span> crypto = require(<span class="string">'crypto'</span>);
+
+app.<span class="func">get</span>(<span class="string">'/api/data'</span>, (req, res) => {
+  <span class="keyword">const</span> data = <span class="func">getData</span>();
+  <span class="keyword">const</span> etag = crypto
+    .<span class="func">createHash</span>(<span class="string">'md5'</span>)
+    .<span class="func">update</span>(<span class="func">JSON.stringify</span>(data))
+    .<span class="func">digest</span>(<span class="string">'hex'</span>);
+
+  res.<span class="func">setHeader</span>(<span class="string">'ETag'</span>, etag);
+  res.<span class="func">setHeader</span>(<span class="string">'Cache-Control'</span>, <span class="string">'public, max-age=0, must-revalidate'</span>);
+
+  <span class="comment">// Client sends back ETag in If-None-Match</span>
+  <span class="keyword">if</span> (req.headers[<span class="string">'if-none-match'</span>] === etag) {
+    <span class="keyword">return</span> res.<span class="func">status</span>(<span class="number">304</span>).<span class="func">end</span>(); <span class="comment">// Not Modified - no body sent!</span>
+  }
+
+  res.<span class="func">json</span>(data);
+});</code></pre>
+  </div>
+</section>
+
+<!-- ============ CDN ============ -->
+<section id="cdn" class="section fade-in">
+  <div class="section-header">
+    <h2>🌐 CDN Configuration</h2>
+    <p>Serve content from locations close to your users</p>
+  </div>
+
+  <div class="card">
+    <h2>🗺️ How a CDN Works</h2>
+
+    <div class="demo-box">
+      <div class="cache-visual" style="justify-content:center">
+        <div class="cache-node" style="background:rgba(231,76,60,0.2);border:1px solid var(--danger)">
+          Origin Server<br><small>🇺🇸 New York</small>
+        </div>
+        <div class="cache-arrow" style="color:var(--success)">→ replicates to →</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="cache-node" style="background:rgba(46,204,113,0.2);border:1px solid var(--success);font-size:0.75rem">Edge 🇬🇧 London</div>
+          <div class="cache-node" style="background:rgba(46,204,113,0.2);border:1px solid var(--success);font-size:0.75rem">Edge 🇯🇵 Tokyo</div>
+          <div class="cache-node" style="background:rgba(46,204,113,0.2);border:1px solid var(--success);font-size:0.75rem">Edge 🇦🇺 Sydney</div>
+        </div>
+        <div class="cache-arrow">→</div>
+        <div class="cache-node" style="background:rgba(108,99,255,0.2);border:1px solid var(--primary)">
+          User in London<br><small>Gets London copy!</small>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:20px">
+        <div style="text-align:center;padding:10px;background:rgba(231,76,60,0.1);border-radius:8px">
+          <strong style="color:var(--danger)">Without CDN</strong>
+          <div style="font-size:2rem;margin:5px 0">~200ms</div>
+          <small style="color:var(--text-dim)">London → New York → London</small>
+        </div>
+        <div style="text-align:center;padding:10px;background:rgba(46,204,113,0.1);border-radius:8px">
+          <strong style="color:var(--success)">With CDN</strong>
+          <div style="font-size:2rem;margin:5px 0">~15ms</div>
+          <small style="color:var(--text-dim)">London → London edge</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ CDN Configuration Patterns</h2>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab(this,'tab-cdn-1')">Cloudflare</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-cdn-2')">AWS CloudFront</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-cdn-3')">Cache Rules</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-cdn-4')">Invalidation</button>
+    </div>
+
+    <div id="tab-cdn-1" class="tab-content active">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Cloudflare Worker - advanced CDN logic at the edge</span>
+
+<span class="keyword">export</span> <span class="keyword">default</span> {
+  <span class="keyword">async</span> <span class="func">fetch</span>(request, env) {
+    <span class="keyword">const</span> url = <span class="keyword">new</span> <span class="func">URL</span>(request.url);
+    <span class="keyword">const</span> cache = caches.<span class="func">default</span>;
+
+    <span class="comment">// 1. Check Cloudflare cache first</span>
+    <span class="keyword">let</span> response = <span class="keyword">await</span> cache.<span class="func">match</span>(request);
+
+    <span class="keyword">if</span> (!response) {
+      <span class="comment">// 2. Not cached - fetch from origin</span>
+      response = <span class="keyword">await</span> <span class="func">fetch</span>(request);
+
+      <span class="comment">// 3. Decide what to cache based on URL pattern</span>
+      <span class="keyword">if</span> (url.pathname.<span class="func">startsWith</span>(<span class="string">'/static/'</span>)) {
+        <span class="comment">// Static assets - cache for 1 year at edge</span>
+        response = <span class="keyword">new</span> <span class="func">Response</span>(response.body, response);
+        response.headers.<span class="func">set</span>(<span class="string">'Cache-Control'</span>, <span class="string">'public, max-age=31536000'</span>);
+        response.headers.<span class="func">set</span>(<span class="string">'CDN-Cache-Control'</span>, <span class="string">'max-age=31536000'</span>);
+        <span class="keyword">await</span> cache.<span class="func">put</span>(request, response.<span class="func">clone</span>());
+
+      } <span class="keyword">else if</span> (url.pathname.<span class="func">startsWith</span>(<span class="string">'/api/'</span>)) {
+        <span class="comment">// API - short cache, stale-while-revalidate</span>
+        response = <span class="keyword">new</span> <span class="func">Response</span>(response.body, response);
+        response.headers.<span class="func">set</span>(
+          <span class="string">'Cache-Control'</span>,
+          <span class="string">'public, s-maxage=60, stale-while-revalidate=600'</span>
+        );
+        <span class="keyword">await</span> cache.<span class="func">put</span>(request, response.<span class="func">clone</span>());
+      }
+    }
+
+    <span class="comment">// Add performance headers</span>
+    response.headers.<span class="func">set</span>(<span class="string">'X-Cache-Status'</span>, response ? <span class="string">'HIT'</span> : <span class="string">'MISS'</span>);
+    <span class="keyword">return</span> response;
+  }
+};</code></pre>
+    </div>
+
+    <div id="tab-cdn-2" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// AWS CloudFront - CloudFormation/CDK configuration</span>
+
+<span class="keyword">const</span> distribution = <span class="keyword">new</span> cloudfront.<span class="func">Distribution</span>(<span class="keyword">this</span>, <span class="string">'MyDist'</span>, {
+  defaultBehavior: {
+    origin: <span class="keyword">new</span> origins.<span class="func">S3Origin</span>(bucket),
+    viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.<span class="func">REDIRECT_TO_HTTPS</span>,
+    cachePolicy: cloudfront.CachePolicy.<span class="func">CACHING_OPTIMIZED</span>,
+  },
+  additionalBehaviors: {
+    <span class="comment">// Static assets - long cache</span>
+    <span class="string">'/static/*'</span>: {
+      origin: <span class="keyword">new</span> origins.<span class="func">S3Origin</span>(bucket),
+      cachePolicy: <span class="keyword">new</span> cloudfront.<span class="func">CachePolicy</span>(<span class="keyword">this</span>, <span class="string">'StaticPolicy'</span>, {
+        defaultTtl: Duration.<span class="func">days</span>(<span class="number">365</span>),
+        maxTtl: Duration.<span class="func">days</span>(<span class="number">365</span>),
+        minTtl: Duration.<span class="func">days</span>(<span class="number">365</span>),
+      })
+    },
+    <span class="comment">// API - short cache or no cache</span>
+    <span class="string">'/api/*'</span>: {
+      origin: <span class="keyword">new</span> origins.<span class="func">HttpOrigin</span>(<span class="string">'api.example.com'</span>),
+      cachePolicy: cloudfront.CachePolicy.<span class="func">CACHING_DISABLED</span>,
+      allowedMethods: cloudfront.AllowedMethods.<span class="func">ALLOW_ALL</span>,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.<span class="func">ALL_VIEWER</span>,
+    }
+  }
+});
+
+<span class="comment">// Get the CDN URL</span>
+console.<span class="func">log</span>(distribution.distributionDomainName);</code></pre>
+    </div>
+
+    <div id="tab-cdn-3" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Vary header - CDN serves different versions based on headers</span>
+
+<span class="comment">// Server-side: Tell CDN to cache different versions by Accept-Encoding</span>
+res.<span class="func">setHeader</span>(<span class="string">'Vary'</span>, <span class="string">'Accept-Encoding'</span>);
+<span class="comment">// CDN caches: compressed version for gzip, uncompressed for others</span>
+
+<span class="comment">// s-maxage: CDN-specific max age (overrides max-age for CDN)</span>
+<span class="comment">// Browser respects max-age, CDN respects s-maxage</span>
+res.<span class="func">setHeader</span>(
+  <span class="string">'Cache-Control'</span>,
+  <span class="string">'public, max-age=3600, s-maxage=86400'</span>
+);
+<span class="comment">// Browser caches for 1 hour, CDN caches for 24 hours</span>
+
+<span class="comment">// Surrogate-Control (Fastly/Varnish specific)</span>
+res.<span class="func">setHeader</span>(<span class="string">'Surrogate-Control'</span>, <span class="string">'max-age=86400'</span>);
+res.<span class="func">setHeader</span>(<span class="string">'Surrogate-Key'</span>, <span class="string">'product-123 category-shoes'</span>);
+<span class="comment">// Later: invalidate all 'product-123' tagged content at once!</span>
+
+<span class="comment">// CDN cache headers to check in responses:</span>
+<span class="comment">// X-Cache: HIT (served from CDN) or MISS (fetched from origin)</span>
+<span class="comment">// Age: seconds since CDN cached this response</span>
+<span class="comment">// CF-Cache-Status: DYNAMIC, HIT, MISS, EXPIRED (Cloudflare)</span></code></pre>
+    </div>
+
+    <div id="tab-cdn-4" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// CDN Cache Invalidation - clearing cached content</span>
+
+<span class="comment">// AWS CloudFront - invalidate specific paths</span>
+<span class="keyword">const</span> cloudfront = <span class="keyword">new</span> <span class="func">AWS.CloudFront</span>();
+
+<span class="keyword">await</span> cloudfront.<span class="func">createInvalidation</span>({
+  DistributionId: <span class="string">'EDFDVBD6EXAMPLE'</span>,
+  InvalidationBatch: {
+    CallerReference: Date.<span class="func">now</span>().<span class="func">toString</span>(),
+    Paths: {
+      Quantity: <span class="number">3</span>,
+      Items: [
+        <span class="string">'/index.html'</span>,          <span class="comment">// Specific file</span>
+        <span class="string">'/api/products/*'</span>,       <span class="comment">// Wildcard path</span>
+        <span class="string">'/*'</span>                    <span class="comment">// Everything (expensive!)</span>
+      ]
+    }
+  }
+}).<span class="func">promise</span>();
+
+<span class="comment">// Cloudflare - purge via API</span>
+<span class="keyword">await</span> <span class="func">fetch</span>(
+  <span class="string">`https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache`</span>,
+  {
+    method: <span class="string">'POST'</span>,
+    headers: {
+      <span class="string">'Authorization'</span>: <span class="string">`Bearer ${API_TOKEN}`</span>,
+      <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>
+    },
+    body: <span class="func">JSON.stringify</span>({
+      files: [<span class="string">'https://example.com/style.css'</span>]
+      <span class="comment">// OR: purge_everything: true (nuclear option!)</span>
+    })
+  }
+);</code></pre>
+      <div class="alert alert-warn">
+        <strong>⚠️ Cache Invalidation Pitfall:</strong><br>
+        Invalidating <code>/*</code> is expensive and hammers your origin server (cache stampede!).
+        Use content-hashed filenames instead so you never need to invalidate static assets.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ IMAGES ============ -->
+<section id="images" class="section fade-in">
+  <div class="section-header">
+    <h2>🖼️ Image Optimization</h2>
+    <p>Images = 50-70% of page weight. Optimize them right.</p>
+  </div>
+
+  <div class="card">
+    <h2>📊 Format Comparison</h2>
+    <table>
+      <tr><th>Format</th><th>Best For</th><th>Support</th><th>vs JPEG</th></tr>
+      <tr>
+        <td><strong>JPEG</strong></td>
+        <td>Photos, complex images</td>
+        <td>Universal</td>
+        <td>Baseline</td>
+      </tr>
+      <tr>
+        <td><strong>PNG</strong></td>
+        <td>Logos, transparency, screenshots</td>
+        <td>Universal</td>
+        <td>Larger file</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--success)">WebP</strong></td>
+        <td>Photos + transparency + animation</td>
+        <td>95%+ browsers</td>
+        <td class="compare-good">25-35% smaller</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--primary)">AVIF</strong></td>
+        <td>Best compression, photos</td>
+        <td>80%+ browsers</td>
+        <td class="compare-good">50% smaller!</td>
+      </tr>
+      <tr>
+        <td><strong>SVG</strong></td>
+        <td>Icons, logos, illustrations</td>
+        <td>Universal</td>
+        <td>Scales infinitely</td>
+      </tr>
+      <tr>
+        <td><strong>GIF</strong></td>
+        <td>Simple animations (avoid!)</td>
+        <td>Universal</td>
+        <td class="compare-bad">Use WebP/video instead</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📱 Responsive Images - The Right Way</h2>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab(this,'tab-img-1')">srcset/sizes</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-img-2')">&lt;picture&gt;</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-img-3')">Art Direction</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-img-4')">JS Optimization</button>
+    </div>
+
+    <div id="tab-img-1" class="tab-content active">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">&lt;!-- srcset: tell browser what sizes are available --&gt;</span>
+<span class="tag">&lt;img</span>
+  <span class="string">src</span>=<span class="string">"hero-800.jpg"</span>              <span class="comment">&lt;!-- fallback --&gt;</span>
+  <span class="string">srcset</span>=<span class="string">"
+    hero-400.jpg  400w,           
+    hero-800.jpg  800w,           
+    hero-1200.jpg 1200w,          
+    hero-1600.jpg 1600w           
+  "</span>
+  <span class="string">sizes</span>=<span class="string">"
+    (max-width: 480px)  100vw,    
+    (max-width: 768px)  80vw,     
+    (max-width: 1200px) 60vw,     
+    50vw                          
+  "</span>
+  <span class="string">alt</span>=<span class="string">"Hero image"</span>
+  <span class="string">loading</span>=<span class="string">"eager"</span>               <span class="comment">&lt;!-- LCP image: don't lazy load! --&gt;</span>
+  <span class="string">fetchpriority</span>=<span class="string">"high"</span>          <span class="comment">&lt;!-- Prioritize this resource --&gt;</span>
+  <span class="string">decoding</span>=<span class="string">"sync"</span>               <span class="comment">&lt;!-- Decode before render for LCP --&gt;</span>
+  <span class="string">width</span>=<span class="string">"800"</span>
+  <span class="string">height</span>=<span class="string">"450"</span>                  <span class="comment">&lt;!-- ALWAYS set! Prevents CLS --&gt;</span>
+<span class="tag">/&gt;</span></code></pre>
+      <div class="alert alert-info">
+        <strong>How sizes works:</strong> Browser reads CSS conditions top-to-bottom, uses first match.
+        "On 480px screen, image takes 100% viewport width → download 400w image"
+      </div>
+    </div>
+
+    <div id="tab-img-2" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">&lt;!-- &lt;picture&gt;: serve modern formats with fallbacks --&gt;</span>
+<span class="tag">&lt;picture&gt;</span>
+  <span class="comment">&lt;!-- AVIF: best compression, newer browsers --&gt;</span>
+  <span class="tag">&lt;source</span>
+    <span class="string">type</span>=<span class="string">"image/avif"</span>
+    <span class="string">srcset</span>=<span class="string">"hero-400.avif 400w, hero-800.avif 800w, hero-1200.avif 1200w"</span>
+    <span class="string">sizes</span>=<span class="string">"(max-width: 768px) 100vw, 50vw"</span>
+  <span class="tag">/&gt;</span>
+  
+  <span class="comment">&lt;!-- WebP: great compression, wide support --&gt;</span>
+  <span class="tag">&lt;source</span>
+    <span class="string">type</span>=<span class="string">"image/webp"</span>
+    <span class="string">srcset</span>=<span class="string">"hero-400.webp 400w, hero-800.webp 800w, hero-1200.webp 1200w"</span>
+    <span class="string">sizes</span>=<span class="string">"(max-width: 768px) 100vw, 50vw"</span>
+  <span class="tag">/&gt;</span>
+  
+  <span class="comment">&lt;!-- JPEG: universal fallback --&gt;</span>
+  <span class="tag">&lt;img</span>
+    <span class="string">src</span>=<span class="string">"hero-800.jpg"</span>
+    <span class="string">alt</span>=<span class="string">"Hero image"</span>
+    <span class="string">width</span>=<span class="string">"800"</span>
+    <span class="string">height</span>=<span class="string">"450"</span>
+    <span class="string">loading</span>=<span class="string">"lazy"</span>
+  <span class="tag">/&gt;</span>
+<span class="tag">&lt;/picture&gt;</span>
+
+<span class="comment">&lt;!-- Browser picks: AVIF → WebP → JPEG (best available) --&gt;</span></code></pre>
+    </div>
+
+    <div id="tab-img-3" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">&lt;!-- Art Direction: different CROPS for different screens --&gt;</span>
+<span class="tag">&lt;picture&gt;</span>
+  <span class="comment">&lt;!-- Mobile: square crop, just the face --&gt;</span>
+  <span class="tag">&lt;source</span>
+    <span class="string">media</span>=<span class="string">"(max-width: 480px)"</span>
+    <span class="string">srcset</span>=<span class="string">"team-portrait-mobile.webp"</span>
+    <span class="string">type</span>=<span class="string">"image/webp"</span>
+  <span class="tag">/&gt;</span>
+  
+  <span class="comment">&lt;!-- Tablet: upper body --&gt;</span>
+  <span class="tag">&lt;source</span>
+    <span class="string">media</span>=<span class="string">"(max-width: 768px)"</span>
+    <span class="string">srcset</span>=<span class="string">"team-portrait-tablet.webp"</span>
+    <span class="string">type</span>=<span class="string">"image/webp"</span>
+  <span class="tag">/&gt;</span>
+  
+  <span class="comment">&lt;!-- Desktop: full wide landscape shot --&gt;</span>
+  <span class="tag">&lt;img</span>
+    <span class="string">src</span>=<span class="string">"team-wide.jpg"</span>
+    <span class="string">alt</span>=<span class="string">"Team photo"</span>
+    <span class="string">width</span>=<span class="string">"1200"</span>
+    <span class="string">height</span>=<span class="string">"600"</span>
+  <span class="tag">/&gt;</span>
+<span class="tag">&lt;/picture&gt;</span></code></pre>
+      <div class="alert alert-warn">
+        <strong>Note:</strong> <code>media</code> attribute on <code>&lt;source&gt;</code> = art direction (different content).
+        <code>srcset + sizes</code> on <code>&lt;img&gt;</code> = same image, different resolutions.
+      </div>
+    </div>
+
+    <div id="tab-img-4" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// JavaScript image optimization utilities</span>
+
+<span class="comment">// 1. Detect format support</span>
+<span class="keyword">async function</span> <span class="func">supportsAvif</span>() {
+  <span class="keyword">const</span> avif = <span class="keyword">new</span> <span class="func">Image</span>();
+  avif.src = <span class="string">'data:image/avif;base64,AAAAIG...'</span>; <span class="comment">// tiny avif</span>
+  <span class="keyword">return new</span> <span class="func">Promise</span>((resolve) => {
+    avif.onload = () => <span class="func">resolve</span>(<span class="keyword">true</span>);
+    avif.onerror = () => <span class="func">resolve</span>(<span class="keyword">false</span>);
+  });
+}
+
+<span class="comment">// 2. Generate optimized image URL (Cloudinary example)</span>
+<span class="keyword">function</span> <span class="func">getOptimizedUrl</span>(publicId, options = {}) {
+  <span class="keyword">const</span> {
+    width = <span class="string">'auto'</span>,
+    quality = <span class="string">'auto'</span>,
+    format = <span class="string">'auto'</span>  <span class="comment">// auto selects WebP/AVIF</span>
+  } = options;
+  
+  <span class="keyword">return</span> <span class="string">`https://res.cloudinary.com/demo/image/upload/</span>
+    <span class="string">f_${format},q_${quality},w_${width}/</span>
+    <span class="string">${publicId}`</span>.<span class="func">replace</span>(<span class="string">/\s/g</span>, <span class="string">''</span>);
+}
+
+<span class="comment">// 3. Responsive image srcset generator</span>
+<span class="keyword">function</span> <span class="func">generateSrcset</span>(baseUrl, widths = [<span class="number">400</span>, <span class="number">800</span>, <span class="number">1200</span>, <span class="number">1600</span>]) {
+  <span class="keyword">return</span> widths
+    .<span class="func">map</span>((w) => <span class="string">`${baseUrl}?w=${w} ${w}w`</span>)
+    .<span class="func">join</span>(<span class="string">', '</span>);
+}
+
+<span class="comment">// 4. Check if image is in viewport (manual intersection)</span>
+<span class="keyword">const</span> imageObserver = <span class="keyword">new</span> <span class="func">IntersectionObserver</span>((entries) => {
+  entries.<span class="func">forEach</span>((entry) => {
+    <span class="keyword">if</span> (entry.isIntersecting) {
+      <span class="keyword">const</span> img = entry.target;
+      img.src = img.dataset.src;         <span class="comment">// load real src</span>
+      img.srcset = img.dataset.srcset;   <span class="comment">// load real srcset</span>
+      img.<span class="func">classList</span>.<span class="func">add</span>(<span class="string">'loaded'</span>);
+      imageObserver.<span class="func">unobserve</span>(img);    <span class="comment">// stop watching</span>
+    }
+  });
+}, { rootMargin: <span class="string">'200px'</span> }); <span class="comment">// load 200px before visible</span></code></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Critical Image Best Practices</h2>
+    <div class="grid-2">
+      <div>
+        <div class="alert alert-success">
+          <strong>✅ Always Do:</strong><br>
+          • Set width/height attributes (prevents CLS)<br>
+          • Use <code>fetchpriority="high"</code> on LCP image<br>
+          • Use <code>loading="lazy"</code> on below-fold images<br>
+          • Compress: 80-85% quality is usually enough<br>
+          • Use CDN with auto image optimization<br>
+          • Add <code>decoding="async"</code> for off-screen images
+        </div>
+      </div>
+      <div>
+        <div class="alert alert-danger">
+          <strong>❌ Never Do:</strong><br>
+          • Lazy load the LCP image<br>
+          • Serve 4K images for mobile screens<br>
+          • Use GIFs for animations (use WebM/MP4)<br>
+          • Forget alt attributes (accessibility + SEO)<br>
+          • Inline huge base64 images in CSS/JS<br>
+          • Skip width/height (causes layout shift)
+        </div>
+      </div>
+    </div>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">&lt;!-- ❌ Bad: GIF animation --&gt;</span>
+<span class="tag">&lt;img</span> <span class="string">src</span>=<span class="string">"animation.gif"</span> <span class="string">alt</span>=<span class="string">"Loading"</span><span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- ✅ Good: WebM video instead (70-90% smaller!) --&gt;</span>
+<span class="tag">&lt;video</span> <span class="string">autoplay</span> <span class="string">loop</span> <span class="string">muted</span> <span class="string">playsinline</span> <span class="string">width</span>=<span class="string">"200"</span> <span class="string">height</span>=<span class="string">"200"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;source</span> <span class="string">src</span>=<span class="string">"animation.webm"</span> <span class="string">type</span>=<span class="string">"video/webm"</span><span class="tag">/&gt;</span>
+  <span class="tag">&lt;source</span> <span class="string">src</span>=<span class="string">"animation.mp4"</span> <span class="string">type</span>=<span class="string">"video/mp4"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;/video&gt;</span>
+
+<span class="comment">&lt;!-- CSS: Prevent CLS for images without dimensions --&gt;</span>
+<span class="string">img</span> {
+  <span class="keyword">max-width</span>: <span class="number">100%</span>;
+  <span class="keyword">height</span>: <span class="number">auto</span>;        <span class="comment">/* Maintain aspect ratio */</span>
+  <span class="keyword">aspect-ratio</span>: <span class="number">16/9</span>;  <span class="comment">/* Reserve space before load */</span>
+}</code></pre>
+  </div>
+</section>
+
+<!-- ============ LAZY LOADING ============ -->
+<section id="lazyload" class="section fade-in">
+  <div class="section-header">
+    <h2>⏳ Lazy Loading</h2>
+    <p>Load resources only when they're actually needed</p>
+  </div>
+
+  <div class="card">
+    <h2>🖼️ Native Image Lazy Loading</h2>
+    <p>The simplest approach — built into browsers:</p>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">&lt;!-- Native lazy loading - just add loading="lazy" --&gt;</span>
+<span class="tag">&lt;img</span>
+  <span class="string">src</span>=<span class="string">"product.jpg"</span>
+  <span class="string">loading</span>=<span class="string">"lazy"</span>        <span class="comment">&lt;!-- Browser handles everything! --&gt;</span>
+  <span class="string">alt</span>=<span class="string">"Product"</span>
+  <span class="string">width</span>=<span class="string">"300"</span>
+  <span class="string">height</span>=<span class="string">"300"</span>           <span class="comment">&lt;!-- Required to prevent CLS --&gt;</span>
+<span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- Also works for iframes! --&gt;</span>
+<span class="tag">&lt;iframe</span>
+  <span class="string">src</span>=<span class="string">"https://www.youtube.com/embed/xyz"</span>
+  <span class="string">loading</span>=<span class="string">"lazy"</span>
+  <span class="string">width</span>=<span class="string">"560"</span>
+  <span class="string">height</span>=<span class="string">"315"</span>
+<span class="tag">&gt;&lt;/iframe&gt;</span>
+
+<span class="comment">&lt;!-- 
+  loading="lazy"  → load when near viewport  
+  loading="eager" → load immediately (default for most images)
+  loading="eager" → ALWAYS use for LCP/above-fold images!
+--&gt;</span></code></pre>
+  </div>
+
+  <div class="card">
+    <h2>👁️ Intersection Observer - Custom Lazy Loading</h2>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Full custom lazy loading implementation</span>
+<span class="keyword">class</span> <span class="func">LazyLoader</span> {
+  <span class="keyword">constructor</span>(options = {}) {
+    <span class="keyword">this</span>.options = {
+      rootMargin: <span class="string">'200px 0px'</span>,   <span class="comment">// load 200px before visible</span>
+      threshold: <span class="number">0</span>,              <span class="comment">// trigger when any pixel visible</span>
+      ...options
+    };
+    <span class="keyword">this</span>.observer = <span class="keyword">null</span>;
+    <span class="keyword">this</span>.<span class="func">init</span>();
+  }
+
+  <span class="func">init</span>() {
+    <span class="comment">// Create observer</span>
+    <span class="keyword">this</span>.observer = <span class="keyword">new</span> <span class="func">IntersectionObserver</span>(
+      <span class="keyword">this</span>.handleIntersect.<span class="func">bind</span>(<span class="keyword">this</span>),
+      <span class="keyword">this</span>.options
+    );
+
+    <span class="comment">// Observe all lazy elements</span>
+    document.<span class="func">querySelectorAll</span>(<span class="string">'[data-lazy]'</span>).<span class="func">forEach</span>((el) => {
+      <span class="keyword">this</span>.observer.<span class="func">observe</span>(el);
+    });
+  }
+
+  <span class="func">handleIntersect</span>(entries) {
+    entries.<span class="func">forEach</span>((entry) => {
+      <span class="keyword">if</span> (!entry.isIntersecting) <span class="keyword">return</span>;
+      
+      <span class="keyword">const</span> el = entry.target;
+      <span class="keyword">const</span> type = el.tagName.<span class="func">toLowerCase</span>();
+
+      <span class="keyword">if</span> (type === <span class="string">'img'</span>) {
+        <span class="keyword">this</span>.<span class="func">loadImage</span>(el);
+      } <span class="keyword">else if</span> (type === <span class="string">'video'</span>) {
+        <span class="keyword">this</span>.<span class="func">loadVideo</span>(el);
+      } <span class="keyword">else</span> {
+        <span class="keyword">this</span>.<span class="func">loadBackground</span>(el);
+      }
+
+      <span class="keyword">this</span>.observer.<span class="func">unobserve</span>(el); <span class="comment">// done! stop watching</span>
+    });
+  }
+
+  <span class="func">loadImage</span>(img) {
+    <span class="comment">// Swap data-src → src for images and srcset</span>
+    <span class="keyword">if</span> (img.dataset.src) img.src = img.dataset.src;
+    <span class="keyword">if</span> (img.dataset.srcset) img.srcset = img.dataset.srcset;
+    img.<span class="func">classList</span>.<span class="func">add</span>(<span class="string">'lazy-loaded'</span>);
+    img.<span class="func">removeAttribute</span>(<span class="string">'data-lazy'</span>);
+  }
+
+  <span class="func">loadVideo</span>(video) {
+    <span class="comment">// Load video sources</span>
+    video.<span class="func">querySelectorAll</span>(<span class="string">'source'</span>).<span class="func">forEach</span>((source) => {
+      source.src = source.dataset.src;
+    });
+    video.<span class="func">load</span>(); <span class="comment">// reload with new sources</span>
+  }
+
+  <span class="func">loadBackground</span>(el) {
+    <span class="comment">// CSS background images</span>
+    el.style.backgroundImage = <span class="string">`url(${el.dataset.bg})`</span>;
+    el.<span class="func">classList</span>.<span class="func">add</span>(<span class="string">'lazy-loaded'</span>);
+  }
+}
+
+<span class="comment">// HTML usage:</span>
+<span class="comment">// &lt;img data-lazy data-src="real.jpg" data-srcset="real-400.jpg 400w" src="placeholder.jpg"&gt;</span>
+<span class="comment">// &lt;div data-lazy data-bg="bg-image.jpg"&gt;&lt;/div&gt;</span>
+
+<span class="keyword">const</span> loader = <span class="keyword">new</span> <span class="func">LazyLoader</span>();</code></pre>
+  </div>
+
+  <div class="card">
+    <h2>📦 Lazy Loading JavaScript Modules</h2>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab(this,'tab-lazy-1')">Dynamic Import</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-lazy-2')">Route Splitting</button>
+      <button class="tab-btn" onclick="showTab(this,'tab-lazy-3')">Component Lazy</button>
+    </div>
+
+    <div id="tab-lazy-1" class="tab-content active">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Dynamic import - load code only when needed</span>
+
+<span class="comment">// Load chart library only when user clicks "Show Chart"</span>
+document.<span class="func">getElementById</span>(<span class="string">'chartBtn'</span>).<span class="func">addEventListener</span>(<span class="string">'click'</span>, <span class="keyword">async</span> () => {
+  <span class="comment">// Show loading state</span>
+  btn.textContent = <span class="string">'Loading...'</span>;
+  
+  <span class="comment">// Dynamic import - returns a Promise!</span>
+  <span class="keyword">const</span> { default: Chart } = <span class="keyword">await</span> <span class="keyword">import</span>(<span class="string">'./chart.js'</span>);
+  
+  <span class="keyword">const</span> chart = <span class="keyword">new</span> <span class="func">Chart</span>(<span class="string">'#canvas'</span>, { data });
+  btn.textContent = <span class="string">'Chart Loaded!'</span>;
+});
+
+<span class="comment">// Load heavy feature only on user interaction</span>
+<span class="keyword">let</span> editorLoaded = <span class="keyword">false</span>;
+document.<span class="func">getElementById</span>(<span class="string">'editBtn'</span>).<span class="func">addEventListener</span>(<span class="string">'click'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">if</span> (!editorLoaded) {
+    <span class="comment">// Webpack/Vite magic comment - names the chunk!</span>
+    <span class="keyword">const</span> { initEditor } = <span class="keyword">await</span> <span class="keyword">import</span>(
+      <span class="comment">/* webpackChunkName: "editor" */</span>
+      <span class="comment">/* webpackPrefetch: true */</span>  <span class="comment">// hint: prefetch when idle</span>
+      <span class="string">'./features/editor'</span>
+    );
+    <span class="func">initEditor</span>(<span class="string">'#editor'</span>);
+    editorLoaded = <span class="keyword">true</span>;
+  }
+});
+
+<span class="comment">// Conditional loading based on screen size</span>
+<span class="keyword">if</span> (window.innerWidth > <span class="number">768</span>) {
+  <span class="keyword">import</span>(<span class="string">'./desktop-features.js'</span>);
+} <span class="keyword">else</span> {
+  <span class="keyword">import</span>(<span class="string">'./mobile-features.js'</span>);
+}</code></pre>
+    </div>
+
+    <div id="tab-lazy-2" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Vite/Webpack route-based code splitting</span>
+
+<span class="comment">// React Router with lazy routes</span>
+<span class="keyword">import</span> { lazy, Suspense } from <span class="string">'react'</span>;
+<span class="keyword">import</span> { Routes, Route } from <span class="string">'react-router-dom'</span>;
+
+<span class="comment">// Pages are separate chunks - only loaded when navigated to</span>
+<span class="keyword">const</span> Home = <span class="func">lazy</span>(() => <span class="keyword">import</span>(<span class="string">'./pages/Home'</span>));
+<span class="keyword">const</span> Dashboard = <span class="func">lazy</span>(() => <span class="keyword">import</span>(<span class="string">'./pages/Dashboard'</span>));
+<span class="keyword">const</span> Settings = <span class="func">lazy</span>(() => <span class="keyword">import</span>(<span class="string">'./pages/Settings'</span>));
+
+<span class="keyword">function</span> <span class="func">App</span>() {
+  <span class="keyword">return</span> (
+    &lt;Suspense fallback={&lt;div&gt;Loading...&lt;/div&gt;}&gt;
+      &lt;Routes&gt;
+        &lt;Route path=<span class="string">"/"</span> element={&lt;Home /&gt;} /&gt;
+        &lt;Route path=<span class="string">"/dashboard"</span> element={&lt;Dashboard /&gt;} /&gt;
+        &lt;Route path=<span class="string">"/settings"</span> element={&lt;Settings /&gt;} /&gt;
+      &lt;/Routes&gt;
+    &lt;/Suspense&gt;
+  );
+}
+
+<span class="comment">// Prefetch next routes on hover (like Gmail/Next.js)</span>
+link.<span class="func">addEventListener</span>(<span class="string">'mouseenter'</span>, () => {
+  <span class="keyword">import</span>(<span class="string">'./pages/Dashboard'</span>); <span class="comment">// Preload on hover</span>
+});</code></pre>
+    </div>
+
+    <div id="tab-lazy-3" class="tab-content">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Lazy load below-fold components with IntersectionObserver</span>
+
+<span class="keyword">class</span> <span class="func">LazyComponent</span> {
+  <span class="keyword">constructor</span>(selector, importFn) {
+    <span class="keyword">this</span>.selector = selector;
+    <span class="keyword">this</span>.importFn = importFn;
+    <span class="keyword">this</span>.loaded = <span class="keyword">false</span>;
+    <span class="keyword">this</span>.<span class="func">setup</span>();
+  }
+
+  <span class="func">setup</span>() {
+    <span class="keyword">const</span> element = document.<span class="func">querySelector</span>(<span class="keyword">this</span>.selector);
+    <span class="keyword">if</span> (!element) <span class="keyword">return</span>;
+
+    <span class="keyword">const</span> observer = <span class="keyword">new</span> <span class="func">IntersectionObserver</span>(
+      <span class="keyword">async</span> (entries) => {
+        <span class="keyword">if</span> (entries[<span class="number">0</span>].isIntersecting && !<span class="keyword">this</span>.loaded) {
+          <span class="keyword">this</span>.loaded = <span class="keyword">true</span>;
+          observer.<span class="func">disconnect</span>();
+
+          <span class="comment">// Load the component code</span>
+          <span class="keyword">const</span> { default: Component } = <span class="keyword">await</span> <span class="keyword">this</span>.<span class="func">importFn</span>();
+          <span class="keyword">new</span> <span class="func">Component</span>(element); <span class="comment">// Initialize component</span>
+        }
+      },
+      { rootMargin: <span class="string">'300px'</span> }
+    );
+
+    observer.<span class="func">observe</span>(element);
+  }
+}
+
+<span class="comment">// Usage: Load map only when user scrolls to it</span>
+<span class="keyword">new</span> <span class="func">LazyComponent</span>(
+  <span class="string">'#map-container'</span>,
+  () => <span class="keyword">import</span>(<span class="string">'./components/Map.js'</span>)
+);
+
+<span class="comment">// Load comments section when near bottom</span>
+<span class="keyword">new</span> <span class="func">LazyComponent</span>(
+  <span class="string">'#comments'</span>,
+  () => <span class="keyword">import</span>(<span class="string">'./components/Comments.js'</span>)
+);</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESOURCE HINTS ============ -->
+<section id="hints" class="section fade-in">
+  <div class="section-header">
+    <h2>💡 Resource Hints</h2>
+    <p>Tell the browser what to do before it figures it out itself</p>
+  </div>
+
+  <div class="card">
+    <h2>🗂️ All Resource Hints Explained</h2>
+
+    <table>
+      <tr><th>Hint</th><th>What it does</th><th>Use Case</th><th>Cost</th></tr>
+      <tr>
+        <td><code>dns-prefetch</code></td>
+        <td>Resolves DNS early</td>
+        <td>Third-party origins</td>
+        <td>Very low</td>
+      </tr>
+      <tr>
+        <td><code>preconnect</code></td>
+        <td>DNS + TCP + TLS early</td>
+        <td>Critical third-party origins</td>
+        <td>Low-Medium</td>
+      </tr>
+      <tr>
+        <td><code>prefetch</code></td>
+        <td>Downloads resource for future navigation</td>
+        <td>Next-page resources</td>
+        <td>Medium</td>
+      </tr>
+      <tr>
+        <td><code>preload</code></td>
+        <td>Downloads resource for current page NOW</td>
+        <td>Critical above-fold resources</td>
+        <td>High (use carefully!)</td>
+      </tr>
+      <tr>
+        <td><code>prerender</code></td>
+        <td>Renders entire next page in background</td>
+        <td>Very confident next navigation</td>
+        <td>Very High</td>
+      </tr>
+      <tr>
+        <td><code>modulepreload</code></td>
+        <td>Preloads ES module + dependencies</td>
+        <td>Critical JS modules</td>
+        <td>High</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>💻 Resource Hints in Practice</h2>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">&lt;!-- In your &lt;head&gt; --&gt;</span>
+
+<span class="comment">&lt;!-- 1. DNS-PREFETCH: cheapest, resolve DNS for third parties --&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"dns-prefetch"</span> <span class="string">href</span>=<span class="string">"//fonts.googleapis.com"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"dns-prefetch"</span> <span class="string">href</span>=<span class="string">"//analytics.example.com"</span><span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- 2. PRECONNECT: full connection for critical resources --&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preconnect"</span> <span class="string">href</span>=<span class="string">"https://fonts.googleapis.com"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preconnect"</span> <span class="string">href</span>=<span class="string">"https://fonts.gstatic.com"</span> <span class="string">crossorigin</span><span class="tag">/&gt;</span>
+<span class="comment">&lt;!-- crossorigin needed when resource uses CORS (fonts, etc) --&gt;</span>
+
+<span class="comment">&lt;!-- 3. PRELOAD: load critical resources immediately --&gt;</span>
+<span class="comment">&lt;!-- LCP image - critical! --&gt;</span>
+<span class="tag">&lt;link</span>
+  <span class="string">rel</span>=<span class="string">"preload"</span>
+  <span class="string">as</span>=<span class="string">"image"</span>
+  <span class="string">href</span>=<span class="string">"hero.webp"</span>
+  <span class="string">type</span>=<span class="string">"image/webp"</span>
+  <span class="string">imagesrcset</span>=<span class="string">"hero-400.webp 400w, hero-800.webp 800w"</span>
+  <span class="string">imagesizes</span>=<span class="string">"(max-width: 480px) 100vw, 50vw"</span>
+<span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- Critical CSS (if not inlined) --&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"style"</span> <span class="string">href</span>=<span class="string">"/critical.css"</span><span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- Critical font --&gt;</span>
+<span class="tag">&lt;link</span>
+  <span class="string">rel</span>=<span class="string">"preload"</span>
+  <span class="string">as</span>=<span class="string">"font"</span>
+  <span class="string">type</span>=<span class="string">"font/woff2"</span>
+  <span class="string">href</span>=<span class="string">"/fonts/main.woff2"</span>
+  <span class="string">crossorigin</span>
+<span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- 4. PREFETCH: load resources for NEXT page (low priority) --&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"prefetch"</span> <span class="string">href</span>=<span class="string">"/about.html"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"prefetch"</span> <span class="string">as</span>=<span class="string">"image"</span> <span class="string">href</span>=<span class="string">"/about-hero.webp"</span><span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- 5. MODULE PRELOAD: preload ES modules --&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"modulepreload"</span> <span class="string">href</span>=<span class="string">"/app.js"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"modulepreload"</span> <span class="string">href</span>=<span class="string">"/utils.js"</span><span class="tag">/&gt;</span></code></pre>
+
+    <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="comment">// Dynamic resource hints with JavaScript</span>
+
+<span class="comment">// Add preload programmatically (e.g., after login)</span>
+<span class="keyword">function</span> <span class="func">preloadResource</span>(href, as, type = <span class="keyword">null</span>) {
+  <span class="keyword">const</span> link = document.<span class="func">createElement</span>(<span class="string">'link'</span>);
+  link.rel = <span class="string">'preload'</span>;
+  link.href = href;
+  link.as = as;
+  <span class="keyword">if</span> (type) link.type = type;
+  <span class="keyword">if</span> (as === <span class="string">'font'</span>) link.crossOrigin = <span class="string">'anonymous'</span>;
+  document.head.<span class="func">appendChild</span>(link);
+}
+
+<span class="comment">// Prefetch next page on hover</span>
+document.<span class="func">querySelectorAll</span>(<span class="string">'a[data-prefetch]'</span>).<span class="func">forEach</span>((link) => {
+  link.<span class="func">addEventListener</span>(<span class="string">'mouseenter'</span>, () => {
+    <span class="keyword">const</span> href = link.href;
+    
+    <span class="comment">// Don't duplicate prefetch</span>
+    <span class="keyword">if</span> (document.<span class="func">querySelector</span>(<span class="string">`link[rel="prefetch"][href="${href}"]`</span>)) <span class="keyword">return</span>;
+    
+    <span class="keyword">const</span> prefetch = document.<span class="func">createElement</span>(<span class="string">'link'</span>);
+    prefetch.rel = <span class="string">'prefetch'</span>;
+    prefetch.href = href;
+    document.head.<span class="func">appendChild</span>(prefetch);
+  }, { once: <span class="keyword">true</span> }); <span class="comment">// Only fire once per link</span>
+});
+
+<span class="comment">// Speculation Rules API (modern Chrome) - prerender next page</span>
+<span class="keyword">const</span> speculationScript = document.<span class="func">createElement</span>(<span class="string">'script'</span>);
+speculationScript.type = <span class="string">'speculationrules'</span>;
+speculationScript.textContent = <span class="func">JSON.stringify</span>({
+  prerender: [{
+    source: <span class="string">'list'</span>,
+    urls: [<span class="string">'/checkout'</span>, <span class="string">'/next-step'</span>]
+  }]
+});
+document.body.<span class="func">appendChild</span>(speculationScript);</code></pre>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Critical Rendering Path Optimization</h2>
+
+    <div class="grid-2">
+      <div>
+        <h3>Render-Blocking Resources</h3>
+        <div class="alert alert-danger">
+          <strong>CSS blocks rendering</strong> → inline critical CSS, load rest async
+        </div>
+        <div class="alert alert-danger">
+          <strong>JS blocks parsing</strong> → use defer or async
+        </div>
+        <pre style="font-size:0.8rem"><code><span class="comment">&lt;!-- Load order matters! --&gt;</span>
+
+<span class="comment">&lt;!-- Inline critical CSS (above fold only) --&gt;</span>
+<span class="tag">&lt;style&gt;</span>/* critical CSS here */&lt;/style&gt;
+
+<span class="comment">&lt;!-- Load rest async - doesn't block --&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"style"</span>
+  <span class="string">href</span>=<span class="string">"styles.css"</span>
+  <span class="string">onload</span>=<span class="string">"this.rel='stylesheet'"</span><span class="tag">/&gt;</span>
+
+<span class="comment">&lt;!-- defer: runs after HTML parsed --&gt;</span>
+<span class="tag">&lt;script</span> <span class="string">defer</span> <span class="string">src</span>=<span class="string">"app.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="comment">&lt;!-- async: runs as soon as downloaded --&gt;</span>
+<span class="tag">&lt;script</span> <span class="string">async</span> <span class="string">src</span>=<span class="string">"analytics.js"</span><span class="tag">&gt;&lt;/script&gt;</span></code></pre>
+      </div>
+      <div>
+        <h3>Script Loading Comparison</h3>
+        <div style="background:var(--dark);padding:15px;border-radius:8px;font-size:0.8rem">
+          <p style="margin-bottom:10px"><strong style="color:var(--danger)">Normal script:</strong></p>
+          <div style="display:flex;gap:5px;align-items:center;margin-bottom:15px;flex-wrap:wrap">
+            <div style="background:rgba(108,99,255,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">HTML Parse</div>
+            <span>⏸️</span>
+            <div style="background:rgba(231,76,60,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">Download</div>
+            <div style="background:rgba(231,76,60,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">Execute</div>
+            <span>▶️</span>
+            <div style="background:rgba(108,99,255,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">HTML Parse</div>
+          </div>
+          <p style="margin-bottom:10px"><strong style="color:var(--warning)">async:</strong></p>
+          <div style="display:flex;gap:5px;align-items:center;margin-bottom:15px;flex-wrap:wrap">
+            <div style="background:rgba(108,99,255,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">HTML Parse ─────────</div>
+            <span>⏸️</span>
+            <div style="background:rgba(243,156,18,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">Execute</div>
+          </div>
+          <p style="margin-bottom:10px"><strong style="color:var(--success)">defer:</strong></p>
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            <div style="background:rgba(108,99,255,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">HTML Parse ─────────────</div>
+            <div style="background:rgba(46,204,113,0.3);padding:4px 10px;border-radius:4px;font-size:0.75rem">Execute</div>
+          </div>
+        </div>
+        <div class="alert alert-info" style="margin-top:10px;font-size:0.82rem">
+          <strong>Rule of thumb:</strong><br>
+          • Use <code>defer</code> for most scripts<br>
+          • Use <code>async</code> for independent scripts (analytics)<br>
+          • Use <code>type="module"</code> (deferred by default)
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXERCISES ============ -->
+<section id="exercises" class="section fade-in">
+  <div class="section-header">
+    <h2>🏋️ Practice Exercises</h2>
+    <p>Write the code, check your answer</p>
+  </div>
+
+  <!-- Exercise 1 -->
+  <div class="card">
+    <h2>Exercise 1: Set Correct Cache Headers</h2>
+    <div class="alert alert-info">
+      <strong>Task:</strong> Write a function that returns the correct Cache-Control header for:
+      a) A content-hashed CSS file (<code>style.abc123.css</code>)
+      b) An HTML page
+      c) A user profile API endpoint
+    </div>
+
+    <div class="exercise-area">
+      <textarea id="ex1" spellcheck="false">// Write the getCacheHeader function
+function getCacheHeader(resourceType) {
+  // resourceType: 'static-asset' | 'html' | 'private-api'
+  
+  // Your code here...
+  
+}
+
+// Test it
+console.log(getCacheHeader('static-asset'));
+console.log(getCacheHeader('html'));
+console.log(getCacheHeader('private-api'));</textarea>
+      <div class="exercise-controls">
+        <button class="btn btn-primary" onclick="runExercise('ex1','out1')">▶ Run</button>
+        <button class="btn btn-secondary" onclick="showSolution('sol1')">💡 Solution</button>
+        <button class="btn btn-secondary" onclick="resetExercise('ex1',1)">↺ Reset</button>
+      </div>
+    </div>
+    <div id="out1" class="output-area" style="display:none"></div>
+    <div id="sol1" style="display:none">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="keyword">function</span> <span class="func">getCacheHeader</span>(resourceType) {
+  <span class="keyword">const</span> headers = {
+    <span class="comment">// Hashed filename = never changes = cache forever!</span>
+    <span class="string">'static-asset'</span>: <span class="string">'public, max-age=31536000, immutable'</span>,
+    <span class="comment">// HTML must always be fresh (contains links to hashed assets)</span>
+    <span class="string">'html'</span>: <span class="string">'no-cache'</span>,
+    <span class="comment">// User data: private (not CDN), short cache</span>
+    <span class="string">'private-api'</span>: <span class="string">'private, max-age=300'</span>,
+  };
+  <span class="keyword">return</span> headers[resourceType] || <span class="string">'no-store'</span>;
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="card">
+    <h2>Exercise 2: Implement Lazy Image Loader</h2>
+    <div class="alert alert-info">
+      <strong>Task:</strong> Create a function that sets up IntersectionObserver to lazy-load
+      images with <code>data-src</code> attribute.
+    </div>
+
+    <div class="exercise-area">
+      <textarea id="ex2" spellcheck="false">// Implement lazy image loading
+function initLazyImages() {
+  // Select all images with data-src attribute
+  // Create an IntersectionObserver
+  // When image enters viewport: swap data-src → src
+  // Stop observing after load
+  
+  // Your code here...
+  
+}
+
+// Test - should work with:
+// <img data-src="real.jpg" src="placeholder.jpg" data-lazy>
+initLazyImages();</textarea>
+      <div class="exercise-controls">
+        <button class="btn btn-primary" onclick="runExercise('ex2','out2')">▶ Run</button>
+        <button class="btn btn-secondary" onclick="showSolution('sol2')">💡 Solution</button>
+        <button class="btn btn-secondary" onclick="resetExercise('ex2',2)">↺ Reset</button>
+      </div>
+    </div>
+    <div id="out2" class="output-area" style="display:none"></div>
+    <div id="sol2" style="display:none">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="keyword">function</span> <span class="func">initLazyImages</span>() {
+  <span class="keyword">const</span> lazyImages = document.<span class="func">querySelectorAll</span>(<span class="string">'img[data-src]'</span>);
+  
+  <span class="keyword">if</span> (!(<span class="string">'IntersectionObserver'</span> <span class="keyword">in</span> window)) {
+    <span class="comment">// Fallback for old browsers: load all images immediately</span>
+    lazyImages.<span class="func">forEach</span>((img) => { img.src = img.dataset.src; });
+    <span class="keyword">return</span>;
+  }
+
+  <span class="keyword">const</span> observer = <span class="keyword">new</span> <span class="func">IntersectionObserver</span>(
+    (entries) => {
+      entries.<span class="func">forEach</span>((entry) => {
+        <span class="keyword">if</span> (entry.isIntersecting) {
+          <span class="keyword">const</span> img = entry.target;
+          img.src = img.dataset.src;
+          <span class="keyword">if</span> (img.dataset.srcset) img.srcset = img.dataset.srcset;
+          img.<span class="func">removeAttribute</span>(<span class="string">'data-src'</span>);
+          observer.<span class="func">unobserve</span>(img);
+        }
+      });
+    },
+    {
+      rootMargin: <span class="string">'200px 0px'</span>,  <span class="comment">// 200px before visible</span>
+      threshold: <span class="number">0</span>
+    }
+  );
+
+  lazyImages.<span class="func">forEach</span>((img) => observer.<span class="func">observe</span>(img));
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="card">
+    <h2>Exercise 3: Service Worker - Stale While Revalidate</h2>
+    <div class="alert alert-info">
+      <strong>Task:</strong> Implement the stale-while-revalidate strategy in a service worker fetch handler.
+    </div>
+
+    <div class="exercise-area">
+      <textarea id="ex3" spellcheck="false">// Service Worker fetch handler
+// Implement stale-while-revalidate:
+// 1. Check cache
+// 2. If cached: return immediately AND update cache in background
+// 3. If not cached: fetch, cache, and return
+
+const CACHE = 'my-cache-v1';
+
+self.addEventListener('fetch', (event) => {
+  // Your implementation here...
+  
+});</textarea>
+      <div class="exercise-controls">
+        <button class="btn btn-primary" onclick="runExercise('ex3','out3')">▶ Run</button>
+        <button class="btn btn-secondary" onclick="showSolution('sol3')">💡 Solution</button>
+        <button class="btn btn-secondary" onclick="resetExercise('ex3',3)">↺ Reset</button>
+      </div>
+    </div>
+    <div id="out3" class="output-area" style="display:none"></div>
+    <div id="sol3" style="display:none">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="keyword">const</span> CACHE = <span class="string">'my-cache-v1'</span>;
+
+self.<span class="func">addEventListener</span>(<span class="string">'fetch'</span>, (event) => {
+  event.<span class="func">respondWith</span>(
+    caches.<span class="func">open</span>(CACHE).<span class="func">then</span>(<span class="keyword">async</span> (cache) => {
+      <span class="keyword">const</span> cached = <span class="keyword">await</span> cache.<span class="func">match</span>(event.request);
+      
+      <span class="comment">// Always fetch fresh in background</span>
+      <span class="keyword">const</span> fetchPromise = <span class="func">fetch</span>(event.request).<span class="func">then</span>((response) => {
+        <span class="keyword">if</span> (response.ok) {
+          cache.<span class="func">put</span>(event.request, response.<span class="func">clone</span>());
+        }
+        <span class="keyword">return</span> response;
+      });
+      
+      <span class="comment">// Return cached immediately (if available), otherwise wait for network</span>
+      <span class="keyword">return</span> cached || fetchPromise;
+    })
+  );
+});</code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="card">
+    <h2>Exercise 4: Generate Resource Hints</h2>
+    <div class="alert alert-info">
+      <strong>Task:</strong> Write a function that dynamically adds preconnect and prefetch hints
+      based on the resources array.
+    </div>
+
+    <div class="exercise-area">
+      <textarea id="ex4" spellcheck="false">// Add resource hints dynamically
+function addResourceHints(resources) {
+  // resources = array of { url, type: 'preconnect' | 'prefetch' | 'preload', as? }
+  // For each resource, create a <link> element with correct attributes
+  // Append to document.head
+  // Don't add duplicates!
+  
+  // Your code here...
+  
+}
+
+// Test
+addResourceHints([
+  { url: 'https://fonts.googleapis.com', type: 'preconnect' },
+  { url: '/next-page.js', type: 'prefetch', as: 'script' },
+  { url: '/hero.webp', type: 'preload', as: 'image' },
+]);
+
+// Log how many link tags were added to head
+console.log('Links added:', document.querySelectorAll('link').length);</textarea>
+      <div class="exercise-controls">
+        <button class="btn btn-primary" onclick="runExercise('ex4','out4')">▶ Run</button>
+        <button class="btn btn-secondary" onclick="showSolution('sol4')">💡 Solution</button>
+        <button class="btn btn-secondary" onclick="resetExercise('ex4',4)">↺ Reset</button>
+      </div>
+    </div>
+    <div id="out4" class="output-area" style="display:none"></div>
+    <div id="sol4" style="display:none">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="keyword">function</span> <span class="func">addResourceHints</span>(resources) {
+  resources.<span class="func">forEach</span>(({ url, type, as }) => {
+    <span class="comment">// Check for duplicates</span>
+    <span class="keyword">const</span> existing = document.<span class="func">querySelector</span>(
+      <span class="string">`link[rel="${type}"][href="${url}"]`</span>
+    );
+    <span class="keyword">if</span> (existing) <span class="keyword">return</span>;
+
+    <span class="keyword">const</span> link = document.<span class="func">createElement</span>(<span class="string">'link'</span>);
+    link.rel = type;
+    link.href = url;
+    
+    <span class="keyword">if</span> (as) link.as = as;
+    
+    <span class="comment">// Fonts and cross-origin requests need crossorigin</span>
+    <span class="keyword">if</span> (type === <span class="string">'preconnect'</span> || as === <span class="string">'font'</span>) {
+      link.crossOrigin = <span class="string">'anonymous'</span>;
+    }
+    
+    document.head.<span class="func">appendChild</span>(link);
+  });
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 5 -->
+  <div class="card">
+    <h2>Exercise 5: Measure Web Vitals</h2>
+    <div class="alert alert-info">
+      <strong>Task:</strong> Write code that measures LCP and reports it. Also measure how long a
+      custom function takes to run.
+    </div>
+
+    <div class="exercise-area">
+      <textarea id="ex5" spellcheck="false">// 1. Measure LCP with PerformanceObserver
+function measureLCP(callback) {
+  // Your code here...
+}
+
+// 2. Time a function execution
+function timeFunction(fn, label) {
+  // Use performance.mark() and performance.measure()
+  // Return the duration
+  // Your code here...
+}
+
+// Test timing
+function heavyTask() {
+  let sum = 0;
+  for (let i = 0; i < 1000000; i++) sum += i;
+  return sum;
+}
+
+const duration = timeFunction(heavyTask, 'heavyTask');
+console.log(`Heavy task took: ${duration.toFixed(2)}ms`);</textarea>
+      <div class="exercise-controls">
+        <button class="btn btn-primary" onclick="runExercise('ex5','out5')">▶ Run</button>
+        <button class="btn btn-secondary" onclick="showSolution('sol5')">💡 Solution</button>
+        <button class="btn btn-secondary" onclick="resetExercise('ex5',5)">↺ Reset</button>
+      </div>
+    </div>
+    <div id="out5" class="output-area" style="display:none"></div>
+    <div id="sol5" style="display:none">
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code><span class="keyword">function</span> <span class="func">measureLCP</span>(callback) {
+  <span class="keyword">const</span> observer = <span class="keyword">new</span> <span class="func">PerformanceObserver</span>((list) => {
+    <span class="keyword">const</span> entries = list.<span class="func">getEntries</span>();
+    <span class="comment">// LCP can fire multiple times - last entry is the real LCP</span>
+    <span class="keyword">const</span> lcp = entries.<span class="func">at</span>(-<span class="number">1</span>);
+    <span class="func">callback</span>({
+      value: Math.<span class="func">round</span>(lcp.startTime),
+      element: lcp.element,
+      url: lcp.url
+    });
+  });
+  observer.<span class="func">observe</span>({ type: <span class="string">'largest-contentful-paint'</span>, buffered: <span class="keyword">true</span> });
+}
+
+<span class="keyword">function</span> <span class="func">timeFunction</span>(fn, label) {
+  performance.<span class="func">mark</span>(<span class="string">`${label}-start`</span>);
+  
+  <span class="keyword">const</span> result = <span class="func">fn</span>();
+  
+  performance.<span class="func">mark</span>(<span class="string">`${label}-end`</span>);
+  performance.<span class="func">measure</span>(label, <span class="string">`${label}-start`</span>, <span class="string">`${label}-end`</span>);
+  
+  <span class="keyword">const</span> [measure] = performance.<span class="func">getEntriesByName</span>(label);
+  <span class="keyword">return</span> measure.duration;
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section id="quiz" class="section fade-in">
+  <div class="section-header">
+    <h2>🧠 Knowledge Quiz</h2>
+    <p>Test your understanding of Web Performance Optimization</p>
+  </div>
+
+  <div class="quiz-counter">
+    <div class="counter-box">
+      <div class="num" id="qScore" style="color:var(--success)">0</div>
+      <div class="lbl">Correct</div>
+    </div>
+    <div class="counter-box">
+      <div class="num" id="qWrong" style="color:var(--danger)">0</div>
+      <div class="lbl">Incorrect</div>
+    </div>
+    <div class="counter-box">
+      <div class="num" id="qTotal">0/20</div>
+      <div class="lbl">Progress</div>
+    </div>
+    <button class="btn btn-secondary" onclick="resetQuiz()" style="align-self:center">↺ Reset Quiz</button>
+  </div>
+
+  <div id="quizContainer"></div>
+</section>
+
+<!-- ============ PITFALLS ============ -->
+<section id="pitfalls" class="section fade-in">
+  <div class="section-header">
+    <h2>⚠️ Common Mistakes & Pitfalls</h2>
+    <p>Learn from others' mistakes before making them yourself</p>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #1: Lazy Loading the LCP Image</h3>
+    <p>The LCP (Largest Contentful Paint) image is the most important visible element. Lazy loading it delays it further!</p>
+    <pre><code><span class="comment">// ❌ WRONG - hurts LCP score!</span>
+<span class="tag">&lt;img</span> <span class="string">src</span>=<span class="string">"hero.jpg"</span> <span class="string">loading</span>=<span class="string">"lazy"</span> <span class="string">alt</span>=<span class="string">"Hero"</span><span class="tag">/&gt;</span>
+
+<span class="comment">// ✅ CORRECT - load immediately, high priority</span>
+<span class="tag">&lt;img</span> <span class="string">src</span>=<span class="string">"hero.jpg"</span> <span class="string">loading</span>=<span class="string">"eager"</span> <span class="string">fetchpriority</span>=<span class="string">"high"</span> <span class="string">alt</span>=<span class="string">"Hero"</span><span class="tag">/&gt;</span></code></pre>
+    <div class="fix">
+      <h4>✅ Fix:</h4>
+      <p>Only lazy load images below the fold. Use <code>fetchpriority="high"</code> on LCP images. Also preload LCP images with <code>&lt;link rel="preload" as="image"&gt;</code>.</p>
+    </div>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #2: Missing Width/Height on Images (CLS!)</h3>
+    <p>Without dimensions, the browser doesn't know how much space to reserve. Content jumps when images load = bad CLS score.</p>
+    <pre><code><span class="comment">// ❌ WRONG - causes layout shift</span>
+<span class="tag">&lt;img</span> <span class="string">src</span>=<span class="string">"photo.jpg"</span> <span class="string">alt</span>=<span class="string">"Photo"</span><span class="tag">/&gt;</span>
+
+<span class="comment">// ✅ CORRECT - space reserved, no shift</span>
+<span class="tag">&lt;img</span> <span class="string">src</span>=<span class="string">"photo.jpg"</span> <span class="string">alt</span>=<span class="string">"Photo"</span> <span class="string">width</span>=<span class="string">"800"</span> <span class="string">height</span>=<span class="string">"600"</span><span class="tag">/&gt;</span>
+<span class="comment">/* CSS: ensure responsiveness */</span>
+img { max-width: 100%; height: auto; }</code></pre>
+    <div class="fix">
+      <h4>✅ Fix:</h4>
+      <p>Always set explicit width and height. The browser uses these to compute aspect-ratio and reserve space, even if CSS overrides the actual display size.</p>
+    </div>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #3: Cache Stampede (Thundering Herd)</h3>
+    <p>When a popular cached item expires, thousands of requests hit your origin server simultaneously!</p>
+    <pre><code><span class="comment">// ❌ WRONG - all expire at same time → stampede!</span>
+<span class="string">'Cache-Control: public, max-age=3600'</span>
+
+<span class="comment">// ✅ BETTER - use stale-while-revalidate</span>
+<span class="string">'Cache-Control: public, max-age=3600, stale-while-revalidate=86400'</span>
+<span class="comment">// Serve stale for 24h while one request refreshes the cache</span>
+
+<span class="comment">// ✅ ALSO: Add jitter to expiry times (server-side)</span>
+<span class="keyword">const</span> baseTtl = <span class="number">3600</span>;
+<span class="keyword">const</span> jitter = Math.<span class="func">random</span>() * <span class="number">300</span>; <span class="comment">// 0-5 min random</span>
+res.<span class="func">setHeader</span>(<span class="string">'Cache-Control'</span>, <span class="string">`public, max-age=${baseTtl + jitter}`</span>);</code></pre>
+    <div class="fix">
+      <h4>✅ Fix:</h4>
+      <p>Use <code>stale-while-revalidate</code> to serve stale content while background refresh happens. Add random jitter to TTLs to spread out expiry times.</p>
+    </div>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #4: Preloading Too Many Resources</h3>
+    <p><code>preload</code> is high priority — overusing it fights with other critical resources!</p>
+    <pre><code><span class="comment">// ❌ WRONG - preloading everything defeats the purpose</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"image"</span> <span class="string">href</span>=<span class="string">"img1.jpg"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"image"</span> <span class="string">href</span>=<span class="string">"img2.jpg"</span><span class="tag">/&gt;</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"image"</span> <span class="string">href</span>=<span class="string">"img3.jpg"</span><span class="tag">/&gt;</span>
+<span class="comment">&lt;!-- ...10 more preloads --&gt;</span>
+
+<span class="comment">// ✅ CORRECT - only preload the LCP image</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"image"</span> <span class="string">href</span>=<span class="string">"hero.jpg"</span> <span class="string">fetchpriority</span>=<span class="string">"high"</span><span class="tag">/&gt;</span></code></pre>
+    <div class="fix">
+      <h4>✅ Fix:</h4>
+      <p>Preload: 1-2 critical resources MAX. Use <code>prefetch</code> (low priority) for future navigation resources instead.</p>
+    </div>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #5: Forgetting crossorigin on Font Preloads</h3>
+    <p>Fonts always use CORS. Without <code>crossorigin</code>, the browser downloads the font TWICE!</p>
+    <pre><code><span class="comment">// ❌ WRONG - font downloaded twice!</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"font"</span> <span class="string">href</span>=<span class="string">"/font.woff2"</span><span class="tag">/&gt;</span>
+
+<span class="comment">// ✅ CORRECT</span>
+<span class="tag">&lt;link</span> <span class="string">rel</span>=<span class="string">"preload"</span> <span class="string">as</span>=<span class="string">"font"</span> <span class="string">type</span>=<span class="string">"font/woff2"</span>
+  <span class="string">href</span>=<span class="string">"/font.woff2"</span> <span class="string">crossorigin</span><span class="tag">/&gt;</span>
+<span class="comment">&lt;!-- crossorigin (or crossorigin="anonymous") is REQUIRED for fonts --&gt;</span></code></pre>
+    <div class="fix">
+      <h4>✅ Fix:</h4>
+      <p>Always add <code>crossorigin</code> attribute when preloading fonts. Same applies to <code>preconnect</code> for cross-origin font servers.</p>
+    </div>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #6: Caching API Responses Without Vary Header</h3>
+    <p>If your API returns different content based on headers (Accept-Language, auth, etc.) but you forget <code>Vary</code>, CDN serves wrong cached version!</p>
+    <pre><code><span class="comment">// ❌ WRONG - CDN caches one version for all users</span>
+res.<span class="func">setHeader</span>(<span class="string">'Cache-Control'</span>, <span class="string">'public, max-age=3600'</span>);
+<span class="comment">// User A (English) gets cache</span>
+<span class="comment">// User B (French) gets SAME English cache! 💥</span>
+
+<span class="comment">// ✅ CORRECT - separate cache per language</span>
+res.<span class="func">setHeader</span>(<span class="string">'Cache-Control'</span>, <span class="string">'public, max-age=3600'</span>);
+res.<span class="func">setHeader</span>(<span class="string">'Vary'</span>, <span class="string">'Accept-Language'</span>);
+
+<span class="comment">// For APIs with auth: use private (no CDN)</span>
+res.<span class="func">setHeader</span>(<span class="string">'Cache-Control'</span>, <span class="string">'private, max-age=300'</span>);</code></pre>
+    <div class="fix">
+      <h4>✅ Fix:</h4>
+      <p>Use <code>Vary</code> header to tell CDN which request headers determine the cache key. Be careful: <code>Vary: Cookie</code> effectively disables CDN caching.</p>
+    </div>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #7: Not Handling the "no-cache" vs "no-store" Confusion</h3>
+    <p>This trips up SO many developers!</p>
+    <pre><code><span class="comment">// ❌ Thinking no-cache means "don't cache"</span>
+<span class="comment">// WRONG! no-cache means "cache but always revalidate first"</span>
+
+<span class="comment">// Reality:</span>
+<span class="string">'Cache-Control: no-cache'</span>
+<span class="comment">// = Store in cache BUT always check with server before using</span>
+<span class="comment">// = Sends If-Modified-Since or If-None-Match</span>
+<span class="comment">// = Gets 304 Not Modified if unchanged (no body download!)</span>
+
+<span class="string">'Cache-Control: no-store'</span>
+<span class="comment">// = NEVER store this. Ever. Fetch from server every time.</span>
+<span class="comment">// = Use for sensitive data (passwords, bank data)</span>
+
+<span class="comment">// For HTML: no-cache is correct (always check for new version)</span>
+<span class="comment">// For sensitive pages: no-store (don't cache at all)</span></code></pre>
+    <div class="fix">
+      <h4>✅ Mnemonic:</h4>
+      <p><code>no-cache</code> = "no use without checking cache first" | <code>no-store</code> = "no storage at all"</p>
+    </div>
+  </div>
+
+  <div class="pitfall-card">
+    <h3>⚠️ #8: Service Worker Not Updating</h3>
+    <p>Service workers update lazily. Old SW keeps running until all tabs are closed!</p>
+    <pre><code><span class="comment">// ❌ Problem: users stuck on old version</span>
+<span class="comment">// Old service worker handles requests even after deploy</span>
+
+<span class="comment">// ✅ Fix 1: skipWaiting + clients.claim</span>
+self.<span class="func">addEventListener</span>(<span class="string">'install'</span>, (e) => {
+  e.<span class="func">waitUntil</span>(caches.<span class="func">open</span>(CACHE).<span class="func">then</span>((c) => c.<span class="func">addAll</span>(ASSETS)));
+  self.<span class="func">skipWaiting</span>(); <span class="comment">// Don't wait for old SW to die</span>
+});
+
+self.<span class="func">addEventListener</span>(<span class="string">'activate'</span>, (e) => {
+  self.clients.<span class="func">claim</span>(); <span class="comment">// Take control immediately</span>
+  e.<span class="func">waitUntil</span>(deleteOldCaches());
+});
+
+<span class="comment">// ✅ Fix 2: Version cache names</span>
+<span class="keyword">const</span> CACHE = <span class="string">'app-v2'</span>; <span class="comment">// Change on deploy!</span>
+
+<span class="comment">// ✅ Fix 3: Notify user of update</span>
+navigator.serviceWorker.ready.<span class="func">then</span>((reg) => {
+  reg.<span class="func">addEventListener</span>(<span class="string">'updatefound'</span>, () => {
+    <span class="func">showUpdateBanner</span>(); <span class="comment">// "Refresh for new version"</span>
+  });
+});</code></pre>
+    <div class="fix">
+      <h4>✅ Fix:</h4>
+      <p>Use <code>skipWaiting()</code> + versioned cache names + notify users when update available.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHEAT SHEET ============ -->
+<section id="cheatsheet" class="section fade-in">
+  <div class="section-header">
+    <h2>📋 Cheat Sheet</h2>
+    <p>Quick reference for interviews and daily use</p>
+  </div>
+
+  <div class="card">
+    <h2>💾 Cache-Control Quick Reference</h2>
+    <div class="cheat-item"><div class="cheat-key">max-age=31536000</div><div class="cheat-desc">Cache for 1 year (use with hashed filenames)</div></div>
+    <div class="cheat-item"><div class="cheat-key">max-age=86400</div><div class="cheat-desc">Cache for 24 hours</div></div>
+    <div class="cheat-item"><div class="cheat-key">no-cache</div><div class="cheat-desc">Cache but ALWAYS revalidate first → for HTML files</div></div>
+    <div class="cheat-item"><div class="cheat-key">no-store</div><div class="cheat-desc">NEVER cache → for sensitive/auth data</div></div>
+    <div class="cheat-item"><div class="cheat-key">public</div><div class="cheat-desc">CDN + Browser can cache → static assets</div></div>
+    <div class="cheat-item"><div class="cheat-key">private</div><div class="cheat-desc">ONLY browser can cache → user-specific data</div></div>
+    <div class="cheat-item"><div class="cheat-key">immutable</div><div class="cheat-desc">Never check for updates → with hashed filenames</div></div>
+    <div class="cheat-item"><div class="cheat-key">s-maxage=86400</div><div class="cheat-desc">CDN-specific max-age (overrides max-age for CDN)</div></div>
+    <div class="cheat-item"><div class="cheat-key">stale-while-revalidate=600</div><div class="cheat-desc">Serve stale for 10min while refreshing in background</div></div>
+    <div class="cheat-item"><div class="cheat-key">must-revalidate</div><div class="cheat-desc">Never serve stale after max-age → for accuracy</div></div>
+  </div>
+
+  <div class="card">
+    <h2>🖼️ Image Optimization Rules</h2>
+    <div class="grid-2">
+      <div>
+        <div class="cheat-item"><div class="cheat-key">LCP image</div><div class="cheat-desc"><code>loading="eager"</code>, <code>fetchpriority="high"</code>, preload it</div></div>
+        <div class="cheat-item"><div class="cheat-key">Below fold</div><div class="cheat-desc"><code>loading="lazy"</code>, <code>decoding="async"</code></div></div>
+        <div class="cheat-item"><div class="cheat-key">CLS fix</div><div class="cheat-desc">Always set <code>width</code> + <code>height</code> attributes</div></div>
+        <div class="cheat-item"><div class="cheat-key">Format order</div><div class="cheat-desc">AVIF → WebP → JPEG (use &lt;picture&gt;)</div></div>
+        <div class="cheat-item"><div class="cheat-key">Animations</div><div class="cheat-desc">Use WebM/MP4 instead of GIF</div></div>
+      </div>
+      <div>
+        <div class="cheat-item"><div class="cheat-key">Quality</div><div class="cheat-desc">80-85% JPEG, 75-80% WebP is usually ideal</div></div>
+        <div class="cheat-item"><div class="cheat-key">srcset</div><div class="cheat-desc">Generate 400w, 800w, 1200w, 1600w variants</div></div>
+        <div class="cheat-item"><div class="cheat-key">sizes</div><div class="cheat-desc">Tell browser what size image will display</div></div>
+        <div class="cheat-item"><div class="cheat-key">SVG</div><div class="cheat-desc">For icons, logos — scale infinitely</div></div>
+        <div class="cheat-item"><div class="cheat-key">CDN images</div><div class="cheat-desc">Cloudinary/imgix auto-optimizes on-the-fly</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💡 Resource Hints</h2>
+    <div class="cheat-item"><div class="cheat-key">dns-prefetch</div><div class="cheat-desc">Resolve DNS for third-party domains. Cheapest hint.</div></div>
+    <div class="cheat-item"><div class="cheat-key">preconnect</div><div class="cheat-desc">DNS + TCP + TLS for critical origins. Use max 2-3.</div></div>
+    <div class="cheat-item"><div class="cheat-key">preload</div><div class="cheat-desc">Fetch critical resource NOW. Max 1-2 resources.</div></div>
+    <div class="cheat-item"><div class="cheat-key">prefetch</div><div class="cheat-desc">Fetch for NEXT navigation. Low priority, safe to use more.</div></div>
+    <div class="cheat-item"><div class="cheat-key">modulepreload</div><div class="cheat-desc">Preload ES module AND its dependency tree.</div></div>
+    <div class="cheat-item"><div class="cheat-key">crossorigin</div><div class="cheat-desc">REQUIRED for fonts and cross-origin preloads.</div></div>
+  </div>
+
+  <div class="card">
+    <h2>⏳ Lazy Loading Decision Tree</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">?</div>
+        <div>Is this resource needed immediately for the user?</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:5px 0">
+        <div style="padding:10px;background:rgba(46,204,113,0.1);border-radius:8px;border:1px solid var(--success)">
+          <strong style="color:var(--success)">YES</strong> → Load eagerly<br>
+          <small>loading="eager"<br>fetchpriority="high" for LCP<br>preload critical CSS/fonts</small>
+        </div>
+        <div style="padding:10px;background:rgba(108,99,255,0.1);border-radius:8px;border:1px solid var(--primary)">
+          <strong style="color:var(--primary)">NO</strong> → Lazy load<br>
+          <small>loading="lazy" for images<br>dynamic import() for JS<br>IntersectionObserver for custom</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏗️ Service Worker Strategies</h2>
+    <table>
+      <tr><th>Strategy</th><th>Pattern</th><th>Best For</th></tr>
+      <tr><td>Cache First</td><td>Cache → Network</td><td>Static assets, app shell</td></tr>
+      <tr><td>Network First</td><td>Network → Cache fallback</td><td>API calls, dynamic content</td></tr>
+      <tr><td>Stale While Revalidate</td><td>Cache + background update</td><td>News, non-critical updates</td></tr>
+      <tr><td>Cache Only</td><td>Cache only</td><td>Fully offline resources</td></tr>
+      <tr><td>Network Only</td><td>Network only</td><td>Analytics, auth endpoints</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📏 Performance Targets (Interview Numbers!)</h2>
+    <div class="grid-3">
+      <div class="metric-card">
+        <div class="metric-value" style="font-size:1.5rem">&lt; 2.5s</div>
+        <div class="metric-label">LCP (Good)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" style="font-size:1.5rem">&lt; 200ms</div>
+        <div class="metric-label">INP (Good)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" style="font-size:1.5rem">&lt; 0.1</div>
+        <div class="metric-label">CLS (Good)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" style="font-size:1.5rem">&lt; 1.8s</div>
+        <div class="metric-label">FCP (Good)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" style="font-size:1.5rem">&lt; 3s</div>
+        <div class="metric-label">TTI (Good)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value" style="font-size:1.5rem">&lt; 50ms</div>
+        <div class="metric-label">Long Tasks</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Interview Key Phrases</h2>
+    <div class="alert alert-info">
+      <strong>"How would you optimize a slow page?"</strong><br>
+      1. Measure first: Lighthouse + WebPageTest + Real User Monitoring<br>
+      2. Identify the bottleneck: is it LCP? FID? Network? JS parsing?<br>
+      3. Fix in order: Critical path → Images → JS → Caching → CDN
+    </div>
+    <div class="alert alert-info">
+      <strong>"Explain caching strategies"</strong><br>
+      Cache-Control headers control browser + CDN behavior. Key pattern: hash filenames for static assets (cache forever), no-cache for HTML (always fresh). Use stale-while-revalidate for API responses.
+    </div>
+    <div class="alert alert-info">
+      <strong>"What is a CDN?"</strong><br>
+      Network of servers distributed globally. Serves static assets from location closest to user, reducing latency from 200ms+ to 15ms. Also provides DDoS protection and automatic compression.
+    </div>
+    <div class="alert alert-info">
+      <strong>"What causes CLS?"</strong><br>
+      Images without dimensions, dynamically injected content, web fonts loading late (FOUT/FOIT), ads/embeds without reserved space.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ============ NAVIGATION ============
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById(id).classList.add('fade-in');
+  event.target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============ TABS ============
+function showTab(btn, tabId) {
+  const parent = btn.closest('.card');
+  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// ============ COPY CODE ============
+function copyCode(btn) {
+  const code = btn.nextSibling.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    btn.style.background = '#2ECC71';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.background = ''; }, 2000);
+  });
+}
+
+// ============ EXERCISES ============
+const exerciseDefaults = {
+  1: `// Write the getCacheHeader function
+function getCacheHeader(resourceType) {
+  // resourceType: 'static-asset' | 'html' | 'private-api'
+  
+  // Your code here...
+  
+}
+
+// Test it
+console.log(getCacheHeader('static-asset'));
+console.log(getCacheHeader('html'));
+console.log(getCacheHeader('private-api'));`,
+
+  2: `// Implement lazy image loading
+function initLazyImages() {
+  // Select all images with data-src attribute
+  // Create an IntersectionObserver
+  // When image enters viewport: swap data-src → src
+  // Stop observing after load
+  
+  // Your code here...
+  
+}
+
+// Test - should work with:
+// <img data-src="real.jpg" src="placeholder.jpg" data-lazy>
+initLazyImages();`,
+
+  3: `// Service Worker fetch handler
+// Implement stale-while-revalidate:
+// 1. Check cache
+// 2. If cached: return immediately AND update cache in background
+// 3. If not cached: fetch, cache, and return
+
+const CACHE = 'my-cache-v1';
+
+self.addEventListener('fetch', (event) => {
+  // Your implementation here...
+  
+});`,
+
+  4: `// Add resource hints dynamically
+function addResourceHints(resources) {
+  // resources = array of { url, type: 'preconnect' | 'prefetch' | 'preload', as? }
+  // For each resource, create a <link> element with correct attributes
+  // Append to document.head
+  // Don't add duplicates!
+  
+  // Your code here...
+  
+}
+
+// Test
+addResourceHints([
+  { url: 'https://fonts.googleapis.com', type: 'preconnect' },
+  { url: '/next-page.js', type: 'prefetch', as: 'script' },
+  { url: '/hero.webp', type: 'preload', as: 'image' },
+]);
+
+// Log how many link tags were added to head
+console.log('Links added:', document.querySelectorAll('link').length);`,
+
+  5: `// 1. Measure LCP with PerformanceObserver
+function measureLCP(callback) {
+  // Your code here...
+}
+
+// 2. Time a function execution
+function timeFunction(fn, label) {
+  // Use performance.mark() and performance.measure()
+  // Return the duration
+  // Your code here...
+}
+
+// Test timing
+function heavyTask() {
+  let sum = 0;
+  for (let i = 0; i < 1000000; i++) sum += i;
+  return sum;
+}
+
+const duration = timeFunction(heavyTask, 'heavyTask');
+console.log(\`Heavy task took: \${duration.toFixed(2)}ms\`);`
+};
+
+function runExercise(inputId, outputId) {
+  const code = document.getElementById(inputId).value;
+  const output = document.getElementById(outputId);
+  output.style.display = 'block';
+  
+  const logs = [];
+  const originalLog = console.log;
+  const originalError = console.error;
+  console.log = (...args) => logs.push('→ ' + args.join(' '));
+  console.error = (...args) => logs.push('❌ ERROR: ' + args.join(' '));
+  
+  try {
+    eval(code);
+    output.style.color = '#2ECC71';
+    output.textContent = logs.length > 0 ? logs.join('\n') : '✅ Code ran successfully (no console output)';
+  } catch(e) {
+    output.style.color = '#E74C3C';
+    output.textContent = '❌ Error: ' + e.message;
+  }
+  
+  console.log = originalLog;
+  console.error = originalError;
+}
+
+function showSolution(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function resetExercise(inputId, num) {
+  document.getElementById(inputId).value = exerciseDefaults[num];
+  const outputId = 'out' + num;
+  document.getElementById(outputId).style.display = 'none';
+}
+
+// ============ QUIZ ============
+const quizData = [
+  {
+    q: "What does `Cache-Control: no-cache` actually mean?",
+    opts: [
+      "Never cache this resource",
+      "Cache the resource but always revalidate with server before using",
+      "Cache for 0 seconds",
+      "Same as no-store"
+    ],
+    answer: 1,
+    explain: "`no-cache` means the browser CAN cache the response but MUST check with the server (via ETag/Last-Modified) before using it. Use `no-store` to prevent caching entirely."
+  },
+  {
+    q: "Which cache strategy should you use for a content-hashed static asset like `app.a1b2c3.js`?",
+    opts: [
+      "Cache-Control: no-cache",
+      "Cache-Control: max-age=3600",
+      "Cache-Control: public, max-age=31536000, immutable",
+      "Cache-Control: private, max-age=86400"
+    ],
+    answer: 2,
+    explain: "Since the filename changes when content changes, it's safe to cache forever. `immutable` tells browser to never check for updates, saving a network round-trip."
+  },
+  {
+    q: "What is a cache stampede (thundering herd) problem?",
+    opts: [
+      "When the cache gets too full and crashes",
+      "When many users request an expired cached resource simultaneously, overwhelming the origin server",
+      "When a CDN serves incorrect cached content",
+      "When service worker cache conflicts with browser cache"
+    ],
+    answer: 1,
+    explain: "When a popular cached item expires, all waiting requests hit the origin at once. Fix: use `stale-while-revalidate` or add random jitter to TTL values."
+  },
+  {
+    q: "For the LCP (Largest Contentful Paint) image, what should you do?",
+    opts: [
+      "Add loading='lazy' to defer loading",
+      "Use loading='eager' and fetchpriority='high', consider preloading it",
+      "Compress it as much as possible, quality doesn't matter",
+      "Always inline it as base64 in CSS"
+    ],
+    answer: 1,
+    explain: "LCP image is critical for user experience. Never lazy-load it. Use `fetchpriority='high'` and add a `<link rel='preload'>` in the head for maximum priority."
+  },
+  {
+    q: "What is the difference between `preload` and `prefetch`?",
+    opts: [
+      "preload is for CSS, prefetch is for JavaScript",
+      "preload fetches for the current page (high priority), prefetch fetches for future navigation (low priority)",
+      "preload downloads immediately, prefetch downloads during browser idle time for the same page",
+      "They are the same, just different browser syntax"
+    ],
+    answer: 1,
+    explain: "`preload` is high priority - use for critical resources needed now (LCP image, critical font). `prefetch` is low priority - use for resources you'll need on the next page the user might visit."
+  },
+  {
+    q: "Why do you MUST add `crossorigin` when preloading fonts?",
+    opts: [
+      "Browser security policy requires it for all preloads",
+      "Fonts always use CORS; without crossorigin, browser downloads the font twice",
+      "It makes fonts load faster by using HTTP/2",
+      "It prevents the CDN from caching the font"
+    ],
+    answer: 1,
+    explain: "Fonts always make CORS requests. If you preload without `crossorigin`, the preloaded resource won't match the actual font request, so the browser downloads it twice! Always add `crossorigin` for font preloads."
+  },
+  {
+    q: "What is the correct image format priority for browser compatibility?",
+    opts: [
+      "PNG → WebP → JPEG",
+      "GIF → PNG → JPEG",
+      "AVIF → WebP → JPEG",
+      "WebP → AVIF → PNG"
+    ],
+    answer: 2,
+    explain: "AVIF offers best compression (~50% smaller than JPEG) but less browser support. WebP is excellent (~25-35% smaller, 95%+ support). JPEG is universal fallback. Use `<picture>` to serve best format."
+  },
+  {
+    q: "In a Service Worker, why do you call `response.clone()` before caching?",
+    opts: [
+      "To create a backup in case the cache fails",
+      "Response body is a stream that can only be read once; clone() creates a second readable copy",
+      "To strip authentication headers before caching",
+      "To compress the response before storage"
+    ],
+    answer: 1,
+    explain: "A Response body is a ReadableStream that can only be consumed once. If you put it in cache and also return it, one operation will get an empty body. `clone()` creates an independent copy."
+  },
+  {
+    q: "What causes Cumulative Layout Shift (CLS)?",
+    opts: [
+      "Slow JavaScript execution blocking the main thread",
+      "Large images, slow fonts, many DOM elements",
+      "Images without width/height, late-injected content, web fonts loading",
+      "Missing gzip compression on server responses"
+    ],
+    answer: 2,
+    explain: "CLS happens when content moves after initial render. Main causes: images without dimensions (browser can't reserve space), dynamically injected banners/ads, and web fonts causing text to shift (FOUT)."
+  },
+  {
+    q: "What does `s-maxage` in Cache-Control control?",
+    opts: [
+      "The shared cache max age - applies to CDNs/proxies, overrides max-age for them",
+      "The slow network max age threshold",
+      "The service worker cache duration",
+      "The maximum file size that can be cached"
+    ],
+    answer: 0,
+    explain: "`s-maxage` (shared max-age) is the CDN-specific TTL. Browser still uses `max-age`. Example: `max-age=3600, s-maxage=86400` caches for 1h in browser, 24h in CDN."
+  },
+  {
+    q: "Which resource hint resolves DNS + opens TCP connection + does TLS handshake in advance?",
+    opts: [
+      "dns-prefetch",
+      "preconnect",
+      "preload",
+      "prefetch"
+    ],
+    answer: 1,
+    explain: "`preconnect` does the full connection setup: DNS lookup + TCP handshake + TLS negotiation. `dns-prefetch` only does the DNS lookup (cheaper). Use `preconnect` for critical third-party origins like fonts, analytics CDN."
+  },
+  {
+    q: "What is the Stale-While-Revalidate caching strategy?",
+    opts: [
+      "Serve from cache if fresh, otherwise wait for network",
+      "Serve stale cached content immediately, then update cache in background",
+      "Always fetch from network, never serve stale content",
+      "Cache content only until the user closes the tab"
+    ],
+    answer: 1,
+    explain: "SWR serves the cached response immediately (even if expired/stale) while simultaneously fetching a fresh version in the background. Users get instant response, cache gets updated silently. Great for news feeds."
+  },
+  {
+    q: "What is the correct way to load JavaScript that should run after HTML parsing but maintains execution order?",
+    opts: [
+      "<script src='app.js'>",
+      "<script async src='app.js'>",
+      "<script defer src='app.js'>",
+      "<script type='module' async src='app.js'>"
+    ],
+    answer: 2,
+    explain: "`defer` downloads in parallel, executes after HTML is parsed, AND maintains script execution order. `async` executes as soon as downloaded (no order guarantee). `type='module'` is deferred by default."
+  },
+  {
+    q: "When should you use `loading='lazy'` vs NOT using it?",
+    opts: [
+      "Always use lazy loading on all images for maximum performance",
+      "Never use lazy loading - it hurts SEO",
+      "Use lazy loading for below-the-fold images; NEVER use it on the LCP image or above-fold content",
+      "Use lazy loading only on mobile, not desktop"
+    ],
+    answer: 2,
+    explain: "Lazy loading HELPS for images below the fold (reduces initial page weight). But it HURTS if used on LCP/above-fold images because it delays their loading. Rule: if you can see it on initial load, don't lazy load it."
+  },
+  {
+    q: "What is CDN cache invalidation and when is it problematic?",
+    opts: [
+      "Process of updating CDN configuration - always instant",
+      "Clearing CDN cached content - invalidating /* can cause cache stampede and costs money",
+      "CDN automatically invalidates old content every 24 hours",
+      "Blocking specific IPs from accessing CDN content"
+    ],
+    answer: 1,
+    explain: "Cache invalidation clears CDN cached files. Invalidating `/*` (everything) is expensive (costs money per invalidation in AWS CloudFront) and can cause cache stampede. Best practice: use hashed filenames so you never need to invalidate static assets."
+  },
+  {
+    q: "What is the `Vary` HTTP response header used for?",
+    opts: [
+      "Specifying how long the CDN should vary its cache TTL",
+      "Telling CDN to create separate cache entries based on specified request headers",
+      "Indicating the response content varies across different CDN nodes",
+      "Setting different cache policies for different user agents"
+    ],
+    answer: 1,
+    explain: "`Vary: Accept-Language` tells CDN to cache separate versions for each language. `Vary: Cookie` effectively disables CDN caching (bad!). Use it when your response legitimately differs based on a request header."
+  },
+  {
+    q: "In IntersectionObserver for lazy loading, what does `rootMargin: '200px'` mean?",
+    opts: [
+      "Load images only when they are 200px into the viewport",
+      "Start loading images 200px BEFORE they enter the viewport",
+      "Images must be at least 200px tall to be lazy loaded",
+      "Wait 200ms after image becomes visible before loading"
+    ],
+    answer: 1,
+    explain: "`rootMargin: '200px'` extends the observable root boundary by 200px. This means the observer triggers when the image is 200px BELOW the visible area — starting download before the user scrolls to it, preventing visual delays."
+  },
+  {
+    q: "What is `fetchpriority='high'` used for?",
+    opts: [
+      "Forces the browser to use HTTP/2 multiplexing for the resource",
+      "Hints to the browser that this resource should be prioritized over others of the same type",
+      "Enables streaming for large file downloads",
+      "Tells CDN to cache this resource with higher priority"
+    ],
+    answer: 1,
+    explain: "`fetchpriority='high'` is a priority hint telling the browser to prioritize fetching this resource. Critical for LCP images — if multiple images are in the initial viewport, the LCP image needs high priority to load first."
+  },
+  {
+    q: "What problem does `<img width='800' height='450'>` solve?",
+    opts: [
+      "It limits the image to display at exactly 800x450 pixels",
+      "It allows CSS to ignore the actual image dimensions",
+      "Browser can calculate the aspect-ratio and reserve space before image loads, preventing CLS",
+      "It enables the browser to skip downloading image metadata"
+    ],
+    answer: 2,
+    explain: "Without explicit dimensions, the browser doesn't know how much space to reserve. When the image loads, surrounding content shifts — causing CLS. With width/height, browser computes aspect-ratio and reserves the right amount of space from the start."
+  },
+  {
+    q: "What is the purpose of `skipWaiting()` in a Service Worker?",
+    opts: [
+      "Skips the waiting state and activates the new service worker immediately without waiting for old one to be released",
+      "Bypasses cache checking for faster responses",
+      "Skips TLS verification for internal resources",
+      "Prevents service worker from intercepting requests during installation"
+    ],
+    answer: 0,
+    explain: "Normally a new SW waits until all tabs using the old SW are closed. `skipWaiting()` forces the new SW to activate immediately, taking over from the old one right away. Pair with `clients.claim()` to immediately control all open pages."
+  }
+];
+
+let quizState = { answered: 0, correct: 0, wrong: 0 };
+
+function initQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  quizState = { answered: 0, correct: 0, wrong: 0 };
+  updateQuizCounter();
+  
+  quizData.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.id = `qcard${i}`;
+    card.innerHTML = `
+      <h3>Q${i+1}. ${q.q}</h3>
+      <div class="quiz-options">
+        ${q.opts.map((opt, j) => `
+          <button class="quiz-option" onclick="answerQuiz(${i},${j})" id="qopt${i}_${j}">
+            ${String.fromCharCode(65+j)}. ${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="qfeedback${i}"></div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function answerQuiz(qi, selected) {
+  const q = quizData[qi];
+  const opts = document.querySelectorAll(`#qcard${qi} .quiz-option`);
+  const feedback = document.getElementById(`qfeedback${qi}`);
+  
+  opts.forEach(btn => btn.disabled = true);
+  
+  opts[q.answer].classList.add('correct');
+  
+  if (selected === q.answer) {
+    quizState.correct++;
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(46,204,113,0.1)';
+    feedback.style.border = '1px solid var(--success)';
+    feedback.style.color = 'var(--success)';
+    feedback.innerHTML = `✅ Correct! ${q.explain}`;
+    document.getElementById(`qcard${qi}`).classList.add('celebrate');
+  } else {
+    quizState.wrong++;
+    opts[selected].classList.add('wrong');
+    feedback.style.display = 'block';
+    feedback.style.background = 'rgba(231,76,60,0.1)';
+    feedback.style.border = '1px solid var(--danger)';
+    feedback.style.color = '#ccc';
+    feedback.innerHTML = `❌ Incorrect. ${q.explain}`;
+  }
+  
+  quizState.answered++;
+  updateQuizCounter();
+}
+
+function updateQuizCounter() {
+  document.getElementById('qScore').textContent = quizState.correct;
+  document.getElementById('qWrong').textContent = quizState.wrong;
+  document.getElementById('qTotal').textContent = `${quizState.answered}/${quizData.length}`;
+}
+
+function resetQuiz() {
+  initQuiz();
+}
+
+// Initialize quiz
+initQuiz();
+
+// ============ INTERACTIVE DEMO (for basics page) ============
+// Simple performance simulator
+document.addEventListener('DOMContentLoaded', () => {
+  // Any initial setup
+});
+</script>
+</body>
+</html>

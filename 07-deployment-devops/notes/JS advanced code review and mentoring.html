@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Review & Mentoring Mastery</title>
+<style>
+  :root {
+    --primary: #6c63ff;
+    --secondary: #f50057;
+    --success: #00c853;
+    --warning: #ff6d00;
+    --dark: #1a1a2e;
+    --darker: #0f0f1a;
+    --card: #16213e;
+    --card2: #1e2a4a;
+    --text: #e0e0f0;
+    --muted: #8888aa;
+    --border: #2a3a6a;
+    --highlight: #ffd700;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--darker);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  /* NAV */
+  nav {
+    background: var(--dark);
+    border-bottom: 2px solid var(--primary);
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-height: 56px;
+  }
+  nav .logo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-right: 12px;
+    white-space: nowrap;
+  }
+  nav button {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  nav button:hover, nav button.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  /* SECTIONS */
+  .section { display: none; padding: 24px 20px; max-width: 960px; margin: 0 auto; }
+  .section.active { display: block; }
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .card h2 { color: var(--primary); margin-bottom: 12px; font-size: 1.2rem; }
+  .card h3 { color: var(--highlight); margin-bottom: 8px; font-size: 1rem; }
+  .card p { color: var(--text); margin-bottom: 10px; font-size: 0.93rem; }
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .badge-blue { background: #1a3a7a; color: #70aeff; }
+  .badge-green { background: #0a3a1a; color: #4eff91; }
+  .badge-red { background: #3a0a1a; color: #ff6a8a; }
+  .badge-yellow { background: #3a2a00; color: var(--highlight); }
+  .badge-purple { background: #2a1a5a; color: #c0a0ff; }
+  /* CODE BLOCKS */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.84rem;
+    overflow-x: auto;
+    margin: 10px 0;
+    line-height: 1.7;
+    position: relative;
+  }
+  .code-block .good { color: #4eff91; }
+  .code-block .bad { color: #ff6a8a; }
+  .code-block .comment { color: #6a9955; }
+  .code-block .keyword { color: #569cd6; }
+  .code-block .string { color: #ce9178; }
+  .code-block .func { color: #dcdcaa; }
+  .code-block .num { color: #b5cea8; }
+  .label {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .label-bad { background: #3a0a1a; color: #ff6a8a; }
+  .label-good { background: #0a3a1a; color: #4eff91; }
+  /* COMPARISON GRID */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  @media(max-width: 600px) { .compare-grid { grid-template-columns: 1fr; } }
+  /* QUIZ */
+  .quiz-option {
+    background: var(--card2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+  .quiz-option:hover { border-color: var(--primary); background: #1e2a5a; }
+  .quiz-option.correct { border-color: var(--success); background: #0a3a1a; color: #4eff91; }
+  .quiz-option.wrong { border-color: var(--secondary); background: #3a0a1a; color: #ff6a8a; }
+  .quiz-option.disabled { pointer-events: none; opacity: 0.7; }
+  .quiz-result {
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    display: none;
+  }
+  .quiz-result.show { display: block; }
+  .quiz-result.correct-msg { background: #0a3a1a; border: 1px solid var(--success); color: #4eff91; }
+  .quiz-result.wrong-msg { background: #3a0a1a; border: 1px solid var(--secondary); color: #ff6a8a; }
+  /* EXERCISE */
+  .exercise-box {
+    background: var(--card2);
+    border-left: 4px solid var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  textarea.code-input {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 0.83rem;
+    padding: 12px;
+    resize: vertical;
+    min-height: 120px;
+    margin: 8px 0;
+  }
+  textarea.code-input:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+  /* BUTTONS */
+  .btn {
+    padding: 9px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin: 4px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #5a52e0; }
+  .btn-success { background: var(--success); color: #000; }
+  .btn-success:hover { background: #00b847; }
+  .btn-warning { background: var(--warning); color: white; }
+  .btn-warning:hover { background: #e05a00; }
+  .btn-danger { background: var(--secondary); color: white; }
+  .btn-danger:hover { background: #d4004a; }
+  /* PROGRESS */
+  .progress-bar-wrap {
+    background: var(--border);
+    border-radius: 10px;
+    height: 8px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a78bfa);
+    border-radius: 10px;
+    transition: width 0.5s;
+  }
+  /* CHEAT SHEET */
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .cheat-item {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .cheat-item h4 { color: var(--highlight); font-size: 0.88rem; margin-bottom: 6px; }
+  .cheat-item p, .cheat-item li { font-size: 0.82rem; color: var(--muted); }
+  .cheat-item ul { padding-left: 16px; }
+  .cheat-item li { margin: 3px 0; }
+  /* MENTOR CHAT SIMULATOR */
+  .chat-window {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin: 12px 0;
+  }
+  .chat-msg {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .chat-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .avatar-mentor { background: #2a1a5a; }
+  .avatar-junior { background: #1a3a1a; }
+  .chat-bubble {
+    background: var(--card2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    max-width: 85%;
+    border: 1px solid var(--border);
+  }
+  .chat-bubble .sender { font-weight: 700; font-size: 0.78rem; margin-bottom: 4px; }
+  .sender-mentor { color: var(--primary); }
+  .sender-junior { color: var(--success); }
+  /* SCORE */
+  .score-display {
+    background: var(--card2);
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .score-display .score-num {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  /* TIPS */
+  .tip-box {
+    background: #1a2a0a;
+    border-left: 4px solid var(--success);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.88rem;
+  }
+  .warning-box {
+    background: #2a1a0a;
+    border-left: 4px solid var(--warning);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.88rem;
+  }
+  .danger-box {
+    background: #2a0a0a;
+    border-left: 4px solid var(--secondary);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-size: 0.88rem;
+  }
+  /* TABS within section */
+  .inner-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .inner-tab {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.2s;
+  }
+  .inner-tab.active, .inner-tab:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .inner-panel { display: none; }
+  .inner-panel.active { display: block; }
+  /* FEEDBACK SIMULATOR */
+  .feedback-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 10px 0;
+  }
+  .feedback-card .rating { color: var(--highlight); font-size: 1.1rem; }
+  /* STAR RATING */
+  .star-rate { display: flex; gap: 6px; margin: 8px 0; }
+  .star { font-size: 1.4rem; cursor: pointer; transition: transform 0.1s; }
+  .star:hover { transform: scale(1.2); }
+  /* SCENARIO */
+  .scenario-box {
+    background: #0d1520;
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .scenario-box h4 { color: var(--primary); margin-bottom: 8px; font-size: 0.92rem; }
+  /* CHECKLIST */
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin: 4px 0;
+    background: var(--card2);
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.88rem;
+  }
+  .checklist-item:hover { background: #1e2a5a; }
+  .checklist-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); }
+  .checklist-item.done { text-decoration: line-through; opacity: 0.6; }
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--dark); }
+  ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+  /* ANIMATED COUNTER */
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+  .pop { animation: pop 0.3s ease; }
+  /* hr */
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  /* list styling */
+  ul.styled { padding-left: 18px; }
+  ul.styled li { margin: 6px 0; font-size: 0.9rem; color: var(--text); }
+  ol.styled { padding-left: 18px; }
+  ol.styled li { margin: 6px 0; font-size: 0.9rem; color: var(--text); }
+  /* info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .info-card {
+    background: var(--card2);
+    border-radius: 8px;
+    padding: 14px;
+    border-top: 3px solid var(--primary);
+    text-align: center;
+  }
+  .info-card .icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .info-card h4 { font-size: 0.88rem; color: var(--highlight); margin-bottom: 4px; }
+  .info-card p { font-size: 0.78rem; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">🔍 CodeReview Pro</span>
+  <button class="active" onclick="showSection('basics')">📚 Basics</button>
+  <button onclick="showSection('techniques')">🛠 Techniques</button>
+  <button onclick="showSection('feedback')">💬 Feedback</button>
+  <button onclick="showSection('mentoring')">🎓 Mentoring</button>
+  <button onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+  <button onclick="showSection('exercises')">✏️ Exercises</button>
+  <button onclick="showSection('quiz')">🧠 Quiz</button>
+  <button onclick="showSection('cheatsheet')">📋 Cheat Sheet</button>
+</nav>
+
+<!-- ==================== BASICS ==================== -->
+<div class="section active" id="basics">
+  <div class="score-display">
+    <div>Your Learning Score</div>
+    <div class="score-num" id="score-display">0</div>
+    <div style="color:var(--muted);font-size:0.8rem;">Complete exercises & quizzes to earn points</div>
+    <div class="progress-bar-wrap" style="max-width:300px;margin:10px auto 0">
+      <div class="progress-bar-fill" id="score-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🌟 What Is Code Review?</h2>
+    <p>Code review is the process where one or more developers examine code written by a colleague to find bugs, ensure quality, share knowledge, and maintain coding standards — <strong>before</strong> the code is merged into the main codebase.</p>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="icon">🐛</div>
+        <h4>Catch Bugs Early</h4>
+        <p>Find defects before they reach production. 60% cheaper to fix now than later.</p>
+      </div>
+      <div class="info-card" style="border-top-color:var(--success)">
+        <div class="icon">📚</div>
+        <h4>Share Knowledge</h4>
+        <p>Everyone learns from everyone. Junior devs grow fast, seniors stay sharp.</p>
+      </div>
+      <div class="info-card" style="border-top-color:var(--warning)">
+        <div class="icon">🏗️</div>
+        <h4>Maintain Standards</h4>
+        <p>Keep the codebase consistent, readable, and maintainable over time.</p>
+      </div>
+      <div class="info-card" style="border-top-color:var(--secondary)">
+        <div class="icon">🤝</div>
+        <h4>Build Team Culture</h4>
+        <p>Collaborative reviews build trust and psychological safety in teams.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 The Code Review Lifecycle</h2>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="checklist-item" style="cursor:default;background:#0d1520;border-left:3px solid var(--primary)">
+        <span style="font-size:1.1rem">1️⃣</span>
+        <div><strong>Author writes code</strong> — Self-review first, then opens a Pull Request (PR)</div>
+      </div>
+      <div class="checklist-item" style="cursor:default;background:#0d1520;border-left:3px solid #a78bfa">
+        <span style="font-size:1.1rem">2️⃣</span>
+        <div><strong>Reviewer is assigned</strong> — One or more reviewers examine the PR</div>
+      </div>
+      <div class="checklist-item" style="cursor:default;background:#0d1520;border-left:3px solid var(--success)">
+        <span style="font-size:1.1rem">3️⃣</span>
+        <div><strong>Feedback given</strong> — Comments, suggestions, blocking issues raised</div>
+      </div>
+      <div class="checklist-item" style="cursor:default;background:#0d1520;border-left:3px solid var(--warning)">
+        <span style="font-size:1.1rem">4️⃣</span>
+        <div><strong>Author revises</strong> — Addresses feedback, asks clarifying questions</div>
+      </div>
+      <div class="checklist-item" style="cursor:default;background:#0d1520;border-left:3px solid var(--highlight)">
+        <span style="font-size:1.1rem">5️⃣</span>
+        <div><strong>Approval & Merge</strong> — Reviewer approves, code gets merged to main</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Types of Code Reviews</h2>
+    <div class="compare-grid">
+      <div class="cheat-item">
+        <h4>👥 Pair Programming</h4>
+        <p>Real-time review while writing code together. Immediate feedback, excellent for learning.</p>
+        <span class="badge badge-green">Learning ★★★</span>
+        <span class="badge badge-blue">Speed ★★</span>
+      </div>
+      <div class="cheat-item">
+        <h4>🔀 Pull Request (PR)</h4>
+        <p>Most common. Code submitted via Git, reviewed async before merging. Standard industry practice.</p>
+        <span class="badge badge-green">Most Common</span>
+        <span class="badge badge-blue">Async Friendly</span>
+      </div>
+      <div class="cheat-item">
+        <h4>🔄 Over-the-Shoulder</h4>
+        <p>Reviewer looks at code while author walks through it. Good for quick feedback sessions.</p>
+        <span class="badge badge-yellow">Informal</span>
+        <span class="badge badge-blue">Quick</span>
+      </div>
+      <div class="cheat-item">
+        <h4>🛠 Tool-Assisted</h4>
+        <p>Using automated tools (ESLint, SonarQube, GitHub Actions) to catch issues automatically.</p>
+        <span class="badge badge-purple">Automated</span>
+        <span class="badge badge-green">Scalable</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Real JavaScript Code Review Example</h2>
+    <p>Here's a real PR scenario. Spot what's wrong in the first version:</p>
+    <div class="compare-grid">
+      <div>
+        <div class="code-block" style="position:relative">
+          <span class="label label-bad">❌ BEFORE REVIEW</span>
+<pre>
+<span class="comment">// Junior's original code</span>
+<span class="keyword">function</span> <span class="func">getUser</span>(id) {
+  <span class="keyword">var</span> u = db.users.find(id);
+  <span class="keyword">if</span> (u != <span class="keyword">null</span>) {
+    <span class="keyword">var</span> n = u.firstName + <span class="string">' '</span> + u.lastName;
+    <span class="keyword">var</span> e = u.emailAddress;
+    <span class="keyword">return</span> {n: n, e: e};
+  }
+}
+</pre>
+        </div>
+        <div class="danger-box">
+          🔴 Issues: <code>var</code> instead of <code>const/let</code>, cryptic variable names (u, n, e), inconsistent null check, no error handling, no JSDoc
+        </div>
+      </div>
+      <div>
+        <div class="code-block" style="position:relative">
+          <span class="label label-good">✅ AFTER REVIEW</span>
+<pre>
+<span class="comment">/**
+ * Retrieves a user by their ID
+ * @param {string} id - The user ID
+ * @returns {Object|null} User data or null
+ */</span>
+<span class="keyword">function</span> <span class="func">getUser</span>(id) {
+  <span class="keyword">const</span> user = db.users.find(id);
+  <span class="keyword">if</span> (!user) <span class="keyword">return null</span>;
+
+  <span class="keyword">const</span> fullName = <span class="string">`${user.firstName} ${user.lastName}`</span>;
+  <span class="keyword">const</span> email = user.emailAddress;
+
+  <span class="keyword">return</span> { fullName, email };
+}
+</pre>
+        </div>
+        <div class="tip-box">
+          ✅ Fixed: uses <code>const</code>, descriptive names, early return pattern, template literals, shorthand property names
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧩 What To Look For In A Code Review</h2>
+    <div class="inner-tabs">
+      <div class="inner-tab active" onclick="showInner('look', 'correctness')">Correctness</div>
+      <div class="inner-tab" onclick="showInner('look', 'readability')">Readability</div>
+      <div class="inner-tab" onclick="showInner('look', 'performance')">Performance</div>
+      <div class="inner-tab" onclick="showInner('look', 'security')">Security</div>
+      <div class="inner-tab" onclick="showInner('look', 'tests')">Tests</div>
+    </div>
+    <div class="inner-panel active" id="look-correctness">
+      <ul class="styled">
+        <li>✅ Does the code do what the ticket/task says?</li>
+        <li>✅ Are edge cases handled? (empty arrays, null values, 0, NaN)</li>
+        <li>✅ Are errors caught and handled properly?</li>
+        <li>✅ Does it work for all expected inputs?</li>
+        <li>✅ Are async operations awaited correctly?</li>
+      </ul>
+      <div class="code-block"><pre>
+<span class="comment">// ❌ Bug: doesn't handle empty array</span>
+<span class="keyword">function</span> <span class="func">getFirst</span>(arr) {
+  <span class="keyword">return</span> arr[<span class="num">0</span>].name; <span class="comment">// crashes if arr is empty!</span>
+}
+
+<span class="comment">// ✅ Handles edge case</span>
+<span class="keyword">function</span> <span class="func">getFirst</span>(arr) {
+  <span class="keyword">if</span> (!arr?.length) <span class="keyword">return null</span>;
+  <span class="keyword">return</span> arr[<span class="num">0</span>].name;
+}
+</pre></div>
+    </div>
+    <div class="inner-panel" id="look-readability">
+      <ul class="styled">
+        <li>📖 Are variable/function names descriptive and clear?</li>
+        <li>📖 Is the code self-documenting? (minimal need for comments)</li>
+        <li>📖 Is there consistent formatting (spaces, braces, semicolons)?</li>
+        <li>📖 Are magic numbers replaced with named constants?</li>
+        <li>📖 Is the function doing ONE thing only?</li>
+      </ul>
+      <div class="code-block"><pre>
+<span class="comment">// ❌ Magic numbers, bad names</span>
+<span class="keyword">if</span> (u.age > <span class="num">17</span> && u.score * <span class="num">1.15</span> > <span class="num">85</span>) { ... }
+
+<span class="comment">// ✅ Named constants, readable</span>
+<span class="keyword">const</span> MIN_AGE = <span class="num">18</span>;
+<span class="keyword">const</span> SCORE_BONUS_MULTIPLIER = <span class="num">1.15</span>;
+<span class="keyword">const</span> PASSING_SCORE = <span class="num">85</span>;
+
+<span class="keyword">const</span> isEligible = user.age >= MIN_AGE &&
+  user.score * SCORE_BONUS_MULTIPLIER > PASSING_SCORE;
+<span class="keyword">if</span> (isEligible) { ... }
+</pre></div>
+    </div>
+    <div class="inner-panel" id="look-performance">
+      <ul class="styled">
+        <li>⚡ Are there unnecessary loops inside loops (O(n²))?</li>
+        <li>⚡ Are expensive operations called repeatedly in a loop?</li>
+        <li>⚡ Is there unnecessary re-rendering (React)?</li>
+        <li>⚡ Are large objects cloned when not necessary?</li>
+        <li>⚡ Should results be memoized/cached?</li>
+      </ul>
+      <div class="code-block"><pre>
+<span class="comment">// ❌ Expensive call inside loop</span>
+<span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="num">0</span>; i < items.length; i++) {
+  <span class="keyword">const</span> config = JSON.parse(fs.readFileSync(<span class="string">'config.json'</span>));
+  process(items[i], config);
+}
+
+<span class="comment">// ✅ Hoist expensive operation out of loop</span>
+<span class="keyword">const</span> config = JSON.parse(fs.readFileSync(<span class="string">'config.json'</span>));
+<span class="keyword">for</span> (<span class="keyword">const</span> item <span class="keyword">of</span> items) {
+  process(item, config);
+}
+</pre></div>
+    </div>
+    <div class="inner-panel" id="look-security">
+      <ul class="styled">
+        <li>🔒 Is user input sanitized? (XSS, SQL injection risks)</li>
+        <li>🔒 Are secrets hardcoded? (API keys, passwords in code = BIG NO)</li>
+        <li>🔒 Is sensitive data logged to console?</li>
+        <li>🔒 Are permissions/authorization checked?</li>
+        <li>🔒 Is HTTPS enforced? Are tokens stored safely?</li>
+      </ul>
+      <div class="code-block"><pre>
+<span class="comment">// ❌ NEVER do this - hardcoded secret + XSS risk</span>
+<span class="keyword">const</span> API_KEY = <span class="string">'sk-abc123realkey'</span>; <span class="comment">// EXPOSED!</span>
+elem.innerHTML = userInput; <span class="comment">// XSS vulnerability!</span>
+console.log(<span class="string">'User password:'</span>, user.password); <span class="comment">// LEAK!</span>
+
+<span class="comment">// ✅ Use env vars + safe DOM methods</span>
+<span class="keyword">const</span> API_KEY = process.env.API_KEY;
+elem.textContent = userInput; <span class="comment">// Safe!</span>
+console.log(<span class="string">'User logged in:'</span>, user.id); <span class="comment">// No sensitive data</span>
+</pre></div>
+    </div>
+    <div class="inner-panel" id="look-tests">
+      <ul class="styled">
+        <li>🧪 Are there tests for the new code?</li>
+        <li>🧪 Do tests cover happy path AND edge cases?</li>
+        <li>🧪 Are tests independent and not relying on each other?</li>
+        <li>🧪 Are test names descriptive? (describe what scenario fails)</li>
+        <li>🧪 Is code coverage reasonable? (aim for 70-80%+)</li>
+      </ul>
+      <div class="code-block"><pre>
+<span class="comment">// ❌ Vague test name, missing edge case test</span>
+test(<span class="string">'getUser works'</span>, () => {
+  expect(getUser(<span class="string">'123'</span>)).toBeTruthy();
+});
+
+<span class="comment">// ✅ Descriptive names, edge cases covered</span>
+describe(<span class="string">'getUser'</span>, () => {
+  it(<span class="string">'returns user object for valid ID'</span>, () => {
+    expect(getUser(<span class="string">'123'</span>)).toEqual({ fullName: <span class="string">'Jane Doe'</span>, email: <span class="string">'jane@example.com'</span> });
+  });
+  it(<span class="string">'returns null when user not found'</span>, () => {
+    expect(getUser(<span class="string">'nonexistent'</span>)).toBeNull();
+  });
+  it(<span class="string">'returns null for undefined input'</span>, () => {
+    expect(getUser(<span class="keyword">undefined</span>)).toBeNull();
+  });
+});
+</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TECHNIQUES ==================== -->
+<div class="section" id="techniques">
+  <div class="card">
+    <h2>🛠 Code Review Techniques</h2>
+    <p>Professional reviewers use specific, proven techniques. Here are the most important ones:</p>
+  </div>
+
+  <div class="card">
+    <h2>1️⃣ The "Author First" Technique</h2>
+    <p>Before opening a PR, the author must <strong>self-review</strong> their own code. This catches 20-30% of issues before anyone else sees them.</p>
+    <div class="exercise-box">
+      <h3>Author's Pre-Review Checklist:</h3>
+      <div id="author-checklist">
+        <div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox"><span>I've re-read every line I changed</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox"><span>I've removed all console.log/debug statements</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox"><span>I've run the tests locally and they pass</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox"><span>The PR description explains WHY, not just what</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox"><span>The PR is small enough to review (<400 lines ideally)</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox"><span>I've checked for typos in variable names and comments</span></div>
+        <div class="checklist-item" onclick="toggleCheck(this)"><input type="checkbox"><span>No hardcoded secrets or sensitive data</span></div>
+      </div>
+      <div id="checklist-progress" style="margin-top:10px;color:var(--muted);font-size:0.85rem">0/7 completed</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2️⃣ The LGTM Trap vs Thoughtful Review</h2>
+    <div class="compare-grid">
+      <div>
+        <h3 style="color:var(--secondary)">❌ Lazy LGTM Review</h3>
+        <div class="code-block"><pre>
+<span class="comment">// Reviewer just hits approve without reading</span>
+<span class="comment">// "LGTM" = "Looks Good To Me" (rubber stamp)</span>
+
+<span class="comment">// Signs of lazy reviewing:</span>
+<span class="bad">- Approving 500+ line PRs in 2 minutes</span>
+<span class="bad">- No comments ever</span>
+<span class="bad">- "Looks fine" on security-sensitive code</span>
+<span class="bad">- Not running the code at all</span>
+<span class="bad">- Approving to avoid conflict</span>
+</pre></div>
+        <div class="danger-box">⚠️ LGTM culture leads to production bugs, security holes, and tech debt accumulating silently.</div>
+      </div>
+      <div>
+        <h3 style="color:var(--success)">✅ Thoughtful Review</h3>
+        <div class="code-block"><pre>
+<span class="comment">// Good reviewer behavior:</span>
+<span class="good">+ Reads the linked ticket first</span>
+<span class="good">+ Understands the goal before the code</span>
+<span class="good">+ Checks out branch locally if complex</span>
+<span class="good">+ Leaves at least one substantive comment</span>
+<span class="good">+ Asks questions when confused</span>
+<span class="good">+ Praises good patterns too</span>
+<span class="good">+ Time-boxes review to 60-90 min max</span>
+</pre></div>
+        <div class="tip-box">✅ Research shows reviews >60 min lead to missed bugs. Review in smaller chunks.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3️⃣ Comment Severity Levels</h2>
+    <p>Good reviewers label their comments by importance. This prevents all comments feeling equally urgent:</p>
+    <div class="code-block"><pre>
+<span class="comment">// 🔴 [BLOCKING] Must fix before merge</span>
+<span class="bad">This SQL query is vulnerable to injection. Use parameterized queries.</span>
+
+<span class="comment">// 🟡 [SUGGESTION] Should fix, not blocking</span>
+<span class="keyword">// Consider</span> extracting this logic into a separate function for reuse.
+
+<span class="comment">// 💬 [NIT] Minor style/preference issue</span>
+<span class="comment">// nit: prefer arrow function here for consistency with rest of file</span>
+
+<span class="comment">// 🌟 [PRAISE] Acknowledge good work!</span>
+<span class="good">// Love this pattern! Really clean way to handle the null case.</span>
+
+<span class="comment">// ❓ [QUESTION] Reviewer doesn't understand, not necessarily a problem</span>
+<span class="keyword">// Question</span>: Why do we multiply by 1.5 here? Could we document this constant?
+</pre></div>
+    <div class="tip-box">💡 A good rule: every blocking comment should come with a suggested fix or example.</div>
+  </div>
+
+  <div class="card">
+    <h2>4️⃣ The "Two-Pass" Review Method</h2>
+    <ol class="styled">
+      <li><strong>Pass 1 — Big Picture (5 min):</strong> Read the PR description, understand the goal, check overall structure. Does it solve the right problem?</li>
+      <li><strong>Pass 2 — Line by Line:</strong> Careful examination of logic, edge cases, naming, tests. This is the detailed review.</li>
+    </ol>
+    <div class="tip-box">🏆 Senior engineers always start with "why" before "how". Is this the right solution entirely?</div>
+  </div>
+
+  <div class="card">
+    <h2>5️⃣ Async vs Synchronous Review</h2>
+    <div class="compare-grid">
+      <div class="cheat-item">
+        <h4>📬 Async (GitHub/GitLab)</h4>
+        <ul>
+          <li>Reviewer has time to think</li>
+          <li>Written record of decisions</li>
+          <li>Works across timezones</li>
+          <li>Risk: slow feedback loops</li>
+        </ul>
+        <span class="badge badge-green">Most Common</span>
+      </div>
+      <div class="cheat-item">
+        <h4>🎯 Sync (Screen Share)</h4>
+        <ul>
+          <li>Instant clarification</li>
+          <li>Great for complex changes</li>
+          <li>Better for juniors learning</li>
+          <li>Risk: no written record</li>
+        </ul>
+        <span class="badge badge-blue">Complex PRs</span>
+      </div>
+    </div>
+    <div class="tip-box">💡 Best practice: Async review for small/medium PRs, sync review for architectural decisions or large refactors.</div>
+  </div>
+</div>
+
+<!-- ==================== FEEDBACK ==================== -->
+<div class="section" id="feedback">
+  <div class="card">
+    <h2>💬 The Art of Giving Code Review Feedback</h2>
+    <p>The BIGGEST mistake new tech leads make: great technical feedback delivered poorly. The code may be fixed but the person is demoralized.</p>
+  </div>
+
+  <div class="card">
+    <h2>🎭 The Feedback Framework: Code, Not Person</h2>
+    <div class="compare-grid">
+      <div>
+        <h3 style="color:var(--secondary)">❌ Personal Attacks</h3>
+        <div class="feedback-card">
+          <p style="color:#ff6a8a;font-style:italic">"You clearly don't understand async/await. This is all wrong."</p>
+        </div>
+        <div class="feedback-card">
+          <p style="color:#ff6a8a;font-style:italic">"Why would you ever do it this way? This is terrible code."</p>
+        </div>
+        <div class="feedback-card">
+          <p style="color:#ff6a8a;font-style:italic">"This will obviously fail. Have you tested it?"</p>
+        </div>
+        <div class="danger-box">These comments attack intelligence, create fear, and destroy psychological safety.</div>
+      </div>
+      <div>
+        <h3 style="color:var(--success)">✅ Constructive Feedback</h3>
+        <div class="feedback-card">
+          <p style="color:#4eff91;font-style:italic">"This function might have a race condition with concurrent calls. Consider using a mutex or restructuring to: [example]"</p>
+        </div>
+        <div class="feedback-card">
+          <p style="color:#4eff91;font-style:italic">"I'd suggest [X approach] here because it handles the edge case where Y. What do you think?"</p>
+        </div>
+        <div class="feedback-card">
+          <p style="color:#4eff91;font-style:italic">"Have you tested this with an empty array? I think line 14 might throw."</p>
+        </div>
+        <div class="tip-box">These comments focus on the code, offer solutions, and invite discussion.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📝 The SBI Feedback Model</h2>
+    <p><strong>Situation → Behavior → Impact</strong> — A structured way to give feedback that is specific and actionable:</p>
+    <div class="scenario-box">
+      <h4>Example using SBI:</h4>
+      <p><strong>Situation:</strong> "In the <code>processPayment()</code> function on line 45..."</p>
+      <p><strong>Behavior:</strong> "...there's no try/catch around the API call..."</p>
+      <p><strong>Impact:</strong> "...which means if the payment service is down, the entire app will crash with an unhandled promise rejection."</p>
+      <hr>
+      <p style="color:#4eff91">Combined: <em>"In processPayment() on line 45, there's no try/catch around the API call. If the payment service goes down, this will crash the app with an unhandled rejection — could we add error handling here?"</em></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎨 The Compliment Sandwich (Use Carefully)</h2>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="tip-box">🌟 <strong>Start positive:</strong> "The overall structure here is really clean and the test coverage is great!"</div>
+      <div class="warning-box">⚠️ <strong>Give the critique:</strong> "I think the naming of these variables could be clearer — <code>d</code> and <code>r</code> aren't obvious. Maybe <code>duration</code> and <code>response</code>?"</div>
+      <div class="tip-box">🌟 <strong>End positive:</strong> "Overall this is a solid PR! The approach to caching is exactly what we needed."</div>
+    </div>
+    <div class="warning-box">⚠️ <strong>Warning:</strong> Overusing compliment sandwiches can make the actual critique unclear. Reserve for performance conversations, not every review comment.</div>
+  </div>
+
+  <div class="card">
+    <h2>💬 Interactive Feedback Simulator</h2>
+    <p>Practice choosing the best feedback for each situation:</p>
+    <div id="feedback-sim">
+      <div class="scenario-box">
+        <h4>Scenario: Junior submitted this code</h4>
+        <div class="code-block"><pre>
+<span class="keyword">function</span> <span class="func">getData</span>() {
+  fetch(<span class="string">'/api/data'</span>)
+    .then(<span class="func">res</span> => res.json())
+    .then(<span class="func">data</span> => {
+      this.data = data;
+    })
+}
+</pre></div>
+        <p style="color:var(--muted);font-size:0.85rem">Issues: no error handling, 'this' context problem, no return, not using async/await consistently</p>
+      </div>
+      <p style="margin-bottom:10px">Which feedback is best to send?</p>
+      <div class="quiz-option" onclick="feedbackChoice(this, false)">A) "This code is buggy and won't work. Please learn how fetch() works properly before submitting PRs."</div>
+      <div class="quiz-option" onclick="feedbackChoice(this, false)">B) "LGTM 👍" (approve without comment)</div>
+      <div class="quiz-option" onclick="feedbackChoice(this, true)">C) "Great that you're using fetch! A few things to strengthen this: 1) Add .catch() or try/catch for error handling — network requests fail! 2) 'this' might be undefined in the .then() callback. Consider async/await or an arrow function. 3) We should return the promise so callers can await it. Want me to show an example?"</div>
+      <div class="quiz-option" onclick="feedbackChoice(this, false)">D) "Add a catch block." (then approve)</div>
+      <div id="feedback-result" class="quiz-result"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 Feedback Timing Best Practices</h2>
+    <div class="info-grid">
+      <div class="info-card" style="border-top-color:var(--success)">
+        <div class="icon">⚡</div>
+        <h4>24-Hour Rule</h4>
+        <p>Review within 24 hours. Dev is blocked waiting for your feedback.</p>
+      </div>
+      <div class="info-card" style="border-top-color:var(--warning)">
+        <div class="icon">📏</div>
+        <h4>Batch Comments</h4>
+        <p>Leave all comments at once, not one by one (reduces notification noise).</p>
+      </div>
+      <div class="info-card" style="border-top-color:var(--primary)">
+        <div class="icon">🎯</div>
+        <h4>One Blocker = One Pass</h4>
+        <p>Don't create review loops by adding new blockers after initial feedback is addressed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MENTORING ==================== -->
+<div class="section" id="mentoring">
+  <div class="card">
+    <h2>🎓 Mentoring Junior Developers</h2>
+    <p>Being a mentor is one of the highest-leverage activities in software engineering. A good mentor can 10x a junior's growth speed.</p>
+  </div>
+
+  <div class="card">
+    <h2>🏗️ The Mentoring Pyramid</h2>
+    <div style="text-align:center;padding:10px">
+      <div style="background:#2a1a5a;border-radius:8px;padding:10px 20px;margin:4px auto;max-width:400px;border:1px solid var(--primary)">
+        <strong style="color:#c0a0ff">🏆 LEVEL 4: Independence</strong>
+        <p style="font-size:0.8rem;color:var(--muted)">Junior leads their own features, makes decisions independently</p>
+      </div>
+      <div style="background:#1a3a2a;border-radius:8px;padding:10px 20px;margin:4px auto;max-width:340px;border:1px solid var(--success)">
+        <strong style="color:#4eff91">🌱 LEVEL 3: Guided Practice</strong>
+        <p style="font-size:0.8rem;color:var(--muted)">Junior does the work, mentor reviews and guides</p>
+      </div>
+      <div style="background:#3a2a0a;border-radius:8px;padding:10px 20px;margin:4px auto;max-width:280px;border:1px solid var(--warning)">
+        <strong style="color:var(--highlight)">👀 LEVEL 2: Observe & Discuss</strong>
+        <p style="font-size:0.8rem;color:var(--muted)">Mentor does it, junior observes and asks questions</p>
+      </div>
+      <div style="background:#3a0a0a;border-radius:8px;padding:10px 20px;margin:4px auto;max-width:220px;border:1px solid var(--secondary)">
+        <strong style="color:#ff6a8a">📚 LEVEL 1: Concepts First</strong>
+        <p style="font-size:0.8rem;color:var(--muted)">Teach the why, not just the how</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💬 The Socratic Method in Code Review</h2>
+    <p>Instead of just giving answers, ask questions that guide juniors to discover the answer themselves:</p>
+    <div class="chat-window" id="socratic-chat">
+      <div class="chat-msg">
+        <div class="chat-avatar avatar-junior">👩</div>
+        <div class="chat-bubble">
+          <div class="sender sender-junior">Junior (Sarah)</div>
+          "I'm not sure why my fetch isn't working. I just called fetch() and nothing happens."
+        </div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-avatar avatar-mentor">🧑‍💻</div>
+        <div class="chat-bubble">
+          <div class="sender sender-mentor">Mentor</div>
+          "Interesting! What does fetch() return? Have you logged that return value?"
+        </div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-avatar avatar-junior">👩</div>
+        <div class="chat-bubble">
+          <div class="sender sender-junior">Junior (Sarah)</div>
+          "Oh... it returns a Promise? I didn't know that."
+        </div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-avatar avatar-mentor">🧑‍💻</div>
+        <div class="chat-bubble">
+          <div class="sender sender-mentor">Mentor</div>
+          "Exactly! And what do you need to do with a Promise to get the actual data out of it?"
+        </div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-avatar avatar-junior">👩</div>
+        <div class="chat-bubble">
+          <div class="sender sender-junior">Junior (Sarah)</div>
+          "Use .then() or await! So I need to await fetch()... and then await res.json()?"
+        </div>
+      </div>
+      <div class="chat-msg">
+        <div class="chat-avatar avatar-mentor">🧑‍💻</div>
+        <div class="chat-bubble">
+          <div class="sender sender-mentor">Mentor</div>
+          "🎉 Exactly right! You figured it out. Notice how understanding WHY (Promises) helps you fix it yourself next time."
+        </div>
+      </div>
+    </div>
+    <div class="tip-box">💡 The Socratic method takes longer upfront but junior devs <em>retain</em> the lesson because they discovered it themselves.</div>
+  </div>
+
+  <div class="card">
+    <h2>📅 Structuring 1-on-1 Mentor Sessions</h2>
+    <div class="inner-tabs">
+      <div class="inner-tab active" onclick="showInner('mentor', 'agenda')">Agenda</div>
+      <div class="inner-tab" onclick="showInner('mentor', 'goals')">Goal Setting</div>
+      <div class="inner-tab" onclick="showInner('mentor', 'growth')">Growth Tracking</div>
+    </div>
+    <div class="inner-panel active" id="mentor-agenda">
+      <h3>Typical 30-min 1-on-1 Agenda:</h3>
+      <div class="checklist-item" style="cursor:default"><span>0-5 min</span><strong>Check-in</strong> — How are they feeling? Any blockers? (Human first!)</div>
+      <div class="checklist-item" style="cursor:default"><span>5-15 min</span><strong>Current Work</strong> — Walk through what they're working on. Where are they stuck?</div>
+      <div class="checklist-item" style="cursor:default"><span>15-23 min</span><strong>Learning Topic</strong> — Deep dive into one concept from recent code review</div>
+      <div class="checklist-item" style="cursor:default"><span>23-28 min</span><strong>Goals Review</strong> — Progress on their weekly/monthly goals</div>
+      <div class="checklist-item" style="cursor:default"><span>28-30 min</span><strong>Action Items</strong> — What will they try before next session?</div>
+    </div>
+    <div class="inner-panel" id="mentor-goals">
+      <h3>SMART Goals for Junior Developers:</h3>
+      <div class="code-block"><pre>
+<span class="comment">// ❌ Vague goal</span>
+<span class="bad">"Get better at JavaScript"</span>
+
+<span class="comment">// ✅ SMART goal</span>
+<span class="good">"By next Friday, complete the async/await module</span>
+<span class="good"> on MDN and submit a PR that uses async/await</span>
+<span class="good"> instead of raw Promises in our data-fetching code."</span>
+
+<span class="comment">// Goal template:</span>
+<span class="comment">// WHO: Junior Sarah</span>
+<span class="comment">// WHAT: Learn error boundary patterns in React</span>
+<span class="comment">// HOW: Read docs + implement in one component</span>
+<span class="comment">// WHEN: By end of sprint (2 weeks)</span>
+<span class="comment">// MEASURE: PR submitted and merged with review notes addressed</span>
+</pre></div>
+    </div>
+    <div class="inner-panel" id="mentor-growth">
+      <h3>Tracking Junior Growth:</h3>
+      <ul class="styled">
+        <li>📈 <strong>Code review ratio:</strong> How many blockers per PR over time? (should decrease)</li>
+        <li>🕐 <strong>Time to resolve comments:</strong> Are they getting faster?</li>
+        <li>🤔 <strong>Question quality:</strong> Are questions becoming more sophisticated?</li>
+        <li>🎯 <strong>Independence:</strong> Do they need less hand-holding each month?</li>
+        <li>👥 <strong>Reverse mentoring:</strong> Can they now review other juniors' code?</li>
+      </ul>
+      <div class="tip-box">🏆 The ultimate sign of successful mentoring: your mentee starts mentoring others.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🤝 Team Collaboration Principles</h2>
+    <div class="info-grid">
+      <div class="info-card" style="border-top-color:#ff6a8a">
+        <div class="icon">🔒</div>
+        <h4>Psychological Safety</h4>
+        <p>Team members feel safe to ask "dumb" questions or admit mistakes without fear of judgment.</p>
+      </div>
+      <div class="info-card" style="border-top-color:#4eff91">
+        <div class="icon">🏳️</div>
+        <h4>Blameless Culture</h4>
+        <p>When bugs happen, fix the process/system — not blame the person. Everyone makes mistakes.</p>
+      </div>
+      <div class="info-card" style="border-top-color:var(--highlight)">
+        <div class="icon">📢</div>
+        <h4>Knowledge Sharing</h4>
+        <p>Regular tech talks, docs, and internal wikis prevent knowledge silos.</p>
+      </div>
+      <div class="info-card" style="border-top-color:var(--primary)">
+        <div class="icon">⚖️</div>
+        <h4>Consistent Standards</h4>
+        <p>Code style guides, linters, and documented patterns keep everyone aligned.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PITFALLS ==================== -->
+<div class="section" id="pitfalls">
+  <div class="card">
+    <h2>⚠️ Common Mistakes & Pitfalls to Avoid</h2>
+    <p>These mistakes are made by even experienced engineers. Learn to recognize and avoid them:</p>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Pitfall #1: Reviewing the Author, Not the Code</h2>
+    <div class="compare-grid">
+      <div>
+        <div class="danger-box">
+          <strong>❌ The mistake:</strong><br>
+          "Of course Bob wrote this — his code is always messy."<br><br>
+          Or: Being extra lenient on a senior's code because they're intimidating.
+        </div>
+      </div>
+      <div>
+        <div class="tip-box">
+          <strong>✅ The fix:</strong><br>
+          Apply the same standards to everyone's code, regardless of seniority or relationship. "Is this code correct, clear, and maintainable?" — not "who wrote it?"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Pitfall #2: Style Over Substance</h2>
+    <div class="compare-grid">
+      <div>
+        <div class="danger-box">
+          <strong>❌ The mistake:</strong><br>
+          Spending the entire review commenting on missing semicolons, quote style, and formatting — while missing the actual logic bug on line 45.
+        </div>
+      </div>
+      <div>
+        <div class="tip-box">
+          <strong>✅ The fix:</strong><br>
+          Let linters (ESLint, Prettier) handle style automatically. Focus your human brainpower on logic, architecture, correctness, and security. Use automated tools for the mechanical stuff.
+        </div>
+      </div>
+    </div>
+    <div class="code-block"><pre>
+<span class="comment">// Let these tools handle style automatically:</span>
+<span class="comment">// .eslintrc.json / prettier.config.js</span>
+{
+  "semi": <span class="keyword">true</span>,
+  "singleQuote": <span class="keyword">true</span>,
+  "tabWidth": <span class="num">2</span>,
+  "trailingComma": <span class="string">"es5"</span>
+}
+<span class="comment">// Pre-commit hooks run Prettier = no style debates in reviews!</span>
+</pre></div>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Pitfall #3: The "Rewrite It My Way" Trap</h2>
+    <div class="danger-box">
+      <strong>❌ The mistake:</strong> Rejecting code just because it's not how <em>you</em> would have written it. "I would've used a different approach entirely..." (but the code is correct and clear)
+    </div>
+    <div class="tip-box">
+      <strong>✅ The fix:</strong> Ask yourself: <em>"Is this objectively wrong, or just different from my preference?"</em>. If it's just preference, either accept it or label it clearly as NIT/optional.
+    </div>
+    <div class="code-block"><pre>
+<span class="comment">// Both of these are fine. Don't block PRs over preferences!</span>
+
+<span class="comment">// Style A: Traditional loop</span>
+<span class="keyword">const</span> result = [];
+<span class="keyword">for</span> (<span class="keyword">const</span> item <span class="keyword">of</span> items) {
+  <span class="keyword">if</span> (item.active) result.push(item.name);
+}
+
+<span class="comment">// Style B: Functional</span>
+<span class="keyword">const</span> result = items
+  .filter(<span class="func">item</span> => item.active)
+  .map(<span class="func">item</span> => item.name);
+
+<span class="comment">// ✅ Both are correct. Unless your team has a standard, don't block on this.</span>
+</pre></div>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Pitfall #4: Never Praising Good Code</h2>
+    <div class="danger-box">
+      <strong>❌ The mistake:</strong> Only commenting when something is wrong. Juniors feel like they can never do anything right. Team morale suffers. "No news is good news" is NOT a mentoring strategy.
+    </div>
+    <div class="tip-box">
+      <strong>✅ The fix:</strong> Make at least one positive comment per review. Be specific: "Love how you handled the error case here" is better than just "👍".
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Pitfall #5: Blocking on Perfection</h2>
+    <div class="danger-box">
+      <strong>❌ The mistake:</strong> Refusing to approve code until it's "perfect." Result: PR sits in review for weeks, developer loses momentum, team velocity drops.
+    </div>
+    <div class="tip-box">
+      <strong>✅ The fix:</strong> Ship and iterate. Distinguish between "must fix now" vs "can improve in a follow-up ticket." Open a JIRA ticket for non-blocking improvements and approve.
+    </div>
+    <div class="warning-box">
+      <strong>Good rule of thumb:</strong> If the code is better than what it replaced and doesn't introduce bugs/security issues, it can merge. Perfection is the enemy of shipping.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Pitfall #6: PR Too Large to Review</h2>
+    <div class="compare-grid">
+      <div>
+        <div class="danger-box">
+          <strong>❌ Signs of a massive PR problem:</strong>
+          <ul style="padding-left:16px;margin-top:8px">
+            <li>3,000+ line changes</li>
+            <li>20+ files changed</li>
+            <li>"Refactor entire module" PRs</li>
+            <li>Reviewer doesn't know where to start</li>
+            <li>Review takes multiple days</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="tip-box">
+          <strong>✅ Solutions:</strong>
+          <ul style="padding-left:16px;margin-top:8px">
+            <li>Break features into smaller PRs (&lt;400 lines)</li>
+            <li>Use feature flags to ship partial work</li>
+            <li>Infrastructure PR first, then feature PR</li>
+            <li>Trunk-based development</li>
+            <li>Review one file at a time</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Pitfall #7: Not Documenting Decisions</h2>
+    <div class="danger-box">
+      <strong>❌ Common scenario:</strong> You and the author have a 20-minute Slack DM debate about the architecture. You decide on approach X. The comment in the PR just says "LGTM". <br><br>
+      Six months later: "Why did we do it this way?" Nobody remembers. Now someone refactors it "wrong."
+    </div>
+    <div class="tip-box">
+      <strong>✅ The fix:</strong> If you had a discussion that influenced the code, summarize the decision in the PR comments: "We discussed using Redis vs in-memory cache here and chose Redis because [reasons]. This affects the deployment requirements."
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🚨 Common JS Anti-Patterns to Catch in Reviews</h2>
+    <div class="code-block"><pre>
+<span class="comment">// ❌ PITFALL 1: Mutating function parameters</span>
+<span class="keyword">function</span> <span class="func">processUser</span>(user) {
+  user.name = user.name.toUpperCase(); <span class="comment">// mutates the original!</span>
+  <span class="keyword">return</span> user;
+}
+<span class="comment">// ✅ Return new object</span>
+<span class="keyword">function</span> <span class="func">processUser</span>(user) {
+  <span class="keyword">return</span> { ...user, name: user.name.toUpperCase() };
+}
+
+<span class="comment">// ❌ PITFALL 2: Callback hell</span>
+getData(<span class="keyword">function</span>(a) {
+  getMoreData(a, <span class="keyword">function</span>(b) {
+    getEvenMoreData(b, <span class="keyword">function</span>(c) { ... });
+  });
+});
+<span class="comment">// ✅ async/await</span>
+<span class="keyword">const</span> a = <span class="keyword">await</span> getData();
+<span class="keyword">const</span> b = <span class="keyword">await</span> getMoreData(a);
+<span class="keyword">const</span> c = <span class="keyword">await</span> getEvenMoreData(b);
+
+<span class="comment">// ❌ PITFALL 3: == instead of ===</span>
+<span class="keyword">if</span> (userId == <span class="string">'5'</span>) { ... } <span class="comment">// '5' == 5 is true! Unexpected.</span>
+<span class="comment">// ✅ Always use strict equality</span>
+<span class="keyword">if</span> (userId === <span class="string">'5'</span>) { ... }
+
+<span class="comment">// ❌ PITFALL 4: Unhandled promises</span>
+fetchData(); <span class="comment">// fire and forget — errors silently swallowed!</span>
+<span class="comment">// ✅ Always handle the promise</span>
+fetchData().catch(<span class="func">console</span>.error);
+
+<span class="comment">// ❌ PITFALL 5: Variable shadowing</span>
+<span class="keyword">const</span> user = getUser();
+<span class="keyword">function</span> <span class="func">updateUser</span>() {
+  <span class="keyword">const</span> user = {}; <span class="comment">// shadows outer 'user'! Confusing!</span>
+}
+</pre></div>
+  </div>
+</div>
+
+<!-- ==================== EXERCISES ==================== -->
+<div class="section" id="exercises">
+  <div class="card">
+    <h2>✏️ Practical Exercises</h2>
+    <p>Complete these exercises to practice code review and mentoring skills. Each completed exercise earns points!</p>
+  </div>
+
+  <!-- Exercise 1 -->
+  <div class="card">
+    <h2>Exercise 1: Spot the Issues 🔍</h2>
+    <p>Review this code and identify ALL issues. Type your review comments below:</p>
+    <div class="code-block"><pre>
+<span class="keyword">var</span> API_KEY = <span class="string">'secret_key_abc123'</span>;
+
+<span class="keyword">async</span> <span class="keyword">function</span> <span class="func">fn</span>(d) {
+  <span class="keyword">var</span> r = <span class="keyword">await</span> fetch(<span class="string">`/api/${d.id}`</span>, {
+    headers: { Authorization: API_KEY }
+  });
+  <span class="keyword">var</span> j = <span class="keyword">await</span> r.json();
+  console.log(<span class="string">'User data:'</span>, j);
+  <span class="keyword">return</span> j.data[<span class="num">0</span>].name;
+}
+</pre></div>
+    <div class="exercise-box">
+      <label>Your review comments:</label>
+      <textarea class="code-input" id="ex1-answer" placeholder="Write your code review comments here. Try to find at least 5 issues..."></textarea>
+      <button class="btn btn-primary" onclick="checkExercise1()">Submit Review</button>
+      <div id="ex1-result" style="display:none;margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="card">
+    <h2>Exercise 2: Rewrite for Quality 🔨</h2>
+    <p>Rewrite the function below following best practices:</p>
+    <div class="code-block"><pre>
+<span class="comment">// This function fetches products and returns expensive ones</span>
+<span class="keyword">function</span> <span class="func">f</span>(arr, n) {
+  <span class="keyword">var</span> x = [];
+  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="num">0</span>; i < arr.length; i++) {
+    <span class="keyword">if</span> (arr[i].price > n) {
+      x.push(arr[i]);
+    }
+  }
+  <span class="keyword">return</span> x;
+}
+</pre></div>
+    <div class="exercise-box">
+      <label>Your improved version:</label>
+      <textarea class="code-input" id="ex2-answer" placeholder="Write your improved version here..."></textarea>
+      <button class="btn btn-primary" onclick="checkExercise2()">Check Answer</button>
+      <button class="btn btn-warning" onclick="showEx2Solution()">Show Solution</button>
+      <div id="ex2-result" style="display:none;margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="card">
+    <h2>Exercise 3: Write a PR Description 📝</h2>
+    <p>You added authentication to an API. Write a proper PR description. A good PR description includes: What changed, Why, How to test it, any risks or notes.</p>
+    <div class="exercise-box">
+      <label>Your PR Description:</label>
+      <textarea class="code-input" id="ex3-answer" placeholder="## Summary&#10;&#10;## Changes Made&#10;&#10;## How to Test&#10;&#10;## Risks/Notes" style="min-height:180px"></textarea>
+      <button class="btn btn-primary" onclick="checkExercise3()">Submit Description</button>
+      <button class="btn btn-warning" onclick="showEx3Template()">Show Good Example</button>
+      <div id="ex3-result" style="display:none;margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="card">
+    <h2>Exercise 4: Rewrite Feedback Constructively ✍️</h2>
+    <p>Rewrite these toxic review comments to be constructive:</p>
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <div class="exercise-box">
+        <div class="danger-box" style="margin-bottom:10px"><strong>Toxic comment:</strong> "This is obviously wrong. You should know better."</div>
+        <textarea class="code-input" id="ex4a" style="min-height:80px" placeholder="Your constructive version..."></textarea>
+        <button class="btn btn-primary" onclick="checkEx4a()">Check</button>
+        <button class="btn btn-warning" onclick="showEx4aModel()">Show Example</button>
+        <div id="ex4a-result" style="display:none;margin-top:8px"></div>
+      </div>
+
+      <div class="exercise-box">
+        <div class="danger-box" style="margin-bottom:10px"><strong>Toxic comment:</strong> "Why would you even do it this way? This is so inefficient."</div>
+        <textarea class="code-input" id="ex4b" style="min-height:80px" placeholder="Your constructive version..."></textarea>
+        <button class="btn btn-primary" onclick="checkEx4b()">Check</button>
+        <button class="btn btn-warning" onclick="showEx4bModel()">Show Example</button>
+        <div id="ex4b-result" style="display:none;margin-top:8px"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Exercise 5 -->
+  <div class="card">
+    <h2>Exercise 5: Mentoring Scenario Role-Play 🎭</h2>
+    <p>A junior dev says: <em>"I don't understand why we need async/await. Can't we just do everything synchronously?"</em></p>
+    <p style="color:var(--muted);font-size:0.85rem;margin-top:6px">Write how you would explain this as a mentor — using a real-world analogy and then a code example:</p>
+    <div class="exercise-box">
+      <textarea class="code-input" id="ex5-answer" placeholder="Your mentoring response (include an analogy + code example)..." style="min-height:150px"></textarea>
+      <button class="btn btn-primary" onclick="checkExercise5()">Submit Response</button>
+      <button class="btn btn-warning" onclick="showEx5Model()">Show Model Answer</button>
+      <div id="ex5-result" style="display:none;margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== QUIZ ==================== -->
+<div class="section" id="quiz">
+  <div class="card">
+    <h2>🧠 Knowledge Quiz — Code Review & Mentoring</h2>
+    <p>Test your understanding. Each correct answer earns <strong>10 points!</strong></p>
+    <div id="quiz-score-mini" style="color:var(--highlight);font-weight:700;font-size:1.1rem;margin-top:8px">Quiz Score: 0/0</div>
+  </div>
+
+  <!-- Q1 -->
+  <div class="card" id="q1-card">
+    <h2>Q1: What is the PRIMARY purpose of code review?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q1', false)">A) To make junior developers feel bad about their code</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q1', false)">B) To ensure only senior engineers write code</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q1', true)">C) To improve code quality, catch bugs, and share knowledge</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q1', false)">D) To slow down development so bugs are found in QA</div>
+    <div class="quiz-result" id="q1-result"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="card" id="q2-card">
+    <h2>Q2: Which comment type should be used for mandatory issues that must be fixed before merge?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q2', false)">A) NIT</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q2', true)">B) BLOCKING</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q2', false)">C) SUGGESTION</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q2', false)">D) PRAISE</div>
+    <div class="quiz-result" id="q2-result"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="card" id="q3-card">
+    <h2>Q3: What is the "LGTM trap"?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q3', false)">A) Spending too long on code reviews</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q3', true)">B) Approving code without actually reviewing it properly</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q3', false)">C) Using too many acronyms in review comments</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q3', false)">D) Letting tests replace code reviews</div>
+    <div class="quiz-result" id="q3-result"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="card" id="q4-card">
+    <h2>Q4: What does the Socratic Method mean in mentoring?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q4', false)">A) Giving detailed answers to every question immediately</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q4', false)">B) Writing all the code for the junior and explaining it</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q4', true)">C) Asking guiding questions so the junior discovers the answer themselves</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q4', false)">D) Assigning reading material and testing comprehension</div>
+    <div class="quiz-result" id="q4-result"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="card" id="q5-card">
+    <h2>Q5: Which of these is a SECURITY issue you should catch in code review?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q5', false)">A) Using single quotes instead of double quotes for strings</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q5', false)">B) Using .map() instead of a for loop</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q5', true)">C) API keys hardcoded directly in source code</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q5', false)">D) Missing JSDoc comments on private functions</div>
+    <div class="quiz-result" id="q5-result"></div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="card" id="q6-card">
+    <h2>Q6: What's the recommended maximum PR size for effective review?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q6', false)">A) 50 lines</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q6', true)">B) ~400 lines</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q6', false)">C) 2,000 lines</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q6', false)">D) No limit — bigger PRs are better for context</div>
+    <div class="quiz-result" id="q6-result"></div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="card" id="q7-card">
+    <h2>Q7: Which JS code has a bug that a reviewer should catch?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q7', false)">A) <code>const name = user?.firstName ?? 'Anonymous'</code></div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q7', true)">B) <code>const result = arr[0].name</code> (when arr might be empty)</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q7', false)">C) <code>const filtered = items.filter(x => x.active)</code></div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q7', false)">D) <code>async function load() { const data = await fetch('/api') }</code></div>
+    <div class="quiz-result" id="q7-result"></div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="card" id="q8-card">
+    <h2>Q8: What is "psychological safety" in a team context?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q8', false)">A) Using TypeScript to prevent runtime errors</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q8', false)">B) Having a code review process in place</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q8', true)">C) Team members feel safe to speak up, ask questions, and make mistakes without fear of blame</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q8', false)">D) Having role-based access control in your application</div>
+    <div class="quiz-result" id="q8-result"></div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="card" id="q9-card">
+    <h2>Q9: What does SBI stand for in feedback models?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q9', false)">A) Style, Bug, Improvement</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q9', true)">B) Situation, Behavior, Impact</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q9', false)">C) Senior, Blocker, Issue</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q9', false)">D) Source, Branch, Integration</div>
+    <div class="quiz-result" id="q9-result"></div>
+  </div>
+
+  <!-- Q10 -->
+  <div class="card" id="q10-card">
+    <h2>Q10: Why should code review style issues (semicolons, spacing) be automated?</h2>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q10', false)">A) Computers are always better at style decisions than humans</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q10', false)">B) Style doesn't matter in professional code</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q10', true)">C) So human reviewers can focus their mental energy on logic, correctness, and architecture instead of mechanical checks</div>
+    <div class="quiz-option" onclick="quizAnswer(this, 'q10', false)">D) Because humans can't agree on style preferences</div>
+    <div class="quiz-result" id="q10-result"></div>
+  </div>
+
+  <div class="card" id="quiz-final" style="display:none">
+    <h2>🏆 Quiz Complete!</h2>
+    <div id="quiz-final-result" style="text-align:center;padding:20px"></div>
+  </div>
+</div>
+
+<!-- ==================== CHEAT SHEET ==================== -->
+<div class="section" id="cheatsheet">
+  <div class="card">
+    <h2>📋 Code Review & Mentoring Cheat Sheet</h2>
+    <p>Your quick reference guide for interviews and daily work.</p>
+    <button class="btn btn-success" onclick="window.print()">🖨️ Print Cheat Sheet</button>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Code Review Quick Reference</h2>
+    <div class="cheat-grid">
+      <div class="cheat-item">
+        <h4>🔴 Blocking Issues</h4>
+        <ul>
+          <li>Security vulnerabilities (XSS, injection)</li>
+          <li>Hardcoded secrets/API keys</li>
+          <li>Logic bugs / incorrect behavior</li>
+          <li>Broken/missing tests</li>
+          <li>Data corruption risks</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>🟡 Suggestions (non-blocking)</h4>
+        <ul>
+          <li>Better naming opportunities</li>
+          <li>Performance improvements</li>
+          <li>Missing error handling</li>
+          <li>Refactoring opportunities</li>
+          <li>Adding documentation</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>💬 Nits (optional)</h4>
+        <ul>
+          <li>Personal style preferences</li>
+          <li>Minor naming tweaks</li>
+          <li>Comment wording</li>
+          <li>Micro-optimizations</li>
+          <li>Alternative approaches (both valid)</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>🌟 Always Praise</h4>
+        <ul>
+          <li>Elegant solutions</li>
+          <li>Good test coverage</li>
+          <li>Clear, readable code</li>
+          <li>Good error handling</li>
+          <li>Helpful documentation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💬 Feedback Phrase Library</h2>
+    <div class="cheat-grid">
+      <div class="cheat-item">
+        <h4>🤔 Asking Questions</h4>
+        <ul>
+          <li>"Could you help me understand why...?"</li>
+          <li>"Have you considered...?"</li>
+          <li>"What happens when [edge case]?"</li>
+          <li>"Is there a reason this uses X instead of Y?"</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>💡 Making Suggestions</h4>
+        <ul>
+          <li>"I'd suggest X because..."</li>
+          <li>"One option would be..."</li>
+          <li>"We could also approach this by..."</li>
+          <li>"Consider extracting this into..."</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>⚠️ Raising Issues</h4>
+        <ul>
+          <li>"[BLOCKING] This will cause X when Y..."</li>
+          <li>"This could be a security risk because..."</li>
+          <li>"This won't handle the case where..."</li>
+          <li>"I think there's a bug here: [explain]"</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>🏆 Giving Praise</h4>
+        <ul>
+          <li>"Really clean solution here!"</li>
+          <li>"Love how you handled the error case."</li>
+          <li>"Great test coverage on this."</li>
+          <li>"This is much more readable, nice!"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🎓 Mentoring Quick Reference</h2>
+    <div class="cheat-grid">
+      <div class="cheat-item">
+        <h4>📚 Teaching Techniques</h4>
+        <ul>
+          <li>Socratic method (guide with questions)</li>
+          <li>Show, don't tell (live code together)</li>
+          <li>Real-world analogies first</li>
+          <li>Teach the WHY before the HOW</li>
+          <li>Let them struggle productively</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>📅 1-on-1 Structure</h4>
+        <ul>
+          <li>Check-in (feelings/blockers)</li>
+          <li>Current work review</li>
+          <li>One deep-dive concept</li>
+          <li>Goals progress check</li>
+          <li>Next steps / action items</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>🎯 SMART Goals</h4>
+        <ul>
+          <li><strong>S</strong>pecific — clear outcome</li>
+          <li><strong>M</strong>easurable — how will you know?</li>
+          <li><strong>A</strong>chievable — realistic stretch</li>
+          <li><strong>R</strong>elevant — tied to their growth</li>
+          <li><strong>T</strong>ime-bound — deadline set</li>
+        </ul>
+      </div>
+      <div class="cheat-item">
+        <h4>🚩 Red Flags in Teams</h4>
+        <ul>
+          <li>Fear of asking "dumb" questions</li>
+          <li>Blame culture after incidents</li>
+          <li>Knowledge silos / "only I know this"</li>
+          <li>No code reviews at all</li>
+          <li>LGTM culture (rubber stamps)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔍 The Perfect Code Review Checklist</h2>
+    <div class="compare-grid">
+      <div>
+        <h3 style="margin-bottom:10px">As the AUTHOR:</h3>
+        <div class="cheat-item">
+          <ul>
+            <li>✅ Self-reviewed before submitting</li>
+            <li>✅ PR is small (&lt;400 lines)</li>
+            <li>✅ PR description explains WHY</li>
+            <li>✅ Tests added/updated</li>
+            <li>✅ No debug code left in</li>
+            <li>✅ No hardcoded secrets</li>
+            <li>✅ Linter passing</li>
+            <li>✅ Linked to ticket/issue</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:10px">As the REVIEWER:</h3>
+        <div class="cheat-item">
+          <ul>
+            <li>✅ Read the ticket first</li>
+            <li>✅ Big picture pass first</li>
+            <li>✅ Check logic and edge cases</li>
+            <li>✅ Check security implications</li>
+            <li>✅ Label comments (BLOCKING/NIT/etc)</li>
+            <li>✅ Give at least one piece of praise</li>
+            <li>✅ Respond within 24 hours</li>
+            <li>✅ Batch all comments at once</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Common JS Issues to Catch in Reviews</h2>
+    <div class="code-block"><pre>
+<span class="comment">// ✅ CHEAT SHEET: JS Code Review Patterns</span>
+
+<span class="comment">// 1. Always const/let, never var</span>
+<span class="bad">var x = 1;</span>         → <span class="good">const x = 1;</span>
+
+<span class="comment">// 2. Strict equality</span>
+<span class="bad">x == null</span>           → <span class="good">x === null</span>  or  <span class="good">x == null</span> (only for null+undefined check)
+
+<span class="comment">// 3. Optional chaining for nested access</span>
+<span class="bad">obj && obj.user && obj.user.name</span>  → <span class="good">obj?.user?.name</span>
+
+<span class="comment">// 4. Nullish coalescing for defaults</span>
+<span class="bad">const name = user.name || 'Anonymous'</span>  → <span class="good">const name = user.name ?? 'Anonymous'</span>
+
+<span class="comment">// 5. Always handle async errors</span>
+<span class="bad">const data = await fetch('/api').then(r => r.json())</span>
+<span class="good">try { const data = await fetch('/api').then(r => r.json()) } catch(e) { ... }</span>
+
+<span class="comment">// 6. Use Array methods over manual loops</span>
+<span class="bad">const names = []; for(let i=0;i<users.length;i++) names.push(users[i].name)</span>
+<span class="good">const names = users.map(u => u.name);</span>
+
+<span class="comment">// 7. Destructuring for clarity</span>
+<span class="bad">const name = user.name; const age = user.age;</span>
+<span class="good">const { name, age } = user;</span>
+
+<span class="comment">// 8. Template literals over concatenation</span>
+<span class="bad">'Hello ' + name + ', you are ' + age + ' years old'</span>
+<span class="good">`Hello ${name}, you are ${age} years old`</span>
+</pre></div>
+  </div>
+
+  <div class="card">
+    <h2>🏢 Interview Questions & Model Answers</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="scenario-box">
+        <h4>Q: "How do you handle disagreements during code review?"</h4>
+        <p style="font-size:0.85rem;color:var(--text);margin-top:6px"><strong>Model Answer:</strong> "I focus on the merits of the technical argument, not personal preferences. If we disagree, I'll ask 'What problem are we solving?' and discuss trade-offs objectively. If we can't agree, we escalate to the team's agreed conventions or bring in a third engineer for input. The goal is always the best outcome for the product, not 'winning' the argument."</p>
+      </div>
+      <div class="scenario-box">
+        <h4>Q: "How do you mentor a junior developer who is struggling?"</h4>
+        <p style="font-size:0.85rem;color:var(--text);margin-top:6px"><strong>Model Answer:</strong> "I start by understanding where the gap is — is it conceptual knowledge, confidence, or problem-solving process? I use the Socratic method to guide rather than just giving answers. I pair program with them, explain the WHY behind decisions, and set small achievable goals. I also make sure they feel psychologically safe to ask questions. Growth takes time and I celebrate their progress explicitly."</p>
+      </div>
+      <div class="scenario-box">
+        <h4>Q: "What do you look for first in a code review?"</h4>
+        <p style="font-size:0.85rem;color:var(--text);margin-top:6px"><strong>Model Answer:</strong> "First I read the PR description and linked ticket to understand the goal. Then I do a big-picture pass — does this approach make sense architecturally? Then I do a detailed pass checking: correctness and edge cases, security implications (especially auth, input validation), error handling, test coverage, and readability. I leave style/formatting to automated tools."</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== GLOBALS ====================
+let totalScore = 0;
+let quizCorrect = 0;
+let quizTotal = 0;
+const quizAnswered = {};
+const exercisesDone = {};
+
+function updateScore(pts) {
+  totalScore += pts;
+  const el = document.getElementById('score-display');
+  el.textContent = totalScore;
+  el.classList.add('pop');
+  setTimeout(() => el.classList.remove('pop'), 300);
+  const bar = document.getElementById('score-bar');
+  const pct = Math.min(100, (totalScore / 300) * 100);
+  bar.style.width = pct + '%';
+}
+
+// ==================== NAVIGATION ====================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const idx = ['basics','techniques','feedback','mentoring','pitfalls','exercises','quiz','cheatsheet'].indexOf(id);
+  document.querySelectorAll('nav button')[idx].classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showInner(group, panel) {
+  const allPanels = document.querySelectorAll(`[id^="${group}-"]`);
+  const allTabs = document.querySelectorAll(`.inner-tab`);
+  allPanels.forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(`${group}-${panel}`);
+  if (target) target.classList.add('active');
+  // Update tabs within the same card
+  event.target.closest('.card').querySelectorAll('.inner-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.toLowerCase().includes(panel) || t.onclick.toString().includes(`'${panel}'`));
+  });
+}
+
+// ==================== CHECKLIST ====================
+function toggleCheck(el) {
+  const cb = el.querySelector('input[type="checkbox"]');
+  cb.checked = !cb.checked;
+  el.classList.toggle('done', cb.checked);
+  const checks = document.querySelectorAll('#author-checklist input[type="checkbox"]');
+  let done = 0;
+  checks.forEach(c => { if (c.checked) done++; });
+  document.getElementById('checklist-progress').textContent = `${done}/${checks.length} completed`;
+  if (done === checks.length && !exercisesDone['checklist']) {
+    exercisesDone['checklist'] = true;
+    updateScore(15);
+    document.getElementById('checklist-progress').innerHTML += ' 🎉 <span style="color:var(--success)">+15 pts!</span>';
+  }
+}
+
+// ==================== QUIZ ====================
+function quizAnswer(el, id, correct) {
+  if (quizAnswered[id]) return;
+  quizAnswered[id] = true;
+  quizTotal++;
+  const card = document.getElementById(`${id}-card`);
+  const result = document.getElementById(`${id}-result`);
+  card.querySelectorAll('.quiz-option').forEach(o => o.classList.add('disabled'));
+  if (correct) {
+    el.classList.add('correct');
+    quizCorrect++;
+    result.textContent = '✅ Correct! Well done.';
+    result.className = 'quiz-result show correct-msg';
+    updateScore(10);
+  } else {
+    el.classList.add('wrong');
+    result.className = 'quiz-result show wrong-msg';
+    // Find and show correct
+    const correctAnswers = {
+      'q1': 'C) To improve code quality, catch bugs, and share knowledge',
+      'q2': 'B) BLOCKING',
+      'q3': 'B) Approving code without actually reviewing it properly',
+      'q4': 'C) Asking guiding questions so the junior discovers the answer themselves',
+      'q5': 'C) API keys hardcoded directly in source code',
+      'q6': 'B) ~400 lines',
+      'q7': 'B) const result = arr[0].name (when arr might be empty)',
+      'q8': 'C) Team members feel safe to speak up, ask questions, and make mistakes without fear of blame',
+      'q9': 'B) Situation, Behavior, Impact',
+      'q10': 'C) So human reviewers can focus their mental energy on logic, correctness, and architecture instead of mechanical checks'
+    };
+    result.textContent = `❌ Incorrect. Correct answer: ${correctAnswers[id]}`;
+  }
+  document.getElementById('quiz-score-mini').textContent = `Quiz Score: ${quizCorrect}/${quizTotal}`;
+  if (quizTotal === 10) {
+    setTimeout(() => {
+      const final = document.getElementById('quiz-final');
+      final.style.display = 'block';
+      const pct = Math.round((quizCorrect / 10) * 100);
+      let grade = pct >= 90 ? '🏆 Expert!' : pct >= 70 ? '🌟 Proficient' : pct >= 50 ? '📚 Keep Learning' : '🔄 Review & Retry';
+      document.getElementById('quiz-final-result').innerHTML = `
+        <div style="font-size:3rem;margin-bottom:10px">${pct >= 70 ? '🎉' : '📚'}</div>
+        <div style="font-size:2rem;font-weight:700;color:var(--primary)">${quizCorrect}/10</div>
+        <div style="font-size:1.2rem;color:var(--highlight);margin:8px 0">${grade}</div>
+        <div style="color:var(--muted)">${pct}% correct</div>
+        ${pct < 70 ? '<button class="btn btn-primary" style="margin-top:12px" onclick="resetQuiz()">🔄 Retry Quiz</button>' : ''}
+      `;
+      final.scrollIntoView({ behavior: 'smooth' });
+    }, 500);
+  }
+}
+
+function resetQuiz() {
+  Object.keys(quizAnswered).forEach(k => delete quizAnswered[k]);
+  quizCorrect = 0;
+  quizTotal = 0;
+  document.getElementById('quiz-score-mini').textContent = 'Quiz Score: 0/0';
+  document.getElementById('quiz-final').style.display = 'none';
+  for (let i = 1; i <= 10; i++) {
+    const card = document.getElementById(`q${i}-card`);
+    if (!card) continue;
+    card.querySelectorAll('.quiz-option').forEach(o => {
+      o.classList.remove('correct', 'wrong', 'disabled');
+    });
+    const result = document.getElementById(`q${i}-result`);
+    if (result) { result.className = 'quiz-result'; result.textContent = ''; }
+  }
+}
+
+// ==================== FEEDBACK SIM ====================
+function feedbackChoice(el, correct) {
+  const result = document.getElementById('feedback-result');
+  document.querySelectorAll('#feedback-sim .quiz-option').forEach(o => o.classList.add('disabled'));
+  if (correct) {
+    el.classList.add('correct');
+    result.className = 'quiz-result show correct-msg';
+    result.innerHTML = '✅ <strong>Excellent choice!</strong> This feedback: acknowledges the effort, explains each specific issue, gives context for WHY it\'s a problem, and offers help. This is how senior engineers build juniors up while improving code quality.';
+    if (!exercisesDone['feedback-sim']) {
+      exercisesDone['feedback-sim'] = true;
+      updateScore(10);
+    }
+  } else {
+    el.classList.add('wrong');
+    result.className = 'quiz-result show wrong-msg';
+    if (el.textContent.startsWith('B)')) {
+      result.innerHTML = '❌ <strong>The LGTM trap!</strong> Approving without feedback means the junior never learns, bugs stay in the codebase, and you\'re not doing your job as a reviewer.';
+    } else if (el.textContent.startsWith('D)')) {
+      result.innerHTML = '❌ <strong>Too vague!</strong> "Add a catch block" doesn\'t explain the other issues (this context problem, no return) and gives no educational value.';
+    } else {
+      result.innerHTML = '❌ <strong>Personal attack!</strong> Attacking intelligence ("you clearly don\'t understand") destroys psychological safety and makes juniors afraid to submit PRs. Focus on the code, not the person.';
+    }
+  }
+}
+
+// ==================== EXERCISES ====================
+function checkExercise1() {
+  const answer = document.getElementById('ex1-answer').value.toLowerCase();
+  const result = document.getElementById('ex1-result');
+  result.style.display = 'block';
+  const issues = ['var', 'key', 'secret', 'fn', 'name', 'console', 'error', 'null', 'edge', 'param'];
+  const found = issues.filter(i => answer.includes(i)).length;
+  if (answer.length < 50) {
+    result.innerHTML = '<div class="warning-box">Please write a more detailed review. Try to identify at least 5 issues.</div>';
+    return;
+  }
+  if (!exercisesDone['ex1']) {
+    exercisesDone['ex1'] = true;
+    updateScore(20);
+  }
+  result.innerHTML = `
+    <div class="tip-box">
+      <strong>✅ Good attempt! Here are all the issues in this code:</strong>
+      <ul class="styled">
+        <li>🔴 <strong>[BLOCKING]</strong> Hardcoded API key — use <code>process.env.API_KEY</code></li>
+        <li>🔴 <strong>[BLOCKING]</strong> No error handling — what if fetch fails?</li>
+        <li>🔴 <strong>[BLOCKING]</strong> <code>j.data[0].name</code> will crash if data is empty</li>
+        <li>🟡 <strong>[SUGGESTION]</strong> <code>fn</code> is not a descriptive function name</li>
+        <li>🟡 <strong>[SUGGESTION]</strong> <code>d</code>, <code>r</code>, <code>j</code> are cryptic variable names</li>
+        <li>🟡 <strong>[SUGGESTION]</strong> <code>var</code> should be <code>const</code></li>
+        <li>💬 <strong>[NIT]</strong> <code>console.log</code> should be removed from production code</li>
+        <li>💬 <strong>[NIT]</strong> Missing JSDoc documentation</li>
+      </ul>
+      <strong>+20 points earned!</strong>
+    </div>`;
+}
+
+function checkExercise2() {
+  const answer = document.getElementById('ex2-answer').value;
+  const result = document.getElementById('ex2-result');
+  result.style.display = 'block';
+  const hasConst = answer.includes('const');
+  const hasDescName = answer.includes('products') || answer.includes('items') || answer.includes('threshold') || answer.includes('minPrice');
+  const hasFilter = answer.includes('filter') || answer.includes('reduce');
+  const hasJsDoc = answer.includes('/**') || answer.includes('* @');
+  let score = 0;
+  if (hasConst) score++;
+  if (hasDescName) score++;
+  if (hasFilter) score++;
+  if (hasJsDoc) score++;
+  if (answer.length < 30) {
+    result.innerHTML = '<div class="warning-box">Please write your improved version first!</div>';
+    return;
+  }
+  if (!exercisesDone['ex2']) {
+    exercisesDone['ex2'] = true;
+    updateScore(15);
+  }
+  result.innerHTML = `
+    <div class="tip-box">
+      <strong>✅ Submitted! Score: ${score}/4 best practices used</strong><br>
+      ${hasConst ? '✅' : '❌'} Using const/let<br>
+      ${hasDescName ? '✅' : '❌'} Descriptive variable names<br>
+      ${hasFilter ? '✅' : '❌'} Array.filter() method<br>
+      ${hasJsDoc ? '✅' : '❌'} JSDoc documentation<br>
+      <strong>+15 points earned!</strong>
+    </div>`;
+}
+
+function showEx2Solution() {
+  const result = document.getElementById('ex2-result');
+  result.style.display = 'block';
+  result.innerHTML = `
+    <div class="code-block"><pre>
+<span class="comment">/**
+ * Returns products with price above the minimum threshold
+ * @param {Array} products - Array of product objects with price property
+ * @param {number} minPrice - Minimum price threshold
+ * @returns {Array} Filtered array of expensive products
+ */</span>
+<span class="keyword">function</span> <span class="func">getExpensiveProducts</span>(products, minPrice) {
+  <span class="keyword">if</span> (!Array.isArray(products)) <span class="keyword">return</span> [];
+  <span class="keyword">return</span> products.filter(<span class="func">product</span> => product.price > minPrice);
+}
+</pre></div>
+    <div class="tip-box">Key improvements: JSDoc, descriptive names, guard clause, Array.filter()</div>`;
+}
+
+function checkExercise3() {
+  const answer = document.getElementById('ex3-answer').value.toLowerCase();
+  const result = document.getElementById('ex3-result');
+  result.style.display = 'block';
+  if (answer.length < 100) {
+    result.innerHTML = '<div class="warning-box">Your PR description needs more detail. Include what changed, why, and how to test.</div>';
+    return;
+  }
+  const hasWhat = answer.includes('auth') || answer.includes('change') || answer.includes('add');
+  const hasWhy = answer.includes('because') || answer.includes('reason') || answer.includes('why') || answer.includes('security');
+  const hasTest = answer.includes('test') || answer.includes('verify') || answer.includes('check');
+  if (!exercisesDone['ex3']) {
+    exercisesDone['ex3'] = true;
+    updateScore(15);
+  }
+  result.innerHTML = `
+    <div class="tip-box">
+      ✅ PR Description submitted! +15 points<br><br>
+      ${hasWhat ? '✅' : '❌'} Explains WHAT changed<br>
+      ${hasWhy ? '✅' : '❌'} Explains WHY it was needed<br>
+      ${hasTest ? '✅' : '❌'} Includes testing instructions
+    </div>`;
+}
+
+function showEx3Template() {
+  const result = document.getElementById('ex3-result');
+  result.style.display = 'block';
+  result.innerHTML = `
+    <div class="tip-box">
+      <strong>📝 Model PR Description:</strong><br><br>
+      <strong>## Summary</strong><br>
+      Adds JWT-based authentication to the /api/users endpoints.<br><br>
+      <strong>## Why</strong><br>
+      Currently, all user data endpoints are publicly accessible. This fixes JIRA-423 security requirement.<br><br>
+      <strong>## Changes Made</strong><br>
+      - Added authMiddleware.js with JWT verification<br>
+      - Applied middleware to all /api/users routes<br>
+      - Added 401 error responses for invalid tokens<br>
+      - Updated API docs in README<br><br>
+      <strong>## How to Test</strong><br>
+      1. Start server: npm run dev<br>
+      2. Hit GET /api/users without token → expect 401<br>
+      3. Get token via POST /api/login<br>
+      4. Hit GET /api/users with Bearer token → expect 200<br><br>
+      <strong>## Notes/Risks</strong><br>
+      - Existing integration tests updated for auth<br>
+      - JWT_SECRET must be set in .env (see .env.example)
+    </div>`;
+}
+
+function checkEx4a() {
+  const answer = document.getElementById('ex4a').value;
+  const result = document.getElementById('ex4a-result');
+  result.style.display = 'block';
+  if (answer.length < 20) {
+    result.innerHTML = '<div class="warning-box">Please write a constructive version first.</div>';
+    return;
+  }
+  if (!exercisesDone['ex4a']) { exercisesDone['ex4a'] = true; updateScore(10); }
+  result.innerHTML = '<div class="tip-box">✅ Good! +10 points. See model answer for comparison.</div>';
+}
+
+function showEx4aModel() {
+  document.getElementById('ex4a-result').style.display = 'block';
+  document.getElementById('ex4a-result').innerHTML = `
+    <div class="tip-box">
+      <strong>Model constructive version:</strong><br>
+      "I noticed [specific thing] on line X might not work as expected in [scenario]. 
+      The issue is that [explanation]. One way to fix this would be [suggestion]. 
+      What do you think about that approach?"
+    </div>`;
+}
+
+function checkEx4b() {
+  const answer = document.getElementById('ex4b').value;
+  const result = document.getElementById('ex4b-result');
+  result.style.display = 'block';
+  if (answer.length < 20) {
+    result.innerHTML = '<div class="warning-box">Please write a constructive version first.</div>';
+    return;
+  }
+  if (!exercisesDone['ex4b']) { exercisesDone['ex4b'] = true; updateScore(10); }
+  result.innerHTML = '<div class="tip-box">✅ Good! +10 points. See model answer for comparison.</div>';
+}
+
+function showEx4bModel() {
+  document.getElementById('ex4b-result').style.display = 'block';
+  document.getElementById('ex4b-result').innerHTML = `
+    <div class="tip-box">
+      <strong>Model constructive version:</strong><br>
+      "I think there might be a performance opportunity here. Currently this is O(n²) because 
+      of the nested loop. If we use a Map/Set for lookup instead, we could get this down to O(n). 
+      Here's what that might look like: [example]. Want to give it a try?"
+    </div>`;
+}
+
+function checkExercise5() {
+  const answer = document.getElementById('ex5-answer').value.toLowerCase();
+  const result = document.getElementById('ex5-result');
+  result.style.display = 'block';
+  if (answer.length < 80) {
+    result.innerHTML = '<div class="warning-box">Please write a more complete mentor response. Include an analogy and code example.</div>';
+    return;
+  }
+  if (!exercisesDone['ex5']) { exercisesDone['ex5'] = true; updateScore(20); }
+  const hasAnalogy = answer.includes('like') || answer.includes('imagine') || answer.includes('restaurant') || answer.includes('coffee') || answer.includes('analogy');
+  const hasCode = answer.includes('async') || answer.includes('await') || answer.includes('function') || answer.includes('fetch');
+  result.innerHTML = `
+    <div class="tip-box">
+      ✅ Mentor response submitted! +20 points<br>
+      ${hasAnalogy ? '✅ Real-world analogy included' : '💡 Tip: Add a real-world analogy (e.g., ordering coffee = async!'}<br>
+      ${hasCode ? '✅ Code example included' : '💡 Tip: Always show a code example to make the concept concrete'}
+    </div>`;
+}
+
+function showEx5Model() {
+  document.getElementById('ex5-result').style.display = 'block';
+  document.getElementById('ex5-result').innerHTML = `
+    <div class="tip-box">
+      <strong>Model Mentor Answer:</strong><br><br>
+      <strong>Analogy:</strong> "Imagine you're at a coffee shop. If JS was synchronous, you'd order your coffee, 
+      then STAND THERE doing nothing until it's ready — the entire coffee shop is frozen. With async/await, 
+      you order, sit down, and DO OTHER THINGS while it's being prepared. When it's ready, you get notified."<br><br>
+      <strong>Why it matters in code:</strong> "If we make a database call synchronously, the entire server 
+      freezes for ALL users during that call. With 1000 users, that's catastrophic."<br><br>
+      <strong>Code example to show:</strong><br>
+      // Synchronous (bad for I/O)<br>
+      const data = readFile('huge.json'); // everything freezes!<br><br>
+      // Async (non-blocking)<br>
+      const data = await readFile('huge.json'); // other requests still process!
+    </div>`;
+}
+</script>
+</body>
+</html>

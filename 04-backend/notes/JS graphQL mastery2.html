@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphQL Mastery Dojo | The Path to Production</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --code-bg: #0d1117;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header & Progress */
+        .dojo-header {
+            background: linear-gradient(135deg, var(--bg-panel) 0%, #0f172a 100%);
+            border-bottom: 2px solid var(--accent-cyan);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-size: 1.25rem;
+        }
+
+        .progress-container {
+            width: 200px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        /* Layout */
+        .dojo-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            height: calc(100vh - 80px);
+            overflow: hidden;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            background: var(--bg-panel);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-item:hover {
+            background: rgba(6, 182, 212, 0.1);
+            border-left-color: var(--accent-cyan);
+        }
+
+        .nav-item.active {
+            background: rgba(6, 182, 212, 0.15);
+            border-left-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .difficulty {
+            font-size: 0.625rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            overflow-y: auto;
+            padding: 2rem;
+            background: var(--bg-dark);
+        }
+
+        .module-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .module-title {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .content-card {
+            background: var(--bg-panel);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin: 1rem 0;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 0.5rem;
+            right: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .keyword { color: var(--accent-purple); }
+        .string { color: var(--success); }
+        .function { color: var(--accent-cyan); }
+        .comment { color: var(--text-secondary); font-style: italic; }
+        .type { color: var(--accent-pink); }
+
+        /* Interactive Playground */
+        .playground {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 1rem;
+            height: 500px;
+            background: var(--code-bg);
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .playground-toolbar {
+            background: rgba(255,255,255,0.05);
+            padding: 0.75rem 1rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .playground-input, .playground-output {
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            overflow: auto;
+            white-space: pre;
+            line-height: 1.6;
+        }
+
+        .playground-input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            resize: none;
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+
+        .playground-output {
+            background: rgba(0,0,0,0.3);
+            border-left: 2px solid var(--accent-cyan);
+            color: var(--success);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Right Panel - Pitfalls & Tips */
+        .sensei-panel {
+            background: var(--bg-panel);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .pitfall-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .pitfall-title {
+            color: var(--error);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .tip-card {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tip-title {
+            color: var(--success);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        /* Quiz Styles */
+        .quiz-option {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .quiz-option:hover {
+            background: rgba(6, 182, 212, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error);
+        }
+
+        .quiz-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Visual Comparisons */
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .comparison-box {
+            background: var(--code-bg);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .comparison-header {
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.05);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .comparison-content {
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .bandwidth-visual {
+            height: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+            position: relative;
+        }
+
+        .bandwidth-fill {
+            height: 100%;
+            background: var(--accent-pink);
+            transition: width 1s ease;
+            border-radius: 10px;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .typing-cursor::after {
+            content: '|';
+            animation: pulse 1s infinite;
+            color: var(--accent-cyan);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Badge System */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+            border: 1px solid var(--accent-cyan);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dojo-container {
+                grid-template-columns: 260px 1fr;
+            }
+            .sensei-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dojo-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Exercise validation visual feedback */
+        .validation-message {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-weight: 600;
+            display: none;
+        }
+
+        .validation-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="dojo-header">
+    <div class="logo">
+        <span>⚡</span>
+        <span>GraphQL Mastery Dojo</span>
+    </div>
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-value" id="xp-value">0</span>
+            <span>XP Points</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" id="level-value">Padawan</span>
+            <span>Rank</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-fill" id="progress-bar"></div>
+        </div>
+    </div>
+</header>
+
+<div class="dojo-container">
+    <!-- Left Sidebar -->
+    <nav class="sidebar">
+        <div class="nav-section">
+            <div class="nav-title">Fundamentals</div>
+            <div class="nav-item active" onclick="loadModule('vs-rest')">
+                <span>GraphQL vs REST</span>
+                <span class="difficulty">Easy</span>
+            </div>
+            <div class="nav-item" onclick="loadModule('schema')">
+                <span>Schema & Types</span>
+                <span class="difficulty">Med</span>
+            </div>
+            <div class="nav-item" onclick="loadModule('queries')">
+                <span>Query Mastery</span>
+                <span class="difficulty">Med</span>
+            </div>
+            <div class="nav-item" onclick="loadModule('mutations')">
+                <span>Mutations</span>
+                <span class="difficulty">Hard</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Advanced</div>
+            <div class="nav-item" onclick="loadModule('apollo-client')">
+                <span>Apollo Client</span>
+                <span class="difficulty">Hard</span>
+            </div>
+            <div class="nav-item locked" onclick="loadModule('performance')">
+                <span>Performance</span>
+                <span class="difficulty">Expert</span>
+            </div>
+            <div class="nav-item locked" onclick="loadModule('security')">
+                <span>Security</span>
+                <span class="difficulty">Expert</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Trials</div>
+            <div class="nav-item" onclick="loadModule('final-boss')">
+                <span>The Architect</span>
+                <span class="difficulty">Boss</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+        <!-- Content injected via JS -->
+    </main>
+
+    <!-- Right Panel: Sensei's Wisdom -->
+    <aside class="sensei-panel">
+        <h3 style="margin-bottom: 1.5rem; color: var(--accent-cyan);">🎓 Sensei's Watch</h3>
+        
+        <div id="pitfalls-container">
+            <div class="pitfall-card">
+                <div class="pitfall-title">⚠️ Common Pitfall</div>
+                <p style="font-size: 0.875rem;">Thinking in REST endpoints. GraphQL is about graphs, not endpoints. Avoid creating queries that mirror REST URLs like <code>getUserById</code>.</p>
+            </div>
+
+            <div class="tip-card">
+                <div class="tip-title">💡 Pro Tip</div>
+                <p style="font-size: 0.875rem;">Always request <code>id</code> fields in your queries. Apollo Client normalizes cache by <code>__typename + id</code>. Missing ids break caching.</p>
+            </div>
+
+            <div class="pitfall-card">
+                <div class="pitfall-title">🐛 N+1 Problem</div>
+                <p style="font-size: 0.875rem;">Resolving nested lists without DataLoader? You're hitting the database N+1 times. Always batch your requests.</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+            <h4 style="margin-bottom: 1rem; font-size: 0.875rem; color: var(--text-secondary);">ACHIEVEMENTS</h4>
+            <div id="badges-container">
+                <div class="badge">🏁 First Query</div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+/**
+ * GRAPHQL MASTERY DOJO - Interactive Learning Engine
+ * 
+ * Features:
+ * - Mock GraphQL implementation for safe practice
+ * - Apollo Client simulation with normalized cache
+ * - Progressive difficulty with skill tree
+ * - Real-time validation and feedback
+ */
+
+// Game State
+const State = {
+    xp: 0,
+    level: 'Padawan',
+    completedModules: new Set(),
+    currentModule: 'vs-rest',
+    badges: ['First Steps']
+};
+
+// Mock Database
+const mockDB = {
+    users: [
+        { id: '1', name: 'Alice Chen', email: 'alice@techcorp.com', role: 'SENIOR', posts: ['101', '102'] },
+        { id: '2', name: 'Bob Smith', email: 'bob@startup.io', role: 'JUNIOR', posts: ['103'] },
+        { id: '3', name: 'Carol Wu', email: 'carol@enterprise.com', role: 'LEAD', posts: [] }
+    ],
+    posts: [
+        { id: '101', title: 'GraphQL Best Practices', content: 'Always use fragments...', authorId: '1', views: 1250 },
+        { id: '102', title: 'Apollo Client Cache', content: 'Normalization is key...', authorId: '1', views: 890 },
+        { id: '103', title: 'Schema Design', content: 'Thinking in graphs...', authorId: '2', views: 45 }
+    ]
+};
+
+// Simplified GraphQL Executor (Educational purposes)
+class GraphQLEngine {
+    constructor() {
+        this.schema = {
+            Query: {
+                users: () => mockDB.users,
+                user: (_, { id }) => mockDB.users.find(u => u.id === id),
+                posts: () => mockDB.posts,
+                post: (_, { id }) => mockDB.posts.find(p => p.id === id)
+            },
+            Mutation: {
+                createPost: (_, { input }) => {
+                    const newPost = {
+                        id: String(Date.now()),
+                        ...input,
+                        views: 0
+                    };
+                    mockDB.posts.push(newPost);
+                    return newPost;
+                },
+                updateUser: (_, { id, input }) => {
+                    const user = mockDB.users.find(u => u.id === id);
+                    if (user) Object.assign(user, input);
+                    return user;
+                }
+            }
+        };
+    }
+
+    // Simplified query parser for demo purposes
+    execute(query, variables = {}) {
+        try {
+            // Remove whitespace and parse basic structure
+            const cleanQuery = query.replace(/\s+/g, ' ').trim();
+            
+            // Detect operation type
+            const isMutation = cleanQuery.startsWith('mutation');
+            const type = isMutation ? 'Mutation' : 'Query';
+            
+            // Extract fields (simplified regex approach for educational demo)
+            const result = {};
+            
+            // Mock execution for specific patterns
+            if (cleanQuery.includes('users') && !cleanQuery.includes('user(')) {
+                result.users = mockDB.users.map(u => this.selectFields(u, ['id', 'name', 'email', 'role']));
+            }
+            
+            if (cleanQuery.match(/user\s*\(\s*id\s*:\s*["']?(\d+)["']?\s*\)/)) {
+                const match = cleanQuery.match(/user\s*\(\s*id\s*:\s*["']?(\d+)["']?\s*\)/);
+                const id = match[1];
+                const user = mockDB.users.find(u => u.id === id);
+                if (user) {
+                    result.user = this.selectFields(user, ['id', 'name', 'email', 'role', 'posts']);
+                }
+            }
+
+            if (cleanQuery.includes('posts')) {
+                result.posts = mockDB.posts;
+            }
+
+            return { data: result };
+        } catch (error) {
+            return { errors: [{ message: error.message }] };
+        }
+    }
+
+    selectFields(obj, fields) {
+        const result = {};
+        fields.forEach(field => {
+            if (obj[field] !== undefined) result[field] = obj[field];
+        });
+        return result;
+    }
+}
+
+// Apollo Client Simulation
+class MockApolloClient {
+    constructor() {
+        this.cache = new Map();
+        this.watches = new Set();
+    }
+
+    watchQuery(query) {
+        return {
+            subscribe: (callback) => {
+                const result = graphqlEngine.execute(query);
+                callback(result);
+                this.watches.add({ query, callback });
+                
+                // Return unsubscribe
+                return {
+                    unsubscribe: () => this.watches.delete({ query, callback })
+                };
+            }
+        };
+    }
+
+    mutate({ mutation, variables, optimisticResponse }) {
+        // Simulate network delay
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const result = graphqlEngine.execute(mutation, variables);
+                
+                // Apply optimistic response immediately if provided
+                if (optimisticResponse) {
+                    console.log('Optimistic UI:', optimisticResponse);
+                }
+                
+                resolve(result);
+            }, 800);
+        });
+    }
+
+    // Normalize cache key
+    cacheKey(typeName, id) {
+        return `${typeName}:${id}`;
+    }
+}
+
+const graphqlEngine = new GraphQLEngine();
+const apolloClient = new MockApolloClient();
+
+// Module Content Definitions
+const modules = {
+    'vs-rest': {
+        title: 'GraphQL vs REST: The Paradigm Shift',
+        render: () => `
+            <div class="module-header">
+                <h1 class="module-title">The Great Migration</h1>
+                <p style="color: var(--text-secondary);">Understanding why GraphQL exists and when to use it over REST.</p>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3 style="margin-bottom: 1rem;">The Bandwidth Problem</h3>
+                <p style="margin-bottom: 1.5rem;">In a competitive environment, every byte counts. Let's compare fetching user data with their posts:</p>
+                
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <div class="comparison-header" style="color: var(--error);">REST Approach (3 Requests)</div>
+                        <div class="comparison-content">
+<span class="comment">// Request 1: GET /users/1</span>
+{
+  "id": "1",
+  "name": "Alice Chen",
+  "email": "alice@techcorp.com",
+  "role": "SENIOR",
+  "createdAt": "2020-01-15",
+  "lastLogin": "2024-01-20",
+  "preferences": { ... },
+  "metadata": { ... }
+  <span class="comment">// 2.4 KB over the wire</span>
+}
+
+<span class="comment">// Request 2: GET /users/1/posts</span>
+[
+  { "id": "101", "title": "GraphQL...", ... },
+  { "id": "102", "title": "Apollo...", ... }
+  <span class="comment">// 1.8 KB over the wire</span>
+]
+
+<span class="comment">// Request 3: GET /posts/101/comments</span>
+[ ... ]
+                        </div>
+                        <div style="padding: 0 1rem 1rem;">
+                            <div class="bandwidth-visual">
+                                <div class="bandwidth-fill" style="width: 85%; background: var(--error);"></div>
+                            </div>
+                            <small style="color: var(--text-secondary);">4.2 KB + Network Latency × 3</small>
+                        </div>
+                    </div>
+
+                    <div class="comparison-box">
+                        <div class="comparison-header" style="color: var(--success);">GraphQL (1 Request)</div>
+                        <div class="comparison-content">
+<span class="keyword">query</span> <span class="function">GetUserWithPosts</span>(<span class="type">$id</span>: ID!) {
+  <span class="function">user</span>(<span class="type">id</span>: <span class="type">$id</span>) {
+    <span class="type">name</span>
+    <span class="type">email</span>
+    <span class="type">posts</span> {
+      <span class="type">title</span>
+      <span class="type">views</span>
+    }
+  }
+}
+
+<span class="comment">// Response: Exactly what you asked for</span>
+{
+  "data": {
+    "user": {
+      "name": "Alice Chen",
+      "email": "alice@techcorp.com",
+      "posts": [
+        { "title": "GraphQL...", "views": 1250 },
+        { "title": "Apollo...", "views": 890 }
+      ]
+    }
+  }
+}
+                        </div>
+                        <div style="padding: 0 1rem 1rem;">
+                            <div class="bandwidth-visual">
+                                <div class="bandwidth-fill" style="width: 35%; background: var(--success);"></div>
+                            </div>
+                            <small style="color: var(--text-secondary);">0.8 KB - Precise data fetching</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(6, 182, 212, 0.1); border-radius: 0.5rem; border-left: 4px solid var(--accent-cyan);">
+                    <h4 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">💼 Interview Insight</h4>
+                    <p style="font-size: 0.95rem;">Top-tier companies don't just want to know that GraphQL "fetches less data." They want to hear about:</p>
+                    <ul style="margin-top: 0.5rem; padding-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Reduced round-trips (solve N+1 at network layer)</li>
+                        <li>Strong typing prevents runtime errors in production</li>
+                        <li>Developer experience with introspection and GraphiQL</li>
+                        <li>Versioning strategy (or lack thereof - no more v1, v2 APIs)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Interactive Challenge: Design the Query</h3>
+                <p>You need to build a dashboard showing a user's profile card (name, avatar) and their top 3 posts (title only). The REST endpoint returns 25 fields per user and full post content.</p>
+                
+                <div class="playground" style="margin-top: 1.5rem; height: 300px;">
+                    <div class="playground-toolbar">
+                        <span style="color: var(--text-secondary); font-size: 0.875rem;">Write your GraphQL query:</span>
+                        <button class="btn btn-secondary" style="margin-left: auto; padding: 0.5rem 1rem;" onclick="validateRESTChallenge()">Run Query</button>
+                    </div>
+                    <textarea class="playground-input" id="rest-challenge" placeholder="query GetUserDashboard($id: ID!) {
+  user(id: $id) {
+    name
+    # Your fields here...
+  }
+}"></textarea>
+                </div>
+                <div id="rest-validation" class="validation-message"></div>
+            </div>
+        `
+    },
+
+    'schema': {
+        title: 'Schema Design & Type System',
+        render: () => `
+            <div class="module-header">
+                <h1 class="module-title">The Schema Forge</h1>
+                <p style="color: var(--text-secondary);">Learn to design robust, scalable schemas using SDL (Schema Definition Language).</p>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Type System Fundamentals</h3>
+                <p>GraphQL is strongly typed. Your schema is the contract between client and server. In a competitive org, bad schema design will cost you millions in tech debt.</p>
+                
+                <div class="code-block" data-lang="graphql">
+<span class="keyword">type</span> <span class="type">User</span> {
+  <span class="type">id</span>: ID!           <span class="comment"># Non-null unique identifier</span>
+  <span class="type">email</span>: String!    <span class="comment"># Basic scalar types: String, Int, Float, Boolean</span>
+  <span class="type">age</span>: Int
+  <span class="type">role</span>: Role!       <span class="comment"># Enums for finite sets</span>
+  <span class="type">posts</span>: [Post!]!   <span class="comment"># List of non-null Posts, field itself is non-null</span>
+  <span class="type">profile</span>: Profile  <span class="comment"># Nullable - user might not have profile yet</span>
+}
+
+<span class="keyword">enum</span> <span class="type">Role</span> {
+  ADMIN
+  USER
+  GUEST
+}
+
+<span class="keyword">type</span> <span class="type">Post</span> {
+  <span class="type">id</span>: ID!
+  <span class="type">title</span>: String!
+  <span class="type">content</span>: String!
+  <span class="type">author</span>: User!     <span class="comment"># Circular reference - GraphQL handles this</span>
+  <span class="type">publishedAt</span>: String
+}
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h4>Common Schema Anti-Patterns to Avoid:</h4>
+                    <ul style="margin-top: 0.5rem; padding-left: 1.5rem; color: var(--text-secondary);">
+                        <li><strong>Leaky Abstractions:</strong> Exposing database column names like <code>created_at</code> instead of <code>createdAt</code> (camelCase is GraphQL convention)</li>
+                        <li><strong>God Objects:</strong> Types with 50+ fields. Use interfaces and fragments instead.</li>
+                        <li><strong>Nullable Madness:</strong> Making everything nullable. Be explicit about required fields.</li>
+                        <li><strong>Root Field Explosion:</strong> <code>getUser</code>, <code>fetchPost</code>, <code>listComments</code>. Use single entry points: <code>Query { user, post, comments }</code></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Exercise: Fix the Broken Schema</h3>
+                <p>The following schema has 3 critical errors that would fail code review at a top tech company. Identify and fix them.</p>
+                
+                <div class="playground" style="margin-top: 1rem; height: 400px;">
+                    <textarea class="playground-input" id="schema-fix">
+type user {
+  id: String
+  name: String
+  posts: [Post]
+}
+
+type Post {
+  ID: ID!
+  title: string!
+  author_id: String!
+  views: Int
+}</textarea>
+                    <div class="playground-toolbar">
+                        <button class="btn" onclick="validateSchemaFix()">Validate Schema</button>
+                    </div>
+                </div>
+                <div id="schema-validation" class="validation-message"></div>
+            </div>
+        `
+    },
+
+    'queries': {
+        title: 'Query Mastery: From Basic to Advanced',
+        render: () => `
+            <div class="module-header">
+                <h1 class="module-title">The Art of Querying</h1>
+                <p style="color: var(--text-secondary);">Master arguments, aliases, fragments, and variables for production-grade queries.</p>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Advanced Query Techniques</h3>
+                
+                <div class="code-block" data-lang="graphql">
+<span class="comment"># 1. Variables (Never use string interpolation for params!)</span>
+<span class="keyword">query</span> <span class="function">GetUser</span>(<span class="type">$id</span>: ID!, <span class="type">$includeEmail</span>: Boolean = <span class="keyword">false</span>) {
+  <span class="function">user</span>(<span class="type">id</span>: <span class="type">$id</span>) {
+    <span class="type">name</span>
+    <span class="type">email</span> <span class="keyword">@include</span>(<span class="type">if</span>: <span class="type">$includeEmail</span>)
+  }
+}
+
+<span class="comment"># 2. Aliases (fetch same field with different args)</span>
+<span class="keyword">query</span> <span class="function">GetUserStats</span> {
+  <span class="type">recentPosts</span>: <span class="function">posts</span>(<span class="type">limit</span>: 5) { title }
+  <span class="type">popularPosts</span>: <span class="function">posts</span>(<span class="type">limit</span>: 5, <span class="type">sort</span>: BY_VIEWS) { title }
+}
+
+<span class="comment"># 3. Fragments (DRY - Don't Repeat Yourself)</span>
+<span class="keyword">fragment</span> <span class="type">UserFields</span> <span class="keyword">on</span> <span class="type">User</span> {
+  id
+  name
+  email
+}
+
+<span class="keyword">query</span> <span class="function">GetDashboard</span> {
+  <span class="function">user</span>(<span class="type">id</span>: <span class="string">"1"</span>) {
+    ...UserFields
+    posts { title }
+  }
+  <span class="function">topContributor</span> {
+    ...UserFields
+  }
+}
+                </div>
+
+                <div style="margin-top: 1.5rem; background: rgba(236, 72, 153, 0.1); padding: 1rem; border-radius: 0.5rem; border-left: 4px solid var(--accent-pink);">
+                    <strong style="color: var(--accent-pink);">🚨 Production Mistake:</strong>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+                        Developers often write separate queries for desktop and mobile. Instead, use fragments! 
+                        The backend caches fragment definitions, and you get consistent data shapes across platforms.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Interactive Query Builder</h3>
+                <p>Build a query that fetches User 1 with their posts, but use an alias to get the posts as 'articles'. Include a fragment for user fields.</p>
+                
+                <div class="playground" style="height: 350px;">
+                    <textarea class="playground-input" id="query-challenge" placeholder="query {
+  user(id: \"1\") {
+    # Use fragment here
+    posts {
+      title
+    }
+  }
+}"></textarea>
+                    <div class="playground-toolbar">
+                        <button class="btn" onclick="runQueryChallenge()">Execute Query</button>
+                        <span style="color: var(--text-secondary); font-size: 0.875rem; margin-left: auto;">Target: Use fragment + alias</span>
+                    </div>
+                </div>
+                <div id="query-output" class="playground-output" style="display: none;"></div>
+            </div>
+        `
+    },
+
+    'mutations': {
+        title: 'Mutations & Input Types',
+        render: () => `
+            <div class="module-header">
+                <h1 class="module-title">The Mutation Dojo</h1>
+                <p style="color: var(--text-secondary);">Writing data safely with input types, optimistic UI, and error handling.</p>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Mutation Best Practices</h3>
+                
+                <div class="code-block" data-lang="graphql">
+<span class="comment"># ❌ Bad: Multiple scalar args, hard to extend</span>
+<span class="keyword">type</span> <span class="type">Mutation</span> {
+  <span class="function">createPost</span>(<span class="type">title</span>: String!, <span class="type">content</span>: String!, <span class="type">authorId</span>: ID!): Post
+}
+
+<span class="comment"># ✅ Good: Input type - extensible, self-documenting</span>
+<span class="keyword">type</span> <span class="type">Mutation</span> {
+  <span class="function">createPost</span>(<span class="type">input</span>: CreatePostInput!): CreatePostPayload!
+}
+
+<span class="keyword">input</span> <span class="type">CreatePostInput</span> {
+  <span class="type">title</span>: String!
+  <span class="type">content</span>: String!
+  <span class="type">authorId</span>: ID!
+  <span class="type">tags</span>: [String!]     <span class="comment"># Easy to add without breaking changes</span>
+  <span class="type">isDraft</span>: Boolean = <span class="keyword">false</span>
+}
+
+<span class="comment"># Payload pattern: Return wrapper for metadata + errors</span>
+<span class="keyword">type</span> <span class="type">CreatePostPayload</span> {
+  <span class="type">post</span>: Post
+  <span class="type">errors</span>: [UserError!]  <span class="comment"># Structured errors, not just exceptions</span>
+  <span class="type">clientMutationId</span>: String  <span class="comment"># For relay-style mutations</span>
+}
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <h3>Optimistic UI Pattern</h3>
+                    <p>When submitting a mutation, update the UI immediately with predicted data, then reconcile when server responds.</p>
+                    
+                    <div style="background: var(--code-bg); padding: 1rem; border-radius: 0.5rem; margin-top: 1rem; font-family: monospace; font-size: 0.9rem;">
+                        <span style="color: var(--accent-cyan);">// Apollo Client Optimistic Response</span><br>
+                        apolloClient.mutate({<br>
+                        &nbsp;&nbsp;mutation: CREATE_POST,<br>
+                        &nbsp;&nbsp;variables: { input },<br>
+                        &nbsp;&nbsp;<span style="color: var(--accent-pink);">optimisticResponse</span>: {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;createPost: {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id: <span style="color: var(--string);">'temp-'</span> + Date.now(),<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;title: input.title,<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;__typename: <span style="color: var(--string);">'Post'</span><br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                        &nbsp;&nbsp;}<br>
+                        })
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Challenge: Write a Production-Ready Mutation</h3>
+                <p>Create a mutation to update a user's role. Use proper input types and return a payload with the user and potential errors.</p>
+                
+                <div class="playground" style="height: 400px;">
+                    <textarea class="playground-input" id="mutation-challenge">type Mutation {
+  # Your mutation here
+}</textarea>
+                    <div class="playground-toolbar">
+                        <button class="btn" onclick="validateMutation()">Check Solution</button>
+                    </div>
+                </div>
+                <div id="mutation-validation" class="validation-message"></div>
+            </div>
+        `
+    },
+
+    'apollo-client': {
+        title: 'Apollo Client Deep Dive',
+        render: () => `
+            <div class="module-header">
+                <h1 class="module-title">The Apollo Temple</h1>
+                <p style="color: var(--text-secondary);">Mastering cache normalization, fetch policies, and reactive variables.</p>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Normalized Cache: The Brain of Apollo</h3>
+                <p>Apollo doesn't just cache requests like REST. It builds a graph in memory.</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: var(--code-bg); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="color: var(--accent-cyan); font-weight: bold; margin-bottom: 0.5rem;">Query 1</div>
+                        <code style="font-size: 0.8rem;">
+query {<br>
+&nbsp;&nbsp;user(id: "1") {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;id name<br>
+&nbsp;&nbsp;}<br>
+}
+                        </code>
+                    </div>
+                    <div style="background: var(--code-bg); padding: 1rem; border-radius: 0.5rem;">
+                        <div style="color: var(--accent-purple); font-weight: bold; margin-bottom: 0.5rem;">Query 2</div>
+                        <code style="font-size: 0.8rem;">
+query {<br>
+&nbsp;&nbsp;me {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;id name email<br>
+&nbsp;&nbsp;}<br>
+}
+                        </code>
+                    </div>
+                </div>
+
+                <div style="background: rgba(139, 92, 246, 0.1); border: 1px solid var(--accent-purple); padding: 1rem; border-radius: 0.5rem;">
+                    <strong>Cache Result (Normalized):</strong>
+                    <pre style="margin-top: 0.5rem; overflow-x: auto;">
+{
+  "User:1": { "id": "1", "name": "Alice", "email": "alice@corp.com" },
+  "ROOT_QUERY": {
+    "user({\"id\":\"1\"})": { "__ref": "User:1" },
+    "me": { "__ref": "User:1" }
+  }
+}</pre>
+                    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                        Notice: Two different queries, one cache entry. Update one, both queries refresh automatically.
+                    </p>
+                </div>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Critical Pitfall: Missing __typename and id</h3>
+                <div class="code-block" data-lang="javascript">
+<span class="comment">// ❌ This breaks normalization!</span>
+<span class="keyword">const</span> <span class="type">client</span> = <span class="keyword">new</span> <span class="function">ApolloClient</span>({
+  uri: <span class="string">'/graphql'</span>,
+  cache: <span class="keyword">new</span> <span class="function">InMemoryCache</span>({
+    <span class="comment">// dataIdFromObject is deprecated, but concept remains:</span>
+    <span class="comment">// Apollo needs to know how to key your objects</span>
+  })
+});
+
+<span class="comment">// ✅ Always fetch id and __typename in every query</span>
+<span class="keyword">const</span> <span class="type">ENRICH_FRAGMENT</span> = gql<span class="string">\`
+  fragment Enrich on Query {
+    __typename
+    id  # Even if you don't need it for UI, Apollo needs it
+  }
+\`</span>;
+
+<span class="comment">// ✅ Or use typePolicies for custom keys</span>
+<span class="keyword">new</span> <span class="function">InMemoryCache</span>({
+  typePolicies: {
+    User: {
+      keyFields: [<span class="string">'email'</span>]  <span class="comment">// If you don't have global IDs</span>
+    }
+  }
+})
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <h4>Fetch Policies - When to Use What:</h4>
+                    <ul style="margin-top: 0.5rem; color: var(--text-secondary); padding-left: 1.5rem;">
+                        <li><code>cache-first</code> (default): Fastest, but may show stale data</li>
+                        <li><code>network-only</code>: Always fresh, no cache benefits</li>
+                        <li><code>cache-and-network</code>: Show cached instantly, refresh in background. Best UX but more requests</li>
+                        <li><code>no-cache</code>: For sensitive data that should never persist</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Simulated Apollo Client</h3>
+                <p>Test how the cache behaves. Run the same query twice to see caching in action.</p>
+                
+                <div class="playground" style="height: 300px;">
+                    <div class="playground-toolbar">
+                        <select id="fetch-policy" style="background: var(--bg-dark); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 0.25rem;">
+                            <option value="cache-first">cache-first</option>
+                            <option value="network-only">network-only</option>
+                        </select>
+                        <button class="btn" onclick="simulateApolloQuery()">Execute Query</button>
+                        <button class="btn btn-secondary" onclick="clearApolloCache()">Clear Cache</button>
+                    </div>
+                    <div id="apollo-log" class="playground-output" style="border-left: none; font-size: 0.8rem;">
+// Logs will appear here...
+                    </div>
+                </div>
+            </div>
+        `
+    },
+
+    'final-boss': {
+        title: 'The Architect: Final Challenge',
+        render: () => `
+            <div class="module-header">
+                <h1 class="module-title">The Architect's Trial</h1>
+                <p style="color: var(--text-secondary);">Design a complete schema for a Social Media Analytics Dashboard. This is interview-level difficulty.</p>
+            </div>
+
+            <div class="content-card fade-in">
+                <h3>Requirements</h3>
+                <ul style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                    <li>Users can have multiple Projects (teams)</li>
+                    <li>Each Project has Analytics (views, clicks, conversion rate)</li>
+                    <li>Analytics can be filtered by DateRange (start, end)</li>
+                    <li>Support pagination with Cursor-based (not offset) for large datasets</li>
+                    <li>Real-time updates for live analytics (Subscription)</li>
+                    <li>Mutation to export data (async job, returns jobId)</li>
+                </ul>
+
+                <div class="playground" style="height: 500px;">
+                    <textarea class="playground-input" id="final-challenge"># Design your complete schema here
+# Include: Types, Inputs, Query, Mutation, Subscription
+
+type Query {
+  # Your fields
+}</textarea>
+                    <div class="playground-toolbar">
+                        <button class="btn" onclick="submitFinalChallenge()" style="background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));">Submit for Review</button>
+                    </div>
+                </div>
+                <div id="final-validation" class="validation-message"></div>
+            </div>
+
+            <div class="content-card fade-in" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1));">
+                <h3>🏆 What Makes a Winning Solution?</h3>
+                <div style="margin-top: 1rem;">
+                    <p style="margin-bottom: 0.5rem;"><strong>1. Relay-Style Pagination:</strong></p>
+                    <code style="background: var(--code-bg); padding: 0.5rem; border-radius: 0.25rem;">type AnalyticsConnection { edges: [AnalyticsEdge!]!, pageInfo: PageInfo! }</code>
+                    
+                    <p style="margin: 1rem 0 0.5rem;"><strong>2. Input Validation:</strong></p>
+                    <code style="background: var(--code-bg); padding: 0.5rem; border-radius: 0.25rem;">input DateRangeInput { start: DateTime!, end: DateTime! } @constraint(minDate: "2020-01-01")</code>
+                    
+                    <p style="margin: 1rem 0 0.5rem;"><strong>3. Async Mutation Pattern:</strong></p>
+                    <code style="background: var(--code-bg); padding: 0.5rem; border-radius: 0.25rem;">exportAnalytics(input: ExportInput!): ExportJob! # Returns jobId, poll with Query</code>
+                </div>
+            </div>
+        `
+    }
+};
+
+// Validation Functions
+function validateRESTChallenge() {
+    const input = document.getElementById('rest-challenge').value;
+    const validation = document.getElementById('rest-validation');
+    
+    if (input.includes('user') && input.includes('posts') && input.includes('title') && !input.includes('content')) {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(16, 185, 129, 0.2)';
+        validation.style.color = 'var(--success)';
+        validation.innerHTML = '✅ Perfect! You fetched exactly what was needed. In REST, you would have received the full post content (HTML, metadata, tags) even though you only needed titles.';
+        addXP(50);
+    } else {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(239, 68, 68, 0.2)';
+        validation.style.color = 'var(--error)';
+        validation.innerHTML = '❌ Remember: Only request the fields you need (name, avatar, posts { title }). Avoid requesting content field.';
+    }
+}
+
+function validateSchemaFix() {
+    const input = document.getElementById('schema-fix').value;
+    const validation = document.getElementById('schema-validation');
+    
+    const checks = [
+        { test: /type\s+User/, msg: 'Type names must be PascalCase (User, not user)' },
+        { test: /id:\s*ID!/, msg: 'ID field should be non-null ID! type' },
+        { test: /String/, msg: 'Scalars are capitalized (String, not string)' },
+        { test: /authorId/, msg: 'Use camelCase for fields (authorId, not author_id)' }
+    ];
+    
+    const errors = checks.filter(c => !c.test.test(input));
+    
+    if (errors.length === 0) {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(16, 185, 129, 0.2)';
+        validation.style.color = 'var(--success)';
+        validation.innerHTML = '✅ Excellent! You fixed all 4 issues: PascalCase types, ID! scalar, camelCase fields, and proper nullability.';
+        addXP(75);
+        unlockModule('performance');
+    } else {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(239, 68, 68, 0.2)';
+        validation.style.color = 'var(--error)';
+        validation.innerHTML = '❌ Issues remaining: ' + errors.map(e => e.msg).join(', ');
+    }
+}
+
+function runQueryChallenge() {
+    const input = document.getElementById('query-challenge').value;
+    const output = document.getElementById('query-output');
+    
+    // Simulate execution
+    if (input.includes('fragment') && input.includes('articles:')) {
+        output.style.display = 'block';
+        output.style.background = 'rgba(16, 185, 129, 0.1)';
+        output.textContent = JSON.stringify({
+            data: {
+                user: {
+                    name: "Alice Chen",
+                    email: "alice@techcorp.com",
+                    articles: [
+                        { title: "GraphQL Best Practices" },
+                        { title: "Apollo Client Cache" }
+                    ]
+                }
+            }
+        }, null, 2);
+        addXP(60);
+    } else {
+        output.style.display = 'block';
+        output.style.background = 'rgba(239, 68, 68, 0.1)';
+        output.style.color = 'var(--error)';
+        output.textContent = 'Hint: Use syntax like "articles: posts" for aliasing and "fragment UserFields on User" for fragments.';
+    }
+}
+
+function validateMutation() {
+    const input = document.getElementById('mutation-challenge').value;
+    const validation = document.getElementById('mutation-validation');
+    
+    if (input.includes('input') && input.includes('Payload') && input.includes('UpdateUserInput')) {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(16, 185, 129, 0.2)';
+        validation.style.color = 'var(--success)';
+        validation.innerHTML = '✅ Production ready! You used Input types for extensibility and Payload pattern for error handling.';
+        addXP(80);
+    } else {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(239, 68, 68, 0.2)';
+        validation.style.color = 'var(--error)';
+        validation.innerHTML = '❌ Remember: Use Input types (not scalar args) and return Payload wrappers with error fields.';
+    }
+}
+
+function simulateApolloQuery() {
+    const policy = document.getElementById('fetch-policy').value;
+    const log = document.getElementById('apollo-log');
+    const timestamp = new Date().toLocaleTimeString();
+    
+    if (policy === 'cache-first') {
+        log.innerHTML += `\n[${timestamp}] 📦 Cache lookup: MISS (first time)`;
+        setTimeout(() => {
+            log.innerHTML += `\n[${timestamp}] 🌐 Network request: 200 OK (234ms)`;
+            log.innerHTML += `\n[${timestamp}] ✅ Data normalized to cache`;
+            setTimeout(() => {
+                log.innerHTML += `\n[${timestamp}] 🔄 Second query: Cache HIT (0ms) - Instant!`;
+                log.scrollTop = log.scrollHeight;
+            }, 1000);
+        }, 600);
+    } else {
+        log.innerHTML += `\n[${timestamp}] 🌐 Network-only: Bypassing cache`;
+        setTimeout(() => {
+            log.innerHTML += `\n[${timestamp}] ✅ Fresh data from server (245ms)`;
+            log.scrollTop = log.scrollHeight;
+        }, 600);
+    }
+}
+
+function clearApolloCache() {
+    document.getElementById('apollo-log').innerHTML = '// Cache cleared. Logs reset.\n';
+}
+
+function submitFinalChallenge() {
+    const input = document.getElementById('final-challenge').value;
+    const validation = document.getElementById('final-validation');
+    
+    const hasConnection = input.includes('Connection') || input.includes('Edge');
+    const hasInput = input.includes('input');
+    const hasSubscription = input.includes('Subscription');
+    
+    if (hasConnection && hasInput && hasSubscription) {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(16, 185, 129, 0.2)';
+        validation.style.color = 'var(--success)';
+        validation.innerHTML = '🏆 ARCHITECT LEVEL ACHIEVED! You demonstrated mastery of modern GraphQL patterns: Relay pagination, input types, and real-time subscriptions. You are ready for FAANG-level interviews!';
+        addXP(500);
+        addBadge('GraphQL Architect');
+        updateLevel('Sensei');
+    } else {
+        validation.className = 'validation-message show';
+        validation.style.background = 'rgba(245, 158, 11, 0.2)';
+        validation.style.color = 'var(--warning)';
+        validation.innerHTML = '⚠️ Good start, but missing key elements: ' + 
+            [!hasConnection ? 'Cursor-based pagination (Connection/Edge types)' : '',
+             !hasInput ? 'Input types for mutations' : '',
+             !hasSubscription ? 'Subscription type for real-time' : ''].filter(Boolean).join(', ');
+    }
+}
+
+// Game Mechanics
+function addXP(amount) {
+    State.xp += amount;
+    document.getElementById('xp-value').textContent = State.xp;
+    
+    // Level progression
+    if (State.xp > 200) updateLevel('Apprentice');
+    if (State.xp > 500) updateLevel('Developer');
+    if (State.xp > 1000) updateLevel('Senior');
+    
+    // Update progress bar
+    const progress = Math.min((State.xp / 1000) * 100, 100);
+    document.getElementById('progress-bar').style.width = progress + '%';
+}
+
+function updateLevel(level) {
+    if (State.level !== level) {
+        State.level = level;
+        document.getElementById('level-value').textContent = level;
+        // Could add animation here
+    }
+}
+
+function addBadge(badge) {
+    if (!State.badges.includes(badge)) {
+        State.badges.push(badge);
+        const container = document.getElementById('badges-container');
+        const div = document.createElement('div');
+        div.className = 'badge';
+        div.textContent = '🏆 ' + badge;
+        container.appendChild(div);
+    }
+}
+
+function unlockModule(moduleId) {
+    const items = document.querySelectorAll('.nav-item');
+    items.forEach(item => {
+        if (item.onclick && item.onclick.toString().includes(moduleId)) {
+            item.classList.remove('locked');
+            item.style.animation = 'pulse 1s';
+        }
+    });
+}
+
+function loadModule(moduleId) {
+    State.currentModule = moduleId;
+    const module = modules[moduleId];
+    if (!module) return;
+    
+    // Update navigation
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    event.target.closest('.nav-item')?.classList.add('active');
+    
+    // Render content
+    const content = document.getElementById('main-content');
+    content.innerHTML = module.render();
+    content.scrollTop = 0;
+    
+    // Update pitfalls based on module
+    updatePitfalls(moduleId);
+}
+
+function updatePitfalls(moduleId) {
+    const container = document.getElementById('pitfalls-container');
+    const pitfalls = {
+        'vs-rest': [
+            { title: 'REST Mindset', text: 'Don\'t create queries like "getUserById". GraphQL uses field arguments: user(id: "1")' },
+            { title: 'Over-fetching', text: 'Even in GraphQL, requesting * is an anti-pattern. Be explicit.' }
+        ],
+        'schema': [
+            { title: 'Nullable Arrays', text: '[Post] vs [Post!] vs [Post!]! are very different. Use [Post!]! for empty lists.' },
+            { title: 'N+1 Queries', text: 'If your resolver calls DB per item, use DataLoader pattern.' }
+        ],
+        'apollo-client': [
+            { title: 'Cache Poisoning', text: 'Missing __typename breaks cache updates. Always include it.' },
+            { title: 'Memory Leaks', text: 'Forgetting to unsubscribe from watchQuery causes memory leaks.' }
+        ]
+    };
+    
+    if (pitfalls[moduleId]) {
+        container.innerHTML = pitfalls[moduleId].map(p => `
+            <div class="pitfall-card">
+                <div class="pitfall-title">⚠️ ${p.title}</div>
+                <p style="font-size: 0.875rem;">${p.text}</p>
+            </div>
+        `).join('');
+    }
+}
+
+// Initialize
+window.onload = () => {
+    loadModule('vs-rest');
+};
+</script>
+
+</body>
+</html>

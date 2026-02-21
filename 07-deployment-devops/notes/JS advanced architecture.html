@@ -1,0 +1,2940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serverless Architecture - Master Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --primary: #FF9900;
+    --secondary: #232F3E;
+    --accent: #00A8E1;
+    --success: #2ecc71;
+    --error: #e74c3c;
+    --warning: #f39c12;
+    --bg: #0a0e1a;
+    --card: #111827;
+    --card2: #1a2236;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: #1e2d3d;
+    --code-bg: #0d1117;
+    --purple: #9b59b6;
+    --teal: #1abc9c;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--secondary) 0%, #1a2744 50%, #0a0e1a 100%);
+    padding: 20px 30px;
+    border-bottom: 2px solid var(--primary);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .progress-bar-container {
+    background: var(--border);
+    border-radius: 10px;
+    height: 8px;
+    width: 200px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 10px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .progress-text { font-size: 0.75rem; color: var(--muted); }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    gap: 6px;
+    padding: 15px 30px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .nav-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    transition: all 0.3s;
+  }
+
+  .nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .nav-btn.active { background: var(--primary); border-color: var(--primary); color: #000; font-weight: 600; }
+
+  /* MAIN */
+  .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+
+  .card:hover { border-color: var(--primary); }
+
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge {
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .badge-orange { background: rgba(255,153,0,0.15); color: var(--primary); }
+  .badge-blue { background: rgba(0,168,225,0.15); color: var(--accent); }
+  .badge-green { background: rgba(46,204,113,0.15); color: var(--success); }
+  .badge-purple { background: rgba(155,89,182,0.15); color: var(--purple); }
+  .badge-teal { background: rgba(26,188,156,0.15); color: var(--teal); }
+  .badge-red { background: rgba(231,76,60,0.15); color: var(--error); }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    position: relative;
+    overflow-x: auto;
+  }
+
+  .code-block pre {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: #abb2bf;
+  }
+
+  .code-label {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 80px;
+    background: var(--border);
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: var(--primary); color: #000; }
+
+  /* SYNTAX COLORS */
+  .kw { color: #c678dd; }
+  .fn { color: #61afef; }
+  .str { color: #98c379; }
+  .num { color: #d19a66; }
+  .cmt { color: #5c6370; font-style: italic; }
+  .var { color: #e06c75; }
+  .prop { color: #e5c07b; }
+  .tag { color: #e06c75; }
+  .attr { color: #d19a66; }
+  .val { color: #98c379; }
+
+  /* INFO BOXES */
+  .info-box {
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 12px 0;
+    border-left: 4px solid;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .info-tip { background: rgba(0,168,225,0.08); border-color: var(--accent); }
+  .info-warn { background: rgba(243,156,18,0.08); border-color: var(--warning); }
+  .info-error { background: rgba(231,76,60,0.08); border-color: var(--error); }
+  .info-success { background: rgba(46,204,113,0.08); border-color: var(--success); }
+
+  .info-box strong { display: block; margin-bottom: 5px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+
+  /* CONCEPT CARDS */
+  .concept-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .concept-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .concept-icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .concept-card h3 { font-size: 1rem; margin-bottom: 8px; color: var(--primary); }
+  .concept-card p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap; }
+
+  .tab-btn {
+    padding: 7px 18px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active { background: var(--card2); border-color: var(--primary); color: var(--primary); }
+  .tab-btn:hover { color: var(--text); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* QUIZ */
+  .quiz-question {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .quiz-question h3 { font-size: 1rem; margin-bottom: 15px; line-height: 1.5; }
+  .quiz-question .q-num { color: var(--primary); font-size: 0.8rem; margin-bottom: 5px; }
+
+  .options { display: flex; flex-direction: column; gap: 8px; }
+
+  .option-btn {
+    padding: 12px 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    line-height: 1.4;
+  }
+
+  .option-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(0,168,225,0.05); }
+  .option-btn.correct { border-color: var(--success); background: rgba(46,204,113,0.1); color: var(--success); }
+  .option-btn.incorrect { border-color: var(--error); background: rgba(231,76,60,0.1); color: var(--error); }
+
+  .quiz-feedback {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: none;
+    line-height: 1.5;
+  }
+
+  .feedback-correct { background: rgba(46,204,113,0.1); border: 1px solid var(--success); color: var(--success); }
+  .feedback-incorrect { background: rgba(231,76,60,0.1); border: 1px solid var(--error); color: var(--error); }
+
+  /* EXERCISE */
+  .exercise-area {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .exercise-toolbar {
+    background: var(--card2);
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .exercise-toolbar span { font-size: 0.8rem; color: var(--muted); }
+
+  textarea.code-editor {
+    width: 100%;
+    min-height: 200px;
+    background: var(--code-bg);
+    border: none;
+    color: #abb2bf;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
+    padding: 20px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.7;
+  }
+
+  .btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn-primary { background: var(--primary); color: #000; }
+  .btn-primary:hover { background: #ffb733; transform: translateY(-1px); }
+  .btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--primary); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--error); color: #fff; }
+  .btn-sm { padding: 6px 14px; font-size: 0.75rem; }
+
+  .output-area {
+    background: #0a0a0a;
+    border-top: 1px solid var(--border);
+    padding: 15px 20px;
+    font-family: monospace;
+    font-size: 0.82rem;
+    min-height: 60px;
+    color: var(--success);
+    line-height: 1.6;
+  }
+
+  .output-area .out-error { color: var(--error); }
+  .output-area .out-info { color: var(--accent); }
+  .output-area .out-warn { color: var(--warning); }
+
+  /* PITFALLS */
+  .pitfall-card {
+    background: var(--card2);
+    border: 1px solid rgba(231,76,60,0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+  }
+
+  .pitfall-title {
+    color: var(--error);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* CHEATSHEET */
+  .cheat-section { margin-bottom: 25px; }
+  .cheat-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cheat-item {
+    display: flex;
+    gap: 15px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(30,45,61,0.5);
+    font-size: 0.82rem;
+    align-items: flex-start;
+  }
+
+  .cheat-key {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    white-space: nowrap;
+    min-width: 160px;
+  }
+
+  .cheat-val { color: var(--muted); line-height: 1.5; }
+
+  /* ARCHITECTURE DIAGRAM */
+  .arch-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+  }
+
+  .arch-box {
+    background: var(--card2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 0.82rem;
+    min-width: 120px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .arch-box:hover { transform: scale(1.05); }
+  .arch-box.orange { border-color: var(--primary); }
+  .arch-box.blue { border-color: var(--accent); }
+  .arch-box.green { border-color: var(--success); }
+  .arch-box.purple { border-color: var(--purple); }
+  .arch-box.teal { border-color: var(--teal); }
+
+  .arch-arrow { color: var(--muted); font-size: 1.5rem; }
+  .arch-box .icon { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+  .arch-box .label { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+
+  /* SCORE */
+  .score-display {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .score-number { font-size: 3rem; font-weight: 700; color: var(--primary); }
+  .score-label { font-size: 0.85rem; color: var(--muted); }
+
+  /* COMPARISON TABLE */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  .compare-table th {
+    background: var(--card2);
+    padding: 10px 15px;
+    text-align: left;
+    border: 1px solid var(--border);
+    color: var(--primary);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+  }
+  .compare-table td { padding: 10px 15px; border: 1px solid var(--border); line-height: 1.5; }
+  .compare-table tr:hover td { background: rgba(255,153,0,0.03); }
+
+  /* FLOW CHART */
+  .flow { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .flow-step {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 0.82rem;
+    text-align: center;
+    min-width: 200px;
+    transition: all 0.3s;
+  }
+  .flow-step:hover { border-color: var(--primary); }
+  .flow-arrow { color: var(--muted); font-size: 1.2rem; padding: 5px 0; }
+
+  /* INTERACTIVE SIMULATOR */
+  .simulator {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .sim-header {
+    background: var(--card2);
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+  }
+
+  .sim-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .sim-red { background: #ff5f57; }
+  .sim-yellow { background: #febc2e; }
+  .sim-green { background: #28c840; }
+
+  .sim-body { padding: 20px; }
+
+  .sim-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    opacity: 0.4;
+    transition: all 0.5s;
+    font-size: 0.82rem;
+  }
+
+  .sim-step.active-step { opacity: 1; background: rgba(255,153,0,0.05); border: 1px solid rgba(255,153,0,0.2); }
+  .sim-step.done { opacity: 0.7; }
+  .sim-step-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .sim-step-text { line-height: 1.5; }
+  .sim-step-title { font-weight: 600; color: var(--primary); margin-bottom: 3px; }
+  .sim-step-detail { color: var(--muted); font-size: 0.78rem; }
+
+  /* FILL BLANK */
+  .fill-blank {
+    display: inline-block;
+    min-width: 100px;
+    border-bottom: 2px solid var(--primary);
+    background: transparent;
+    color: var(--accent);
+    font-family: monospace;
+    font-size: 0.85rem;
+    padding: 2px 8px;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    outline: none;
+    text-align: center;
+  }
+
+  .fill-blank.correct-fill { border-color: var(--success); color: var(--success); }
+  .fill-blank.incorrect-fill { border-color: var(--error); color: var(--error); }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; }
+  .checklist li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-left: 30px; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .timeline-item { position: relative; margin-bottom: 25px; }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--bg);
+  }
+  .timeline-title { font-weight: 600; font-size: 0.9rem; color: var(--primary); margin-bottom: 5px; }
+  .timeline-body { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .section.active { animation: fadeIn 0.4s ease; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .pulse { animation: pulse 1.5s infinite; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 1s linear infinite; display: inline-block; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .header h1 { font-size: 1.1rem; }
+    .nav { padding: 10px 15px; }
+    .container { padding: 20px 15px; }
+    .card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⚡ Serverless Architecture</h1>
+    <div class="progress-text">Your Progress</div>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+    <div class="progress-bar-container"><div class="progress-bar" id="progressBar"></div></div>
+    <span class="progress-text" id="progressText">0% Complete</span>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showSection('intro')">🏠 Intro</button>
+  <button class="nav-btn" onclick="showSection('concepts')">💡 Concepts</button>
+  <button class="nav-btn" onclick="showSection('lambda')">λ Lambda</button>
+  <button class="nav-btn" onclick="showSection('apigateway')">🔌 API Gateway</button>
+  <button class="nav-btn" onclick="showSection('edge')">🌍 Edge Computing</button>
+  <button class="nav-btn" onclick="showSection('examples')">💻 Examples</button>
+  <button class="nav-btn" onclick="showSection('exercises')">🏋️ Exercises</button>
+  <button class="nav-btn" onclick="showSection('quiz')">🧪 Quiz</button>
+  <button class="nav-btn" onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+  <button class="nav-btn" onclick="showSection('cheatsheet')">📋 Cheat Sheet</button>
+</div>
+
+<div class="container">
+
+<!-- ============ INTRO ============ -->
+<div id="intro" class="section active">
+  <div class="card">
+    <div class="card-title">⚡ What is Serverless? <span class="badge badge-orange">FOUNDATION</span></div>
+    <p style="color:var(--muted);line-height:1.7;margin-bottom:15px">
+      Serverless does NOT mean "no servers" — it means <strong style="color:var(--primary)">YOU don't manage servers</strong>. 
+      The cloud provider handles provisioning, scaling, patching, and maintenance. You just write code.
+    </p>
+    <div class="info-box info-tip">
+      <strong>🎯 Simple Analogy</strong>
+      Think of serverless like using electricity at home. You don't own a power plant — you just plug in and pay for what you use. AWS runs the power plant.
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="concept-card">
+      <div class="concept-icon">🏗️</div>
+      <h3>Traditional Server</h3>
+      <p>You rent a server 24/7, manage OS, patches, scaling. Pay even when idle.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">⚡</div>
+      <h3>Serverless Function</h3>
+      <p>Code runs only when triggered. Scales automatically. Pay per millisecond of execution.</p>
+    </div>
+    <div class="concept-card">
+      <div class="concept-icon">🌍</div>
+      <h3>Edge Computing</h3>
+      <p>Code runs at locations closest to users worldwide. Ultra-low latency responses.</p>
+    </div>
+  </div>
+
+  <!-- Architecture Diagram -->
+  <div class="card">
+    <div class="card-title">🗺️ Serverless Architecture Flow</div>
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-box orange">
+          <span class="icon">👤</span>
+          User / Client
+          <div class="label">Browser / App</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box blue">
+          <span class="icon">🔌</span>
+          API Gateway
+          <div class="label">Routes & Auth</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box green">
+          <span class="icon">λ</span>
+          Lambda Function
+          <div class="label">Business Logic</div>
+        </div>
+      </div>
+      <div class="arch-row" style="margin-top:20px">
+        <div class="arch-box purple">
+          <span class="icon">🗄️</span>
+          DynamoDB
+          <div class="label">Database</div>
+        </div>
+        <div class="arch-arrow">←→</div>
+        <div class="arch-box teal">
+          <span class="icon">🪣</span>
+          S3 Bucket
+          <div class="label">File Storage</div>
+        </div>
+        <div class="arch-arrow">←→</div>
+        <div class="arch-box orange">
+          <span class="icon">📬</span>
+          SQS / SNS
+          <div class="label">Messaging</div>
+        </div>
+      </div>
+    </div>
+    <div class="info-box info-tip">
+      <strong>💡 Key Flow</strong>
+      User hits API Gateway → Gateway authenticates & routes → Lambda executes (cold start if first) → Lambda reads/writes data → Response returned in milliseconds
+    </div>
+  </div>
+
+  <!-- Why Serverless -->
+  <div class="card">
+    <div class="card-title">🏆 Why Companies Use Serverless</div>
+    <div class="grid-2">
+      <div>
+        <table class="compare-table">
+          <thead>
+            <tr><th>Traditional Servers</th><th>Serverless</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Pay 24/7 for idle capacity</td><td>Pay only when code runs</td></tr>
+            <tr><td>Manual scaling setup</td><td>Auto-scales to millions</td></tr>
+            <tr><td>Manage OS, patches, security</td><td>AWS manages all of that</td></tr>
+            <tr><td>Weeks to set up</td><td>Deploy in minutes</td></tr>
+            <tr><td>High operational overhead</td><td>Focus on business logic</td></tr>
+            <tr><td>Single region by default</td><td>Global with edge functions</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-title">2014 – AWS Lambda Launched</div>
+            <div class="timeline-body">First mainstream serverless compute platform. Changed how developers think about backend.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-title">2016 – API Gateway Matures</div>
+            <div class="timeline-body">Serverless APIs became production-ready with auth, throttling, and caching.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-title">2018 – Edge Functions Emerge</div>
+            <div class="timeline-body">CloudFront Functions, Lambda@Edge bring code to 400+ edge locations.</div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-title">2021–Now – Mainstream</div>
+            <div class="timeline-body">Vercel, Netlify, Cloudflare Workers make edge serverless accessible to all devs.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lifecycle -->
+  <div class="card">
+    <div class="card-title">🔄 Lambda Execution Lifecycle</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:20px 0">
+      <div class="flow">
+        <div class="flow-step" style="border-color:var(--primary)">📨 Event Trigger</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="border-color:var(--accent)">🧊 Cold Start (first time)</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="border-color:var(--success)">⚙️ Function Executes</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="border-color:var(--purple)">📤 Return Response</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="border-color:var(--warning)">💤 Container Kept Warm (~15 min)</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step" style="border-color:var(--muted)">🗑️ Container Destroyed</div>
+      </div>
+    </div>
+    <div class="info-box info-warn">
+      <strong>⚡ Cold Start vs Warm Start</strong>
+      Cold Start = First invocation, Lambda downloads your code and initializes (~100ms–3s). Warm Start = Container reused from previous call (~1–10ms). This is a key interview topic!
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <button class="btn btn-primary" onclick="showSection('concepts')">Next: Core Concepts →</button>
+  </div>
+</div>
+
+<!-- ============ CONCEPTS ============ -->
+<div id="concepts" class="section">
+  <div class="card">
+    <div class="card-title">💡 Core Serverless Concepts <span class="badge badge-blue">FUNDAMENTALS</span></div>
+    
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-faas')">FaaS</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-events')">Events & Triggers</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-state')">Stateless & State</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-pricing')">Pricing Model</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-limits')">Limits & Quotas</button>
+    </div>
+
+    <div id="tab-faas" class="tab-content active">
+      <h3 style="margin-bottom:12px;font-size:1rem">Function as a Service (FaaS)</h3>
+      <p style="color:var(--muted);line-height:1.7;margin-bottom:15px">
+        FaaS is the core of serverless. You deploy individual functions — not applications — and each function does one specific job.
+      </p>
+      <div class="code-block">
+        <div class="code-label">AWS Lambda Handler</div>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmt">// This IS a Lambda function — the entire backend</span>
+<span class="cmt">// AWS calls this function when an event occurs</span>
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>, <span class="var">context</span>) => {
+  <span class="cmt">// event  = the trigger data (HTTP request, S3 event, etc)</span>
+  <span class="cmt">// context = Lambda runtime info (function name, timeout, etc)</span>
+
+  <span class="kw">const</span> <span class="var">userId</span> = <span class="var">event</span>.<span class="prop">pathParameters</span>?.<span class="prop">id</span>;
+  
+  <span class="cmt">// Do your business logic</span>
+  <span class="kw">const</span> <span class="var">user</span> = <span class="kw">await</span> <span class="fn">getUser</span>(<span class="var">userId</span>);
+  
+  <span class="cmt">// Always return a response object for API Gateway</span>
+  <span class="kw">return</span> {
+    <span class="prop">statusCode</span>: <span class="num">200</span>,
+    <span class="prop">headers</span>: {
+      <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+      <span class="str">'Access-Control-Allow-Origin'</span>: <span class="str">'*'</span>  <span class="cmt">// CORS</span>
+    },
+    <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="prop">user</span> })
+  };
+};</pre>
+      </div>
+      <div class="info-box info-tip">
+        <strong>🔑 Key Properties of FaaS</strong>
+        1. Stateless (no memory between calls) &nbsp;|&nbsp; 2. Event-driven &nbsp;|&nbsp; 3. Short-lived (max 15 min) &nbsp;|&nbsp; 4. Single responsibility &nbsp;|&nbsp; 5. Automatically scaled
+      </div>
+    </div>
+
+    <div id="tab-events" class="tab-content">
+      <h3 style="margin-bottom:12px;font-size:1rem">Events & Triggers</h3>
+      <p style="color:var(--muted);line-height:1.7;margin-bottom:15px">Lambda functions are triggered by events from many AWS services:</p>
+      
+      <table class="compare-table" style="margin-bottom:15px">
+        <thead>
+          <tr><th>Trigger Source</th><th>Use Case</th><th>Event Shape</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>🔌 API Gateway</td><td>REST/HTTP APIs</td><td>{ httpMethod, path, body, headers }</td></tr>
+          <tr><td>🪣 S3</td><td>File upload processing</td><td>{ Records[{ s3: { bucket, object } }] }</td></tr>
+          <tr><td>📬 SQS</td><td>Queue message processing</td><td>{ Records[{ body, messageId }] }</td></tr>
+          <tr><td>📊 DynamoDB Streams</td><td>DB change reactions</td><td>{ Records[{ dynamodb: { NewImage } }] }</td></tr>
+          <tr><td>⏰ EventBridge / CW</td><td>Scheduled jobs (cron)</td><td>{ source, detail-type, detail }</td></tr>
+          <tr><td>🔑 Cognito</td><td>User auth hooks</td><td>{ triggerSource, userPoolId, request }</td></tr>
+          <tr><td>📨 SNS</td><td>Pub/sub notifications</td><td>{ Records[{ Sns: { Message } }] }</td></tr>
+        </tbody>
+      </table>
+
+      <div class="code-block">
+        <div class="code-label">S3 Event Handler</div>
+        <pre><span class="cmt">// Triggered when a file is uploaded to S3</span>
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">record</span> <span class="kw">of</span> <span class="var">event</span>.<span class="prop">Records</span>) {
+    <span class="kw">const</span> <span class="var">bucket</span> = <span class="var">record</span>.<span class="prop">s3</span>.<span class="prop">bucket</span>.<span class="prop">name</span>;
+    <span class="kw">const</span> <span class="var">key</span> = <span class="fn">decodeURIComponent</span>(<span class="var">record</span>.<span class="prop">s3</span>.<span class="prop">object</span>.<span class="prop">key</span>);
+    
+    <span class="fn">console.log</span>(<span class="str">`Processing: s3://<span class="var">${bucket}</span>/<span class="var">${key}</span>`</span>);
+    <span class="kw">await</span> <span class="fn">processImage</span>(<span class="var">bucket</span>, <span class="var">key</span>);
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div id="tab-state" class="tab-content">
+      <h3 style="margin-bottom:12px;font-size:1rem">Stateless Functions & Managing State</h3>
+      <div class="info-box info-warn">
+        <strong>⚠️ Lambda Is Stateless</strong>
+        Each invocation is independent. Variables in memory DO NOT persist between calls. You CANNOT rely on module-level variables for user data.
+      </div>
+      <div class="code-block">
+        <div class="code-label">State Management Patterns</div>
+        <pre><span class="cmt">// ❌ WRONG - This counter resets or gives wrong values</span>
+<span class="kw">let</span> <span class="var">requestCount</span> = <span class="num">0</span>; <span class="cmt">// Different containers have different values!</span>
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> () => {
+  <span class="var">requestCount</span>++; <span class="cmt">// Unreliable!</span>
+};
+
+<span class="cmt">// ✅ RIGHT - Use external storage for state</span>
+<span class="kw">const</span> { <span class="var">DynamoDBClient</span>, <span class="var">UpdateItemCommand</span> } = <span class="fn">require</span>(<span class="str">'@aws-sdk/client-dynamodb'</span>);
+<span class="kw">const</span> <span class="var">db</span> = <span class="kw">new</span> <span class="fn">DynamoDBClient</span>({});
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> () => {
+  <span class="cmt">// Increment counter in DynamoDB — consistent across all instances</span>
+  <span class="kw">await</span> <span class="var">db</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">UpdateItemCommand</span>({
+    <span class="prop">TableName</span>: <span class="str">'counters'</span>,
+    <span class="prop">Key</span>: { <span class="prop">id</span>: { <span class="prop">S</span>: <span class="str">'requests'</span> }},
+    <span class="prop">UpdateExpression</span>: <span class="str">'ADD #count :inc'</span>,
+    <span class="prop">ExpressionAttributeValues</span>: { <span class="str">':inc'</span>: { <span class="prop">N</span>: <span class="str">'1'</span> }}
+  }));
+};
+
+<span class="cmt">// ✅ OK - Reuse DB client between WARM invocations (not state, just optimization)</span>
+<span class="kw">const</span> <span class="var">client</span> = <span class="kw">new</span> <span class="fn">DynamoDBClient</span>({});  <span class="cmt">// Outside handler = initialized once</span></pre>
+      </div>
+      <div class="info-box info-success">
+        <strong>✅ Where to Store State</strong>
+        Session data → ElastiCache (Redis) &nbsp;|&nbsp; User data → DynamoDB &nbsp;|&nbsp; Files → S3 &nbsp;|&nbsp; App state → Step Functions &nbsp;|&nbsp; Temp cache → /tmp (512MB per container, not shared)
+      </div>
+    </div>
+
+    <div id="tab-pricing" class="tab-content">
+      <h3 style="margin-bottom:12px;font-size:1rem">Serverless Pricing Model</h3>
+      <div class="code-block">
+        <pre><span class="cmt">/* AWS Lambda Pricing (as of 2024) */</span>
+
+<span class="cmt">// Price per REQUEST:</span>
+<span class="prop">requests</span>: <span class="num">$0.20</span> per <span class="num">1,000,000</span> requests
+<span class="prop">free_tier</span>: <span class="num">1,000,000</span> requests/month FREE
+
+<span class="cmt">// Price per DURATION:</span>
+<span class="prop">duration</span>: <span class="num">$0.0000166667</span> per GB-second
+<span class="prop">formula</span>: (memory_GB × duration_seconds × invocations) × rate
+
+<span class="cmt">// Example calculation:</span>
+<span class="cmt">// 1M invocations, 512MB RAM, 200ms average duration</span>
+<span class="kw">const</span> <span class="fn">calculateCost</span> = () => {
+  <span class="kw">const</span> <span class="var">invocations</span> = <span class="num">1_000_000</span>;
+  <span class="kw">const</span> <span class="var">memoryGB</span> = <span class="num">0.5</span>;         <span class="cmt">// 512MB = 0.5 GB</span>
+  <span class="kw">const</span> <span class="var">durationSec</span> = <span class="num">0.2</span>;      <span class="cmt">// 200ms</span>
+  <span class="kw">const</span> <span class="var">ratePerGBSec</span> = <span class="num">0.0000166667</span>;
+  
+  <span class="kw">const</span> <span class="var">computeCost</span> = <span class="var">invocations</span> * <span class="var">memoryGB</span> * <span class="var">durationSec</span> * <span class="var">ratePerGBSec</span>;
+  <span class="kw">const</span> <span class="var">requestCost</span> = (<span class="var">invocations</span> / <span class="num">1_000_000</span>) * <span class="num">0.20</span>;
+  
+  <span class="kw">return</span> <span class="var">computeCost</span> + <span class="var">requestCost</span>; <span class="cmt">// ≈ $1.87 for 1M requests!</span>
+};</pre>
+      </div>
+      <div class="info-box info-success">
+        <strong>💰 Cost Reality Check</strong>
+        For most startups, Lambda is essentially FREE. You'd need millions of requests per month to pay meaningful amounts. Compare to EC2: a t3.small = ~$15/month running 24/7 doing nothing.
+      </div>
+    </div>
+
+    <div id="tab-limits" class="tab-content">
+      <h3 style="margin-bottom:12px;font-size:1rem">Lambda Limits & Quotas</h3>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Limit</th><th>Default</th><th>Max (Configurable)</th><th>Interview Importance</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Execution timeout</td><td>3 seconds</td><td>15 minutes</td><td>⭐⭐⭐⭐⭐</td></tr>
+          <tr><td>Memory</td><td>128 MB</td><td>10,240 MB (10 GB)</td><td>⭐⭐⭐⭐</td></tr>
+          <tr><td>Ephemeral storage (/tmp)</td><td>512 MB</td><td>10,240 MB</td><td>⭐⭐⭐</td></tr>
+          <tr><td>Deployment package size</td><td>—</td><td>50 MB (zip), 250 MB (unzipped)</td><td>⭐⭐⭐⭐</td></tr>
+          <tr><td>Concurrent executions</td><td>1,000/region</td><td>Higher (request increase)</td><td>⭐⭐⭐⭐⭐</td></tr>
+          <tr><td>Environment variables</td><td>—</td><td>4 KB total</td><td>⭐⭐</td></tr>
+          <tr><td>Payload size (sync)</td><td>—</td><td>6 MB request, 6 MB response</td><td>⭐⭐⭐</td></tr>
+          <tr><td>Layers per function</td><td>—</td><td>5 layers</td><td>⭐⭐</td></tr>
+        </tbody>
+      </table>
+      <div class="info-box info-warn">
+        <strong>⚠️ Reserved vs Unreserved Concurrency</strong>
+        By default all your functions share the 1,000 concurrency pool. If one function gets 1,000 concurrent requests, it can throttle ALL other functions in your account. Use Reserved Concurrency to protect critical functions.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LAMBDA ============ -->
+<div id="lambda" class="section">
+  <div class="card">
+    <div class="card-title">λ AWS Lambda Deep Dive <span class="badge badge-green">CORE SERVICE</span></div>
+    
+    <!-- Lambda Simulator -->
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:1rem;margin-bottom:12px;color:var(--muted)">🎮 Lambda Invocation Simulator</h3>
+      <div class="simulator">
+        <div class="sim-header">
+          <div class="sim-dot sim-red"></div>
+          <div class="sim-dot sim-yellow"></div>
+          <div class="sim-dot sim-green"></div>
+          <span style="margin-left:10px;color:var(--muted)">Lambda Runtime Environment</span>
+          <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="runSimulator()">▶ Run Simulation</button>
+        </div>
+        <div class="sim-body" id="simSteps">
+          <div class="sim-step" id="step0">
+            <span class="sim-step-icon">📨</span>
+            <div class="sim-step-text">
+              <div class="sim-step-title">Event Received</div>
+              <div class="sim-step-detail">API Gateway sends: { httpMethod: "GET", path: "/users/123" }</div>
+            </div>
+          </div>
+          <div class="sim-step" id="step1">
+            <span class="sim-step-icon">🧊</span>
+            <div class="sim-step-text">
+              <div class="sim-step-title">Cold Start: Container Initialization</div>
+              <div class="sim-step-detail">AWS provisions container, downloads deployment package (~250ms)</div>
+            </div>
+          </div>
+          <div class="sim-step" id="step2">
+            <span class="sim-step-icon">📦</span>
+            <div class="sim-step-text">
+              <div class="sim-step-title">Runtime Initialization</div>
+              <div class="sim-step-detail">Node.js starts, module-level code runs: DB client created, env vars loaded (~100ms)</div>
+            </div>
+          </div>
+          <div class="sim-step" id="step3">
+            <span class="sim-step-icon">⚙️</span>
+            <div class="sim-step-text">
+              <div class="sim-step-title">Handler Execution</div>
+              <div class="sim-step-detail">exports.handler() called → getUser(123) → DynamoDB query → result (~45ms)</div>
+            </div>
+          </div>
+          <div class="sim-step" id="step4">
+            <span class="sim-step-icon">📤</span>
+            <div class="sim-step-text">
+              <div class="sim-step-title">Response Returned</div>
+              <div class="sim-step-detail">{ statusCode: 200, body: '{"id":123,"name":"Alice"}' } → API Gateway → Client</div>
+            </div>
+          </div>
+          <div class="sim-step" id="step5">
+            <span class="sim-step-icon">♨️</span>
+            <div class="sim-step-text">
+              <div class="sim-step-title">Container Kept Warm</div>
+              <div class="sim-step-detail">Container stays alive ~15 minutes. Next call = warm start (skips steps 1 & 2)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'ltab-handler')">Handler Patterns</button>
+      <button class="tab-btn" onclick="switchTab(this,'ltab-env')">Environment & Config</button>
+      <button class="tab-btn" onclick="switchTab(this,'ltab-layers')">Layers & Dependencies</button>
+      <button class="tab-btn" onclick="switchTab(this,'ltab-error')">Error Handling</button>
+      <button class="tab-btn" onclick="switchTab(this,'ltab-iac')">IaC / SAM / CDK</button>
+    </div>
+
+    <div id="ltab-handler" class="tab-content active">
+      <div class="code-block">
+        <div class="code-label">Complete Lambda Handler Patterns</div>
+        <pre><span class="cmt">// ═══════════════════════════════════════════════
+// PATTERN 1: Simple REST API Handler
+// ═══════════════════════════════════════════════</span>
+<span class="kw">const</span> <span class="fn">buildResponse</span> = (<span class="var">statusCode</span>, <span class="var">body</span>) => ({
+  <span class="prop">statusCode</span>,
+  <span class="prop">headers</span>: {
+    <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+    <span class="str">'Access-Control-Allow-Origin'</span>: <span class="str">'*'</span>,
+    <span class="str">'Access-Control-Allow-Credentials'</span>: <span class="str">'true'</span>
+  },
+  <span class="prop">body</span>: <span class="kw">typeof</span> <span class="var">body</span> === <span class="str">'string'</span> ? <span class="var">body</span> : <span class="fn">JSON.stringify</span>(<span class="var">body</span>)
+});
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { <span class="var">httpMethod</span>, <span class="var">pathParameters</span>, <span class="var">body</span> } = <span class="var">event</span>;
+    
+    <span class="cmt">// Route based on HTTP method</span>
+    <span class="kw">switch</span> (<span class="var">httpMethod</span>) {
+      <span class="kw">case</span> <span class="str">'GET'</span>:
+        <span class="kw">return</span> <span class="fn">buildResponse</span>(<span class="num">200</span>, <span class="kw">await</span> <span class="fn">getItem</span>(<span class="var">pathParameters</span>.<span class="prop">id</span>));
+      <span class="kw">case</span> <span class="str">'POST'</span>:
+        <span class="kw">return</span> <span class="fn">buildResponse</span>(<span class="num">201</span>, <span class="kw">await</span> <span class="fn">createItem</span>(<span class="fn">JSON.parse</span>(<span class="var">body</span>)));
+      <span class="kw">case</span> <span class="str">'PUT'</span>:
+        <span class="kw">return</span> <span class="fn">buildResponse</span>(<span class="num">200</span>, <span class="kw">await</span> <span class="fn">updateItem</span>(<span class="var">pathParameters</span>.<span class="prop">id</span>, <span class="fn">JSON.parse</span>(<span class="var">body</span>)));
+      <span class="kw">case</span> <span class="str">'DELETE'</span>:
+        <span class="kw">await</span> <span class="fn">deleteItem</span>(<span class="var">pathParameters</span>.<span class="prop">id</span>);
+        <span class="kw">return</span> <span class="fn">buildResponse</span>(<span class="num">204</span>, {});
+      <span class="kw">default</span>:
+        <span class="kw">return</span> <span class="fn">buildResponse</span>(<span class="num">405</span>, { <span class="prop">error</span>: <span class="str">'Method not allowed'</span> });
+    }
+  } <span class="kw">catch</span> (<span class="var">error</span>) {
+    <span class="fn">console.error</span>(<span class="str">'Handler error:'</span>, <span class="var">error</span>);
+    <span class="kw">return</span> <span class="fn">buildResponse</span>(<span class="num">500</span>, { <span class="prop">error</span>: <span class="str">'Internal server error'</span> });
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div id="ltab-env" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Environment Variables & Configuration</div>
+        <pre><span class="cmt">// Access environment variables — set in Lambda console or IaC</span>
+<span class="kw">const</span> <span class="var">config</span> = {
+  <span class="prop">tableName</span>: <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">TABLE_NAME</span>,           <span class="cmt">// 'users-table-prod'</span>
+  <span class="prop">bucketName</span>: <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">S3_BUCKET</span>,           <span class="cmt">// 'my-app-uploads'</span>
+  <span class="prop">stage</span>: <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">STAGE</span> || <span class="str">'dev'</span>,            <span class="cmt">// 'prod'</span>
+  <span class="prop">region</span>: <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">AWS_REGION</span>,              <span class="cmt">// Auto-set by Lambda</span>
+};
+
+<span class="cmt">// ✅ Best Practice: Validate required env vars at startup (module level)</span>
+<span class="kw">const</span> <span class="fn">requireEnv</span> = (<span class="var">name</span>) => {
+  <span class="kw">const</span> <span class="var">val</span> = <span class="var">process</span>.<span class="prop">env</span>[<span class="var">name</span>];
+  <span class="kw">if</span> (!<span class="var">val</span>) <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">Error</span>(<span class="str">`Missing required env var: <span class="var">${name}</span>`</span>);
+  <span class="kw">return</span> <span class="var">val</span>;
+};
+
+<span class="cmt">// Fail FAST at cold start, not during a request</span>
+<span class="kw">const</span> <span class="var">TABLE_NAME</span> = <span class="fn">requireEnv</span>(<span class="str">'TABLE_NAME'</span>);
+
+<span class="cmt">// ✅ Use SSM Parameter Store for secrets (not env vars!)</span>
+<span class="kw">const</span> { <span class="var">SSMClient</span>, <span class="var">GetParameterCommand</span> } = <span class="fn">require</span>(<span class="str">'@aws-sdk/client-ssm'</span>);
+<span class="kw">const</span> <span class="var">ssm</span> = <span class="kw">new</span> <span class="fn">SSMClient</span>({});
+
+<span class="cmt">// Cache secrets between warm invocations</span>
+<span class="kw">let</span> <span class="var">cachedSecret</span> = <span class="kw">null</span>;
+<span class="kw">const</span> <span class="fn">getSecret</span> = <span class="kw">async</span> () => {
+  <span class="kw">if</span> (<span class="var">cachedSecret</span>) <span class="kw">return</span> <span class="var">cachedSecret</span>; <span class="cmt">// Reuse on warm start</span>
+  <span class="kw">const</span> <span class="var">result</span> = <span class="kw">await</span> <span class="var">ssm</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">GetParameterCommand</span>({
+    <span class="prop">Name</span>: <span class="str">'/myapp/prod/db-password'</span>, <span class="prop">WithDecryption</span>: <span class="kw">true</span>
+  }));
+  <span class="var">cachedSecret</span> = <span class="var">result</span>.<span class="prop">Parameter</span>.<span class="prop">Value</span>;
+  <span class="kw">return</span> <span class="var">cachedSecret</span>;
+};</pre>
+      </div>
+    </div>
+
+    <div id="ltab-layers" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Lambda Layers — Share Code Across Functions</div>
+        <pre><span class="cmt">// Lambda Layer = a .zip with shared libraries/code
+// Mounted at /opt/ in the Lambda runtime
+
+// Layer structure:
+// my-layer.zip
+//   └── nodejs/
+//       └── node_modules/
+//           ├── lodash/
+//           └── axios/
+
+// In your Lambda function (layers provide the modules):
+<span class="kw">const</span> <span class="var">_</span> = <span class="fn">require</span>(<span class="str">'lodash'</span>);        <span class="cmt">// From layer</span>
+<span class="kw">const</span> <span class="var">axios</span> = <span class="fn">require</span>(<span class="str">'axios'</span>);      <span class="cmt">// From layer</span>
+
+<span class="cmt">// Custom shared utilities layer</span>
+<span class="cmt">// In: /opt/nodejs/utils/response.js</span>
+<span class="kw">const</span> { <span class="fn">buildResponse</span>, <span class="fn">buildError</span> } = <span class="fn">require</span>(<span class="str">'/opt/nodejs/utils/response'</span>);
+
+<span class="cmt">// Benefits:
+// ✅ Deployment package smaller (faster cold starts)
+// ✅ Share code without copy-paste
+// ✅ Update dependencies once across all functions
+// ✅ Up to 5 layers per function (250MB total)</span></pre>
+      </div>
+    </div>
+
+    <div id="ltab-error" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Error Handling Patterns</div>
+        <pre><span class="cmt">// ═══════════════════════════════════════════════
+// Synchronous errors (API Gateway) — return HTTP response
+// ═══════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="fn">AppError</span> <span class="kw">extends</span> <span class="fn">Error</span> {
+  <span class="fn">constructor</span>(<span class="var">message</span>, <span class="var">statusCode</span> = <span class="num">500</span>) {
+    <span class="kw">super</span>(<span class="var">message</span>);
+    <span class="kw">this</span>.<span class="prop">statusCode</span> = <span class="var">statusCode</span>;
+  }
+}
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> <span class="var">data</span> = <span class="fn">JSON.parse</span>(<span class="var">event</span>.<span class="prop">body</span>);
+    
+    <span class="kw">if</span> (!<span class="var">data</span>.<span class="prop">email</span>) <span class="kw">throw</span> <span class="kw">new</span> <span class="fn">AppError</span>(<span class="str">'Email required'</span>, <span class="num">400</span>);
+    
+    <span class="kw">const</span> <span class="var">result</span> = <span class="kw">await</span> <span class="fn">createUser</span>(<span class="var">data</span>);
+    <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">201</span>, <span class="prop">body</span>: <span class="fn">JSON.stringify</span>(<span class="var">result</span>) };
+    
+  } <span class="kw">catch</span> (<span class="var">error</span>) {
+    <span class="fn">console.error</span>(<span class="fn">JSON.stringify</span>({  <span class="cmt">// Structured logging for CloudWatch</span>
+      <span class="prop">level</span>: <span class="str">'ERROR'</span>,
+      <span class="prop">message</span>: <span class="var">error</span>.<span class="prop">message</span>,
+      <span class="prop">stack</span>: <span class="var">error</span>.<span class="prop">stack</span>,
+      <span class="prop">requestId</span>: <span class="var">context</span>.<span class="prop">awsRequestId</span>
+    }));
+    
+    <span class="kw">const</span> <span class="var">status</span> = <span class="var">error</span>.<span class="prop">statusCode</span> || <span class="num">500</span>;
+    <span class="kw">return</span> {
+      <span class="prop">statusCode</span>: <span class="var">status</span>,
+      <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({
+        <span class="prop">error</span>: <span class="var">status</span> < <span class="num">500</span> ? <span class="var">error</span>.<span class="prop">message</span> : <span class="str">'Internal server error'</span>
+      })
+    };
+  }
+};
+
+<span class="cmt">// ═══════════════════════════════════════════════
+// Async errors (SQS, S3) — throw to trigger retry
+// ═══════════════════════════════════════════════</span>
+<span class="kw">exports</span>.<span class="prop">sqsHandler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> <span class="var">failures</span> = [];
+  
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">record</span> <span class="kw">of</span> <span class="var">event</span>.<span class="prop">Records</span>) {
+    <span class="kw">try</span> {
+      <span class="kw">await</span> <span class="fn">processMessage</span>(<span class="var">record</span>.<span class="prop">body</span>);
+    } <span class="kw">catch</span> (<span class="var">err</span>) {
+      <span class="fn">console.error</span>(<span class="str">'Failed to process'</span>, <span class="var">record</span>.<span class="prop">messageId</span>);
+      <span class="var">failures</span>.<span class="fn">push</span>({ <span class="prop">itemIdentifier</span>: <span class="var">record</span>.<span class="prop">messageId</span> });
+    }
+  }
+  
+  <span class="cmt">// Return failed items for SQS partial batch retry</span>
+  <span class="kw">return</span> { <span class="prop">batchItemFailures</span>: <span class="var">failures</span> };
+};</pre>
+      </div>
+    </div>
+
+    <div id="ltab-iac" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">AWS SAM Template (Infrastructure as Code)</div>
+        <pre><span class="cmt"># template.yaml — Define your entire serverless app</span>
+<span class="prop">AWSTemplateFormatVersion</span>: <span class="str">'2010-09-09'</span>
+<span class="prop">Transform</span>: <span class="str">AWS::Serverless-2016-10-31'</span>
+
+<span class="prop">Globals</span>:
+  <span class="prop">Function</span>:
+    <span class="prop">Runtime</span>: <span class="str">nodejs20.x</span>
+    <span class="prop">Timeout</span>: <span class="num">30</span>
+    <span class="prop">MemorySize</span>: <span class="num">512</span>
+    <span class="prop">Environment</span>:
+      <span class="prop">Variables</span>:
+        <span class="prop">TABLE_NAME</span>: !<span class="fn">Ref</span> <span class="var">UsersTable</span>
+        <span class="prop">STAGE</span>: <span class="str">prod</span>
+
+<span class="prop">Resources</span>:
+  <span class="prop">GetUserFunction</span>:
+    <span class="prop">Type</span>: <span class="str">AWS::Serverless::Function</span>
+    <span class="prop">Properties</span>:
+      <span class="prop">Handler</span>: <span class="str">src/handlers/getUser.handler</span>
+      <span class="prop">Events</span>:
+        <span class="prop">GetUser</span>:
+          <span class="prop">Type</span>: <span class="str">Api</span>
+          <span class="prop">Properties</span>:
+            <span class="prop">Path</span>: <span class="str">/users/{id}</span>
+            <span class="prop">Method</span>: <span class="str">get</span>
+      <span class="prop">Policies</span>:
+        - <span class="prop">DynamoDBReadPolicy</span>:
+            <span class="prop">TableName</span>: !<span class="fn">Ref</span> <span class="var">UsersTable</span>
+
+  <span class="prop">UsersTable</span>:
+    <span class="prop">Type</span>: <span class="str">AWS::Serverless::SimpleTable</span>
+    <span class="prop">Properties</span>:
+      <span class="prop">PrimaryKey</span>:
+        <span class="prop">Name</span>: <span class="str">id</span>
+        <span class="prop">Type</span>: <span class="str">String</span>
+
+<span class="cmt"># Deploy: sam build && sam deploy --guided</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ API GATEWAY ============ -->
+<div id="apigateway" class="section">
+  <div class="card">
+    <div class="card-title">🔌 API Gateway <span class="badge badge-blue">ROUTING & AUTH</span></div>
+    
+    <p style="color:var(--muted);line-height:1.7;margin-bottom:20px">
+      API Gateway is the front door for your Lambda functions. It handles routing, authentication, throttling, CORS, caching, and request/response transformation.
+    </p>
+
+    <div class="grid-2" style="margin-bottom:20px">
+      <div>
+        <h3 style="font-size:0.9rem;color:var(--primary);margin-bottom:12px">API Gateway Types</h3>
+        <table class="compare-table">
+          <thead><tr><th>Type</th><th>Best For</th><th>Features</th></tr></thead>
+          <tbody>
+            <tr><td><strong>REST API</strong></td><td>Full-featured APIs</td><td>Caching, request validation, API keys</td></tr>
+            <tr><td><strong>HTTP API</strong></td><td>Lower cost, simpler</td><td>70% cheaper, JWT auth built-in, faster</td></tr>
+            <tr><td><strong>WebSocket API</strong></td><td>Real-time apps</td><td>Persistent connections, chat, gaming</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="info-box info-tip">
+          <strong>🎯 Which API Type to Use?</strong>
+          Use <strong>HTTP API</strong> for new projects (cheaper, faster, simpler). Use <strong>REST API</strong> only if you need caching, request/response mapping, or usage plans. Use <strong>WebSocket</strong> for real-time bidirectional communication.
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'atab-routes')">Routes & Integration</button>
+      <button class="tab-btn" onclick="switchTab(this,'atab-auth')">Authorization</button>
+      <button class="tab-btn" onclick="switchTab(this,'atab-cors')">CORS</button>
+      <button class="tab-btn" onclick="switchTab(this,'atab-throttle')">Throttling & Caching</button>
+      <button class="tab-btn" onclick="switchTab(this,'atab-openapi')">OpenAPI / Swagger</button>
+    </div>
+
+    <div id="atab-routes" class="tab-content active">
+      <div class="code-block">
+        <div class="code-label">API Gateway Route Configuration (AWS CDK)</div>
+        <pre><span class="kw">const</span> { <span class="var">HttpApi</span>, <span class="var">HttpMethod</span>, <span class="var">HttpLambdaIntegration</span> } = 
+  <span class="fn">require</span>(<span class="str">'@aws-cdk/aws-apigatewayv2-alpha'</span>);
+
+<span class="cmt">// HTTP API — cheapest, fastest</span>
+<span class="kw">const</span> <span class="var">api</span> = <span class="kw">new</span> <span class="fn">HttpApi</span>(<span class="kw">this</span>, <span class="str">'MyApi'</span>, {
+  <span class="prop">apiName</span>: <span class="str">'users-api'</span>,
+  <span class="prop">corsPreflight</span>: {
+    <span class="prop">allowOrigins</span>: [<span class="str">'https://myapp.com'</span>],
+    <span class="prop">allowMethods</span>: [<span class="var">HttpMethod</span>.<span class="prop">GET</span>, <span class="var">HttpMethod</span>.<span class="prop">POST</span>],
+  }
+});
+
+<span class="cmt">// Add routes pointing to Lambda functions</span>
+<span class="var">api</span>.<span class="fn">addRoutes</span>({
+  <span class="prop">path</span>: <span class="str">'/users'</span>,
+  <span class="prop">methods</span>: [<span class="var">HttpMethod</span>.<span class="prop">GET</span>],
+  <span class="prop">integration</span>: <span class="kw">new</span> <span class="fn">HttpLambdaIntegration</span>(<span class="str">'ListUsers'</span>, <span class="var">listUsersLambda</span>)
+});
+
+<span class="var">api</span>.<span class="fn">addRoutes</span>({
+  <span class="prop">path</span>: <span class="str">'/users/{id}'</span>,   <span class="cmt">// Path parameter</span>
+  <span class="prop">methods</span>: [<span class="var">HttpMethod</span>.<span class="prop">GET</span>, <span class="var">HttpMethod</span>.<span class="prop">PUT</span>, <span class="var">HttpMethod</span>.<span class="prop">DELETE</span>],
+  <span class="prop">integration</span>: <span class="kw">new</span> <span class="fn">HttpLambdaIntegration</span>(<span class="str">'UserCRUD'</span>, <span class="var">userLambda</span>)
+});
+
+<span class="cmt">// In Lambda: access path param via event.pathParameters.id
+// Access query string via event.queryStringParameters.filter</span></pre>
+      </div>
+    </div>
+
+    <div id="atab-auth" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Lambda Authorizer — Custom Auth</div>
+        <pre><span class="cmt">// ═══════════════════════════════════════════════
+// Lambda Authorizer — called BEFORE your main Lambda
+// Validates JWT, API keys, custom tokens etc.
+// ═══════════════════════════════════════════════</span>
+<span class="kw">const</span> <span class="var">jwt</span> = <span class="fn">require</span>(<span class="str">'jsonwebtoken'</span>);
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> <span class="var">token</span> = <span class="var">event</span>.<span class="prop">authorizationToken</span>?.<span class="fn">split</span>(<span class="str">' '</span>)[<span class="num">1</span>]; <span class="cmt">// "Bearer eyJ..."</span>
+  
+  <span class="kw">if</span> (!<span class="var">token</span>) <span class="kw">return</span> <span class="fn">denyPolicy</span>(<span class="str">'*'</span>);
+  
+  <span class="kw">try</span> {
+    <span class="kw">const</span> <span class="var">decoded</span> = <span class="var">jwt</span>.<span class="fn">verify</span>(<span class="var">token</span>, <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">JWT_SECRET</span>);
+    
+    <span class="cmt">// Return policy document — AWS caches this by token (up to 3600s)</span>
+    <span class="kw">return</span> {
+      <span class="prop">principalId</span>: <span class="var">decoded</span>.<span class="prop">sub</span>,
+      <span class="prop">policyDocument</span>: {
+        <span class="prop">Version</span>: <span class="str">'2012-10-17'</span>,
+        <span class="prop">Statement</span>: [{
+          <span class="prop">Action</span>: <span class="str">'execute-api:Invoke'</span>,
+          <span class="prop">Effect</span>: <span class="str">'Allow'</span>,
+          <span class="prop">Resource</span>: <span class="var">event</span>.<span class="prop">methodArn</span>
+        }]
+      },
+      <span class="prop">context</span>: {  <span class="cmt">// Passed to your main Lambda</span>
+        <span class="prop">userId</span>: <span class="var">decoded</span>.<span class="prop">sub</span>,
+        <span class="prop">role</span>: <span class="var">decoded</span>.<span class="prop">role</span>,
+        <span class="prop">email</span>: <span class="var">decoded</span>.<span class="prop">email</span>
+      }
+    };
+  } <span class="kw">catch</span> (<span class="var">err</span>) {
+    <span class="kw">return</span> <span class="fn">denyPolicy</span>(<span class="var">event</span>.<span class="prop">methodArn</span>);
+  }
+};
+
+<span class="cmt">// In main Lambda: access auth context</span>
+<span class="kw">const</span> <span class="var">userId</span> = <span class="var">event</span>.<span class="prop">requestContext</span>.<span class="prop">authorizer</span>.<span class="prop">userId</span>;</pre>
+      </div>
+    </div>
+
+    <div id="atab-cors" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">CORS Configuration</div>
+        <pre><span class="cmt">// CORS = Cross-Origin Resource Sharing
+// Browser blocks requests from different origins unless server allows it
+
+// ✅ Method 1: Handle in API Gateway (PREFERRED for HTTP API)</span>
+<span class="cmt">// Set in API Gateway console or CDK — no Lambda code needed</span>
+
+<span class="cmt">// ✅ Method 2: Handle in Lambda (for REST API or complex needs)</span>
+<span class="kw">const</span> <span class="var">corsHeaders</span> = {
+  <span class="str">'Access-Control-Allow-Origin'</span>: <span class="str">'https://myapp.com'</span>,
+  <span class="str">'Access-Control-Allow-Headers'</span>: <span class="str">'Content-Type,Authorization,X-Api-Key'</span>,
+  <span class="str">'Access-Control-Allow-Methods'</span>: <span class="str">'GET,POST,PUT,DELETE,OPTIONS'</span>,
+  <span class="str">'Access-Control-Allow-Credentials'</span>: <span class="str">'true'</span>,
+  <span class="str">'Access-Control-Max-Age'</span>: <span class="str">'86400'</span>  <span class="cmt">// Cache preflight 24h</span>
+};
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="cmt">// Handle OPTIONS preflight request</span>
+  <span class="kw">if</span> (<span class="var">event</span>.<span class="prop">httpMethod</span> === <span class="str">'OPTIONS'</span>) {
+    <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">200</span>, <span class="prop">headers</span>: <span class="var">corsHeaders</span>, <span class="prop">body</span>: <span class="str">''</span> };
+  }
+  
+  <span class="kw">return</span> {
+    <span class="prop">statusCode</span>: <span class="num">200</span>,
+    <span class="prop">headers</span>: { ...<span class="var">corsHeaders</span>, <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="prop">data</span>: <span class="str">'hello'</span> })
+  };
+};
+
+<span class="cmt">// ❌ COMMON MISTAKE: Wildcard origin with credentials</span>
+<span class="cmt">// 'Access-Control-Allow-Origin': '*'  +  credentials: true = BROWSER ERROR!</span></pre>
+      </div>
+    </div>
+
+    <div id="atab-throttle" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Throttling & Caching Configuration</div>
+        <pre><span class="cmt">/* API Gateway Rate Limiting */</span>
+
+<span class="cmt">// Account level default: 10,000 RPS, burst 5,000
+// Per-route limits override account defaults
+
+// AWS CDK throttling config:</span>
+<span class="kw">const</span> <span class="var">restApi</span> = <span class="kw">new</span> <span class="fn">RestApi</span>(<span class="kw">this</span>, <span class="str">'Api'</span>, {
+  <span class="prop">deployOptions</span>: {
+    <span class="prop">throttlingRateLimit</span>: <span class="num">1000</span>,     <span class="cmt">// requests per second</span>
+    <span class="prop">throttlingBurstLimit</span>: <span class="num">2000</span>,    <span class="cmt">// max burst</span>
+    <span class="cmt">// Caching</span>
+    <span class="prop">cachingEnabled</span>: <span class="kw">true</span>,
+    <span class="prop">cacheClusterEnabled</span>: <span class="kw">true</span>,
+    <span class="prop">cacheClusterSize</span>: <span class="str">'0.5'</span>,      <span class="cmt">// GB</span>
+    <span class="prop">cacheTtl</span>: <span class="var">Duration</span>.<span class="fn">minutes</span>(<span class="num">5</span>),
+  }
+});
+
+<span class="cmt">// Usage Plans + API Keys (for third-party API monetization):</span>
+<span class="kw">const</span> <span class="var">plan</span> = <span class="kw">new</span> <span class="fn">UsagePlan</span>(<span class="kw">this</span>, <span class="str">'Plan'</span>, {
+  <span class="prop">throttle</span>: { <span class="prop">rateLimit</span>: <span class="num">100</span>, <span class="prop">burstLimit</span>: <span class="num">200</span> },
+  <span class="prop">quota</span>: { <span class="prop">limit</span>: <span class="num">10000</span>, <span class="prop">period</span>: <span class="var">Period</span>.<span class="prop">MONTH</span> }
+});
+
+<span class="cmt">// When throttled: 429 Too Many Requests
+// Implement exponential backoff on client!</span>
+<span class="kw">const</span> <span class="fn">callWithRetry</span> = <span class="kw">async</span> (<span class="var">fn</span>, <span class="var">retries</span> = <span class="num">3</span>) => {
+  <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> < <span class="var">retries</span>; <span class="var">i</span>++) {
+    <span class="kw">try</span> { <span class="kw">return</span> <span class="kw">await</span> <span class="fn">fn</span>(); } <span class="kw">catch</span> (<span class="var">e</span>) {
+      <span class="kw">if</span> (<span class="var">e</span>.<span class="prop">statusCode</span> === <span class="num">429</span>) {
+        <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Promise</span>(<span class="var">r</span> => <span class="fn">setTimeout</span>(<span class="var">r</span>, <span class="num">2</span> ** <span class="var">i</span> * <span class="num">100</span>)); <span class="cmt">// 100, 200, 400ms</span>
+      } <span class="kw">else</span> <span class="kw">throw</span> <span class="var">e</span>;
+    }
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div id="atab-openapi" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">OpenAPI Spec with API Gateway Extensions</div>
+        <pre><span class="cmt"># openapi.yaml — Define API + Gateway config together</span>
+<span class="prop">openapi</span>: <span class="str">'3.0.0'</span>
+<span class="prop">info</span>:
+  <span class="prop">title</span>: <span class="str">Users API</span>
+  <span class="prop">version</span>: <span class="str">'1.0'</span>
+
+<span class="prop">paths</span>:
+  <span class="str">/users/{id}</span>:
+    <span class="prop">get</span>:
+      <span class="prop">summary</span>: <span class="str">Get user by ID</span>
+      <span class="prop">parameters</span>:
+        - <span class="prop">name</span>: <span class="str">id</span>
+          <span class="prop">in</span>: <span class="str">path</span>
+          <span class="prop">required</span>: <span class="kw">true</span>
+          <span class="prop">schema</span>: { <span class="prop">type</span>: <span class="str">string</span> }
+      <span class="prop">responses</span>:
+        <span class="str">'200'</span>:
+          <span class="prop">description</span>: <span class="str">Success</span>
+      <span class="cmt"># AWS Extension — links route to Lambda</span>
+      <span class="prop">x-amazon-apigateway-integration</span>:
+        <span class="prop">type</span>: <span class="str">aws_proxy</span>
+        <span class="prop">httpMethod</span>: <span class="str">POST</span>
+        <span class="prop">uri</span>: <span class="str">arn:aws:apigateway:us-east-1:lambda:path/functions/${GetUserFn}/invocations</span>
+        <span class="prop">payloadFormatVersion</span>: <span class="str">'2.0'</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EDGE COMPUTING ============ -->
+<div id="edge" class="section">
+  <div class="card">
+    <div class="card-title">🌍 Edge Computing <span class="badge badge-purple">GLOBAL SCALE</span></div>
+
+    <div class="arch-diagram">
+      <p style="color:var(--muted);font-size:0.82rem;margin-bottom:15px">Code runs at 400+ AWS edge locations worldwide — closest to the user</p>
+      <div class="arch-row">
+        <div class="arch-box orange"><span class="icon">🇺🇸</span>User in NYC</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box blue"><span class="icon">⚡</span>Edge Location<br><div class="label">~5ms away</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box green"><span class="icon">✅</span>Response<br><div class="label">No round trip needed</div></div>
+      </div>
+      <div style="margin:15px 0;color:var(--muted);font-size:0.8rem">vs Traditional</div>
+      <div class="arch-row">
+        <div class="arch-box orange"><span class="icon">🇺🇸</span>User in NYC</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box" style="border-color:var(--error)"><span class="icon">☁️</span>us-east-1<br><div class="label">Still ok</div></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box" style="border-color:var(--error)"><span class="icon">⏳</span>150ms latency<br><div class="label">To Singapore</div></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'etab-cff')">CloudFront Functions</button>
+      <button class="tab-btn" onclick="switchTab(this,'etab-lambda-edge')">Lambda@Edge</button>
+      <button class="tab-btn" onclick="switchTab(this,'etab-compare')">Comparison</button>
+      <button class="tab-btn" onclick="switchTab(this,'etab-workers')">Cloudflare Workers</button>
+      <button class="tab-btn" onclick="switchTab(this,'etab-usecases')">Use Cases</button>
+    </div>
+
+    <div id="etab-cff" class="tab-content active">
+      <h3 style="font-size:0.95rem;margin-bottom:12px;color:var(--primary)">CloudFront Functions</h3>
+      <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:12px">Runs at 400+ CloudFront edge locations. Ultra-fast (~1ms), cheap, but limited (no network calls, 2MB code limit, 1ms max execution).</p>
+      <div class="code-block">
+        <div class="code-label">CloudFront Function — URL Rewrite & Redirect</div>
+        <pre><span class="cmt">// CloudFront Functions use JavaScript 2.0 (not Node.js)
+// No require(), no async, no network calls — pure logic only</span>
+
+<span class="kw">function</span> <span class="fn">handler</span>(<span class="var">event</span>) {
+  <span class="kw">var</span> <span class="var">request</span> = <span class="var">event</span>.<span class="prop">request</span>;
+  <span class="kw">var</span> <span class="var">uri</span> = <span class="var">request</span>.<span class="prop">uri</span>;
+  
+  <span class="cmt">// ✅ USE CASE 1: URL Normalization (remove trailing slash)</span>
+  <span class="kw">if</span> (<span class="var">uri</span> !== <span class="str">'/'</span> && <span class="var">uri</span>.<span class="fn">endsWith</span>(<span class="str">'/'</span>)) {
+    <span class="kw">return</span> {
+      <span class="prop">statusCode</span>: <span class="num">301</span>,
+      <span class="prop">headers</span>: { <span class="prop">location</span>: { <span class="prop">value</span>: <span class="var">uri</span>.<span class="fn">slice</span>(<span class="num">0</span>, -<span class="num">1</span>) } }
+    };
+  }
+  
+  <span class="cmt">// ✅ USE CASE 2: SPA Routing (serve index.html for all routes)</span>
+  <span class="kw">if</span> (!<span class="var">uri</span>.<span class="fn">includes</span>(<span class="str">'.'</span>)) {
+    <span class="var">request</span>.<span class="prop">uri</span> = <span class="str">'/index.html'</span>;
+  }
+  
+  <span class="cmt">// ✅ USE CASE 3: Add security headers</span>
+  <span class="kw">var</span> <span class="var">response</span> = <span class="var">event</span>.<span class="prop">response</span>;
+  <span class="kw">if</span> (<span class="var">response</span>) {
+    <span class="var">response</span>.<span class="prop">headers</span>[<span class="str">'x-frame-options'</span>] = { <span class="prop">value</span>: <span class="str">'DENY'</span> };
+    <span class="var">response</span>.<span class="prop">headers</span>[<span class="str">'x-content-type-options'</span>] = { <span class="prop">value</span>: <span class="str">'nosniff'</span> };
+    <span class="var">response</span>.<span class="prop">headers</span>[<span class="str">'strict-transport-security'</span>] = { 
+      <span class="prop">value</span>: <span class="str">'max-age=63072000; includeSubdomains; preload'</span> 
+    };
+  }
+  
+  <span class="kw">return</span> <span class="var">request</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div id="etab-lambda-edge" class="tab-content">
+      <h3 style="font-size:0.95rem;margin-bottom:12px;color:var(--primary)">Lambda@Edge</h3>
+      <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:12px">Runs at CloudFront edge locations. Full Node.js runtime, can make network calls, up to 5s (viewer) or 30s (origin). More powerful but slower and more expensive than CFF.</p>
+      <div class="code-block">
+        <div class="code-label">Lambda@Edge — A/B Testing & Auth at Edge</div>
+        <pre><span class="cmt">// Lambda@Edge: 4 trigger points in CloudFront request lifecycle
+// Viewer Request → Origin Request → Origin Response → Viewer Response</span>
+
+<span class="cmt">// ✅ USE CASE: A/B Testing — Split traffic at edge</span>
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> <span class="var">request</span> = <span class="var">event</span>.<span class="prop">Records</span>[<span class="num">0</span>].<span class="prop">cf</span>.<span class="prop">request</span>;
+  <span class="kw">const</span> <span class="var">headers</span> = <span class="var">request</span>.<span class="prop">headers</span>;
+  
+  <span class="cmt">// Check if user already in experiment group</span>
+  <span class="kw">const</span> <span class="var">cookie</span> = <span class="var">headers</span>.<span class="prop">cookie</span>?.[<span class="num">0</span>].<span class="prop">value</span> || <span class="str">''</span>;
+  <span class="kw">const</span> <span class="var">group</span> = <span class="var">cookie</span>.<span class="fn">includes</span>(<span class="str">'experiment=B'</span>) ? <span class="str">'B'</span> : 
+    <span class="var">cookie</span>.<span class="fn">includes</span>(<span class="str">'experiment=A'</span>) ? <span class="str">'A'</span> :
+    <span class="fn">Math.random</span>() < <span class="num">0.5</span> ? <span class="str">'A'</span> : <span class="str">'B'</span>;  <span class="cmt">// 50/50 split</span>
+  
+  <span class="cmt">// Route to different S3 origins</span>
+  <span class="kw">if</span> (<span class="var">group</span> === <span class="str">'B'</span>) {
+    <span class="var">request</span>.<span class="prop">origin</span>.<span class="prop">s3</span>.<span class="prop">domainName</span> = <span class="str">'myapp-variant-b.s3.amazonaws.com'</span>;
+    <span class="var">request</span>.<span class="prop">headers</span>[<span class="str">'host'</span>] = [{ <span class="prop">value</span>: <span class="str">'myapp-variant-b.s3.amazonaws.com'</span>}];
+  }
+  
+  <span class="kw">return</span> <span class="var">request</span>;
+};
+
+<span class="cmt">// ✅ USE CASE: Image Optimization at Edge</span>
+<span class="kw">exports</span>.<span class="prop">imageHandler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> <span class="var">response</span> = <span class="var">event</span>.<span class="prop">Records</span>[<span class="num">0</span>].<span class="prop">cf</span>.<span class="prop">response</span>;
+  <span class="kw">const</span> <span class="var">request</span> = <span class="var">event</span>.<span class="prop">Records</span>[<span class="num">0</span>].<span class="prop">cf</span>.<span class="prop">request</span>;
+  
+  <span class="cmt">// Add cache headers based on content type</span>
+  <span class="kw">const</span> <span class="var">isImage</span> = /\.(jpg|jpeg|png|gif|webp|svg)$/.<span class="fn">test</span>(<span class="var">request</span>.<span class="prop">uri</span>);
+  <span class="kw">if</span> (<span class="var">isImage</span>) {
+    <span class="var">response</span>.<span class="prop">headers</span>[<span class="str">'cache-control'</span>] = [{ <span class="prop">value</span>: <span class="str">'public, max-age=31536000, immutable'</span>}];
+  }
+  
+  <span class="kw">return</span> <span class="var">response</span>;
+};</pre>
+      </div>
+    </div>
+
+    <div id="etab-compare" class="tab-content">
+      <table class="compare-table">
+        <thead>
+          <tr><th>Feature</th><th>CloudFront Functions</th><th>Lambda@Edge</th><th>Lambda (Regional)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Location</td><td>400+ edge PoPs</td><td>~13 regional edges</td><td>AWS Region</td></tr>
+          <tr><td>Max execution time</td><td>1ms</td><td>5s (viewer) / 30s (origin)</td><td>15 minutes</td></tr>
+          <tr><td>Memory</td><td>2MB</td><td>128MB – 10GB</td><td>128MB – 10GB</td></tr>
+          <tr><td>Network calls</td><td>❌ No</td><td>✅ Yes</td><td>✅ Yes</td></tr>
+          <tr><td>Access to body</td><td>Viewer req/resp only</td><td>All 4 phases</td><td>Full</td></tr>
+          <tr><td>Cost</td><td>💚 ~$0.10/1M</td><td>🟡 ~$0.60/1M</td><td>🔵 Standard</td></tr>
+          <tr><td>Use case</td><td>URL rewrites, headers, redirects</td><td>A/B tests, auth, geo-routing</td><td>Full backend APIs</td></tr>
+          <tr><td>Cold start</td><td>~1ms</td><td>Low (pre-warmed)</td><td>100ms – 3s</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="etab-workers" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Cloudflare Workers (Non-AWS Alternative)</div>
+        <pre><span class="cmt">// Cloudflare Workers — runs in 250+ locations, V8 isolates
+// Ultra-fast cold starts (~0ms), uses Web APIs (fetch, Request, Response)</span>
+
+<span class="kw">export default</span> {
+  <span class="kw">async</span> <span class="fn">fetch</span>(<span class="var">request</span>, <span class="var">env</span>, <span class="var">ctx</span>) {
+    <span class="kw">const</span> <span class="var">url</span> = <span class="kw">new</span> <span class="fn">URL</span>(<span class="var">request</span>.<span class="prop">url</span>);
+    
+    <span class="cmt">// Geo-based routing</span>
+    <span class="kw">const</span> <span class="var">country</span> = <span class="var">request</span>.<span class="prop">cf</span>.<span class="prop">country</span>;
+    
+    <span class="kw">if</span> (<span class="var">country</span> === <span class="str">'EU'</span>) {
+      <span class="cmt">// Route to EU data center for GDPR compliance</span>
+      <span class="kw">return</span> <span class="fn">fetch</span>(<span class="str">'https://eu.myapi.com'</span> + <span class="var">url</span>.<span class="prop">pathname</span>, <span class="var">request</span>);
+    }
+    
+    <span class="cmt">// Rate limiting with Cloudflare KV</span>
+    <span class="kw">const</span> <span class="var">key</span> = <span class="str">`rate:<span class="var">${request.cf.ip}</span>`</span>;
+    <span class="kw">const</span> <span class="var">count</span> = (<span class="kw">await</span> <span class="var">env</span>.<span class="prop">KV</span>.<span class="fn">get</span>(<span class="var">key</span>) || <span class="num">0</span>) + <span class="num">1</span>;
+    
+    <span class="kw">if</span> (<span class="var">count</span> > <span class="num">100</span>) {
+      <span class="kw">return</span> <span class="kw">new</span> <span class="fn">Response</span>(<span class="str">'Rate limited'</span>, { <span class="prop">status</span>: <span class="num">429</span> });
+    }
+    
+    <span class="kw">await</span> <span class="var">env</span>.<span class="prop">KV</span>.<span class="fn">put</span>(<span class="var">key</span>, <span class="var">count</span>, { <span class="prop">expirationTtl</span>: <span class="num">60</span> });
+    
+    <span class="cmt">// D1 Database (SQLite at the edge!)</span>
+    <span class="kw">const</span> <span class="var">stmt</span> = <span class="var">env</span>.<span class="prop">DB</span>.<span class="fn">prepare</span>(<span class="str">'SELECT * FROM users WHERE id = ?'</span>);
+    <span class="kw">const</span> <span class="var">user</span> = <span class="kw">await</span> <span class="var">stmt</span>.<span class="fn">bind</span>(<span class="var">url</span>.<span class="prop">searchParams</span>.<span class="fn">get</span>(<span class="str">'id'</span>)).<span class="fn">first</span>();
+    
+    <span class="kw">return</span> <span class="fn">Response</span>.<span class="fn">json</span>(<span class="var">user</span>);
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div id="etab-usecases" class="tab-content">
+      <div class="grid-2">
+        <div class="card" style="margin:0">
+          <div class="card-title" style="font-size:0.9rem">✅ Great for Edge Functions</div>
+          <ul class="checklist">
+            <li><span class="check-icon">✅</span>URL rewrites and redirects</li>
+            <li><span class="check-icon">✅</span>Auth token validation (JWT check)</li>
+            <li><span class="check-icon">✅</span>A/B testing traffic splitting</li>
+            <li><span class="check-icon">✅</span>Geo-based content/routing</li>
+            <li><span class="check-icon">✅</span>Security headers injection</li>
+            <li><span class="check-icon">✅</span>Bot detection and blocking</li>
+            <li><span class="check-icon">✅</span>Image optimization (resize, format)</li>
+            <li><span class="check-icon">✅</span>SSR for React/Next.js apps</li>
+            <li><span class="check-icon">✅</span>Rate limiting per user/IP</li>
+          </ul>
+        </div>
+        <div class="card" style="margin:0">
+          <div class="card-title" style="font-size:0.9rem">❌ Not Suitable for Edge</div>
+          <ul class="checklist">
+            <li><span class="check-icon">❌</span>Long-running tasks (>30s)</li>
+            <li><span class="check-icon">❌</span>Complex DB operations (no edge DB)</li>
+            <li><span class="check-icon">❌</span>Large file processing (memory limits)</li>
+            <li><span class="check-icon">❌</span>Native module dependencies</li>
+            <li><span class="check-icon">❌</span>CPU-intensive computations</li>
+            <li><span class="check-icon">❌</span>Functions needing VPC access</li>
+            <li><span class="check-icon">❌</span>Node.js-specific APIs (fs, crypto heavy)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EXAMPLES ============ -->
+<div id="examples" class="section">
+  <div class="card">
+    <div class="card-title">💻 Real-World Examples <span class="badge badge-teal">HANDS ON</span></div>
+    
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'ex-crud')">CRUD API</button>
+      <button class="tab-btn" onclick="switchTab(this,'ex-auth')">Auth Flow</button>
+      <button class="tab-btn" onclick="switchTab(this,'ex-s3')">File Upload</button>
+      <button class="tab-btn" onclick="switchTab(this,'ex-queue')">Queue Processing</button>
+      <button class="tab-btn" onclick="switchTab(this,'ex-scheduled')">Scheduled Jobs</button>
+    </div>
+
+    <div id="ex-crud" class="tab-content active">
+      <div class="code-block">
+        <div class="code-label">Complete Serverless CRUD API with DynamoDB</div>
+        <pre><span class="cmt">// handlers/users.js — Full CRUD Lambda handler</span>
+<span class="kw">const</span> { <span class="var">DynamoDBClient</span> } = <span class="fn">require</span>(<span class="str">'@aws-sdk/client-dynamodb'</span>);
+<span class="kw">const</span> { <span class="var">DynamoDBDocumentClient</span>, <span class="var">GetCommand</span>, <span class="var">PutCommand</span>,
+        <span class="var">UpdateCommand</span>, <span class="var">DeleteCommand</span>, <span class="var">ScanCommand</span> } = 
+        <span class="fn">require</span>(<span class="str">'@aws-sdk/lib-dynamodb'</span>);
+<span class="kw">const</span> { <span class="var">randomUUID</span> } = <span class="fn">require</span>(<span class="str">'crypto'</span>);
+
+<span class="cmt">// ✅ Initialize OUTSIDE handler (reused on warm starts)</span>
+<span class="kw">const</span> <span class="var">ddb</span> = <span class="var">DynamoDBDocumentClient</span>.<span class="fn">from</span>(<span class="kw">new</span> <span class="fn">DynamoDBClient</span>({}));
+<span class="kw">const</span> <span class="var">TABLE</span> = <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">TABLE_NAME</span>;
+
+<span class="kw">const</span> <span class="fn">res</span> = (<span class="var">code</span>, <span class="var">body</span>) => ({
+  <span class="prop">statusCode</span>: <span class="var">code</span>,
+  <span class="prop">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>, <span class="str">'Access-Control-Allow-Origin'</span>: <span class="str">'*'</span> },
+  <span class="prop">body</span>: <span class="fn">JSON.stringify</span>(<span class="var">body</span>)
+});
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> ({ <span class="var">httpMethod</span>, <span class="var">pathParameters</span>, <span class="var">body</span>, <span class="var">queryStringParameters</span> }) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> <span class="var">id</span> = <span class="var">pathParameters</span>?.<span class="prop">id</span>;
+    <span class="kw">const</span> <span class="var">data</span> = <span class="var">body</span> ? <span class="fn">JSON.parse</span>(<span class="var">body</span>) : {};
+
+    <span class="kw">switch</span> (<span class="var">httpMethod</span>) {
+      <span class="kw">case</span> <span class="str">'GET'</span>:
+        <span class="kw">if</span> (<span class="var">id</span>) {
+          <span class="kw">const</span> { <span class="var">Item</span> } = <span class="kw">await</span> <span class="var">ddb</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">GetCommand</span>({ <span class="prop">TableName</span>: <span class="var">TABLE</span>, <span class="prop">Key</span>: { <span class="prop">id</span> } }));
+          <span class="kw">return</span> <span class="var">Item</span> ? <span class="fn">res</span>(<span class="num">200</span>, <span class="var">Item</span>) : <span class="fn">res</span>(<span class="num">404</span>, { <span class="prop">error</span>: <span class="str">'Not found'</span> });
+        }
+        <span class="cmt">// List with optional filter</span>
+        <span class="kw">const</span> { <span class="var">Items</span> } = <span class="kw">await</span> <span class="var">ddb</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">ScanCommand</span>({ <span class="prop">TableName</span>: <span class="var">TABLE</span> }));
+        <span class="kw">return</span> <span class="fn">res</span>(<span class="num">200</span>, { <span class="prop">users</span>: <span class="var">Items</span>, <span class="prop">count</span>: <span class="var">Items</span>.<span class="prop">length</span> });
+
+      <span class="kw">case</span> <span class="str">'POST'</span>:
+        <span class="kw">const</span> <span class="var">newUser</span> = { 
+          <span class="prop">id</span>: <span class="fn">randomUUID</span>(), 
+          ...<span class="var">data</span>, 
+          <span class="prop">createdAt</span>: <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>() 
+        };
+        <span class="kw">await</span> <span class="var">ddb</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">PutCommand</span>({ <span class="prop">TableName</span>: <span class="var">TABLE</span>, <span class="prop">Item</span>: <span class="var">newUser</span> }));
+        <span class="kw">return</span> <span class="fn">res</span>(<span class="num">201</span>, <span class="var">newUser</span>);
+
+      <span class="kw">case</span> <span class="str">'PUT'</span>:
+        <span class="kw">const</span> <span class="var">updated</span> = <span class="kw">await</span> <span class="var">ddb</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">UpdateCommand</span>({
+          <span class="prop">TableName</span>: <span class="var">TABLE</span>, <span class="prop">Key</span>: { <span class="prop">id</span> },
+          <span class="prop">UpdateExpression</span>: <span class="str">'SET #name = :name, updatedAt = :ts'</span>,
+          <span class="prop">ExpressionAttributeNames</span>: { <span class="str">'#name'</span>: <span class="str">'name'</span> },
+          <span class="prop">ExpressionAttributeValues</span>: { <span class="str">':name'</span>: <span class="var">data</span>.<span class="prop">name</span>, <span class="str">':ts'</span>: <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>() },
+          <span class="prop">ReturnValues</span>: <span class="str">'ALL_NEW'</span>
+        }));
+        <span class="kw">return</span> <span class="fn">res</span>(<span class="num">200</span>, <span class="var">updated</span>.<span class="prop">Attributes</span>);
+
+      <span class="kw">case</span> <span class="str">'DELETE'</span>:
+        <span class="kw">await</span> <span class="var">ddb</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">DeleteCommand</span>({ <span class="prop">TableName</span>: <span class="var">TABLE</span>, <span class="prop">Key</span>: { <span class="prop">id</span> } }));
+        <span class="kw">return</span> <span class="fn">res</span>(<span class="num">204</span>, {});
+    }
+  } <span class="kw">catch</span> (<span class="var">e</span>) {
+    <span class="fn">console.error</span>(<span class="var">e</span>);
+    <span class="kw">return</span> <span class="fn">res</span>(<span class="num">500</span>, { <span class="prop">error</span>: <span class="str">'Server error'</span> });
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div id="ex-auth" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Complete Auth Flow — Register, Login, Verify</div>
+        <pre><span class="cmt">// auth/register.js</span>
+<span class="kw">const</span> <span class="var">bcrypt</span> = <span class="fn">require</span>(<span class="str">'bcryptjs'</span>);
+<span class="kw">const</span> <span class="var">jwt</span> = <span class="fn">require</span>(<span class="str">'jsonwebtoken'</span>);
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> { <span class="var">email</span>, <span class="var">password</span>, <span class="var">name</span> } = <span class="fn">JSON.parse</span>(<span class="var">event</span>.<span class="prop">body</span>);
+  
+  <span class="cmt">// Validation</span>
+  <span class="kw">if</span> (!<span class="var">email</span> || !<span class="var">password</span>) {
+    <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">400</span>, <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="prop">error</span>: <span class="str">'Email and password required'</span> }) };
+  }
+  
+  <span class="cmt">// Hash password (NEVER store plaintext)</span>
+  <span class="kw">const</span> <span class="var">hash</span> = <span class="kw">await</span> <span class="var">bcrypt</span>.<span class="fn">hash</span>(<span class="var">password</span>, <span class="num">10</span>);
+  
+  <span class="kw">const</span> <span class="var">user</span> = { <span class="prop">id</span>: <span class="fn">randomUUID</span>(), <span class="var">email</span>, <span class="var">name</span>, <span class="prop">passwordHash</span>: <span class="var">hash</span> };
+  <span class="kw">await</span> <span class="fn">saveUser</span>(<span class="var">user</span>);
+  
+  <span class="cmt">// Generate JWT</span>
+  <span class="kw">const</span> <span class="var">token</span> = <span class="var">jwt</span>.<span class="fn">sign</span>(
+    { <span class="prop">sub</span>: <span class="var">user</span>.<span class="prop">id</span>, <span class="var">email</span>, <span class="prop">role</span>: <span class="str">'user'</span> },
+    <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">JWT_SECRET</span>,
+    { <span class="prop">expiresIn</span>: <span class="str">'7d'</span> }
+  );
+  
+  <span class="kw">return</span> {
+    <span class="prop">statusCode</span>: <span class="num">201</span>,
+    <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="prop">token</span>, <span class="prop">user</span>: { <span class="prop">id</span>: <span class="var">user</span>.<span class="prop">id</span>, <span class="var">email</span>, <span class="var">name</span> } })
+  };
+};
+
+<span class="cmt">// auth/login.js</span>
+<span class="kw">exports</span>.<span class="prop">loginHandler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> { <span class="var">email</span>, <span class="var">password</span> } = <span class="fn">JSON.parse</span>(<span class="var">event</span>.<span class="prop">body</span>);
+  <span class="kw">const</span> <span class="var">user</span> = <span class="kw">await</span> <span class="fn">getUserByEmail</span>(<span class="var">email</span>);
+  
+  <span class="kw">if</span> (!<span class="var">user</span> || !(<span class="kw">await</span> <span class="var">bcrypt</span>.<span class="fn">compare</span>(<span class="var">password</span>, <span class="var">user</span>.<span class="prop">passwordHash</span>))) {
+    <span class="cmt">// Same error message — don't leak whether email exists!</span>
+    <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">401</span>, <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="prop">error</span>: <span class="str">'Invalid credentials'</span> }) };
+  }
+  
+  <span class="kw">const</span> <span class="var">token</span> = <span class="var">jwt</span>.<span class="fn">sign</span>({ <span class="prop">sub</span>: <span class="var">user</span>.<span class="prop">id</span>, <span class="prop">email</span>: <span class="var">user</span>.<span class="prop">email</span> }, <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">JWT_SECRET</span>, { <span class="prop">expiresIn</span>: <span class="str">'7d'</span> });
+  <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">200</span>, <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="prop">token</span> }) };
+};</pre>
+      </div>
+    </div>
+
+    <div id="ex-s3" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">File Upload with S3 Presigned URLs (Best Practice)</div>
+        <pre><span class="cmt">// ✅ Best practice: Client uploads DIRECTLY to S3 (no Lambda in the middle)
+// 1. Client requests presigned URL from Lambda
+// 2. Lambda generates presigned URL with S3
+// 3. Client uploads file directly to S3 (bypasses Lambda 6MB limit!)
+// 4. S3 triggers another Lambda to process the file</span>
+
+<span class="kw">const</span> { <span class="var">S3Client</span>, <span class="var">GetObjectCommand</span> } = <span class="fn">require</span>(<span class="str">'@aws-sdk/client-s3'</span>);
+<span class="kw">const</span> { <span class="fn">getSignedUrl</span> } = <span class="fn">require</span>(<span class="str">'@aws-sdk/s3-request-presigner'</span>);
+<span class="kw">const</span> { <span class="var">PutObjectCommand</span> } = <span class="fn">require</span>(<span class="str">'@aws-sdk/client-s3'</span>);
+
+<span class="kw">const</span> <span class="var">s3</span> = <span class="kw">new</span> <span class="fn">S3Client</span>({ <span class="prop">region</span>: <span class="str">'us-east-1'</span> });
+
+<span class="cmt">// Step 1: Generate presigned upload URL</span>
+<span class="kw">exports</span>.<span class="prop">getUploadUrl</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> { <span class="var">filename</span>, <span class="var">contentType</span> } = <span class="fn">JSON.parse</span>(<span class="var">event</span>.<span class="prop">body</span>);
+  <span class="kw">const</span> <span class="var">key</span> = <span class="str">`uploads/<span class="var">${Date.now()}</span>-<span class="var">${filename}</span>`</span>;
+  
+  <span class="kw">const</span> <span class="var">uploadUrl</span> = <span class="kw">await</span> <span class="fn">getSignedUrl</span>(<span class="var">s3</span>, <span class="kw">new</span> <span class="fn">PutObjectCommand</span>({
+    <span class="prop">Bucket</span>: <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">BUCKET_NAME</span>,
+    <span class="prop">Key</span>: <span class="var">key</span>,
+    <span class="prop">ContentType</span>: <span class="var">contentType</span>
+  }), { <span class="prop">expiresIn</span>: <span class="num">300</span> }); <span class="cmt">// URL valid for 5 minutes</span>
+  
+  <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">200</span>, <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="var">uploadUrl</span>, <span class="var">key</span> }) };
+};
+
+<span class="cmt">// Step 4: Process uploaded file (triggered by S3 event)</span>
+<span class="kw">exports</span>.<span class="prop">processUpload</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">record</span> <span class="kw">of</span> <span class="var">event</span>.<span class="prop">Records</span>) {
+    <span class="kw">const</span> <span class="var">bucket</span> = <span class="var">record</span>.<span class="prop">s3</span>.<span class="prop">bucket</span>.<span class="prop">name</span>;
+    <span class="kw">const</span> <span class="var">key</span> = <span class="fn">decodeURIComponent</span>(<span class="var">record</span>.<span class="prop">s3</span>.<span class="prop">object</span>.<span class="prop">key</span>);
+    
+    <span class="fn">console.log</span>(<span class="str">`Processing: <span class="var">${bucket}</span>/<span class="var">${key}</span>`</span>);
+    
+    <span class="cmt">// e.g., generate thumbnail, extract metadata, run virus scan...</span>
+    <span class="kw">await</span> <span class="fn">generateThumbnail</span>(<span class="var">bucket</span>, <span class="var">key</span>);
+    <span class="kw">await</span> <span class="fn">updateDatabase</span>(<span class="var">key</span>, { <span class="prop">status</span>: <span class="str">'processed'</span> });
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div id="ex-queue" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">SQS Queue Processing — Reliable Async Processing</div>
+        <pre><span class="cmt">// Producer Lambda — sends messages to SQS</span>
+<span class="kw">const</span> { <span class="var">SQSClient</span>, <span class="var">SendMessageCommand</span>, <span class="var">SendMessageBatchCommand</span> } = 
+  <span class="fn">require</span>(<span class="str">'@aws-sdk/client-sqs'</span>);
+
+<span class="kw">const</span> <span class="var">sqs</span> = <span class="kw">new</span> <span class="fn">SQSClient</span>({});
+
+<span class="kw">exports</span>.<span class="prop">producer</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> <span class="var">orders</span> = <span class="fn">JSON.parse</span>(<span class="var">event</span>.<span class="prop">body</span>).<span class="prop">orders</span>;
+  
+  <span class="cmt">// Send batch (up to 10 messages, cheaper than individual sends)</span>
+  <span class="kw">await</span> <span class="var">sqs</span>.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">SendMessageBatchCommand</span>({
+    <span class="prop">QueueUrl</span>: <span class="var">process</span>.<span class="prop">env</span>.<span class="prop">QUEUE_URL</span>,
+    <span class="prop">Entries</span>: <span class="var">orders</span>.<span class="fn">map</span>((<span class="var">order</span>, <span class="var">i</span>) => ({
+      <span class="prop">Id</span>: <span class="str">`msg-<span class="var">${i}</span>`</span>,
+      <span class="prop">MessageBody</span>: <span class="fn">JSON.stringify</span>(<span class="var">order</span>),
+      <span class="prop">MessageGroupId</span>: <span class="var">order</span>.<span class="prop">region</span>,  <span class="cmt">// For FIFO queues</span>
+      <span class="prop">MessageDeduplicationId</span>: <span class="var">order</span>.<span class="prop">id</span>  <span class="cmt">// Prevent duplicates</span>
+    }))
+  }));
+};
+
+<span class="cmt">// Consumer Lambda — triggered automatically by SQS</span>
+<span class="kw">exports</span>.<span class="prop">consumer</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> <span class="var">failures</span> = [];
+  
+  <span class="cmt">// Lambda processes messages in batch (configure batch size 1-10000)</span>
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">record</span> <span class="kw">of</span> <span class="var">event</span>.<span class="prop">Records</span>) {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> <span class="var">order</span> = <span class="fn">JSON.parse</span>(<span class="var">record</span>.<span class="prop">body</span>);
+      <span class="kw">await</span> <span class="fn">processOrder</span>(<span class="var">order</span>);
+      <span class="fn">console.log</span>(<span class="str">`✅ Processed order <span class="var">${order.id}</span>`</span>);
+    } <span class="kw">catch</span> (<span class="var">error</span>) {
+      <span class="fn">console.error</span>(<span class="str">`❌ Failed: <span class="var">${record.messageId}</span>`, <span class="var">error</span>);
+      <span class="cmt">// Don't throw! Return failed items for retry</span>
+      <span class="var">failures</span>.<span class="fn">push</span>({ <span class="prop">itemIdentifier</span>: <span class="var">record</span>.<span class="prop">messageId</span> });
+    }
+  }
+  
+  <span class="cmt">// Partial batch failure — retry only failed messages</span>
+  <span class="kw">return</span> { <span class="prop">batchItemFailures</span>: <span class="var">failures</span> };
+  <span class="cmt">// Failed messages go back to queue, eventually to DLQ (Dead Letter Queue)</span>
+};</pre>
+      </div>
+    </div>
+
+    <div id="ex-scheduled" class="tab-content">
+      <div class="code-block">
+        <div class="code-label">Scheduled Jobs — EventBridge / CloudWatch Events</div>
+        <pre><span class="cmt">// Cron-style scheduled Lambda — runs on a schedule
+// No HTTP trigger! Just runs at specified time.
+
+// In SAM template:
+// Events:
+//   DailyCleanup:
+//     Type: Schedule
+//     Properties:
+//       Schedule: cron(0 2 * * ? *)  # 2am UTC every day
+//       Name: daily-cleanup-rule
+//       Description: Daily database cleanup</span>
+
+<span class="kw">exports</span>.<span class="prop">dailyCleanup</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="fn">console.log</span>(<span class="str">'Starting daily cleanup...'</span>, <span class="kw">new</span> <span class="fn">Date</span>().<span class="fn">toISOString</span>());
+  
+  <span class="kw">const</span> <span class="var">thirtyDaysAgo</span> = <span class="kw">new</span> <span class="fn">Date</span>();
+  <span class="var">thirtyDaysAgo</span>.<span class="fn">setDate</span>(<span class="var">thirtyDaysAgo</span>.<span class="fn">getDate</span>() - <span class="num">30</span>);
+  
+  <span class="cmt">// Delete old records in batches (avoid DynamoDB rate limits)</span>
+  <span class="kw">let</span> <span class="var">deleted</span> = <span class="num">0</span>;
+  <span class="kw">let</span> <span class="var">lastKey</span> = <span class="kw">null</span>;
+  
+  <span class="kw">do</span> {
+    <span class="kw">const</span> { <span class="var">Items</span>, <span class="var">LastEvaluatedKey</span> } = <span class="kw">await</span> <span class="fn">queryOldRecords</span>(<span class="var">thirtyDaysAgo</span>, <span class="var">lastKey</span>);
+    <span class="kw">await</span> <span class="fn">deleteRecords</span>(<span class="var">Items</span>);
+    <span class="var">deleted</span> += <span class="var">Items</span>.<span class="prop">length</span>;
+    <span class="var">lastKey</span> = <span class="var">LastEvaluatedKey</span>;
+  } <span class="kw">while</span> (<span class="var">lastKey</span>);
+  
+  <span class="fn">console.log</span>(<span class="str">`Cleanup complete. Deleted <span class="var">${deleted}</span> records.`</span>);
+  
+  <span class="cmt">// Send notification via SNS</span>
+  <span class="kw">await</span> <span class="fn">notify</span>(<span class="str">`Daily cleanup done: <span class="var">${deleted}</span> records deleted`</span>);
+};
+
+<span class="cmt">// Rate limiting strategy pattern</span>
+<span class="kw">const</span> <span class="fn">processInBatches</span> = <span class="kw">async</span> (<span class="var">items</span>, <span class="var">batchSize</span>, <span class="var">fn</span>) => {
+  <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> = <span class="num">0</span>; <span class="var">i</span> < <span class="var">items</span>.<span class="prop">length</span>; <span class="var">i</span> += <span class="var">batchSize</span>) {
+    <span class="kw">const</span> <span class="var">batch</span> = <span class="var">items</span>.<span class="fn">slice</span>(<span class="var">i</span>, <span class="var">i</span> + <span class="var">batchSize</span>);
+    <span class="kw">await</span> <span class="fn">Promise.all</span>(<span class="var">batch</span>.<span class="fn">map</span>(<span class="var">fn</span>));
+    <span class="kw">if</span> (<span class="var">i</span> + <span class="var">batchSize</span> < <span class="var">items</span>.<span class="prop">length</span>) {
+      <span class="kw">await</span> <span class="kw">new</span> <span class="fn">Promise</span>(<span class="var">r</span> => <span class="fn">setTimeout</span>(<span class="var">r</span>, <span class="num">100</span>)); <span class="cmt">// Pause 100ms between batches</span>
+    }
+  }
+};</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ EXERCISES ============ -->
+<div id="exercises" class="section">
+  <div class="card">
+    <div class="card-title">🏋️ Coding Exercises <span class="badge badge-orange">PRACTICE</span></div>
+    
+    <!-- Exercise 1 -->
+    <div style="margin-bottom:30px">
+      <div class="info-box info-tip">
+        <strong>📝 Exercise 1: Fix the Lambda Handler</strong>
+        The code below has 3 bugs. Find and fix them! (Hint: response format, async handling, and cold start optimization)
+      </div>
+      <div class="exercise-area">
+        <div class="exercise-toolbar">
+          <span>🔧 Bug Hunt — Fix all 3 issues</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="resetExercise('ex1')">Reset</button>
+            <button class="btn btn-primary btn-sm" onclick="checkExercise1()">Check Answer</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="ex1" spellcheck="false">// Lambda handler with bugs — find and fix them!
+const { DynamoDBClient, GetItemCommand } = require('@aws-sdk/client-dynamodb');
+
+exports.handler = async (event) => {
+  // Bug area...
+  const client = new DynamoDBClient({});  // Bug #1
+  
+  const id = event.id;  // Bug #2
+  
+  const result = await client.send(new GetItemCommand({
+    TableName: process.env.TABLE_NAME,
+    Key: { id: { S: id } }
+  }));
+  
+  return result.Item;  // Bug #3
+};</textarea>
+        <div class="output-area" id="ex1-output">// Output will appear here after checking...</div>
+      </div>
+      <div class="info-box info-warn" style="margin-top:10px" id="ex1-hint" style="display:none">
+        <strong>💡 Hints (click Check to reveal)</strong>
+        Bug #1: DynamoDBClient should be outside the handler (cold start optimization). Bug #2: Path params come from event.pathParameters.id (API Gateway format). Bug #3: Lambda needs to return { statusCode, headers, body } for API Gateway.
+      </div>
+    </div>
+
+    <!-- Exercise 2 -->
+    <div style="margin-bottom:30px">
+      <div class="info-box info-tip">
+        <strong>📝 Exercise 2: Complete the CORS Handler</strong>
+        Fill in the missing parts to make this Lambda function CORS-compliant.
+      </div>
+      <div class="exercise-area">
+        <div class="exercise-toolbar">
+          <span>🌐 CORS Implementation</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="resetExercise('ex2')">Reset</button>
+            <button class="btn btn-primary btn-sm" onclick="checkExercise2()">Run & Check</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="ex2" spellcheck="false">// Complete the CORS handler
+exports.handler = async (event) => {
+  const corsHeaders = {
+    // Add the required CORS header for all origins:
+    '___': '___',
+    'Content-Type': 'application/json'
+  };
+  
+  // Handle OPTIONS preflight request:
+  if (event.___ === '___') {
+    return { statusCode: ___, headers: corsHeaders, body: '' };
+  }
+  
+  return {
+    statusCode: 200,
+    headers: corsHeaders,
+    body: JSON.stringify({ message: 'Hello from Lambda!' })
+  };
+};</textarea>
+        <div class="output-area" id="ex2-output">// Output will appear here after checking...</div>
+      </div>
+    </div>
+
+    <!-- Exercise 3 -->
+    <div style="margin-bottom:30px">
+      <div class="info-box info-tip">
+        <strong>📝 Exercise 3: Build an SQS Error Handler</strong>
+        Write a Lambda that processes SQS messages and properly handles partial batch failures.
+      </div>
+      <div class="exercise-area">
+        <div class="exercise-toolbar">
+          <span>📬 SQS Batch Processing</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="resetExercise('ex3')">Reset</button>
+            <button class="btn btn-success btn-sm" onclick="runExercise3()">▶ Simulate</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="ex3" spellcheck="false">// Complete the SQS batch processor
+// It should:
+// 1. Process each record
+// 2. Track which messages FAIL
+// 3. Return batchItemFailures for retry
+
+const processMessage = async (body) => {
+  // Simulate: messages with "fail" in body throw an error
+  if (body.includes('fail')) throw new Error('Processing failed');
+  console.log('Processed:', body);
+};
+
+exports.handler = async (event) => {
+  // Your code here:
+  // - Loop through event.Records
+  // - Try to process each record.body
+  // - Collect failed record.messageId into failures array
+  // - Return { batchItemFailures: failures }
+  
+};</textarea>
+        <div class="output-area" id="ex3-output">// Simulate will test your handler with 5 messages (2 will fail)...</div>
+      </div>
+    </div>
+
+    <!-- Fill in the blanks -->
+    <div class="card" style="background:var(--card2)">
+      <div class="card-title">✏️ Fill in the Blanks</div>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:15px">Complete the serverless concepts:</p>
+      
+      <div class="code-block">
+        <pre style="line-height:2.2">
+<span class="cmt">// Lambda max execution timeout is</span> <input class="fill-blank" id="f1" placeholder="?"> <span class="cmt">minutes</span>
+
+<span class="cmt">// To share libraries across Lambda functions, use</span> <input class="fill-blank" id="f2" placeholder="?">
+
+<span class="cmt">// The event.pathParameters object comes from</span> <input class="fill-blank" id="f3" placeholder="?">
+
+<span class="cmt">// To avoid connection per invocation, place DB client</span> <input class="fill-blank" id="f4" placeholder="?"> <span class="cmt">the handler</span>
+
+<span class="cmt">// Lambda@Edge runs at</span> <input class="fill-blank" id="f5" placeholder="?"> <span class="cmt">locations, NOT in a single region</span></pre>
+      </div>
+      <div style="margin-top:15px">
+        <button class="btn btn-primary" onclick="checkFillBlanks()">Check Answers</button>
+        <span id="fill-score" style="margin-left:15px;font-size:0.85rem;color:var(--muted)"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ QUIZ ============ -->
+<div id="quiz" class="section">
+  <div class="score-display">
+    <div class="score-number" id="quizScore">0</div>
+    <div class="score-label">/ <span id="quizTotal">0</span> Questions Answered Correctly</div>
+    <div style="margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="resetQuiz()">🔄 Reset Quiz</button>
+    </div>
+  </div>
+
+  <!-- Q1 -->
+  <div class="quiz-question" id="q1">
+    <div class="q-num">Question 1 / 12</div>
+    <h3>What is the maximum execution timeout for an AWS Lambda function?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q1',false)">A) 5 minutes</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q1',true)">B) 15 minutes</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q1',false)">C) 30 minutes</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q1',false)">D) 60 minutes</button>
+    </div>
+    <div class="quiz-feedback" id="q1-fb">
+      ✅ Correct! Lambda max timeout is <strong>15 minutes (900 seconds)</strong>. For longer tasks, use Step Functions, ECS Fargate, or break into smaller async steps via SQS.
+    </div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quiz-question" id="q2">
+    <div class="q-num">Question 2 / 12</div>
+    <h3>Which of these is the BEST way to avoid a cold start performance hit for critical Lambda functions?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q2',false)">A) Increase memory to 10GB</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q2',false)">B) Use Node.js instead of Python</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q2',true)">C) Use Provisioned Concurrency</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q2',false)">D) Set timeout to 1 second</button>
+    </div>
+    <div class="quiz-feedback" id="q2-fb">
+      ✅ Correct! <strong>Provisioned Concurrency</strong> keeps X containers pre-initialized and warm, eliminating cold starts. Costs extra but eliminates latency spikes. Also useful: Lambda SnapStart (Java), keeping functions small.
+    </div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quiz-question" id="q3">
+    <div class="q-num">Question 3 / 12</div>
+    <h3>A Lambda function uploads a 100MB file to an S3 bucket. The upload fails because the file exceeds Lambda's payload limit. What's the correct architectural solution?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q3',false)">A) Compress the file before uploading</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q3',true)">B) Use S3 presigned URLs so clients upload directly</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q3',false)">C) Split the file into 6MB chunks in the client</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q3',false)">D) Use a REST API payload instead</button>
+    </div>
+    <div class="quiz-feedback" id="q3-fb">
+      ✅ Correct! <strong>Presigned URLs</strong> allow clients to upload files (any size up to 5TB) DIRECTLY to S3, bypassing Lambda entirely. Lambda just generates the URL. This is the standard pattern.
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="quiz-question" id="q4">
+    <div class="q-num">Question 4 / 12</div>
+    <h3>What's WRONG with this Lambda code?<br><code style="font-size:0.8rem;background:var(--code-bg);padding:5px 10px;border-radius:4px;display:block;margin-top:8px">exports.handler = async (event) => {<br>&nbsp;&nbsp;const client = new DynamoDBClient({});<br>&nbsp;&nbsp;const result = await client.send(...);<br>&nbsp;&nbsp;return result;<br>};</code></h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q4',false)">A) Should use callbacks, not async/await</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q4',true)">B) DynamoDBClient is created on every invocation (should be outside handler)</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q4',false)">C) Missing try/catch block</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q4',false)">D) Should return statusCode 200</button>
+    </div>
+    <div class="quiz-feedback" id="q4-fb">
+      ✅ Correct! Creating the client inside the handler = new connection on EVERY invocation. Move it outside the handler so it's created once and reused across warm invocations. This saves ~50-200ms per call.
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="quiz-question" id="q5">
+    <div class="q-num">Question 5 / 12</div>
+    <h3>Which API Gateway type is cheapest and recommended for new serverless APIs?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q5',false)">A) REST API (v1)</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q5',true)">B) HTTP API (v2)</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q5',false)">C) WebSocket API</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q5',false)">D) All cost the same</button>
+    </div>
+    <div class="quiz-feedback" id="q5-fb">
+      ✅ Correct! <strong>HTTP API</strong> is ~70% cheaper than REST API and has lower latency. Use REST API only when you need response/request transformation, API keys with usage plans, or WAF integration.
+    </div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="quiz-question" id="q6">
+    <div class="q-num">Question 6 / 12</div>
+    <h3>Lambda functions receive 429 errors during a traffic spike. The root cause was another Lambda function in the same account. Why?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q6',false)">A) Lambda auto-scales but needs 5 minutes warmup</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q6',true)">B) All Lambda functions share a 1,000 concurrent execution limit per account/region</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q6',false)">C) API Gateway has a 100 RPS limit</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q6',false)">D) DynamoDB throttled the requests</button>
+    </div>
+    <div class="quiz-feedback" id="q6-fb">
+      ✅ Correct! The default concurrency limit is <strong>1,000 per region</strong> shared across ALL functions. One greedy function can starve others. Solution: Use <strong>Reserved Concurrency</strong> on critical functions to guarantee capacity.
+    </div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="quiz-question" id="q7">
+    <div class="q-num">Question 7 / 12</div>
+    <h3>What's the key difference between CloudFront Functions and Lambda@Edge?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q7',false)">A) CloudFront Functions support more programming languages</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q7',true)">B) CloudFront Functions run at 400+ edge PoPs with <1ms, Lambda@Edge runs at ~13 regional edges with up to 30s</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q7',false)">C) Lambda@Edge cannot make network requests</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q7',false)">D) CloudFront Functions are more expensive</button>
+    </div>
+    <div class="quiz-feedback" id="q7-fb">
+      ✅ Correct! CloudFront Functions: 400+ PoPs, 1ms max, no network calls, cheapest. Lambda@Edge: ~13 regional edges, up to 30s, can call external APIs. Use CFF for header manipulation, Lambda@Edge for logic requiring I/O.
+    </div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="quiz-question" id="q8">
+    <div class="q-num">Question 8 / 12</div>
+    <h3>An SQS-triggered Lambda processes messages. Some messages fail. What should the handler return to ensure ONLY failed messages are retried?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q8',false)">A) Throw an error to retry all messages</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q8',true)">B) Return { batchItemFailures: [{ itemIdentifier: failedMessageId }] }</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q8',false)">C) Return statusCode 500</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q8',false)">D) Delete successful messages manually from SQS</button>
+    </div>
+    <div class="quiz-feedback" id="q8-fb">
+      ✅ Correct! <strong>Partial batch failure</strong> returns only failed message IDs. Throwing an error retries the ENTIRE batch including successfully processed messages — causing duplicate processing!
+    </div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="quiz-question" id="q9">
+    <div class="q-num">Question 9 / 12</div>
+    <h3>Where should you store sensitive secrets (database passwords, API keys) for Lambda functions?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q9',false)">A) Hardcoded in the function code</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q9',false)">B) In Lambda environment variables (unencrypted)</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q9',true)">C) AWS Secrets Manager or SSM Parameter Store (with decryption)</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q9',false)">D) In an S3 bucket config file</button>
+    </div>
+    <div class="quiz-feedback" id="q9-fb">
+      ✅ Correct! Use <strong>AWS Secrets Manager</strong> (auto-rotation!) or <strong>SSM Parameter Store</strong> (SecureString). Cache the secret in a module-level variable to avoid fetching on every warm invocation.
+    </div>
+  </div>
+
+  <!-- Q10 -->
+  <div class="quiz-question" id="q10">
+    <div class="q-num">Question 10 / 12</div>
+    <h3>What is the purpose of a Dead Letter Queue (DLQ) in serverless architecture?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q10',false)">A) It stores all processed messages for auditing</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q10',false)">B) It is a high-priority queue for urgent messages</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q10',true)">C) It captures messages that repeatedly fail processing so they're not lost</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q10',false)">D) It throttles incoming traffic during high load</button>
+    </div>
+    <div class="quiz-feedback" id="q10-fb">
+      ✅ Correct! A <strong>DLQ (Dead Letter Queue)</strong> receives messages that failed after maximum retry attempts. Instead of disappearing, they're preserved for debugging, alerting, and manual reprocessing.
+    </div>
+  </div>
+
+  <!-- Q11 -->
+  <div class="quiz-question" id="q11">
+    <div class="q-num">Question 11 / 12</div>
+    <h3>Which Lambda@Edge trigger fires BEFORE the request reaches your origin server, allowing you to modify the request?</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q11',false)">A) Origin Response</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q11',false)">B) Viewer Response</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q11',true)">C) Origin Request</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q11',false)">D) Cache Hit</button>
+    </div>
+    <div class="quiz-feedback" id="q11-fb">
+      ✅ Correct! The 4 triggers are: <strong>Viewer Request → Origin Request → Origin Response → Viewer Response</strong>. Origin Request fires after cache miss, before hitting origin — perfect for modifying headers, routing, or A/B testing.
+    </div>
+  </div>
+
+  <!-- Q12 -->
+  <div class="quiz-question" id="q12">
+    <div class="q-num">Question 12 / 12</div>
+    <h3>Lambda Layers are best used for:</h3>
+    <div class="options">
+      <button class="option-btn" onclick="checkAnswer(this,'q12',false)">A) Storing secrets across functions</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q12',true)">B) Sharing common dependencies and custom runtimes across multiple functions</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q12',false)">C) Running functions longer than 15 minutes</button>
+      <button class="option-btn" onclick="checkAnswer(this,'q12',false)">D) Preventing cold starts</button>
+    </div>
+    <div class="quiz-feedback" id="q12-fb">
+      ✅ Correct! Layers allow you to share node_modules, shared utilities, or custom runtimes (up to 5 layers, 250MB total). This reduces deployment package size → faster cold starts, and eliminates copy-paste code.
+    </div>
+  </div>
+</div>
+
+<!-- ============ PITFALLS ============ -->
+<div id="pitfalls" class="section">
+  <div class="card">
+    <div class="card-title">⚠️ Common Mistakes & Pitfalls <span class="badge badge-red">CRITICAL</span></div>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:20px">These are the most common mistakes that trip up developers in production and interviews.</p>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #1: Initializing Clients Inside the Handler</div>
+      <div class="grid-2">
+        <div class="code-block" style="margin:0">
+          <div class="code-label">❌ WRONG</div>
+          <pre><span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="cmt">// New connection EVERY invocation = slow</span>
+  <span class="kw">const</span> <span class="var">client</span> = <span class="kw">new</span> <span class="fn">DynamoDBClient</span>({});
+  <span class="kw">const</span> <span class="var">db</span> = <span class="fn">mongoose</span>.<span class="fn">connect</span>(<span class="var">uri</span>);  <span class="cmt">// Very slow!</span>
+};</pre>
+        </div>
+        <div class="code-block" style="margin:0">
+          <div class="code-label">✅ CORRECT</div>
+          <pre><span class="cmt">// Initialize ONCE, reuse across warm starts</span>
+<span class="kw">const</span> <span class="var">client</span> = <span class="kw">new</span> <span class="fn">DynamoDBClient</span>({});
+<span class="kw">let</span> <span class="var">dbConnected</span> = <span class="kw">false</span>;
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">if</span> (!<span class="var">dbConnected</span>) {
+    <span class="kw">await</span> <span class="fn">mongoose</span>.<span class="fn">connect</span>(<span class="var">uri</span>);
+    <span class="var">dbConnected</span> = <span class="kw">true</span>;
+  }
+};</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #2: Not Handling Async Errors Properly</div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ Missing await = unhandled promise rejection (silent failure!)</span>
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="fn">saveToDatabase</span>(<span class="var">data</span>); <span class="cmt">// ← No await! Runs after Lambda returns</span>
+  <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">200</span> }; <span class="cmt">// Returns before DB write completes!</span>
+};
+
+<span class="cmt">// ✅ Always await async operations</span>
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">await</span> <span class="fn">saveToDatabase</span>(<span class="var">data</span>); <span class="cmt">// ← Awaited properly</span>
+  <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">200</span> };
+};</pre>
+      </div>
+    </div>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #3: CORS Wildcard with Credentials</div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ Browser BLOCKS this combination — spec violation</span>
+<span class="kw">return</span> {
+  <span class="prop">headers</span>: {
+    <span class="str">'Access-Control-Allow-Origin'</span>: <span class="str">'*'</span>,              <span class="cmt">// ← Wildcard</span>
+    <span class="str">'Access-Control-Allow-Credentials'</span>: <span class="str">'true'</span>    <span class="cmt">// ← + Credentials = ERROR</span>
+  }
+};
+
+<span class="cmt">// ✅ Use specific origin when credentials are needed</span>
+<span class="kw">const</span> <span class="var">origin</span> = <span class="var">event</span>.<span class="prop">headers</span>.<span class="prop">origin</span>;
+<span class="kw">const</span> <span class="var">allowedOrigins</span> = [<span class="str">'https://myapp.com'</span>, <span class="str">'https://staging.myapp.com'</span>];
+<span class="kw">return</span> {
+  <span class="prop">headers</span>: {
+    <span class="str">'Access-Control-Allow-Origin'</span>: <span class="var">allowedOrigins</span>.<span class="fn">includes</span>(<span class="var">origin</span>) ? <span class="var">origin</span> : <span class="str">''</span>,
+    <span class="str">'Access-Control-Allow-Credentials'</span>: <span class="str">'true'</span>  <span class="cmt">// ✅ Now allowed</span>
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #4: Relying on Lambda State Between Invocations</div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ NEVER rely on in-memory state across invocations</span>
+<span class="kw">let</span> <span class="var">userCache</span> = {};  <span class="cmt">// Different Lambda containers have different caches!</span>
+<span class="kw">let</span> <span class="var">counter</span> = <span class="num">0</span>;   <span class="cmt">// Not reliable across instances</span>
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> () => {
+  <span class="var">counter</span>++;  <span class="cmt">// Gives wrong results under load</span>
+};
+
+<span class="cmt">// ✅ Module-level caching IS fine for performance (not correctness)</span>
+<span class="kw">let</span> <span class="var">cachedConfig</span> = <span class="kw">null</span>;  <span class="cmt">// OK — same value if cache misses</span>
+<span class="kw">const</span> <span class="fn">getConfig</span> = <span class="kw">async</span> () => {
+  <span class="kw">if</span> (!<span class="var">cachedConfig</span>) <span class="var">cachedConfig</span> = <span class="kw">await</span> <span class="fn">fetchConfigFromSSM</span>();
+  <span class="kw">return</span> <span class="var">cachedConfig</span>;
+};</pre>
+      </div>
+    </div>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #5: Not Setting Appropriate Timeouts</div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ Default timeout is 3 seconds — often too short for DB queries
+// ❌ Setting timeout too HIGH wastes money (pay for full timeout on hang)
+
+// ✅ Set timeout = expected duration × 3 (safety margin)
+// ✅ Set downstream HTTP timeouts shorter than Lambda timeout!</span>
+
+<span class="kw">const</span> <span class="var">axios</span> = <span class="fn">require</span>(<span class="str">'axios'</span>);
+
+<span class="cmt">// Lambda timeout: 10 seconds
+// HTTP call timeout: 5 seconds (must be less than Lambda timeout)</span>
+<span class="kw">const</span> <span class="fn">callExternalAPI</span> = () => <span class="var">axios</span>.<span class="fn">get</span>(<span class="var">url</span>, {
+  <span class="prop">timeout</span>: <span class="num">5000</span>  <span class="cmt">// ← If this was 30000 and Lambda timeout is 10s,</span>
+                  <span class="cmt">//   Lambda dies with cryptic error before axios timeout!</span>
+});
+
+<span class="cmt">// ✅ Always: axiosTimeout < lambdaTimeout</span></pre>
+      </div>
+    </div>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #6: Throwing Errors in SQS Consumer (Retries Entire Batch)</div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ Throwing retries ALL messages — causes duplicates for successful ones</span>
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">record</span> <span class="kw">of</span> <span class="var">event</span>.<span class="prop">Records</span>) {
+    <span class="kw">await</span> <span class="fn">process</span>(<span class="var">record</span>.<span class="prop">body</span>); <span class="cmt">// ← If THIS throws, ALL messages retry!</span>
+  }
+};
+
+<span class="cmt">// ✅ Use partial batch failure response</span>
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>) => {
+  <span class="kw">const</span> <span class="var">failures</span> = [];
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">record</span> <span class="kw">of</span> <span class="var">event</span>.<span class="prop">Records</span>) {
+    <span class="kw">try</span> {
+      <span class="kw">await</span> <span class="fn">process</span>(<span class="var">record</span>.<span class="prop">body</span>);
+    } <span class="kw">catch</span> (<span class="var">e</span>) {
+      <span class="var">failures</span>.<span class="fn">push</span>({ <span class="prop">itemIdentifier</span>: <span class="var">record</span>.<span class="prop">messageId</span> });
+    }
+  }
+  <span class="kw">return</span> { <span class="prop">batchItemFailures</span>: <span class="var">failures</span> }; <span class="cmt">// Only retry these</span>
+};</pre>
+      </div>
+    </div>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #7: VPC Configuration Without NAT Gateway</div>
+      <div class="info-box info-warn" style="margin:0">
+        <strong>⚠️ VPC Cold Start Trap</strong>
+        Putting Lambda in a VPC used to add 10+ seconds to cold start (ENI creation). Modern Lambda handles this better, but it still adds latency. If your Lambda is in a VPC and needs to call AWS services (S3, DynamoDB, SSM), you MUST use VPC Endpoints OR a NAT Gateway — otherwise requests fail silently!<br><br>
+        <strong>Rule:</strong> Only put Lambda in VPC if it needs access to resources that are ONLY in the VPC (like RDS, ElastiCache). For DynamoDB and S3, use public internet or VPC endpoints.
+      </div>
+    </div>
+
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Pitfall #8: Over-Permissive IAM Roles</div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ Giving Lambda full admin access — security nightmare</span>
+<span class="cmt">// PolicyArn: arn:aws:iam::aws:policy/AdministratorAccess</span>
+
+<span class="cmt">// ✅ Principle of Least Privilege — only what's needed</span>
+<span class="cmt"># SAM/CloudFormation: Fine-grained permissions</span>
+<span class="prop">Policies</span>:
+  - <span class="prop">DynamoDBCrudPolicy</span>:
+      <span class="prop">TableName</span>: !<span class="fn">Ref</span> <span class="var">MyTable</span>
+  - <span class="prop">S3ReadPolicy</span>:
+      <span class="prop">BucketName</span>: !<span class="fn">Ref</span> <span class="var">MyBucket</span>
+  <span class="cmt"># NOT: AdministratorAccess</span>
+
+<span class="cmt">// ✅ IAM Checklist:
+// - One IAM role per Lambda (not shared)
+// - Resource-level permissions (specific table ARN, not *)
+// - Use AWS managed policies where possible
+// - Audit with IAM Access Analyzer</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CHEATSHEET ============ -->
+<div id="cheatsheet" class="section">
+  <div class="card">
+    <div class="card-title">📋 Serverless Architecture Cheat Sheet <span class="badge badge-teal">REFERENCE</span></div>
+    
+    <div class="grid-2">
+      <div>
+        <div class="cheat-section">
+          <div class="cheat-title">⚡ Lambda Limits</div>
+          <div class="cheat-item"><span class="cheat-key">Max Timeout</span><span class="cheat-val">15 minutes (900s)</span></div>
+          <div class="cheat-item"><span class="cheat-key">Memory Range</span><span class="cheat-val">128MB – 10,240MB</span></div>
+          <div class="cheat-item"><span class="cheat-key">Deployment Size</span><span class="cheat-val">50MB zip / 250MB unzipped</span></div>
+          <div class="cheat-item"><span class="cheat-key">Payload (sync)</span><span class="cheat-val">6MB request & response</span></div>
+          <div class="cheat-item"><span class="cheat-key">Concurrency</span><span class="cheat-val">1,000 default / region</span></div>
+          <div class="cheat-item"><span class="cheat-key">/tmp Storage</span><span class="cheat-val">512MB (up to 10GB)</span></div>
+          <div class="cheat-item"><span class="cheat-key">Layers per fn</span><span class="cheat-val">5 layers max</span></div>
+          <div class="cheat-item"><span class="cheat-key">Env vars total</span><span class="cheat-val">4KB max</span></div>
+        </div>
+
+        <div class="cheat-section">
+          <div class="cheat-title">🔌 API Gateway</div>
+          <div class="cheat-item"><span class="cheat-key">HTTP API v2</span><span class="cheat-val">Cheapest, fastest, recommended</span></div>
+          <div class="cheat-item"><span class="cheat-key">REST API v1</span><span class="cheat-val">Caching, usage plans, WAF</span></div>
+          <div class="cheat-item"><span class="cheat-key">WebSocket</span><span class="cheat-val">Real-time, persistent connections</span></div>
+          <div class="cheat-item"><span class="cheat-key">Default limit</span><span class="cheat-val">10,000 RPS / burst 5,000</span></div>
+          <div class="cheat-item"><span class="cheat-key">Throttled code</span><span class="cheat-val">429 Too Many Requests</span></div>
+          <div class="cheat-item"><span class="cheat-key">Payload max</span><span class="cheat-val">10MB (HTTP API)</span></div>
+        </div>
+
+        <div class="cheat-section">
+          <div class="cheat-title">🌍 Edge Functions</div>
+          <div class="cheat-item"><span class="cheat-key">CloudFront Fn</span><span class="cheat-val">400+ PoPs, 1ms, no I/O, $0.10/1M</span></div>
+          <div class="cheat-item"><span class="cheat-key">Lambda@Edge</span><span class="cheat-val">~13 edges, 30s, has I/O, $0.60/1M</span></div>
+          <div class="cheat-item"><span class="cheat-key">Cloudflare Workers</span><span class="cheat-val">250+ PoPs, V8 isolates, near 0 cold start</span></div>
+          <div class="cheat-item"><span class="cheat-key">CFF use cases</span><span class="cheat-val">URL rewrites, headers, redirects</span></div>
+          <div class="cheat-item"><span class="cheat-key">L@E use cases</span><span class="cheat-val">A/B tests, auth, geo-routing</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="cheat-section">
+          <div class="cheat-title">🏆 Best Practices</div>
+          <div class="cheat-item"><span class="cheat-key">Client init</span><span class="cheat-val">Outside handler (warm start reuse)</span></div>
+          <div class="cheat-item"><span class="cheat-key">Secrets</span><span class="cheat-val">SSM Parameter Store / Secrets Manager</span></div>
+          <div class="cheat-item"><span class="cheat-key">State</span><span class="cheat-val">DynamoDB / ElastiCache / S3</span></div>
+          <div class="cheat-item"><span class="cheat-key">Large files</span><span class="cheat-val">S3 presigned URLs (bypass Lambda)</span></div>
+          <div class="cheat-item"><span class="cheat-key">IAM</span><span class="cheat-val">Least privilege, one role per fn</span></div>
+          <div class="cheat-item"><span class="cheat-key">Timeout</span><span class="cheat-val">Set per function, downstream < Lambda</span></div>
+          <div class="cheat-item"><span class="cheat-key">Cold starts</span><span class="cheat-val">Provisioned concurrency / keep small</span></div>
+          <div class="cheat-item"><span class="cheat-key">Logging</span><span class="cheat-val">Structured JSON to CloudWatch</span></div>
+        </div>
+
+        <div class="cheat-section">
+          <div class="cheat-title">📬 Event Sources (Triggers)</div>
+          <div class="cheat-item"><span class="cheat-key">API Gateway</span><span class="cheat-val">HTTP requests</span></div>
+          <div class="cheat-item"><span class="cheat-key">S3</span><span class="cheat-val">Object create/delete/restore</span></div>
+          <div class="cheat-item"><span class="cheat-key">SQS</span><span class="cheat-val">Queue messages (batch)</span></div>
+          <div class="cheat-item"><span class="cheat-key">SNS</span><span class="cheat-val">Pub/sub notifications</span></div>
+          <div class="cheat-item"><span class="cheat-key">EventBridge</span><span class="cheat-val">Cron schedules, AWS events</span></div>
+          <div class="cheat-item"><span class="cheat-key">DynamoDB Streams</span><span class="cheat-val">Table change events</span></div>
+          <div class="cheat-item"><span class="cheat-key">Cognito</span><span class="cheat-val">Pre/post auth hooks</span></div>
+          <div class="cheat-item"><span class="cheat-key">Kinesis</span><span class="cheat-val">Real-time streaming data</span></div>
+        </div>
+
+        <div class="cheat-section">
+          <div class="cheat-title">💰 Cost Model</div>
+          <div class="cheat-item"><span class="cheat-key">Requests</span><span class="cheat-val">$0.20 per 1M (1M free/month)</span></div>
+          <div class="cheat-item"><span class="cheat-key">Duration</span><span class="cheat-val">$0.0000166667 per GB-second</span></div>
+          <div class="cheat-item"><span class="cheat-key">Formula</span><span class="cheat-val">invocations × memGB × sec × rate</span></div>
+          <div class="cheat-item"><span class="cheat-key">1M reqs (512MB, 200ms)</span><span class="cheat-val">≈ $1.87</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interview Questions -->
+    <div class="card" style="background:var(--card2);margin-top:20px">
+      <div class="card-title">🎯 Top Interview Questions & Answers</div>
+      <div class="grid-2">
+        <div>
+          <div class="info-box info-tip">
+            <strong>Q: What's a cold start and how do you mitigate it?</strong>
+            A: First invocation spins up a new container. Mitigation: Provisioned Concurrency, keep functions small, minimize dependencies, avoid VPC unless necessary, use Lambda SnapStart (Java).
+          </div>
+          <div class="info-box info-tip">
+            <strong>Q: Lambda is stateless — how do you manage state?</strong>
+            A: External storage: DynamoDB for data, ElastiCache for sessions, S3 for files, Step Functions for workflow state. Module-level vars only for perf caching (not correctness).
+          </div>
+          <div class="info-box info-tip">
+            <strong>Q: When NOT to use Lambda?</strong>
+            A: Long-running tasks (>15min), needing persistent connections (use ECS), very high consistent load (EC2 may be cheaper), latency-sensitive heavy compute, GPU workloads.
+          </div>
+        </div>
+        <div>
+          <div class="info-box info-tip">
+            <strong>Q: How does Lambda pricing differ from EC2?</strong>
+            A: Lambda: pay per millisecond × memory × invocations. EC2: pay per hour regardless of traffic. Lambda wins for spiky/low traffic; EC2 wins for consistent high load.
+          </div>
+          <div class="info-box info-tip">
+            <strong>Q: What's the difference between REST API and HTTP API in API Gateway?</strong>
+            A: HTTP API is v2 — 70% cheaper, lower latency, simpler. REST API has caching, usage plans, request/response transforms, WAF, API keys. Use HTTP API for new projects.
+          </div>
+          <div class="info-box info-tip">
+            <strong>Q: How do you handle large file uploads in serverless?</strong>
+            A: S3 Presigned URLs — Lambda generates a signed URL, client uploads directly to S3 (bypasses Lambda's 6MB limit). S3 then triggers another Lambda for processing.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Reference -->
+    <div class="card" style="background:var(--code-bg);margin-top:20px">
+      <div class="card-title" style="font-size:0.9rem">⚡ Lambda Handler Quick Reference</div>
+      <div class="code-block" style="margin:0;border:none;padding:0;background:transparent">
+        <pre><span class="cmt">// MINIMAL LAMBDA HANDLER TEMPLATE</span>
+<span class="kw">const</span> <span class="var">client</span> = <span class="kw">new</span> <span class="fn">SomeAWSClient</span>({});  <span class="cmt">// 1. Init OUTSIDE handler</span>
+
+<span class="kw">exports</span>.<span class="prop">handler</span> = <span class="kw">async</span> (<span class="var">event</span>, <span class="var">context</span>) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { <span class="var">httpMethod</span>, <span class="var">pathParameters</span>, <span class="var">body</span>, <span class="var">queryStringParameters</span> } = <span class="var">event</span>;
+    <span class="kw">const</span> <span class="var">data</span> = <span class="var">body</span> ? <span class="fn">JSON.parse</span>(<span class="var">body</span>) : {};  <span class="cmt">// 2. Parse body safely</span>
+    
+    <span class="kw">const</span> <span class="var">result</span> = <span class="kw">await</span> <span class="fn">doWork</span>(<span class="var">data</span>);         <span class="cmt">// 3. Always await!</span>
+    
+    <span class="kw">return</span> {                                    <span class="cmt">// 4. Return proper response</span>
+      <span class="prop">statusCode</span>: <span class="num">200</span>,
+      <span class="prop">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>, <span class="str">'Access-Control-Allow-Origin'</span>: <span class="str">'*'</span> },
+      <span class="prop">body</span>: <span class="fn">JSON.stringify</span>(<span class="var">result</span>)
+    };
+  } <span class="kw">catch</span> (<span class="var">error</span>) {                            <span class="cmt">// 5. Always wrap in try/catch</span>
+    <span class="fn">console.error</span>(<span class="fn">JSON.stringify</span>({ <span class="prop">error</span>: <span class="var">error</span>.<span class="prop">message</span>, <span class="prop">stack</span>: <span class="var">error</span>.<span class="prop">stack</span> }));
+    <span class="kw">return</span> { <span class="prop">statusCode</span>: <span class="num">500</span>, <span class="prop">headers</span>: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+             <span class="prop">body</span>: <span class="fn">JSON.stringify</span>({ <span class="prop">error</span>: <span class="str">'Internal server error'</span> }) };
+  }
+};</pre>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px;padding:20px;background:var(--card2);border-radius:10px;border:1px solid var(--border)">
+      <div style="font-size:2rem;margin-bottom:10px">🎉</div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-bottom:8px">You've Completed the Serverless Masterclass!</div>
+      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:15px">Review the quiz, practice the exercises, and memorize the cheat sheet before your interview.</div>
+      <button class="btn btn-primary" onclick="showSection('quiz')">🧪 Take the Full Quiz</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+const sectionOrder = ['intro','concepts','lambda','apigateway','edge','examples','exercises','quiz','pitfalls','cheatsheet'];
+const visitedSections = new Set();
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const idx = sectionOrder.indexOf(id);
+  document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+  visitedSections.add(id);
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress() {
+  const pct = Math.round((visitedSections.size / sectionOrder.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% Complete';
+}
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function switchTab(btn, contentId) {
+  const parent = btn.closest('.card') || btn.closest('.section');
+  parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  const content = document.getElementById(contentId);
+  if (content) content.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════
+let quizScore = 0;
+let quizAnswered = new Set();
+
+function checkAnswer(btn, questionId, isCorrect) {
+  if (quizAnswered.has(questionId)) return;
+  quizAnswered.add(questionId);
+  
+  const question = document.getElementById(questionId);
+  const feedback = document.getElementById(questionId + '-fb');
+  const allBtns = question.querySelectorAll('.option-btn');
+  
+  allBtns.forEach(b => b.disabled = true);
+  
+  if (isCorrect) {
+    btn.classList.add('correct');
+    quizScore++;
+    feedback.classList.add('feedback-correct');
+    feedback.innerHTML = '✅ ' + feedback.innerHTML;
+  } else {
+    btn.classList.add('incorrect');
+    // Mark correct answer
+    allBtns.forEach(b => {
+      // This is a simplistic approach; in a real app you'd have data attributes
+      if (b.onclick && b.onclick.toString().includes('true')) b.classList.add('correct');
+    });
+    feedback.classList.add('feedback-incorrect');
+    feedback.innerHTML = '❌ ' + feedback.innerHTML;
+  }
+  
+  feedback.style.display = 'block';
+  document.getElementById('quizScore').textContent = quizScore;
+  document.getElementById('quizTotal').textContent = quizAnswered.size;
+}
+
+function resetQuiz() {
+  quizScore = 0;
+  quizAnswered.clear();
+  document.getElementById('quizScore').textContent = '0';
+  document.getElementById('quizTotal').textContent = '0';
+  
+  for (let i = 1; i <= 12; i++) {
+    const q = document.getElementById('q' + i);
+    if (!q) continue;
+    q.querySelectorAll('.option-btn').forEach(b => {
+      b.disabled = false;
+      b.classList.remove('correct', 'incorrect');
+    });
+    const fb = document.getElementById('q' + i + '-fb');
+    if (fb) { fb.style.display = 'none'; fb.classList.remove('feedback-correct','feedback-incorrect'); }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SIMULATOR
+// ═══════════════════════════════════════════════
+let simRunning = false;
+function runSimulator() {
+  if (simRunning) return;
+  simRunning = true;
+  
+  // Reset steps
+  for (let i = 0; i <= 5; i++) {
+    const step = document.getElementById('step'+i);
+    if (step) {
+      step.classList.remove('active-step', 'done');
+      step.style.opacity = '0.4';
+    }
+  }
+  
+  // Animate steps
+  let step = 0;
+  function nextStep() {
+    if (step > 5) {
+      simRunning = false;
+      return;
+    }
+    const current = document.getElementById('step'+step);
+    if (current) {
+      if (step > 0) {
+        const prev = document.getElementById('step'+(step-1));
+        if (prev) {
+          prev.classList.remove('active-step');
+          prev.classList.add('done');
+          prev.style.opacity = '0.7';
+        }
+      }
+      current.classList.add('active-step');
+      current.style.opacity = '1';
+    }
+    step++;
+    setTimeout(nextStep, step === 1 ? 800 : 600);
+  }
+  
+  nextStep();
+}
+
+// ═══════════════════════════════════════════════
+// COPY CODE
+// ═══════════════════════════════════════════════
+function copyCode(btn) {
+  const codeBlock = btn.closest('.code-block');
+  const pre = codeBlock.querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = originalText; }, 1500);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// EXERCISES
+// ═══════════════════════════════════════════════
+// Store original exercise code
+const originalEx1 = document.getElementById('ex1')?.value;
+const originalEx2 = document.getElementById('ex2')?.value;
+const originalEx3 = document.getElementById('ex3')?.value;
+
+function resetExercise(exId) {
+  const ta = document.getElementById(exId);
+  if (!ta) return;
+  if (exId === 'ex1' && originalEx1) ta.value = originalEx1;
+  if (exId === 'ex2' && originalEx2) ta.value = originalEx2;
+  if (exId === 'ex3' && originalEx3) ta.value = originalEx3;
+  const output = document.getElementById(exId + '-output');
+  if (output) output.innerHTML = '// Reset. Try again!';
+}
+
+function checkExercise1() {
+  const code = document.getElementById('ex1').value;
+  const output = document.getElementById('ex1-output');
+  let score = 0;
+  const messages = [];
+  
+  // Bug #1: client should be outside handler
+  if (code.includes('const client = new DynamoDBClient({});') && 
+      !code.includes('const client = new DynamoDBClient({});\n\nexports.handler')) {
+    // crude check: if the line appears after handler start, it's inside
+    const handlerStart = code.indexOf('exports.handler');
+    const clientLine = code.indexOf('const client = new DynamoDBClient({});');
+    if (handlerStart > clientLine) {
+      // client line before handler start -> correct
+      score++;
+      messages.push('✅ Bug #1 fixed: client outside handler');
+    } else {
+      messages.push('❌ Bug #1: client should be outside the handler (cold start optimization)');
+    }
+  } else if (code.includes('const client = new DynamoDBClient({});') && 
+             code.indexOf('const client') > code.indexOf('exports.handler')) {
+    messages.push('❌ Bug #1: client should be outside the handler (cold start optimization)');
+  } else if (!code.includes('new DynamoDBClient')) {
+    messages.push('❌ Bug #1: missing DynamoDBClient initialization');
+  } else {
+    // maybe they moved it
+    score++;
+    messages.push('✅ Bug #1 fixed');
+  }
+  
+  // Bug #2: event.id should be event.pathParameters.id
+  if (code.includes('event.pathParameters.id') && !code.includes('event.id')) {
+    score++;
+    messages.push('✅ Bug #2 fixed: using event.pathParameters.id');
+  } else if (code.includes('event.id')) {
+    messages.push('❌ Bug #2: still using event.id, should be event.pathParameters.id (API Gateway format)');
+  } else {
+    messages.push('❌ Bug #2: missing path parameter access');
+  }
+  
+  // Bug #3: return should include statusCode, headers, body
+  if (code.includes('statusCode') && code.includes('headers') && code.includes('body')) {
+    score++;
+    messages.push('✅ Bug #3 fixed: proper API Gateway response format');
+  } else {
+    messages.push('❌ Bug #3: response must include statusCode, headers, body for API Gateway');
+  }
+  
+  if (score === 3) {
+    output.innerHTML = '🎉 All 3 bugs fixed! Great job!\n' + messages.join('\n');
+  } else {
+    output.innerHTML = '❌ Found ' + (3-score) + ' remaining issues:\n' + messages.join('\n');
+  }
+}
+
+function checkExercise2() {
+  const code = document.getElementById('ex2').value;
+  const output = document.getElementById('ex2-output');
+  let correct = true;
+  const messages = [];
+  
+  // Check for Access-Control-Allow-Origin header
+  if (!code.includes("'Access-Control-Allow-Origin'") && !code.includes('"Access-Control-Allow-Origin"')) {
+    messages.push('❌ Missing Access-Control-Allow-Origin header');
+    correct = false;
+  } else {
+    messages.push('✅ CORS header present');
+  }
+  
+  // Check OPTIONS handling
+  if (!code.includes("event.httpMethod === 'OPTIONS'") && !code.includes('event.httpMethod === "OPTIONS"')) {
+    messages.push('❌ Missing OPTIONS preflight handling');
+    correct = false;
+  } else {
+    messages.push('✅ OPTIONS preflight handled');
+  }
+  
+  // Check statusCode 200 for OPTIONS
+  if (!code.includes('statusCode: 200') && !code.includes('statusCode:200')) {
+    messages.push('❌ OPTIONS should return 200');
+    correct = false;
+  } else {
+    messages.push('✅ OPTIONS returns 200');
+  }
+  
+  if (correct) {
+    output.innerHTML = '✅ All CORS requirements met! Good work.';
+  } else {
+    output.innerHTML = '❌ Issues found:\n' + messages.join('\n');
+  }
+}
+
+function runExercise3() {
+  // Simulate SQS event with 5 messages, 2 failing
+  const mockEvent = {
+    Records: [
+      { messageId: 'msg1', body: '{"order":"1"}' },
+      { messageId: 'msg2', body: 'fail-order' },
+      { messageId: 'msg3', body: '{"order":"3"}' },
+      { messageId: 'msg4', body: 'fail-again' },
+      { messageId: 'msg5', body: '{"order":"5"}' }
+    ]
+  };
+  
+  const userCode = document.getElementById('ex3').value;
+  const output = document.getElementById('ex3-output');
+  
+  // Try to extract the handler function from user code
+  // This is a simplistic evaluation; in a real environment you'd use eval but it's risky.
+  // For educational demo, we'll simulate a correct answer.
+  // We'll just show the expected result.
+  output.innerHTML = `✅ Simulating with 5 messages (2 will fail).\nExpected handler should return:\n{ batchItemFailures: [{ itemIdentifier: "msg2" }, { itemIdentifier: "msg4" }] }\n\nCheck your code against this pattern.`;
+}
+
+function checkFillBlanks() {
+  const answers = {
+    f1: '15',
+    f2: 'Lambda Layers',
+    f3: 'API Gateway',
+    f4: 'outside',
+    f5: 'edge'
+  };
+  let correct = 0;
+  for (let id in answers) {
+    const input = document.getElementById(id);
+    if (!input) continue;
+    const val = input.value.trim().toLowerCase();
+    const expected = answers[id].toLowerCase();
+    if (val === expected || (id === 'f2' && (val === 'layers' || val === 'lambda layers'))) {
+      input.classList.add('correct-fill');
+      input.classList.remove('incorrect-fill');
+      correct++;
+    } else {
+      input.classList.add('incorrect-fill');
+      input.classList.remove('correct-fill');
+    }
+  }
+  document.getElementById('fill-score').textContent = `Score: ${correct}/5`;
+}
+</script>
+
+</body>
+</html>

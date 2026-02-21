@@ -1,0 +1,2905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Performance Profiling Mastery</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d2e;
+    --surface2: #252840;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8eaf6;
+    --text-muted: #9e9eb8;
+    --border: #2e3154;
+    --success: #43e97b;
+    --error: #ff6584;
+    --warning: #f7971e;
+    --info: #38c9f7;
+    --code-bg: #12141f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 2px solid var(--accent);
+    padding: 0 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .nav-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    padding: 1rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  nav button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 1rem 0.6rem;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  nav button:hover { color: var(--text); }
+  nav button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* SECTIONS */
+  .section { display: none; padding: 2rem 1rem; max-width: 1000px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  h1 { font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
+  h2 { font-size: 1.4rem; color: var(--accent); margin: 1.5rem 0 0.75rem; }
+  h3 { font-size: 1.1rem; color: var(--accent4); margin: 1rem 0 0.5rem; }
+  p { color: var(--text-muted); margin-bottom: 0.75rem; }
+
+  .subtitle { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-sm {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+  }
+
+  /* CODE BLOCKS */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+
+  code { font-family: 'Cascadia Code', 'Fira Code', monospace; }
+  pre code { color: #c9d1d9; }
+
+  .kw { color: #ff79c6; }
+  .fn { color: #50fa7b; }
+  .str { color: #f1fa8c; }
+  .num { color: #bd93f9; }
+  .cm { color: #6272a4; font-style: italic; }
+  .cls { color: #8be9fd; }
+  .prop { color: #ffb86c; }
+
+  /* TAGS */
+  .tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin: 0.15rem;
+  }
+
+  .tag-blue { background: #1a3a5c; color: var(--info); }
+  .tag-green { background: #1a3a2a; color: var(--success); }
+  .tag-red { background: #3a1a2a; color: var(--error); }
+  .tag-orange { background: #3a2a1a; color: var(--warning); }
+  .tag-purple { background: #2a1a3a; color: var(--accent); }
+
+  /* BUTTONS */
+  .btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    margin: 0.25rem;
+  }
+
+  .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-green { background: var(--success); color: #000; }
+  .btn-red { background: var(--error); }
+  .btn-orange { background: var(--warning); color: #000; }
+  .btn-outline {
+    background: none;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+  }
+
+  /* QUIZ */
+  .quiz-option {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 0.4rem 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+
+  .quiz-option:hover { border-color: var(--accent); }
+  .quiz-option.correct { border-color: var(--success); background: #1a3a2a; color: var(--success); }
+  .quiz-option.wrong { border-color: var(--error); background: #3a1a1a; color: var(--error); }
+
+  .quiz-feedback {
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: #1a3a2a; border: 1px solid var(--success); color: var(--success); }
+  .quiz-feedback.wrong { background: #3a1a1a; border: 1px solid var(--error); color: var(--error); }
+
+  /* METRICS DISPLAY */
+  .metric-bar-container {
+    background: var(--surface2);
+    border-radius: 20px;
+    height: 12px;
+    overflow: hidden;
+    margin: 0.4rem 0;
+  }
+
+  .metric-bar {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 1s ease;
+  }
+
+  .metric-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .metric-label { font-size: 0.8rem; min-width: 80px; color: var(--text-muted); }
+  .metric-value { font-size: 0.8rem; min-width: 60px; text-align: right; font-weight: 600; }
+
+  /* INTERACTIVE DEMO */
+  .demo-area {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .output-box {
+    background: #000;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--accent3);
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+
+  .output-line { margin: 0.1rem 0; }
+  .output-warn { color: var(--warning); }
+  .output-error { color: var(--error); }
+  .output-info { color: var(--info); }
+
+  /* TIMELINE */
+  .timeline-container {
+    position: relative;
+    padding: 1rem 0;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .timeline-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 0.3rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .timeline-line {
+    position: absolute;
+    left: 6px;
+    top: 14px;
+    bottom: -14px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .timeline-content h4 { font-size: 0.9rem; color: var(--text); margin-bottom: 0.25rem; }
+  .timeline-content p { font-size: 0.82rem; margin: 0; }
+
+  /* VITALS */
+  .vital-card {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 1.2rem;
+    text-align: center;
+    border: 2px solid var(--border);
+    transition: border-color 0.3s;
+  }
+
+  .vital-score {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0.5rem 0;
+  }
+
+  .vital-good { color: var(--success); border-color: var(--success); }
+  .vital-needs { color: var(--warning); border-color: var(--warning); }
+  .vital-poor { color: var(--error); border-color: var(--error); }
+
+  /* PROGRESS */
+  .progress-tracker {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .progress-label { font-size: 0.85rem; color: var(--text-muted); }
+  .progress-bar-outer { flex: 1; min-width: 100px; background: var(--surface2); border-radius: 20px; height: 10px; }
+  .progress-bar-inner { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--accent), var(--accent3)); transition: width 0.5s; }
+  .progress-score { font-weight: 700; color: var(--accent); min-width: 60px; text-align: right; }
+
+  /* PITFALLS */
+  .pitfall {
+    border-left: 4px solid var(--error);
+    background: #1e1215;
+    padding: 1rem 1.2rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+  }
+
+  .pitfall h4 { color: var(--error); margin-bottom: 0.5rem; font-size: 0.95rem; }
+
+  .tip {
+    border-left: 4px solid var(--success);
+    background: #121e15;
+    padding: 1rem 1.2rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+  }
+
+  .tip h4 { color: var(--success); margin-bottom: 0.5rem; font-size: 0.95rem; }
+
+  /* CHEATSHEET */
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .cheat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .cheat-header {
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+  }
+
+  .cheat-body { padding: 0.75rem 1rem; }
+
+  .cheat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+    gap: 0.5rem;
+  }
+
+  .cheat-row:last-child { border-bottom: none; }
+  .cheat-key { color: var(--text-muted); flex-shrink: 0; }
+  .cheat-val { color: var(--text); text-align: right; font-family: monospace; }
+
+  /* EXERCISE */
+  .exercise-area textarea {
+    width: 100%;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    padding: 1rem;
+    resize: vertical;
+    min-height: 120px;
+    outline: none;
+  }
+
+  .exercise-area textarea:focus { border-color: var(--accent); }
+
+  /* ACCORDION */
+  .accordion-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.5rem; overflow: hidden; }
+  .accordion-header {
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+  .accordion-header:hover { background: var(--surface2); }
+  .accordion-icon { transition: transform 0.3s; color: var(--accent); }
+  .accordion-item.open .accordion-icon { transform: rotate(180deg); }
+  .accordion-body { display: none; padding: 1rem; background: var(--surface2); font-size: 0.88rem; }
+  .accordion-item.open .accordion-body { display: block; }
+
+  /* SCORE BADGE */
+  .score-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .badge-gold { background: #3a2f00; color: #ffd700; border: 1px solid #ffd700; }
+  .badge-silver { background: #2a2a2a; color: #c0c0c0; border: 1px solid #c0c0c0; }
+
+  /* LIGHTHOUSE */
+  .lighthouse-score {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 6px solid;
+    margin: 0 auto 0.75rem;
+  }
+
+  .ls-number { font-size: 1.8rem; font-weight: 900; }
+  .ls-label { font-size: 0.6rem; color: var(--text-muted); }
+
+  /* SIMULATION */
+  .sim-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.4rem 0;
+    font-size: 0.8rem;
+  }
+
+  .sim-label { min-width: 120px; color: var(--text-muted); }
+  .sim-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 20px; overflow: hidden; position: relative; }
+  .sim-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 0.5rem; font-size: 0.7rem; font-weight: 600; color: #000; transition: width 1s ease; }
+  .sim-val { min-width: 50px; text-align: right; font-weight: 600; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    h1 { font-size: 1.5rem; }
+    .card { padding: 1rem; }
+    nav button { font-size: 0.7rem; padding: 0.75rem 0.4rem; }
+  }
+
+  .highlight-box {
+    background: linear-gradient(135deg, #1a1d3a, #2a1a3a);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+  .emoji-big { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: white;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .compare-table th { background: var(--surface2); padding: 0.6rem 0.8rem; text-align: left; color: var(--accent); border: 1px solid var(--border); }
+  .compare-table td { padding: 0.6rem 0.8rem; border: 1px solid var(--border); color: var(--text-muted); }
+  .compare-table tr:hover td { background: var(--surface2); color: var(--text); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-title">⚡ Perf Profiling</div>
+  <button class="active" onclick="showSection('intro')">📖 Intro</button>
+  <button onclick="showSection('devtools')">🔧 DevTools</button>
+  <button onclick="showSection('metrics')">📊 Metrics</button>
+  <button onclick="showSection('vitals')">💚 Web Vitals</button>
+  <button onclick="showSection('lighthouse')">🔦 Lighthouse</button>
+  <button onclick="showSection('budget')">💰 Budgets</button>
+  <button onclick="showSection('exercises')">💪 Exercises</button>
+  <button onclick="showSection('quiz')">🧠 Quiz</button>
+  <button onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+  <button onclick="showSection('cheatsheet')">📋 Cheatsheet</button>
+</nav>
+
+<!-- ==================== INTRO ==================== -->
+<section id="intro" class="section active">
+  <h1>⚡ Performance Profiling</h1>
+  <p class="subtitle">Master Chrome DevTools, Web Vitals, Lighthouse & Optimization — from zero to interview-ready</p>
+
+  <div class="highlight-box">
+    <h3 style="color:var(--accent3); margin-top:0">🎯 What is Performance Profiling?</h3>
+    <p>Performance profiling is <strong style="color:var(--text)">measuring and analyzing</strong> how fast your web app runs. Like a doctor diagnosing a patient — you identify <em>what's slow</em>, <em>why it's slow</em>, and <em>how to fix it</em>.</p>
+  </div>
+
+  <h2>🗺️ The Big Picture — Think of it Like a Race</h2>
+  <div class="card-grid">
+    <div class="card-sm">
+      <span class="emoji-big">🏁</span>
+      <h3 style="margin-top:0">The Race</h3>
+      <p>Your webpage loads. The goal: get it to users <strong style="color:var(--text)">as fast as possible</strong>. Every millisecond counts — 53% of mobile users abandon sites that take >3 seconds.</p>
+    </div>
+    <div class="card-sm">
+      <span class="emoji-big">📸</span>
+      <h3 style="margin-top:0">The Camera</h3>
+      <p><strong style="color:var(--text)">Chrome DevTools</strong> = your slow-motion camera. It records exactly what happens frame by frame so you can spot the bottlenecks.</p>
+    </div>
+    <div class="card-sm">
+      <span class="emoji-big">📏</span>
+      <h3 style="margin-top:0">The Rulers</h3>
+      <p><strong style="color:var(--text)">Core Web Vitals</strong> = Google's official rulers. They measure real-world user experience — loading, interactivity, visual stability.</p>
+    </div>
+    <div class="card-sm">
+      <span class="emoji-big">🤖</span>
+      <h3 style="margin-top:0">The Judge</h3>
+      <p><strong style="color:var(--text)">Lighthouse</strong> = automated judge that scores your page 0-100 and tells you exactly what to fix.</p>
+    </div>
+  </div>
+
+  <h2>📚 The Learning Path</h2>
+  <div class="timeline-container">
+    <div class="timeline-item">
+      <div style="position:relative">
+        <div class="timeline-dot" style="background:var(--accent)"></div>
+        <div class="timeline-line"></div>
+      </div>
+      <div class="timeline-content">
+        <h4>1. Chrome DevTools Profiling</h4>
+        <p>Record and analyze performance traces. See JavaScript execution, rendering, network — all in one timeline.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div style="position:relative">
+        <div class="timeline-dot" style="background:var(--info)"></div>
+        <div class="timeline-line"></div>
+      </div>
+      <div class="timeline-content">
+        <h4>2. Performance Metrics</h4>
+        <p>Understand what TTFB, FCP, TTI, CLS, LCP mean and why they matter for users and SEO.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div style="position:relative">
+        <div class="timeline-dot" style="background:var(--success)"></div>
+        <div class="timeline-line"></div>
+      </div>
+      <div class="timeline-content">
+        <h4>3. Core Web Vitals</h4>
+        <p>Google's 3 key metrics: LCP, FID/INP, CLS. These directly affect your Google ranking!</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div style="position:relative">
+        <div class="timeline-dot" style="background:var(--accent4)"></div>
+        <div class="timeline-line"></div>
+      </div>
+      <div class="timeline-content">
+        <h4>4. Lighthouse</h4>
+        <p>Run automated audits. Get actionable scores for Performance, Accessibility, SEO, Best Practices.</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div style="position:relative">
+        <div class="timeline-dot" style="background:var(--error)"></div>
+      </div>
+      <div class="timeline-content">
+        <h4>5. Performance Budgets</h4>
+        <p>Set limits: "JS bundle must be <200KB." Fail the CI/CD build if you exceed the budget. Prevent regressions.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>⚡ Live Performance Demo</h2>
+  <div class="card">
+    <p>See the difference between <strong style="color:var(--error)">bad</strong> and <strong style="color:var(--success)">optimized</strong> code in real time:</p>
+    <div class="demo-area">
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem">
+        <button class="btn btn-red" onclick="runBadCode()">🐌 Run Slow Code</button>
+        <button class="btn btn-green" onclick="runGoodCode()">⚡ Run Fast Code</button>
+        <button class="btn btn-outline" onclick="clearOutput('introOutput')">🗑️ Clear</button>
+      </div>
+      <div class="output-box" id="introOutput">// Click a button to see live performance timing...</div>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <h3 style="margin-top:0; color:var(--warning)">💼 Why This Matters for Your Job Search</h3>
+    <p>Top companies ask performance questions in <strong style="color:var(--text)">every front-end interview</strong>. Google, Meta, Netflix, Airbnb — they all care about:</p>
+    <div style="margin-top:0.5rem; display:flex; flex-wrap:wrap; gap:0.5rem">
+      <span class="tag tag-purple">"How would you improve page load?"</span>
+      <span class="tag tag-blue">"What are Core Web Vitals?"</span>
+      <span class="tag tag-green">"How do you profile a slow React app?"</span>
+      <span class="tag tag-orange">"What causes layout shifts?"</span>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== DEVTOOLS ==================== -->
+<section id="devtools" class="section">
+  <h1>🔧 Chrome DevTools Profiling</h1>
+  <p class="subtitle">Your most powerful weapon for finding performance bottlenecks</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">🗂️ The 4 Key DevTools Panels for Performance</h2>
+    <div class="card-grid">
+      <div class="card-sm" style="border-color:var(--accent)">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+          <span style="font-size:1.5rem">⏱️</span>
+          <strong style="color:var(--accent)">Performance Panel</strong>
+        </div>
+        <p style="margin:0">Records a timeline of everything: JS execution, rendering, painting, network. Your main profiling tool.</p>
+      </div>
+      <div class="card-sm" style="border-color:var(--info)">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+          <span style="font-size:1.5rem">🌐</span>
+          <strong style="color:var(--info)">Network Panel</strong>
+        </div>
+        <p style="margin:0">Shows every request, file size, timing, waterfall. Spot slow requests, large files, blocking resources.</p>
+      </div>
+      <div class="card-sm" style="border-color:var(--success)">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+          <span style="font-size:1.5rem">🧠</span>
+          <strong style="color:var(--success)">Memory Panel</strong>
+        </div>
+        <p style="margin:0">Find memory leaks. Take heap snapshots, record allocation timelines, compare memory usage over time.</p>
+      </div>
+      <div class="card-sm" style="border-color:var(--warning)">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+          <span style="font-size:1.5rem">💡</span>
+          <strong style="color:var(--warning)">Coverage Panel</strong>
+        </div>
+        <p style="margin:0">Shows which CSS and JS code is actually used. Unused code = wasted bytes = slower loading.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>📊 The Performance Panel — Anatomy</h2>
+  <div class="card">
+    <p>When you hit <kbd style="background:var(--surface2);padding:2px 6px;border-radius:4px;border:1px solid var(--border)">Ctrl+Shift+I</kbd> → Performance tab → Record, you get a <strong style="color:var(--text)">flame chart</strong> showing:</p>
+
+    <div class="demo-area">
+      <div style="font-family:monospace;font-size:0.8rem;line-height:2">
+        <div style="background:#2a1a3a;padding:4px 8px;border-radius:4px;margin-bottom:4px">
+          <span style="color:#ff79c6">NETWORK</span> → <span style="color:#f1fa8c">HTML</span> <span style="color:#50fa7b">CSS</span> <span style="color:#8be9fd">JS</span> files loading
+        </div>
+        <div style="background:#1a2a3a;padding:4px 8px;border-radius:4px;margin-bottom:4px">
+          <span style="color:#8be9fd">MAIN THREAD</span> → <span style="color:#ffb86c">Parse HTML</span> → <span style="color:#ff79c6">Evaluate Script</span> → <span style="color:#50fa7b">Layout</span> → <span style="color:#bd93f9">Paint</span>
+        </div>
+        <div style="background:#1a3a2a;padding:4px 8px;border-radius:4px;margin-bottom:4px">
+          <span style="color:#50fa7b">FRAMES</span> → Each frame must finish in <span style="color:#ff6584">16.7ms</span> for 60fps
+        </div>
+        <div style="background:#3a2a1a;padding:4px 8px;border-radius:4px">
+          <span style="color:#f7971e">TIMINGS</span> → FCP, LCP, TTI markers on the timeline
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>🔬 Using the Performance API in Code</h2>
+  <div class="card">
+    <p>Don't just use DevTools GUI — measure programmatically too:</p>
+    <pre><code><span class="cm">// ─── 1. performance.now() ── Most Precise Timer ───────────</span>
+<span class="kw">const</span> start = <span class="cls">performance</span>.<span class="fn">now</span>();
+
+<span class="cm">// ... your code here ...</span>
+doSomethingExpensive();
+
+<span class="kw">const</span> end = <span class="cls">performance</span>.<span class="fn">now</span>();
+console.<span class="fn">log</span>(<span class="str">`Took: <span class="kw">${</span>end - start<span class="kw">}</span>ms`</span>);
+<span class="cm">// Better than Date.now() — sub-millisecond precision!</span>
+
+<span class="cm">// ─── 2. console.time() ── Simple & Readable ───────────────</span>
+console.<span class="fn">time</span>(<span class="str">'myOperation'</span>);
+doSomethingExpensive();
+console.<span class="fn">timeEnd</span>(<span class="str">'myOperation'</span>); <span class="cm">// → myOperation: 23.4ms</span>
+
+<span class="cm">// ─── 3. performance.mark() ── Named Milestones ────────────</span>
+<span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'fetchStart'</span>);
+<span class="kw">await</span> <span class="fn">fetchData</span>();
+<span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'fetchEnd'</span>);
+
+<span class="cls">performance</span>.<span class="fn">measure</span>(
+  <span class="str">'fetchDuration'</span>,  <span class="cm">// name</span>
+  <span class="str">'fetchStart'</span>,     <span class="cm">// start mark</span>
+  <span class="str">'fetchEnd'</span>        <span class="cm">// end mark</span>
+);
+
+<span class="cm">// Get all measures:</span>
+<span class="kw">const</span> measures = <span class="cls">performance</span>.<span class="fn">getEntriesByType</span>(<span class="str">'measure'</span>);
+console.<span class="fn">log</span>(measures[<span class="num">0</span>].duration); <span class="cm">// exact ms</span>
+
+<span class="cm">// ─── 4. PerformanceObserver ── Watch in Real Time ─────────</span>
+<span class="kw">const</span> observer = <span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  list.<span class="fn">getEntries</span>().<span class="fn">forEach</span>(entry => {
+    console.<span class="fn">log</span>(entry.name, entry.startTime, entry.duration);
+  });
+});
+
+observer.<span class="fn">observe</span>({ entryTypes: [<span class="str">'longtask'</span>, <span class="str">'paint'</span>, <span class="str">'navigation'</span>] });</code></pre>
+  </div>
+
+  <h2>🎯 Interactive: Measure Your Own Code</h2>
+  <div class="card">
+    <div class="demo-area">
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
+        <button class="btn" onclick="measureSort()">📊 Measure Sort Algorithms</button>
+        <button class="btn btn-orange" onclick="measureDOMOps()">🖼️ Measure DOM Ops</button>
+        <button class="btn btn-green" onclick="measureMemory()">🧠 Measure Memory</button>
+        <button class="btn btn-outline" onclick="clearOutput('devOutput')">🗑️ Clear</button>
+      </div>
+      <div class="output-box" id="devOutput">// Click buttons to measure real performance...</div>
+    </div>
+  </div>
+
+  <h2>🚦 Key DevTools Shortcuts</h2>
+  <div class="card">
+    <table class="compare-table">
+      <tr>
+        <th>Action</th><th>Shortcut / Where</th><th>Why Use It</th>
+      </tr>
+      <tr>
+        <td>Open DevTools</td>
+        <td><kbd style="background:var(--surface2);padding:2px 6px;border-radius:4px">F12</kbd> or <kbd style="background:var(--surface2);padding:2px 6px;border-radius:4px">Ctrl+Shift+I</kbd></td>
+        <td>Start everything here</td>
+      </tr>
+      <tr>
+        <td>Performance Record</td>
+        <td>Performance tab → ⏺ button</td>
+        <td>Capture a timeline trace</td>
+      </tr>
+      <tr>
+        <td>Throttle CPU</td>
+        <td>Performance → ⚙️ → CPU 4x/6x</td>
+        <td>Simulate slow mobile device</td>
+      </tr>
+      <tr>
+        <td>Throttle Network</td>
+        <td>Network tab → "Fast 3G"</td>
+        <td>Test on slow connections</td>
+      </tr>
+      <tr>
+        <td>Force Reflow Check</td>
+        <td>Console → element.offsetHeight</td>
+        <td>Triggers layout — test for reflow</td>
+      </tr>
+      <tr>
+        <td>Run Lighthouse</td>
+        <td>Lighthouse tab → Analyze</td>
+        <td>Full automated audit</td>
+      </tr>
+      <tr>
+        <td>Check Coverage</td>
+        <td>More tools → Coverage</td>
+        <td>Find unused JS/CSS</td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>🔥 The Flame Chart — Reading It</h2>
+  <div class="card">
+    <p>The flame chart shows <strong style="color:var(--text)">call stacks over time</strong>. Wider = longer. Taller = deeper call stack.</p>
+    <div class="demo-area" style="font-family:monospace;font-size:0.75rem">
+      <div style="background:#2a1f00;padding:6px;margin:2px;border-radius:4px;text-align:center;color:#ffd700">
+        ████████████████ handleClick (45ms) ████████████████
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin:2px">
+        <div style="background:#1a2a00;padding:6px;border-radius:4px;text-align:center;color:#50fa7b">
+          ████ fetchData (20ms) ████
+        </div>
+        <div style="background:#2a1a00;padding:6px;border-radius:4px;text-align:center;color:#ffb86c">
+          ███ renderList (18ms) ███
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin:2px">
+        <div style="background:#1a1a2a;padding:6px;border-radius:4px;text-align:center;color:#bd93f9">
+          ██ parseJSON
+        </div>
+        <div style="background:#1a2a2a;padding:6px;border-radius:4px;text-align:center;color:#8be9fd">
+          ██ validateData
+        </div>
+        <div style="background:#2a1a1a;padding:6px;border-radius:4px;text-align:center;color:#ff6584">
+          ████ createDOM (LONG!)
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:0.75rem">📍 <strong style="color:var(--warning)">Rule:</strong> Any task >50ms is a "Long Task" — it blocks the UI and makes the page feel janky!</p>
+  </div>
+</section>
+
+<!-- ==================== METRICS ==================== -->
+<section id="metrics" class="section">
+  <h1>📊 Performance Metrics</h1>
+  <p class="subtitle">The numbers that tell you how fast (or slow) your site really is</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">📐 The Full Metric Lifecycle — Page Load Journey</h2>
+    <div class="demo-area">
+      <div style="font-size:0.78rem;font-family:monospace">
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+          <span style="color:var(--text-muted)">0ms</span>
+          <div style="background:#2a1a3a;padding:4px 8px;border-radius:4px;color:#ff79c6">Navigation Start</div>
+          <span style="color:var(--border)">────</span>
+          <div style="background:#1a2a3a;padding:4px 8px;border-radius:4px;color:#8be9fd">TTFB</div>
+          <span style="color:var(--border)">──</span>
+          <div style="background:#1a3a1a;padding:4px 8px;border-radius:4px;color:#50fa7b">FCP</div>
+          <span style="color:var(--border)">──</span>
+          <div style="background:#3a2a1a;padding:4px 8px;border-radius:4px;color:#f7971e">LCP</div>
+          <span style="color:var(--border)">──</span>
+          <div style="background:#2a1a1a;padding:4px 8px;border-radius:4px;color:#ff6584">TTI</div>
+          <span style="color:var(--border)">──</span>
+          <div style="background:#1a2a3a;padding:4px 8px;border-radius:4px;color:#6c63ff">FID/INP</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="animateMetrics()">▶️ Animate Load Journey</button>
+    <div id="metricsAnimation" style="margin-top:1rem;display:none">
+      <div id="animMetrics"></div>
+    </div>
+  </div>
+
+  <h2>📏 All Key Metrics Explained</h2>
+
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span>⏱️ TTFB — Time to First Byte <span class="tag tag-blue">Network</span></span>
+      <span class="accordion-icon">▼</span>
+    </div>
+    <div class="accordion-body">
+      <p><strong style="color:var(--text)">What:</strong> Time from page request to first byte received from server.</p>
+      <p><strong style="color:var(--text)">Good:</strong> &lt;800ms | <strong style="color:var(--warning)">Needs Work:</strong> 800ms-1800ms | <strong style="color:var(--error)">Poor:</strong> &gt;1800ms</p>
+      <p><strong style="color:var(--text)">Causes of slow TTFB:</strong> Slow server, no CDN, no caching, long database queries</p>
+      <pre><code><span class="cm">// Measure TTFB with Performance API</span>
+<span class="kw">const</span> observer = <span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">for</span> (<span class="kw">const</span> entry <span class="kw">of</span> list.<span class="fn">getEntries</span>()) {
+    <span class="kw">const</span> ttfb = entry.responseStart - entry.requestStart;
+    console.<span class="fn">log</span>(<span class="str">'TTFB:'</span>, ttfb, <span class="str">'ms'</span>);
+  }
+});
+observer.<span class="fn">observe</span>({ type: <span class="str">'navigation'</span>, buffered: <span class="kw">true</span> });</code></pre>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span>🎨 FCP — First Contentful Paint <span class="tag tag-green">Visual</span></span>
+      <span class="accordion-icon">▼</span>
+    </div>
+    <div class="accordion-body">
+      <p><strong style="color:var(--text)">What:</strong> When the first text, image, or canvas is painted on screen. User sees SOMETHING.</p>
+      <p><strong style="color:var(--text)">Good:</strong> &lt;1.8s | <strong style="color:var(--warning)">Needs Work:</strong> 1.8s-3s | <strong style="color:var(--error)">Poor:</strong> &gt;3s</p>
+      <p><strong style="color:var(--text)">Fix slow FCP:</strong> Remove render-blocking resources, inline critical CSS, preload fonts</p>
+      <pre><code><span class="cm">// Measure FCP</span>
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">const</span> fcp = list.<span class="fn">getEntriesByName</span>(<span class="str">'first-contentful-paint'</span>)[<span class="num">0</span>];
+  console.<span class="fn">log</span>(<span class="str">'FCP:'</span>, fcp.startTime, <span class="str">'ms'</span>);
+}).<span class="fn">observe</span>({ type: <span class="str">'paint'</span>, buffered: <span class="kw">true</span> });</code></pre>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span>🖼️ LCP — Largest Contentful Paint <span class="tag tag-orange">Core Vital</span></span>
+      <span class="accordion-icon">▼</span>
+    </div>
+    <div class="accordion-body">
+      <p><strong style="color:var(--text)">What:</strong> When the largest visible element (image, video, text block) is rendered. Measures perceived load speed.</p>
+      <p><strong style="color:var(--text)">Good:</strong> &lt;2.5s | <strong style="color:var(--warning)">Needs Work:</strong> 2.5s-4s | <strong style="color:var(--error)">Poor:</strong> &gt;4s</p>
+      <p><strong style="color:var(--text)">Fix:</strong> Optimize hero images, preload LCP image, use CDN, reduce server response time</p>
+      <pre><code><span class="cm">// Measure LCP</span>
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">const</span> entries = list.<span class="fn">getEntries</span>();
+  <span class="kw">const</span> lcp = entries[entries.length - <span class="num">1</span>]; <span class="cm">// last = largest</span>
+  console.<span class="fn">log</span>(<span class="str">'LCP:'</span>, lcp.startTime, <span class="str">'ms'</span>);
+  console.<span class="fn">log</span>(<span class="str">'LCP Element:'</span>, lcp.element);
+}).<span class="fn">observe</span>({ type: <span class="str">'largest-contentful-paint'</span>, buffered: <span class="kw">true</span> });</code></pre>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span>🖱️ FID/INP — Interactivity <span class="tag tag-orange">Core Vital</span></span>
+      <span class="accordion-icon">▼</span>
+    </div>
+    <div class="accordion-body">
+      <p><strong style="color:var(--text)">FID (old):</strong> First Input Delay — delay before first interaction is handled.</p>
+      <p><strong style="color:var(--text)">INP (new, 2024):</strong> Interaction to Next Paint — measures ALL interactions, not just first.</p>
+      <p><strong style="color:var(--text)">Good INP:</strong> &lt;200ms | <strong style="color:var(--warning)">Needs Work:</strong> 200ms-500ms | <strong style="color:var(--error)">Poor:</strong> &gt;500ms</p>
+      <p><strong style="color:var(--text)">Fix:</strong> Break up long tasks, use web workers, avoid heavy synchronous JS</p>
+      <pre><code><span class="cm">// Measure INP (Interaction to Next Paint)</span>
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">for</span> (<span class="kw">const</span> entry <span class="kw">of</span> list.<span class="fn">getEntries</span>()) {
+    <span class="cm">// entry.processingStart - entry.startTime = input delay</span>
+    <span class="cm">// entry.duration = total interaction time</span>
+    console.<span class="fn">log</span>(<span class="str">'INP entry:'</span>, entry.duration, <span class="str">'ms'</span>);
+  }
+}).<span class="fn">observe</span>({ type: <span class="str">'event'</span>, buffered: <span class="kw">true</span>, durationThreshold: <span class="num">16</span> });</code></pre>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span>📐 CLS — Cumulative Layout Shift <span class="tag tag-orange">Core Vital</span></span>
+      <span class="accordion-icon">▼</span>
+    </div>
+    <div class="accordion-body">
+      <p><strong style="color:var(--text)">What:</strong> Measures visual instability — when elements move unexpectedly after load (ads popping in, images loading without dimensions).</p>
+      <p><strong style="color:var(--text)">Good:</strong> &lt;0.1 | <strong style="color:var(--warning)">Needs Work:</strong> 0.1-0.25 | <strong style="color:var(--error)">Poor:</strong> &gt;0.25</p>
+      <p><strong style="color:var(--text)">Fix:</strong> Always set width/height on images, use aspect-ratio CSS, reserve space for ads/embeds</p>
+      <pre><code><span class="cm">// Measure CLS</span>
+<span class="kw">let</span> clsScore = <span class="num">0</span>;
+
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">for</span> (<span class="kw">const</span> entry <span class="kw">of</span> list.<span class="fn">getEntries</span>()) {
+    <span class="kw">if</span> (!entry.hadRecentInput) {   <span class="cm">// ignore user-triggered shifts</span>
+      clsScore += entry.value;
+    }
+  }
+  console.<span class="fn">log</span>(<span class="str">'CLS score:'</span>, clsScore);
+}).<span class="fn">observe</span>({ type: <span class="str">'layout-shift'</span>, buffered: <span class="kw">true</span> });
+
+<span class="cm">// BAD: Image without dimensions = layout shift!</span>
+<span class="cm">// &lt;img src="hero.jpg"&gt;  ← DON'T DO THIS</span>
+
+<span class="cm">// GOOD: Always specify dimensions</span>
+<span class="cm">// &lt;img src="hero.jpg" width="800" height="400"&gt;</span></code></pre>
+    </div>
+  </div>
+
+  <div class="accordion-item">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      <span>⏳ TTI — Time to Interactive <span class="tag tag-blue">Usability</span></span>
+      <span class="accordion-icon">▼</span>
+    </div>
+    <div class="accordion-body">
+      <p><strong style="color:var(--text)">What:</strong> When the page is fully interactive — JS loaded, event handlers registered, no long tasks blocking.</p>
+      <p><strong style="color:var(--text)">Good:</strong> &lt;3.8s | <strong style="color:var(--warning)">Needs Work:</strong> 3.8s-7.3s | <strong style="color:var(--error)">Poor:</strong> &gt;7.3s</p>
+      <p><strong style="color:var(--text)">Fix:</strong> Reduce JS bundle size, code-split, defer non-critical JS, eliminate long tasks</p>
+    </div>
+  </div>
+
+  <h2>🎮 Interactive Metric Simulator</h2>
+  <div class="card">
+    <p>Adjust settings and see how metrics change:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">JS Bundle Size</label>
+        <input type="range" id="jsBundleSlider" min="50" max="1000" value="200" style="width:100%" oninput="updateSimulator()">
+        <span id="jsBundleVal" style="font-size:0.8rem;color:var(--accent)">200KB</span>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">Image Size</label>
+        <input type="range" id="imageSlider" min="10" max="500" value="100" style="width:100%" oninput="updateSimulator()">
+        <span id="imageVal" style="font-size:0.8rem;color:var(--accent)">100KB</span>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">Server Response Time</label>
+        <input type="range" id="serverSlider" min="50" max="2000" value="300" style="width:100%" oninput="updateSimulator()">
+        <span id="serverVal" style="font-size:0.8rem;color:var(--accent)">300ms</span>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">Network Speed</label>
+        <select id="networkSpeed" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:0.4rem;width:100%" onchange="updateSimulator()">
+          <option value="1">Fast 4G</option>
+          <option value="2">Slow 4G</option>
+          <option value="4">Fast 3G</option>
+          <option value="8">Slow 3G</option>
+        </select>
+      </div>
+    </div>
+    <div id="simulatorOutput"></div>
+  </div>
+</section>
+
+<!-- ==================== VITALS ==================== -->
+<section id="vitals" class="section">
+  <h1>💚 Core Web Vitals</h1>
+  <p class="subtitle">Google's 3 official metrics that affect your search ranking</p>
+
+  <div class="highlight-box">
+    <p>🔑 <strong style="color:var(--text)">Core Web Vitals are Google ranking signals.</strong> Poor scores → lower search position → less traffic. These are NOT just nice-to-have!</p>
+  </div>
+
+  <h2>The 3 Core Web Vitals</h2>
+  <div class="card-grid">
+    <div class="vital-card vital-good">
+      <div style="font-size:1.5rem">🖼️</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--text)">LCP</div>
+      <div class="vital-score">2.5s</div>
+      <div style="font-size:0.78rem;color:var(--text-muted)">Largest Contentful Paint</div>
+      <div style="margin-top:0.5rem">
+        <span class="tag tag-green">GOOD &lt;2.5s</span>
+        <span class="tag tag-orange">NEEDS 2.5-4s</span>
+        <span class="tag tag-red">POOR &gt;4s</span>
+      </div>
+    </div>
+    <div class="vital-card vital-good">
+      <div style="font-size:1.5rem">🖱️</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--text)">INP</div>
+      <div class="vital-score">200ms</div>
+      <div style="font-size:0.78rem;color:var(--text-muted)">Interaction to Next Paint</div>
+      <div style="margin-top:0.5rem">
+        <span class="tag tag-green">GOOD &lt;200ms</span>
+        <span class="tag tag-orange">NEEDS 200-500ms</span>
+        <span class="tag tag-red">POOR &gt;500ms</span>
+      </div>
+    </div>
+    <div class="vital-card vital-good">
+      <div style="font-size:1.5rem">📐</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--text)">CLS</div>
+      <div class="vital-score">0.1</div>
+      <div style="font-size:0.78rem;color:var(--text-muted)">Cumulative Layout Shift</div>
+      <div style="margin-top:0.5rem">
+        <span class="tag tag-green">GOOD &lt;0.1</span>
+        <span class="tag tag-orange">NEEDS 0.1-0.25</span>
+        <span class="tag tag-red">POOR &gt;0.25</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>🔧 How to Measure Core Web Vitals</h2>
+  <div class="card">
+    <h3>Option 1: web-vitals Library (Google's Official)</h3>
+    <pre><code><span class="cm">// Install: npm install web-vitals</span>
+
+<span class="kw">import</span> { onLCP, onINP, onCLS, onFCP, onTTFB } <span class="kw">from</span> <span class="str">'web-vitals'</span>;
+
+<span class="cm">// Callback fires when metric is ready</span>
+<span class="fn">onLCP</span>((metric) => {
+  console.<span class="fn">log</span>(<span class="str">'LCP:'</span>, metric.value, <span class="str">'ms'</span>);
+  <span class="cm">// metric.rating = 'good' | 'needs-improvement' | 'poor'</span>
+  <span class="cm">// Send to analytics!</span>
+  <span class="fn">sendToAnalytics</span>({ name: metric.name, value: metric.value });
+});
+
+<span class="fn">onINP</span>((metric) => console.<span class="fn">log</span>(<span class="str">'INP:'</span>, metric.value));
+<span class="fn">onCLS</span>((metric) => console.<span class="fn">log</span>(<span class="str">'CLS:'</span>, metric.value));
+
+<span class="kw">function</span> <span class="fn">sendToAnalytics</span>(data) {
+  <span class="cm">// Use navigator.sendBeacon for reliability</span>
+  navigator.<span class="fn">sendBeacon</span>(<span class="str">'/analytics'</span>, <span class="cls">JSON</span>.<span class="fn">stringify</span>(data));
+}</code></pre>
+
+    <h3>Option 2: Raw PerformanceObserver</h3>
+    <pre><code><span class="cm">// Measure all 3 Core Web Vitals manually</span>
+
+<span class="cm">// ─── LCP ────────────────────────────────────</span>
+<span class="kw">let</span> lcpValue = <span class="num">0</span>;
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">const</span> entries = list.<span class="fn">getEntries</span>();
+  lcpValue = entries[entries.length - <span class="num">1</span>].startTime;
+}).<span class="fn">observe</span>({ type: <span class="str">'largest-contentful-paint'</span>, buffered: <span class="kw">true</span> });
+
+<span class="cm">// ─── CLS ────────────────────────────────────</span>
+<span class="kw">let</span> clsValue = <span class="num">0</span>;
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">for</span> (<span class="kw">const</span> entry <span class="kw">of</span> list.<span class="fn">getEntries</span>()) {
+    <span class="kw">if</span> (!entry.hadRecentInput) clsValue += entry.value;
+  }
+}).<span class="fn">observe</span>({ type: <span class="str">'layout-shift'</span>, buffered: <span class="kw">true</span> });
+
+<span class="cm">// ─── INP ────────────────────────────────────</span>
+<span class="kw">let</span> inpValue = <span class="num">0</span>;
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">for</span> (<span class="kw">const</span> entry <span class="kw">of</span> list.<span class="fn">getEntries</span>()) {
+    inpValue = <span class="cls">Math</span>.<span class="fn">max</span>(inpValue, entry.duration);
+  }
+}).<span class="fn">observe</span>({ type: <span class="str">'event'</span>, buffered: <span class="kw">true</span>, durationThreshold: <span class="num">16</span> });</code></pre>
+  </div>
+
+  <h2>🎯 CWV Optimizer — Interactive</h2>
+  <div class="card">
+    <p>Click on a failing vital to see how to fix it:</p>
+    <div class="card-grid">
+      <div class="vital-card vital-poor" style="cursor:pointer" onclick="showVitalFix('lcp')">
+        <div style="font-size:1.5rem">🖼️</div>
+        <div style="font-weight:700">LCP</div>
+        <div class="vital-score" style="font-size:2rem">5.2s</div>
+        <div style="font-size:0.78rem;color:var(--error)">POOR — Click to fix!</div>
+      </div>
+      <div class="vital-card vital-needs" style="cursor:pointer" onclick="showVitalFix('inp')">
+        <div style="font-size:1.5rem">🖱️</div>
+        <div style="font-weight:700">INP</div>
+        <div class="vital-score" style="font-size:2rem">380ms</div>
+        <div style="font-size:0.78rem;color:var(--warning)">NEEDS WORK — Click to fix!</div>
+      </div>
+      <div class="vital-card vital-poor" style="cursor:pointer" onclick="showVitalFix('cls')">
+        <div style="font-size:1.5rem">📐</div>
+        <div style="font-weight:700">CLS</div>
+        <div class="vital-score" style="font-size:2rem">0.31</div>
+        <div style="font-size:0.78rem;color:var(--error)">POOR — Click to fix!</div>
+      </div>
+    </div>
+    <div id="vitalFixPanel" style="display:none"></div>
+  </div>
+
+  <h2>📊 Live CWV Meter</h2>
+  <div class="card">
+    <button class="btn" onclick="runLiveCWV()">🔍 Measure This Page's CWV</button>
+    <div id="cwvResults" style="margin-top:1rem;display:none">
+      <div id="cwvOutput"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== LIGHTHOUSE ==================== -->
+<section id="lighthouse" class="section">
+  <h1>🔦 Lighthouse</h1>
+  <p class="subtitle">Google's automated auditing tool — your performance report card</p>
+
+  <div class="card">
+    <h2 style="margin-top:0">What Lighthouse Measures</h2>
+    <div class="card-grid">
+      <div class="card-sm" style="text-align:center">
+        <div class="lighthouse-score" style="border-color:var(--success);color:var(--success)">
+          <span class="ls-number">92</span>
+          <span class="ls-label">PERF</span>
+        </div>
+        <div style="font-size:0.85rem;font-weight:700">Performance</div>
+        <p>Load speed, rendering, optimization</p>
+      </div>
+      <div class="card-sm" style="text-align:center">
+        <div class="lighthouse-score" style="border-color:var(--warning);color:var(--warning)">
+          <span class="ls-number">78</span>
+          <span class="ls-label">A11Y</span>
+        </div>
+        <div style="font-size:0.85rem;font-weight:700">Accessibility</div>
+        <p>Screen readers, contrast, keyboard nav</p>
+      </div>
+      <div class="card-sm" style="text-align:center">
+        <div class="lighthouse-score" style="border-color:var(--success);color:var(--success)">
+          <span class="ls-number">95</span>
+          <span class="ls-label">BEST</span>
+        </div>
+        <div style="font-size:0.85rem;font-weight:700">Best Practices</div>
+        <p>HTTPS, no deprecated APIs, security</p>
+      </div>
+      <div class="card-sm" style="text-align:center">
+        <div class="lighthouse-score" style="border-color:var(--success);color:var(--success)">
+          <span class="ls-number">100</span>
+          <span class="ls-label">SEO</span>
+        </div>
+        <div style="font-size:0.85rem;font-weight:700">SEO</div>
+        <p>Meta tags, crawlability, mobile-friendly</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>🎯 Lighthouse Performance Score — How It's Calculated</h2>
+  <div class="card">
+    <p>The performance score is a <strong style="color:var(--text)">weighted average</strong> of several metrics:</p>
+    <div style="margin-top:1rem">
+      <div class="metric-row">
+        <span class="metric-label">LCP</span>
+        <div style="flex:1"><div class="metric-bar-container"><div class="metric-bar" style="width:25%;background:var(--accent4)"></div></div></div>
+        <span class="metric-value" style="color:var(--accent4)">25%</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">TBT</span>
+        <div style="flex:1"><div class="metric-bar-container"><div class="metric-bar" style="width:30%;background:var(--error)"></div></div></div>
+        <span class="metric-value" style="color:var(--error)">30%</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">CLS</span>
+        <div style="flex:1"><div class="metric-bar-container"><div class="metric-bar" style="width:25%;background:var(--info)"></div></div></div>
+        <span class="metric-value" style="color:var(--info)">25%</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">FCP</span>
+        <div style="flex:1"><div class="metric-bar-container"><div class="metric-bar" style="width:10%;background:var(--success)"></div></div></div>
+        <span class="metric-value" style="color:var(--success)">10%</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Speed Index</span>
+        <div style="flex:1"><div class="metric-bar-container"><div class="metric-bar" style="width:10%;background:var(--accent)"></div></div></div>
+        <span class="metric-value" style="color:var(--accent)">10%</span>
+      </div>
+    </div>
+    <p style="margin-top:0.75rem; font-size:0.85rem">📍 <strong style="color:var(--warning)">TBT (Total Blocking Time)</strong> has the highest weight! It measures how long the main thread is blocked by long tasks. Reduce it by breaking up JS execution.</p>
+  </div>
+
+  <h2>🖥️ Running Lighthouse</h2>
+  <div class="card">
+    <div class="two-col">
+      <div>
+        <h3>Method 1: Chrome DevTools</h3>
+        <div class="timeline-container">
+          <div class="timeline-item">
+            <div style="position:relative"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-line"></div></div>
+            <div class="timeline-content"><h4>Open DevTools</h4><p>Press F12 → "Lighthouse" tab</p></div>
+          </div>
+          <div class="timeline-item">
+            <div style="position:relative"><div class="timeline-dot" style="background:var(--info)"></div><div class="timeline-line"></div></div>
+            <div class="timeline-content"><h4>Configure</h4><p>Choose: Mobile/Desktop, categories to audit</p></div>
+          </div>
+          <div class="timeline-item">
+            <div style="position:relative"><div class="timeline-dot" style="background:var(--info)"></div></div>
+            <div class="timeline-content"><h4>Analyze</h4><p>Click "Analyze page load" → get full report</p></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Method 2: CLI (Automation)</h3>
+        <pre style="margin-top:0.5rem"><code><span class="cm"># Install globally</span>
+npm install -g lighthouse
+
+<span class="cm"># Basic audit</span>
+lighthouse https://example.com
+
+<span class="cm"># Save HTML report</span>
+lighthouse https://example.com \
+  --output html \
+  --output-path ./report.html
+
+<span class="cm"># Mobile simulation</span>
+lighthouse https://example.com \
+  --form-factor mobile \
+  --throttling-method simulate
+
+<span class="cm"># JSON output for CI/CD</span>
+lighthouse https://example.com \
+  --output json \
+  --output-path ./lh.json</code></pre>
+      </div>
+    </div>
+
+    <h3>Method 3: Node.js Programmatic API</h3>
+    <pre><code><span class="kw">const</span> lighthouse = <span class="fn">require</span>(<span class="str">'lighthouse'</span>);
+<span class="kw">const</span> chromeLauncher = <span class="fn">require</span>(<span class="str">'chrome-launcher'</span>);
+
+<span class="kw">async function</span> <span class="fn">runLighthouse</span>(url) {
+  <span class="kw">const</span> chrome = <span class="kw">await</span> chromeLauncher.<span class="fn">launch</span>({ chromeFlags: [<span class="str">'--headless'</span>] });
+
+  <span class="kw">const</span> options = {
+    logLevel: <span class="str">'info'</span>,
+    output: <span class="str">'json'</span>,
+    onlyCategories: [<span class="str">'performance'</span>],
+    port: chrome.port,
+  };
+
+  <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">lighthouse</span>(url, options);
+  <span class="kw">const</span> score = result.lhr.categories.performance.score * <span class="num">100</span>;
+
+  console.<span class="fn">log</span>(<span class="str">`Performance Score: <span class="kw">${</span>score<span class="kw">}</span>/100`</span>);
+
+  <span class="cm">// Check individual metrics</span>
+  <span class="kw">const</span> lcp = result.lhr.audits[<span class="str">'largest-contentful-paint'</span>];
+  console.<span class="fn">log</span>(<span class="str">`LCP: <span class="kw">${</span>lcp.displayValue<span class="kw">}</span>`</span>);
+
+  <span class="kw">await</span> chrome.<span class="fn">kill</span>();
+  <span class="kw">return</span> score;
+}
+
+<span class="cm">// Fail CI if score drops below threshold</span>
+<span class="kw">const</span> score = <span class="kw">await</span> <span class="fn">runLighthouse</span>(<span class="str">'https://myapp.com'</span>);
+<span class="kw">if</span> (score < <span class="num">90</span>) {
+  console.<span class="fn">error</span>(<span class="str">'Performance budget failed!'</span>);
+  process.<span class="fn">exit</span>(<span class="num">1</span>); <span class="cm">// Fail the build!</span>
+}</code></pre>
+  </div>
+
+  <h2>🎮 Lighthouse Score Simulator</h2>
+  <div class="card">
+    <p>See how different issues affect your Lighthouse score:</p>
+    <div id="lighthouseIssues">
+      <label style="display:flex;align-items:center;gap:0.5rem;margin:0.4rem 0;cursor:pointer;font-size:0.88rem">
+        <input type="checkbox" id="iss1" onchange="calcLighthouse()" checked> Render-blocking resources (-15 pts)
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;margin:0.4rem 0;cursor:pointer;font-size:0.88rem">
+        <input type="checkbox" id="iss2" onchange="calcLighthouse()"> Unoptimized images (-20 pts)
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;margin:0.4rem 0;cursor:pointer;font-size:0.88rem">
+        <input type="checkbox" id="iss3" onchange="calcLighthouse()"> Large JS bundle (-25 pts)
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;margin:0.4rem 0;cursor:pointer;font-size:0.88rem">
+        <input type="checkbox" id="iss4" onchange="calcLighthouse()"> No caching (-10 pts)
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;margin:0.4rem 0;cursor:pointer;font-size:0.88rem">
+        <input type="checkbox" id="iss5" onchange="calcLighthouse()"> Layout shifts (-15 pts)
+      </label>
+    </div>
+    <div id="lighthouseResult" style="margin-top:1rem; text-align:center">
+      <div id="lhScoreDisplay" class="lighthouse-score" style="border-color:var(--error);color:var(--error);margin:0 auto">
+        <span class="ls-number" id="lhScoreNum">85</span>
+        <span class="ls-label">SCORE</span>
+      </div>
+      <div id="lhRating" style="margin-top:0.5rem;font-weight:700;color:var(--success)">Good</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== BUDGET ==================== -->
+<section id="budget" class="section">
+  <h1>💰 Performance Budgets</h1>
+  <p class="subtitle">Set hard limits so performance regressions never reach production</p>
+
+  <div class="highlight-box">
+    <h3 style="margin-top:0;color:var(--accent4)">🏦 What is a Performance Budget?</h3>
+    <p>Like a financial budget — you set <strong style="color:var(--text)">maximum limits</strong> for things like:</p>
+    <div style="margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:0.5rem">
+      <span class="tag tag-orange">JS bundle ≤ 200KB</span>
+      <span class="tag tag-blue">Images ≤ 500KB total</span>
+      <span class="tag tag-green">LCP ≤ 2.5s</span>
+      <span class="tag tag-purple">Lighthouse score ≥ 90</span>
+      <span class="tag tag-red">No more than 3 render-blocking scripts</span>
+    </div>
+    <p style="margin-top:0.75rem">If you exceed the budget → <strong style="color:var(--error)">build fails</strong> → can't deploy. Prevents "death by 1000 cuts"!</p>
+  </div>
+
+  <h2>📊 Types of Performance Budgets</h2>
+  <div class="card-grid">
+    <div class="card-sm">
+      <h3 style="margin-top:0;color:var(--info)">Quantity-Based</h3>
+      <p>Limit file counts and sizes</p>
+      <div style="font-size:0.82rem;color:var(--text-muted)">
+        <div>• Max JS bundle: 200KB gzipped</div>
+        <div>• Max CSS: 50KB</div>
+        <div>• Max images: 500KB per page</div>
+        <div>• Max HTTP requests: 50</div>
+        <div>• Max fonts: 2</div>
+      </div>
+    </div>
+    <div class="card-sm">
+      <h3 style="margin-top:0;color:var(--success)">Timing-Based</h3>
+      <p>Limit actual performance metrics</p>
+      <div style="font-size:0.82rem;color:var(--text-muted)">
+        <div>• TTFB ≤ 600ms</div>
+        <div>• FCP ≤ 1.8s</div>
+        <div>• LCP ≤ 2.5s</div>
+        <div>• TTI ≤ 3.8s</div>
+        <div>• CLS ≤ 0.1</div>
+      </div>
+    </div>
+    <div class="card-sm">
+      <h3 style="margin-top:0;color:var(--accent4)">Score-Based</h3>
+      <p>Minimum scores from tools</p>
+      <div style="font-size:0.82rem;color:var(--text-muted)">
+        <div>• Lighthouse Performance ≥ 90</div>
+        <div>• Lighthouse Accessibility ≥ 80</div>
+        <div>• PageSpeed Insights ≥ 85</div>
+        <div>• WebPageTest grade: A</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>⚙️ Implementing Budgets in Build Tools</h2>
+  <div class="card">
+    <h3>Webpack Bundle Size Budget</h3>
+    <pre><code><span class="cm">// webpack.config.js</span>
+module.exports = {
+  performance: {
+    <span class="prop">hints</span>: <span class="str">'error'</span>,           <span class="cm">// 'warning' or 'error'</span>
+    <span class="prop">maxEntrypointSize</span>: <span class="num">512000</span>, <span class="cm">// 500KB — fail if exceeded</span>
+    <span class="prop">maxAssetSize</span>: <span class="num">512000</span>,      <span class="cm">// per individual asset</span>
+    <span class="prop">assetFilter</span>: (assetFilename) => {
+      <span class="cm">// Only check JS and CSS, ignore images</span>
+      <span class="kw">return</span> assetFilename.<span class="fn">endsWith</span>(<span class="str">'.js'</span>) ||
+             assetFilename.<span class="fn">endsWith</span>(<span class="str">'.css'</span>);
+    }
+  }
+};</code></pre>
+
+    <h3>Lighthouse CI Budget (lhci)</h3>
+    <pre><code><span class="cm">// lighthouserc.js — run with: lhci autorun</span>
+module.exports = {
+  assert: {
+    assertions: {
+      <span class="str">'categories:performance'</span>: [<span class="str">'error'</span>, { minScore: <span class="num">0.9</span> }],
+      <span class="str">'categories:accessibility'</span>: [<span class="str">'warn'</span>, { minScore: <span class="num">0.8</span> }],
+
+      <span class="cm">// Specific metric budgets:</span>
+      <span class="str">'first-contentful-paint'</span>: [<span class="str">'error'</span>, { maxNumericValue: <span class="num">2000</span> }],
+      <span class="str">'largest-contentful-paint'</span>: [<span class="str">'error'</span>, { maxNumericValue: <span class="num">2500</span> }],
+      <span class="str">'cumulative-layout-shift'</span>: [<span class="str">'error'</span>, { maxNumericValue: <span class="num">0.1</span> }],
+      <span class="str">'total-blocking-time'</span>: [<span class="str">'error'</span>, { maxNumericValue: <span class="num">300</span> }],
+
+      <span class="cm">// Resource size budgets:</span>
+      <span class="str">'resource-summary:script:size'</span>: [<span class="str">'error'</span>, { maxNumericValue: <span class="num">200000</span> }],
+      <span class="str">'resource-summary:image:size'</span>: [<span class="str">'error'</span>, { maxNumericValue: <span class="num">500000</span> }],
+    }
+  }
+};</code></pre>
+
+    <h3>Budget JSON File (Supported by Lighthouse CLI)</h3>
+    <pre><code><span class="cm">// budget.json</span>
+[{
+  <span class="str">"resourceSizes"</span>: [
+    { <span class="str">"resourceType"</span>: <span class="str">"script"</span>, <span class="str">"budget"</span>: <span class="num">150</span> },
+    { <span class="str">"resourceType"</span>: <span class="str">"stylesheet"</span>, <span class="str">"budget"</span>: <span class="num">50</span> },
+    { <span class="str">"resourceType"</span>: <span class="str">"image"</span>, <span class="str">"budget"</span>: <span class="num">500</span> },
+    { <span class="str">"resourceType"</span>: <span class="str">"total"</span>, <span class="str">"budget"</span>: <span class="num">800</span> }
+  ],
+  <span class="str">"resourceCounts"</span>: [
+    { <span class="str">"resourceType"</span>: <span class="str">"third-party"</span>, <span class="str">"budget"</span>: <span class="num">5</span> },
+    { <span class="str">"resourceType"</span>: <span class="str">"script"</span>, <span class="str">"budget"</span>: <span class="num">10</span> }
+  ],
+  <span class="str">"timings"</span>: [
+    { <span class="str">"metric"</span>: <span class="str">"first-contentful-paint"</span>, <span class="str">"budget"</span>: <span class="num">2000</span> },
+    { <span class="str">"metric"</span>: <span class="str">"largest-contentful-paint"</span>, <span class="str">"budget"</span>: <span class="num">2500</span> },
+    { <span class="str">"metric"</span>: <span class="str">"cumulative-layout-shift"</span>, <span class="str">"budget"</span>: <span class="num">0.1</span> }
+  ]
+}]
+
+<span class="cm">// Run: lighthouse https://example.com --budget-path=./budget.json</span></code></pre>
+
+    <h3>GitHub Actions CI Integration</h3>
+    <pre><code><span class="cm"># .github/workflows/performance.yml</span>
+<span class="prop">name</span>: Performance Budget Check
+
+<span class="prop">on</span>: [push, pull_request]
+
+<span class="prop">jobs</span>:
+  <span class="prop">lighthouse</span>:
+    <span class="prop">runs-on</span>: ubuntu-latest
+    <span class="prop">steps</span>:
+      - uses: actions/checkout@v3
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          urls: |
+            https://your-app.vercel.app
+          budgetPath: ./budget.json
+          uploadArtifacts: true</code></pre>
+  </div>
+
+  <h2>🎮 Budget Checker</h2>
+  <div class="card">
+    <p>Check if your hypothetical bundle is within budget:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">JS Size (KB)</label>
+        <input type="number" id="jsSize" value="180" min="0" max="2000" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:0.5rem;margin-top:0.25rem" oninput="checkBudget()">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">CSS Size (KB)</label>
+        <input type="number" id="cssSize" value="45" min="0" max="500" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:0.5rem;margin-top:0.25rem" oninput="checkBudget()">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">Images Size (KB)</label>
+        <input type="number" id="imgSize" value="300" min="0" max="5000" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:0.5rem;margin-top:0.25rem" oninput="checkBudget()">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;color:var(--text-muted)">LCP Estimate (ms)</label>
+        <input type="number" id="lcpTime" value="2200" min="0" max="10000" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:0.5rem;margin-top:0.25rem" oninput="checkBudget()">
+      </div>
+    </div>
+    <div id="budgetResults"></div>
+  </div>
+</section>
+
+<!-- ==================== EXERCISES ==================== -->
+<section id="exercises" class="section">
+  <h1>💪 Practice Exercises</h1>
+  <p class="subtitle">Hands-on coding challenges to cement your knowledge</p>
+
+  <div class="progress-tracker">
+    <span class="progress-label">Progress:</span>
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="exerciseProgress" style="width:0%"></div>
+    </div>
+    <span class="progress-score" id="exerciseScore">0/6</span>
+  </div>
+
+  <!-- Exercise 1 -->
+  <div class="card" id="ex1">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+      <h2 style="margin:0">Exercise 1: Basic Timing</h2>
+      <span class="tag tag-green">Beginner</span>
+    </div>
+    <p>Write a function that measures how long <code>Array.sort()</code> takes on an array of 100,000 random numbers. Use <code>performance.now()</code>.</p>
+    <div class="exercise-area">
+      <textarea id="ex1Code" placeholder="// Write your solution here...
+function measureSort() {
+  // 1. Create array of 100k random numbers
+  // 2. Record start time with performance.now()
+  // 3. Sort the array
+  // 4. Record end time
+  // 5. Return the duration in ms
+}"></textarea>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn" onclick="runExercise(1)">▶️ Run Code</button>
+        <button class="btn btn-outline" onclick="showSolution(1)">💡 Show Solution</button>
+      </div>
+      <div class="output-box" id="ex1Output" style="margin-top:0.75rem;display:none"></div>
+    </div>
+    <div id="ex1Solution" style="display:none">
+      <pre><code><span class="kw">function</span> <span class="fn">measureSort</span>() {
+  <span class="cm">// 1. Create array of 100k random numbers</span>
+  <span class="kw">const</span> arr = <span class="cls">Array</span>.<span class="fn">from</span>({ length: <span class="num">100000</span> }, () => <span class="cls">Math</span>.<span class="fn">random</span>());
+
+  <span class="cm">// 2. Record start time - sub-millisecond precision!</span>
+  <span class="kw">const</span> start = <span class="cls">performance</span>.<span class="fn">now</span>();
+
+  <span class="cm">// 3. Sort the array</span>
+  arr.<span class="fn">sort</span>((a, b) => a - b);
+
+  <span class="cm">// 4. Record end time</span>
+  <span class="kw">const</span> end = <span class="cls">performance</span>.<span class="fn">now</span>();
+
+  <span class="cm">// 5. Return duration</span>
+  <span class="kw">return</span> end - start;
+}
+
+console.<span class="fn">log</span>(<span class="str">`Sort took: <span class="kw">${</span><span class="fn">measureSort</span>().<span class="fn">toFixed</span>(<span class="num">2</span>)<span class="kw">}</span>ms`</span>);</code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 2 -->
+  <div class="card" id="ex2">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+      <h2 style="margin:0">Exercise 2: Mark & Measure</h2>
+      <span class="tag tag-green">Beginner</span>
+    </div>
+    <p>Use <code>performance.mark()</code> and <code>performance.measure()</code> to measure 3 phases: "fetchData", "processData", "renderUI". Log each duration.</p>
+    <div class="exercise-area">
+      <textarea id="ex2Code" placeholder="// Simulate async phases with setTimeout
+async function profileApp() {
+  // Mark phase starts and ends
+  // Measure each phase
+  // Log all durations
+}"></textarea>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn" onclick="runExercise(2)">▶️ Run Code</button>
+        <button class="btn btn-outline" onclick="showSolution(2)">💡 Show Solution</button>
+      </div>
+      <div class="output-box" id="ex2Output" style="margin-top:0.75rem;display:none"></div>
+    </div>
+    <div id="ex2Solution" style="display:none">
+      <pre><code><span class="kw">async function</span> <span class="fn">profileApp</span>() {
+  <span class="cm">// Simulate fetch</span>
+  <span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'fetchStart'</span>);
+  <span class="kw">await new</span> <span class="cls">Promise</span>(r => <span class="fn">setTimeout</span>(r, <span class="num">150</span>));
+  <span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'fetchEnd'</span>);
+
+  <span class="cm">// Simulate processing</span>
+  <span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'processStart'</span>);
+  <span class="kw">await new</span> <span class="cls">Promise</span>(r => <span class="fn">setTimeout</span>(r, <span class="num">80</span>));
+  <span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'processEnd'</span>);
+
+  <span class="cm">// Simulate render</span>
+  <span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'renderStart'</span>);
+  <span class="kw">await new</span> <span class="cls">Promise</span>(r => <span class="fn">setTimeout</span>(r, <span class="num">50</span>));
+  <span class="cls">performance</span>.<span class="fn">mark</span>(<span class="str">'renderEnd'</span>);
+
+  <span class="cm">// Measure each phase</span>
+  <span class="cls">performance</span>.<span class="fn">measure</span>(<span class="str">'fetchData'</span>, <span class="str">'fetchStart'</span>, <span class="str">'fetchEnd'</span>);
+  <span class="cls">performance</span>.<span class="fn">measure</span>(<span class="str">'processData'</span>, <span class="str">'processStart'</span>, <span class="str">'processEnd'</span>);
+  <span class="cls">performance</span>.<span class="fn">measure</span>(<span class="str">'renderUI'</span>, <span class="str">'renderStart'</span>, <span class="str">'renderEnd'</span>);
+
+  <span class="cm">// Log all measures</span>
+  <span class="cls">performance</span>.<span class="fn">getEntriesByType</span>(<span class="str">'measure'</span>).<span class="fn">forEach</span>(m => {
+    console.<span class="fn">log</span>(<span class="str">`⏱ <span class="kw">${</span>m.name<span class="kw">}</span>: <span class="kw">${</span>m.duration.<span class="fn">toFixed</span>(<span class="num">1</span>)<span class="kw">}</span>ms`</span>);
+  });
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 3 -->
+  <div class="card" id="ex3">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+      <h2 style="margin:0">Exercise 3: Memoization Speedup</h2>
+      <span class="tag tag-orange">Intermediate</span>
+    </div>
+    <p>Implement a <code>memoize(fn)</code> function. Then use it to speed up a slow <code>fibonacci</code> function. Measure the time difference!</p>
+    <div class="exercise-area">
+      <textarea id="ex3Code" placeholder="// Slow fibonacci
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// TODO: Implement memoize()
+function memoize(fn) {
+  // Use a cache Map
+  // Return a function that checks cache first
+}
+
+// Compare timing for fibonacci(40)"></textarea>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn" onclick="runExercise(3)">▶️ Run Code</button>
+        <button class="btn btn-outline" onclick="showSolution(3)">💡 Show Solution</button>
+      </div>
+      <div class="output-box" id="ex3Output" style="margin-top:0.75rem;display:none"></div>
+    </div>
+    <div id="ex3Solution" style="display:none">
+      <pre><code><span class="kw">function</span> <span class="fn">memoize</span>(fn) {
+  <span class="kw">const</span> cache = <span class="kw">new</span> <span class="cls">Map</span>();
+
+  <span class="kw">return function</span>(...args) {
+    <span class="kw">const</span> key = <span class="cls">JSON</span>.<span class="fn">stringify</span>(args);
+    <span class="kw">if</span> (cache.<span class="fn">has</span>(key)) <span class="kw">return</span> cache.<span class="fn">get</span>(key);
+    <span class="kw">const</span> result = fn.<span class="fn">apply</span>(<span class="kw">this</span>, args);
+    cache.<span class="fn">set</span>(key, result);
+    <span class="kw">return</span> result;
+  };
+}
+
+<span class="cm">// Recursive memoized fib</span>
+<span class="kw">const</span> fibonacci = <span class="fn">memoize</span>(<span class="kw">function</span>(n) {
+  <span class="kw">if</span> (n <= <span class="num">1</span>) <span class="kw">return</span> n;
+  <span class="kw">return</span> <span class="fn">fibonacci</span>(n - <span class="num">1</span>) + <span class="fn">fibonacci</span>(n - <span class="num">2</span>);
+});
+
+<span class="kw">const</span> t1 = <span class="cls">performance</span>.<span class="fn">now</span>();
+console.<span class="fn">log</span>(<span class="str">'Result:'</span>, <span class="fn">fibonacci</span>(<span class="num">40</span>));
+console.<span class="fn">log</span>(<span class="str">`Time: <span class="kw">${</span>(<span class="cls">performance</span>.<span class="fn">now</span>() - t1).<span class="fn">toFixed</span>(<span class="num">3</span>)<span class="kw">}</span>ms`</span>);
+<span class="cm">// Memoized: ~0.05ms vs non-memoized: ~2000ms!</span></code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 4 -->
+  <div class="card" id="ex4">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+      <h2 style="margin:0">Exercise 4: Debounce for Performance</h2>
+      <span class="tag tag-orange">Intermediate</span>
+    </div>
+    <p>Implement <code>debounce(fn, delay)</code>. This is crucial for search inputs, scroll handlers, resize events — prevents function from firing too often.</p>
+    <div class="exercise-area">
+      <textarea id="ex4Code" placeholder="// debounce delays execution until N ms after LAST call
+// If called again before delay: reset the timer
+
+function debounce(fn, delay) {
+  // Store timer reference
+  // Return function that clears and resets timer
+}
+
+// Test: simulate rapid search input
+const search = debounce((query) => {
+  console.log('Searching for:', query);
+}, 300);"></textarea>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn" onclick="runExercise(4)">▶️ Run Code</button>
+        <button class="btn btn-outline" onclick="showSolution(4)">💡 Show Solution</button>
+      </div>
+      <div class="output-box" id="ex4Output" style="margin-top:0.75rem;display:none"></div>
+    </div>
+    <div id="ex4Solution" style="display:none">
+      <pre><code><span class="kw">function</span> <span class="fn">debounce</span>(fn, delay) {
+  <span class="kw">let</span> timerId;
+
+  <span class="kw">return function</span>(...args) {
+    <span class="cm">// Clear any pending execution</span>
+    <span class="fn">clearTimeout</span>(timerId);
+
+    <span class="cm">// Schedule new execution</span>
+    timerId = <span class="fn">setTimeout</span>(() => {
+      fn.<span class="fn">apply</span>(<span class="kw">this</span>, args);
+    }, delay);
+  };
+}
+
+<span class="cm">// Usage: only fires 300ms AFTER user stops typing</span>
+<span class="kw">const</span> search = <span class="fn">debounce</span>((query) => {
+  console.<span class="fn">log</span>(<span class="str">'API call for:'</span>, query);
+}, <span class="num">300</span>);
+
+<span class="cm">// Simulate rapid typing (5 keystrokes, only 1 API call!)</span>
+[<span class="str">'r'</span>, <span class="str">'re'</span>, <span class="str">'rea'</span>, <span class="str">'reac'</span>, <span class="str">'react'</span>].<span class="fn">forEach</span>((v, i) => {
+  <span class="fn">setTimeout</span>(() => {
+    console.<span class="fn">log</span>(<span class="str">'keystroke:'</span>, v);
+    <span class="fn">search</span>(v);
+  }, i * <span class="num">50</span>); <span class="cm">// rapid typing every 50ms</span>
+});
+<span class="cm">// Only 'react' triggers the API call!</span></code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 5 -->
+  <div class="card" id="ex5">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+      <h2 style="margin:0">Exercise 5: LCP Observer</h2>
+      <span class="tag tag-red">Advanced</span>
+    </div>
+    <p>Write a complete LCP monitoring function that: observes LCP, handles page visibility changes (important for accurate measurement!), and sends data to analytics.</p>
+    <div class="exercise-area">
+      <textarea id="ex5Code" placeholder="// A complete, production-ready LCP tracker
+function trackLCP(analyticsCallback) {
+  // Use PerformanceObserver to watch 'largest-contentful-paint'
+  // Handle the case where user navigates away (visibilitychange)
+  // Only report the FINAL LCP value (can update as page loads)
+  // Call analyticsCallback with the final value
+}"></textarea>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn" onclick="runExercise(5)">▶️ Run Code</button>
+        <button class="btn btn-outline" onclick="showSolution(5)">💡 Show Solution</button>
+      </div>
+      <div class="output-box" id="ex5Output" style="margin-top:0.75rem;display:none"></div>
+    </div>
+    <div id="ex5Solution" style="display:none">
+      <pre><code><span class="kw">function</span> <span class="fn">trackLCP</span>(analyticsCallback) {
+  <span class="kw">let</span> lcpValue = <span class="num">0</span>;
+  <span class="kw">let</span> lcpElement = <span class="kw">null</span>;
+
+  <span class="kw">const</span> observer = <span class="kw">new</span> <span class="cls">PerformanceObserver</span>((entryList) => {
+    <span class="kw">const</span> entries = entryList.<span class="fn">getEntries</span>();
+    <span class="cm">// Each new entry = BIGGER element found = update LCP</span>
+    <span class="kw">const</span> lastEntry = entries[entries.length - <span class="num">1</span>];
+    lcpValue = lastEntry.startTime;
+    lcpElement = lastEntry.element;
+  });
+
+  observer.<span class="fn">observe</span>({ type: <span class="str">'largest-contentful-paint'</span>, buffered: <span class="kw">true</span> });
+
+  <span class="cm">// CRITICAL: LCP stops being updated when user leaves the tab</span>
+  <span class="cm">// visibilitychange fires when switching tabs / navigating away</span>
+  <span class="kw">const</span> reportLCP = () => {
+    <span class="kw">if</span> (document.visibilityState === <span class="str">'hidden'</span>) {
+      observer.<span class="fn">disconnect</span>(); <span class="cm">// stop observing</span>
+      <span class="fn">analyticsCallback</span>({
+        metric: <span class="str">'LCP'</span>,
+        value: lcpValue,
+        element: lcpElement?.tagName,
+        rating: lcpValue < <span class="num">2500</span> ? <span class="str">'good'</span> :
+                lcpValue < <span class="num">4000</span> ? <span class="str">'needs-improvement'</span> : <span class="str">'poor'</span>
+      });
+      document.<span class="fn">removeEventListener</span>(<span class="str">'visibilitychange'</span>, reportLCP);
+    }
+  };
+
+  document.<span class="fn">addEventListener</span>(<span class="str">'visibilitychange'</span>, reportLCP);
+}
+
+<span class="cm">// Usage:</span>
+<span class="fn">trackLCP</span>((data) => {
+  console.<span class="fn">log</span>(<span class="str">'LCP Report:'</span>, data);
+  navigator.<span class="fn">sendBeacon</span>(<span class="str">'/analytics'</span>, <span class="cls">JSON</span>.<span class="fn">stringify</span>(data));
+});</code></pre>
+    </div>
+  </div>
+
+  <!-- Exercise 6 -->
+  <div class="card" id="ex6">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+      <h2 style="margin:0">Exercise 6: Virtual List</h2>
+      <span class="tag tag-red">Advanced</span>
+    </div>
+    <p>Implement a simple virtual list that only renders visible items. Rendering 10,000 DOM nodes is slow — only render what's in the viewport!</p>
+    <div class="exercise-area">
+      <textarea id="ex6Code" placeholder="// Virtual List concept:
+// - Container has fixed height + overflow:scroll
+// - Only render items in visible window (e.g., 10 at a time)
+// - On scroll, recalculate which items to show
+// - Use a 'spacer' div to maintain scroll position
+
+class VirtualList {
+  constructor(container, items, itemHeight) {
+    // Initialize properties
+    // Render initial view
+    // Add scroll listener
+  }
+
+  render() {
+    // Calculate visible range from scrollTop
+    // Render only visible items
+  }
+}"></textarea>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn" onclick="runExercise(6)">▶️ Run Code</button>
+        <button class="btn btn-outline" onclick="showSolution(6)">💡 Show Solution</button>
+      </div>
+      <div class="output-box" id="ex6Output" style="margin-top:0.75rem;display:none"></div>
+    </div>
+    <div id="ex6Solution" style="display:none">
+      <pre><code><span class="kw">class</span> <span class="cls">VirtualList</span> {
+  <span class="fn">constructor</span>(container, items, itemHeight = <span class="num">40</span>) {
+    <span class="kw">this</span>.container = container;
+    <span class="kw">this</span>.items = items;
+    <span class="kw">this</span>.itemHeight = itemHeight;
+    <span class="kw">this</span>.visibleCount = <span class="cls">Math</span>.<span class="fn">ceil</span>(container.clientHeight / itemHeight) + <span class="num">2</span>;
+
+    <span class="cm">// Create inner div for total scroll height</span>
+    <span class="kw">this</span>.inner = document.<span class="fn">createElement</span>(<span class="str">'div'</span>);
+    <span class="kw">this</span>.inner.style.height = items.length * itemHeight + <span class="str">'px'</span>;
+    <span class="kw">this</span>.inner.style.position = <span class="str">'relative'</span>;
+    container.<span class="fn">appendChild</span>(<span class="kw">this</span>.inner);
+
+    <span class="kw">this</span>.<span class="fn">render</span>();
+
+    container.<span class="fn">addEventListener</span>(<span class="str">'scroll'</span>, () => <span class="kw">this</span>.<span class="fn">render</span>());
+  }
+
+  <span class="fn">render</span>() {
+    <span class="kw">const</span> scrollTop = <span class="kw">this</span>.container.scrollTop;
+    <span class="kw">const</span> startIdx = <span class="cls">Math</span>.<span class="fn">floor</span>(scrollTop / <span class="kw">this</span>.itemHeight);
+    <span class="kw">const</span> endIdx = <span class="cls">Math</span>.<span class="fn">min</span>(startIdx + <span class="kw">this</span>.visibleCount, <span class="kw">this</span>.items.length);
+
+    <span class="kw">this</span>.inner.innerHTML = <span class="str">''</span>;
+
+    <span class="kw">for</span> (<span class="kw">let</span> i = startIdx; i < endIdx; i++) {
+      <span class="kw">const</span> el = document.<span class="fn">createElement</span>(<span class="str">'div'</span>);
+      el.style.cssText = <span class="str">`
+        position: absolute;
+        top: <span class="kw">${</span>i * <span class="kw">this</span>.itemHeight<span class="kw">}</span>px;
+        height: <span class="kw">${</span><span class="kw">this</span>.itemHeight<span class="kw">}</span>px;
+        width: 100%;
+      `</span>;
+      el.textContent = <span class="kw">this</span>.items[i];
+      <span class="kw">this</span>.inner.<span class="fn">appendChild</span>(el);
+    }
+
+    console.<span class="fn">log</span>(<span class="str">`Rendering items <span class="kw">${</span>startIdx<span class="kw">}</span>-<span class="kw">${</span>endIdx<span class="kw">}</span> of <span class="kw">${</span><span class="kw">this</span>.items.length<span class="kw">}</span>`</span>);
+  }
+}
+
+<span class="cm">// Only renders ~12 DOM nodes regardless of list size!</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== QUIZ ==================== -->
+<section id="quiz" class="section">
+  <h1>🧠 Knowledge Quiz</h1>
+  <p class="subtitle">Test your understanding — 10 challenging questions</p>
+
+  <div class="progress-tracker">
+    <span class="progress-label">Score:</span>
+    <div class="progress-bar-outer">
+      <div class="progress-bar-inner" id="quizProgress" style="width:0%"></div>
+    </div>
+    <span class="progress-score" id="quizScore">0/10</span>
+  </div>
+
+  <div id="quizContainer"></div>
+</section>
+
+<!-- ==================== PITFALLS ==================== -->
+<section id="pitfalls" class="section">
+  <h1>⚠️ Common Mistakes & Pitfalls</h1>
+  <p class="subtitle">The traps that catch most developers — learn them before the interviewer catches you</p>
+
+  <div class="pitfall">
+    <h4>❌ Pitfall 1: Measuring in Dev Mode</h4>
+    <p>React, Vue, and other frameworks run extra code in development mode. Your measurements will be <strong>2-10x slower</strong> than production!</p>
+    <pre><code><span class="cm">// WRONG: Measuring in development</span>
+<span class="cm">// React dev mode adds PropTypes checking, warning systems, etc.</span>
+npm run dev  <span class="cm">← NEVER profile this</span>
+
+<span class="cm">// CORRECT: Always profile production builds</span>
+npm run build
+npx serve ./build  <span class="cm">← profile THIS</span>
+
+<span class="cm">// In Chrome DevTools: also throttle CPU 4x to simulate mobile!</span></code></pre>
+  </div>
+
+  <div class="pitfall">
+    <h4>❌ Pitfall 2: Forgetting Layout Thrashing</h4>
+    <p>Reading layout properties (offsetHeight, getBoundingClientRect) AFTER writing to the DOM forces the browser to recalculate layout synchronously — this is called "forced synchronous layout" and kills performance.</p>
+    <pre><code><span class="cm">// WRONG: Read-write-read-write → forces multiple layout recalculations</span>
+elements.<span class="fn">forEach</span>(el => {
+  <span class="kw">const</span> h = el.offsetHeight; <span class="cm">// READ → forces layout</span>
+  el.style.height = (h + <span class="num">10</span>) + <span class="str">'px'</span>; <span class="cm">// WRITE → invalidates layout</span>
+}); <span class="cm">// Repeated 1000x = 1000 layouts = JANK!</span>
+
+<span class="cm">// CORRECT: Batch reads, then batch writes</span>
+<span class="kw">const</span> heights = elements.<span class="fn">map</span>(el => el.offsetHeight); <span class="cm">// all READs</span>
+elements.<span class="fn">forEach</span>((el, i) => {                          <span class="cm">// all WRITEs</span>
+  el.style.height = (heights[i] + <span class="num">10</span>) + <span class="str">'px'</span>;
+}); <span class="cm">// Only 1 layout calculation!</span></code></pre>
+  </div>
+
+  <div class="pitfall">
+    <h4>❌ Pitfall 3: Using Date.now() for Performance Measurement</h4>
+    <p><code>Date.now()</code> is in whole milliseconds and can be affected by system clock changes. Always use <code>performance.now()</code>.</p>
+    <pre><code><span class="cm">// WRONG: Low precision, not monotonic</span>
+<span class="kw">const</span> start = <span class="cls">Date</span>.<span class="fn">now</span>(); <span class="cm">// millisecond precision only</span>
+doWork();
+console.<span class="fn">log</span>(<span class="cls">Date</span>.<span class="fn">now</span>() - start); <span class="cm">// could show 0ms for fast code!</span>
+
+<span class="cm">// CORRECT: Sub-millisecond precision, monotonic clock</span>
+<span class="kw">const</span> start = <span class="cls">performance</span>.<span class="fn">now</span>(); <span class="cm">// float like 12345.6789</span>
+doWork();
+console.<span class="fn">log</span>(<span class="cls">performance</span>.<span class="fn">now</span>() - start); <span class="cm">// e.g., 0.234ms</span></code></pre>
+  </div>
+
+  <div class="pitfall">
+    <h4>❌ Pitfall 4: Not Accounting for CLS Hidden Input</h4>
+    <p>CLS score counts shifts that happen WITHOUT recent user input. Many devs forget to check <code>hadRecentInput</code>, leading to inflated CLS scores.</p>
+    <pre><code><span class="cm">// WRONG: Counting ALL shifts (includes user-triggered ones)</span>
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  list.<span class="fn">getEntries</span>().<span class="fn">forEach</span>(e => clsScore += e.value); <span class="cm">// BUG!</span>
+}).<span class="fn">observe</span>({ type: <span class="str">'layout-shift'</span>, buffered: <span class="kw">true</span> });
+
+<span class="cm">// CORRECT: Only count unexpected shifts</span>
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  list.<span class="fn">getEntries</span>().<span class="fn">forEach</span>(e => {
+    <span class="kw">if</span> (!e.hadRecentInput) { <span class="cm">// ← THIS CHECK IS CRITICAL</span>
+      clsScore += e.value;
+    }
+  });
+}).<span class="fn">observe</span>({ type: <span class="str">'layout-shift'</span>, buffered: <span class="kw">true</span> });</code></pre>
+  </div>
+
+  <div class="pitfall">
+    <h4>❌ Pitfall 5: Measuring LCP Only Once</h4>
+    <p>LCP can update multiple times as larger elements appear. You must track the LAST reported LCP before the page becomes hidden.</p>
+    <pre><code><span class="cm">// WRONG: Taking first LCP entry</span>
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">const</span> lcp = list.<span class="fn">getEntries</span>()[<span class="num">0</span>]; <span class="cm">// ← might not be final LCP!</span>
+  <span class="fn">sendToServer</span>(lcp.startTime);
+}).<span class="fn">observe</span>({ type: <span class="str">'largest-contentful-paint'</span>, buffered: <span class="kw">true</span> });
+
+<span class="cm">// CORRECT: Track latest, only report on page hide</span>
+<span class="kw">let</span> lcpEntry;
+<span class="kw">new</span> <span class="cls">PerformanceObserver</span>((list) => {
+  <span class="kw">const</span> entries = list.<span class="fn">getEntries</span>();
+  lcpEntry = entries[entries.length - <span class="num">1</span>]; <span class="cm">// always update</span>
+}).<span class="fn">observe</span>({ type: <span class="str">'largest-contentful-paint'</span>, buffered: <span class="kw">true</span> });
+
+document.<span class="fn">addEventListener</span>(<span class="str">'visibilitychange'</span>, () => {
+  <span class="kw">if</span> (document.visibilityState === <span class="str">'hidden'</span> && lcpEntry) {
+    <span class="fn">sendToServer</span>(lcpEntry.startTime); <span class="cm">// ← report the FINAL value</span>
+  }
+});</code></pre>
+  </div>
+
+  <div class="pitfall">
+    <h4>❌ Pitfall 6: Blocking the Main Thread with Heavy JS</h4>
+    <p>JavaScript is single-threaded. Any task >50ms blocks all user input — clicks, scrolling, typing. Use Web Workers for CPU-heavy work.</p>
+    <pre><code><span class="cm">// WRONG: Heavy computation blocks UI</span>
+button.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () => {
+  processMillionItems(data); <span class="cm">// UI frozen for 2 seconds!</span>
+});
+
+<span class="cm">// CORRECT: Use Web Workers for CPU-heavy tasks</span>
+<span class="kw">const</span> worker = <span class="kw">new</span> <span class="cls">Worker</span>(<span class="str">'worker.js'</span>);
+button.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, () => {
+  worker.<span class="fn">postMessage</span>(data); <span class="cm">// runs on separate thread</span>
+  showLoadingSpinner(); <span class="cm">// UI stays responsive!</span>
+});
+worker.<span class="fn">onmessage</span> = (e) => {
+  hideLoadingSpinner();
+  displayResults(e.data);
+};
+
+<span class="cm">// ALSO CORRECT: requestIdleCallback for non-urgent work</span>
+<span class="fn">requestIdleCallback</span>(() => {
+  processNonUrgentData(); <span class="cm">// runs when browser is idle</span>
+});</code></pre>
+  </div>
+
+  <div class="tip">
+    <h4>✅ Pro Tip 1: Use requestAnimationFrame for Visual Updates</h4>
+    <pre><code><span class="cm">// WRONG: Can cause missed frames, visual jank</span>
+<span class="fn">setInterval</span>(animateElement, <span class="num">16</span>); <span class="cm">// not synced to display refresh</span>
+
+<span class="cm">// CORRECT: Synced with browser's repaint cycle</span>
+<span class="kw">function</span> <span class="fn">animate</span>() {
+  updatePosition();
+  <span class="fn">requestAnimationFrame</span>(animate); <span class="cm">// schedule next frame</span>
+}
+<span class="fn">requestAnimationFrame</span>(animate);</code></pre>
+  </div>
+
+  <div class="tip">
+    <h4>✅ Pro Tip 2: Preload Critical Resources</h4>
+    <pre><code><span class="cm">&lt;!-- Preload hero image for better LCP --&gt;</span>
+&lt;link rel=<span class="str">"preload"</span> href=<span class="str">"/hero.jpg"</span> as=<span class="str">"image"</span>&gt;
+
+<span class="cm">&lt;!-- Preload critical fonts --&gt;</span>
+&lt;link rel=<span class="str">"preload"</span> href=<span class="str">"/font.woff2"</span> as=<span class="str">"font"</span> crossorigin&gt;
+
+<span class="cm">&lt;!-- Preconnect to critical third-party origins --&gt;</span>
+&lt;link rel=<span class="str">"preconnect"</span> href=<span class="str">"https://fonts.googleapis.com"</span>&gt;
+
+<span class="cm">&lt;!-- Defer non-critical JS (don't block rendering!) --&gt;</span>
+&lt;script src=<span class="str">"analytics.js"</span> defer&gt;&lt;/script&gt;</code></pre>
+  </div>
+
+  <div class="tip">
+    <h4>✅ Pro Tip 3: IntersectionObserver for Lazy Loading</h4>
+    <pre><code><span class="cm">// WRONG: Load all images immediately</span>
+<span class="cm">// &lt;img src="heavy.jpg"&gt;  ← loads even if not visible</span>
+
+<span class="cm">// CORRECT: Load images only when they enter viewport</span>
+<span class="kw">const</span> observer = <span class="kw">new</span> <span class="cls">IntersectionObserver</span>((entries) => {
+  entries.<span class="fn">forEach</span>(entry => {
+    <span class="kw">if</span> (entry.isIntersecting) {
+      <span class="kw">const</span> img = entry.target;
+      img.src = img.dataset.src; <span class="cm">// load actual image</span>
+      observer.<span class="fn">unobserve</span>(img);  <span class="cm">// stop watching</span>
+    }
+  });
+}, { rootMargin: <span class="str">'200px'</span> }); <span class="cm">// load 200px before visible</span>
+
+document.<span class="fn">querySelectorAll</span>(<span class="str">'img[data-src]'</span>).<span class="fn">forEach</span>(img => {
+  observer.<span class="fn">observe</span>(img);
+});
+
+<span class="cm">// OR just use native loading="lazy"!</span>
+<span class="cm">// &lt;img src="heavy.jpg" loading="lazy"&gt;</span></code></pre>
+  </div>
+</section>
+
+<!-- ==================== CHEATSHEET ==================== -->
+<section id="cheatsheet" class="section">
+  <h1>📋 Performance Cheatsheet</h1>
+  <p class="subtitle">Everything you need — one page reference</p>
+
+  <div class="cheat-grid">
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#2a1a3a,#1a1a3a);color:var(--accent)">
+        ⏱️ TIMING METHODS
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">High-res timer</span><span class="cheat-val">performance.now()</span></div>
+        <div class="cheat-row"><span class="cheat-key">Simple label</span><span class="cheat-val">console.time/timeEnd()</span></div>
+        <div class="cheat-row"><span class="cheat-key">Named marks</span><span class="cheat-val">performance.mark()</span></div>
+        <div class="cheat-row"><span class="cheat-key">Measure between</span><span class="cheat-val">performance.measure()</span></div>
+        <div class="cheat-row"><span class="cheat-key">Get measures</span><span class="cheat-val">getEntriesByType('measure')</span></div>
+        <div class="cheat-row"><span class="cheat-key">Clear marks</span><span class="cheat-val">performance.clearMarks()</span></div>
+        <div class="cheat-row"><span class="cheat-key">Navigation timing</span><span class="cheat-val">getEntriesByType('navigation')</span></div>
+      </div>
+    </div>
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#1a3a1a,#1a2a1a);color:var(--success)">
+        💚 CORE WEB VITALS
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">LCP Good</span><span class="cheat-val" style="color:var(--success)">&lt; 2.5s</span></div>
+        <div class="cheat-row"><span class="cheat-key">LCP Poor</span><span class="cheat-val" style="color:var(--error)">&gt; 4s</span></div>
+        <div class="cheat-row"><span class="cheat-key">INP Good</span><span class="cheat-val" style="color:var(--success)">&lt; 200ms</span></div>
+        <div class="cheat-row"><span class="cheat-key">INP Poor</span><span class="cheat-val" style="color:var(--error)">&gt; 500ms</span></div>
+        <div class="cheat-row"><span class="cheat-key">CLS Good</span><span class="cheat-val" style="color:var(--success)">&lt; 0.1</span></div>
+        <div class="cheat-row"><span class="cheat-key">CLS Poor</span><span class="cheat-val" style="color:var(--error)">&gt; 0.25</span></div>
+        <div class="cheat-row"><span class="cheat-key">Measure all</span><span class="cheat-val">npm: web-vitals</span></div>
+      </div>
+    </div>
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#3a2a1a,#2a1a1a);color:var(--warning)">
+        🔦 LIGHTHOUSE WEIGHTS
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">TBT</span><span class="cheat-val" style="color:var(--error)">30% ← highest</span></div>
+        <div class="cheat-row"><span class="cheat-key">LCP</span><span class="cheat-val">25%</span></div>
+        <div class="cheat-row"><span class="cheat-key">CLS</span><span class="cheat-val">25%</span></div>
+        <div class="cheat-row"><span class="cheat-key">FCP</span><span class="cheat-val">10%</span></div>
+        <div class="cheat-row"><span class="cheat-key">Speed Index</span><span class="cheat-val">10%</span></div>
+        <div class="cheat-row"><span class="cheat-key">Score ≥ 90</span><span class="cheat-val" style="color:var(--success)">Good</span></div>
+        <div class="cheat-row"><span class="cheat-key">Score &lt; 50</span><span class="cheat-val" style="color:var(--error)">Poor</span></div>
+      </div>
+    </div>
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#1a1a3a,#1a2a3a);color:var(--info)">
+        🔧 DEVTOOLS SHORTCUTS
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">Open DevTools</span><span class="cheat-val">F12 / Ctrl+Shift+I</span></div>
+        <div class="cheat-row"><span class="cheat-key">Command Menu</span><span class="cheat-val">Ctrl+Shift+P</span></div>
+        <div class="cheat-row"><span class="cheat-key">Network throttle</span><span class="cheat-val">Network → Throttle</span></div>
+        <div class="cheat-row"><span class="cheat-key">CPU throttle</span><span class="cheat-val">Perf → ⚙️ → CPU</span></div>
+        <div class="cheat-row"><span class="cheat-key">Coverage</span><span class="cheat-val">More tools → Coverage</span></div>
+        <div class="cheat-row"><span class="cheat-key">Layers panel</span><span class="cheat-val">More tools → Layers</span></div>
+        <div class="cheat-row"><span class="cheat-key">FPS meter</span><span class="cheat-val">Rendering → FPS Meter</span></div>
+      </div>
+    </div>
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#2a1a3a,#3a1a2a);color:var(--accent2)">
+        ⚡ OPTIMIZATION STRATEGIES
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">Code split</span><span class="cheat-val">Dynamic import()</span></div>
+        <div class="cheat-row"><span class="cheat-key">Lazy load images</span><span class="cheat-val">loading="lazy"</span></div>
+        <div class="cheat-row"><span class="cheat-key">Preload LCP</span><span class="cheat-val">&lt;link rel="preload"&gt;</span></div>
+        <div class="cheat-row"><span class="cheat-key">No layout thrash</span><span class="cheat-val">Batch reads then writes</span></div>
+        <div class="cheat-row"><span class="cheat-key">Debounce scroll</span><span class="cheat-val">debounce(fn, 150)</span></div>
+        <div class="cheat-row"><span class="cheat-key">Heavy CPU</span><span class="cheat-val">Web Workers</span></div>
+        <div class="cheat-row"><span class="cheat-key">Idle work</span><span class="cheat-val">requestIdleCallback</span></div>
+      </div>
+    </div>
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#1a3a2a,#1a2a3a);color:var(--accent3)">
+        📊 KEY OBSERVER TYPES
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">Paint timing</span><span class="cheat-val">'paint'</span></div>
+        <div class="cheat-row"><span class="cheat-key">LCP</span><span class="cheat-val">'largest-contentful-paint'</span></div>
+        <div class="cheat-row"><span class="cheat-key">Layout shift</span><span class="cheat-val">'layout-shift'</span></div>
+        <div class="cheat-row"><span class="cheat-key">Long tasks</span><span class="cheat-val">'longtask'</span></div>
+        <div class="cheat-row"><span class="cheat-key">Navigation</span><span class="cheat-val">'navigation'</span></div>
+        <div class="cheat-row"><span class="cheat-key">Resources</span><span class="cheat-val">'resource'</span></div>
+        <div class="cheat-row"><span class="cheat-key">Interactions</span><span class="cheat-val">'event'</span></div>
+      </div>
+    </div>
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#3a2a1a,#3a1a1a);color:var(--error)">
+        ❌ NEVER DO
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">Profile dev mode</span><span class="cheat-val" style="color:var(--error)">WRONG</span></div>
+        <div class="cheat-row"><span class="cheat-key">Use Date.now()</span><span class="cheat-val" style="color:var(--error)">WRONG</span></div>
+        <div class="cheat-row"><span class="cheat-key">Read-write-repeat</span><span class="cheat-val" style="color:var(--error)">Layout thrash!</span></div>
+        <div class="cheat-row"><span class="cheat-key">Heavy main thread</span><span class="cheat-val" style="color:var(--error)">Blocks UI!</span></div>
+        <div class="cheat-row"><span class="cheat-key">Img no dimensions</span><span class="cheat-val" style="color:var(--error)">CLS problem!</span></div>
+        <div class="cheat-row"><span class="cheat-key">Skip hadRecentInput</span><span class="cheat-val" style="color:var(--error)">Wrong CLS!</span></div>
+        <div class="cheat-row"><span class="cheat-key">LCP = first entry</span><span class="cheat-val" style="color:var(--error)">Use LAST!</span></div>
+      </div>
+    </div>
+
+    <div class="cheat-card">
+      <div class="cheat-header" style="background:linear-gradient(135deg,#1a3a1a,#2a3a1a);color:var(--success)">
+        ✅ ALWAYS DO
+      </div>
+      <div class="cheat-body">
+        <div class="cheat-row"><span class="cheat-key">Use production build</span><span class="cheat-val" style="color:var(--success)">npm run build</span></div>
+        <div class="cheat-row"><span class="cheat-key">Throttle CPU 4x</span><span class="cheat-val" style="color:var(--success)">Simulates mobile</span></div>
+        <div class="cheat-row"><span class="cheat-key">Set img dimensions</span><span class="cheat-val" style="color:var(--success)">No CLS</span></div>
+        <div class="cheat-row"><span class="cheat-key">Preload LCP image</span><span class="cheat-val" style="color:var(--success)">Faster LCP</span></div>
+        <div class="cheat-row"><span class="cheat-key">Defer non-critical JS</span><span class="cheat-val" style="color:var(--success)">Faster FCP</span></div>
+        <div class="cheat-row"><span class="cheat-key">Check hadRecentInput</span><span class="cheat-val" style="color:var(--success)">Accurate CLS</span></div>
+        <div class="cheat-row"><span class="cheat-key">Test on real devices</span><span class="cheat-val" style="color:var(--success)">Real perf data</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>🔥 Quick Interview Answer Template</h2>
+  <div class="card">
+    <p style="color:var(--warning);font-weight:700">Q: "How would you investigate a slow React app?"</p>
+    <div class="tip">
+      <h4>✅ Model Answer Structure:</h4>
+      <p><strong style="color:var(--text)">1. Measure first:</strong> "I'd open Chrome DevTools Performance tab, record a trace with CPU throttled 4x to simulate mobile. I'd identify long tasks (>50ms) in the flame chart."</p>
+      <p><strong style="color:var(--text)">2. Check the right metrics:</strong> "I'd look at LCP, INP, TBT — the Core Web Vitals. TBT specifically tells me if JS is blocking the main thread."</p>
+      <p><strong style="color:var(--text)">3. Specific React tools:</strong> "React DevTools Profiler shows which components re-render unnecessarily. I'd look for expensive renders and apply memo(), useMemo(), useCallback()."</p>
+      <p><strong style="color:var(--text)">4. Bundle analysis:</strong> "I'd run webpack-bundle-analyzer to find large dependencies. Then code-split with dynamic import() and lazy load routes."</p>
+      <p><strong style="color:var(--text)">5. Prevent regression:</strong> "Set up Lighthouse CI with performance budgets so any PR that degrades performance fails the build automatically."</p>
+    </div>
+  </div>
+
+  <h2>📊 Metric Quick Reference Card</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="compare-table">
+      <tr>
+        <th>Metric</th><th>Full Name</th><th>Good</th><th>Poor</th><th>What Hurts It</th><th>Quick Fix</th>
+      </tr>
+      <tr>
+        <td style="color:var(--info)">TTFB</td>
+        <td>Time to First Byte</td>
+        <td style="color:var(--success)">&lt;800ms</td>
+        <td style="color:var(--error)">&gt;1800ms</td>
+        <td>Slow server, no CDN</td>
+        <td>CDN, caching, edge compute</td>
+      </tr>
+      <tr>
+        <td style="color:var(--info)">FCP</td>
+        <td>First Contentful Paint</td>
+        <td style="color:var(--success)">&lt;1.8s</td>
+        <td style="color:var(--error)">&gt;3s</td>
+        <td>Render-blocking CSS/JS</td>
+        <td>Inline critical CSS, defer JS</td>
+      </tr>
+      <tr>
+        <td style="color:var(--accent4)">LCP ⭐</td>
+        <td>Largest Contentful Paint</td>
+        <td style="color:var(--success)">&lt;2.5s</td>
+        <td style="color:var(--error)">&gt;4s</td>
+        <td>Large hero image, slow server</td>
+        <td>Optimize images, preload, CDN</td>
+      </tr>
+      <tr>
+        <td style="color:var(--accent4)">INP ⭐</td>
+        <td>Interaction to Next Paint</td>
+        <td style="color:var(--success)">&lt;200ms</td>
+        <td style="color:var(--error)">&gt;500ms</td>
+        <td>Heavy JS, long tasks</td>
+        <td>Break up tasks, Web Workers</td>
+      </tr>
+      <tr>
+        <td style="color:var(--accent4)">CLS ⭐</td>
+        <td>Cumulative Layout Shift</td>
+        <td style="color:var(--success)">&lt;0.1</td>
+        <td style="color:var(--error)">&gt;0.25</td>
+        <td>Images w/o dimensions, ads</td>
+        <td>Set img width/height, reserve space</td>
+      </tr>
+      <tr>
+        <td style="color:var(--info)">TTI</td>
+        <td>Time to Interactive</td>
+        <td style="color:var(--success)">&lt;3.8s</td>
+        <td style="color:var(--error)">&gt;7.3s</td>
+        <td>Large JS bundles</td>
+        <td>Code split, defer scripts</td>
+      </tr>
+      <tr>
+        <td style="color:var(--info)">TBT</td>
+        <td>Total Blocking Time</td>
+        <td style="color:var(--success)">&lt;200ms</td>
+        <td style="color:var(--error)">&gt;600ms</td>
+        <td>Long JS tasks blocking thread</td>
+        <td>Break tasks with scheduler API</td>
+      </tr>
+    </table>
+    <p style="margin-top:0.5rem;font-size:0.8rem">⭐ = Core Web Vitals (Google ranking signals)</p>
+  </div>
+</section>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+
+  if (id === 'quiz' && !quizBuilt) buildQuiz();
+  if (id === 'budget') { checkBudget(); }
+  if (id === 'metrics') { updateSimulator(); }
+  if (id === 'lighthouse') { calcLighthouse(); }
+}
+
+// ══════════════════════════════════════════════════════
+//  OUTPUT HELPERS
+// ══════════════════════════════════════════════════════
+function appendOutput(id, text, cls = '') {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  el.innerHTML += `<div class="output-line ${cls}">${text}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearOutput(id) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  el.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════
+//  INTRO DEMOS
+// ══════════════════════════════════════════════════════
+function runBadCode() {
+  clearOutput('introOutput');
+  appendOutput('introOutput', '🐌 Running SLOW code...', 'output-warn');
+
+  const t0 = performance.now();
+
+  // Simulate expensive operation
+  let result = 0;
+  for (let i = 0; i < 5_000_000; i++) {
+    result += Math.sqrt(i) * Math.sin(i);
+  }
+
+  const duration = (performance.now() - t0).toFixed(2);
+  appendOutput('introOutput', `Result: ${result.toFixed(2)}`, '');
+  appendOutput('introOutput', `⏱ Time: ${duration}ms — This is a LONG TASK!`, 'output-error');
+  appendOutput('introOutput', `❌ If this was >50ms, it's blocking the main thread!`, 'output-error');
+  appendOutput('introOutput', `💡 The UI was frozen for ${duration}ms — no clicks or scrolls processed.`, 'output-warn');
+}
+
+function runGoodCode() {
+  clearOutput('introOutput');
+  appendOutput('introOutput', '⚡ Running OPTIMIZED code...', 'output-info');
+
+  const t0 = performance.now();
+
+  // Use TypedArray (much faster) + smaller iteration
+  const arr = new Float64Array(1000);
+  for (let i = 0; i < arr.length; i++) {
+    arr[i] = Math.sqrt(i);
+  }
+  const sum = arr.reduce((a, b) => a + b, 0);
+
+  const duration = (performance.now() - t0).toFixed(3);
+  appendOutput('introOutput', `Result: ${sum.toFixed(2)}`, '');
+  appendOutput('introOutput', `⏱ Time: ${duration}ms — Lightning fast!`, 'output-info');
+  appendOutput('introOutput', `✅ Optimizations used:`, '');
+  appendOutput('introOutput', `  • TypedArray (Float64Array) — avoids type coercion`, 'output-info');
+  appendOutput('introOutput', `  • Smaller problem size — only compute what you need`, 'output-info');
+  appendOutput('introOutput', `  • Would use Web Worker for truly heavy work`, 'output-info');
+}
+
+// ══════════════════════════════════════════════════════
+//  DEVTOOLS DEMOS
+// ══════════════════════════════════════════════════════
+function measureSort() {
+  clearOutput('devOutput');
+  appendOutput('devOutput', '📊 Measuring sort algorithms...', 'output-info');
+
+  const sizes = [1000, 10000, 100000];
+
+  sizes.forEach(size => {
+    const arr = Array.from({ length: size }, () => Math.random());
+    const t0 = performance.now();
+    arr.sort((a, b) => a - b);
+    const duration = (performance.now() - t0).toFixed(3);
+    const rating = duration > 50 ? '🔴 LONG TASK!' : duration > 16 ? '🟡 Slow frame' : '🟢 Fast';
+    appendOutput('devOutput', `Array[${size.toLocaleString()}].sort() → ${duration}ms ${rating}`, '');
+  });
+
+  appendOutput('devOutput', '', '');
+  appendOutput('devOutput', '📍 Rule: >50ms = Long Task = UI blocked!', 'output-warn');
+  appendOutput('devOutput', '💡 Break large operations into smaller chunks using setTimeout or requestIdleCallback', 'output-info');
+}
+
+function measureDOMOps() {
+  clearOutput('devOutput');
+  appendOutput('devOutput', '🖼️ Measuring DOM operations...', 'output-info');
+
+  // BAD: Layout thrashing
+  const div = document.createElement('div');
+  div.style.cssText = 'position:absolute;left:-9999px;width:100px';
+  document.body.appendChild(div);
+
+  let t0 = performance.now();
+  for (let i = 0; i < 100; i++) {
+    div.style.height = (i * 2) + 'px'; // write
+    const _ = div.offsetHeight; // read → forces layout recalc!
+  }
+  const badTime = (performance.now() - t0).toFixed(3);
+
+  // GOOD: Batch reads then writes
+  t0 = performance.now();
+  const heights = [];
+  for (let i = 0; i < 100; i++) heights.push(i * 2); // all reads/computes
+  heights.forEach(h => div.style.height = h + 'px'); // all writes
+  const goodTime = (performance.now() - t0).toFixed(3);
+
+  document.body.removeChild(div);
+
+  appendOutput('devOutput', `❌ Layout thrashing (read-write-read): ${badTime}ms`, 'output-error');
+  appendOutput('devOutput', `✅ Batched writes: ${goodTime}ms`, 'output-info');
+  appendOutput('devOutput', `🚀 Speedup: ${(badTime/goodTime).toFixed(1)}x faster!`, 'output-info');
+  appendOutput('devOutput', '', '');
+  appendOutput('devOutput', '💡 Lesson: NEVER read layout props inside a write loop!', 'output-warn');
+}
+
+function measureMemory() {
+  clearOutput('devOutput');
+  appendOutput('devOutput', '🧠 Measuring memory usage...', 'output-info');
+
+  const t0 = performance.now();
+  const arrays = [];
+  let allocBytes = 0;
+
+  for (let i = 0; i < 10; i++) {
+    const arr = new Float64Array(10000);
+    arr.fill(Math.random());
+    arrays.push(arr);
+    allocBytes += arr.byteLength;
+  }
+
+  const duration = (performance.now() - t0).toFixed(3);
+  appendOutput('devOutput', `Allocated: ${(allocBytes / 1024).toFixed(1)}KB in ${duration}ms`, '');
+
+  if (performance.memory) {
+    const mem = performance.memory;
+    appendOutput('devOutput', `JS Heap Used: ${(mem.usedJSHeapSize / 1048576).toFixed(1)}MB`, 'output-info');
+    appendOutput('devOutput', `JS Heap Total: ${(mem.totalJSHeapSize / 1048576).toFixed(1)}MB`, 'output-info');
+    appendOutput('devOutput', `JS Heap Limit: ${(mem.jsHeapSizeLimit / 1048576).toFixed(1)}MB`, 'output-info');
+  } else {
+    appendOutput('devOutput', 'performance.memory requires Chrome with --enable-precise-memory-info', 'output-warn');
+  }
+
+  appendOutput('devOutput', '', '');
+  appendOutput('devOutput', '💡 In DevTools Memory panel: take heap snapshots to find leaks!', 'output-info');
+}
+
+// ══════════════════════════════════════════════════════
+//  METRICS SIMULATOR
+// ══════════════════════════════════════════════════════
+function updateSimulator() {
+  const jsKB = parseInt(document.getElementById('jsBundleSlider').value);
+  const imgKB = parseInt(document.getElementById('imageSlider').value);
+  const serverMs = parseInt(document.getElementById('serverSlider').value);
+  const netMult = parseFloat(document.getElementById('networkSpeed').value);
+
+  document.getElementById('jsBundleVal').textContent = jsKB + 'KB';
+  document.getElementById('imageVal').textContent = imgKB + 'KB';
+  document.getElementById('serverVal').textContent = serverMs + 'ms';
+
+  // Rough simulation
+  const ttfb = serverMs;
+  const fcp = ttfb + (jsKB / 100 * 300 * netMult);
+  const lcp = fcp + (imgKB / 100 * 400 * netMult);
+  const tti = lcp + (jsKB / 50 * 200);
+  const tbt = Math.max(0, jsKB - 100) * 2;
+
+  const metrics = [
+    { name: 'TTFB', val: ttfb, unit: 'ms', good: 800, poor: 1800 },
+    { name: 'FCP', val: fcp, unit: 'ms', good: 1800, poor: 3000 },
+    { name: 'LCP', val: lcp, unit: 'ms', good: 2500, poor: 4000 },
+    { name: 'TTI', val: tti, unit: 'ms', good: 3800, poor: 7300 },
+    { name: 'TBT', val: tbt, unit: 'ms', good: 200, poor: 600 },
+  ];
+
+  const out = document.getElementById('simulatorOutput');
+  out.innerHTML = metrics.map(m => {
+    const pct = Math.min(100, (m.val / m.poor) * 100);
+    const color = m.val <= m.good ? 'var(--success)' : m.val <= m.poor ? 'var(--warning)' : 'var(--error)';
+    const rating = m.val <= m.good ? '✅ Good' : m.val <= m.poor ? '⚠️ Needs Work' : '❌ Poor';
+    const display = m.name === 'LCP' || m.name === 'FCP' || m.name === 'TTI'
+      ? (m.val / 1000).toFixed(2) + 's'
+      : Math.round(m.val) + 'ms';
+
+    return `
+      <div class="sim-bar">
+        <span class="sim-label">${m.name}</span>
+        <div class="sim-track">
+          <div class="sim-fill" style="width:${pct}%;background:${color}">${rating}</div>
+        </div>
+        <span class="sim-val" style="color:${color}">${display}</span>
+      </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  METRICS ANIMATION
+// ══════════════════════════════════════════════════════
+function animateMetrics() {
+  const container = document.getElementById('metricsAnimation');
+  const inner = document.getElementById('animMetrics');
+  container.style.display = 'block';
+  inner.innerHTML = '';
+
+  const stages = [
+    { ms: 0, label: 'Navigation Start', color: '#ff79c6', desc: 'User clicks link / types URL' },
+    { ms: 300, label: 'TTFB', color: '#8be9fd', desc: 'Server responds with first byte' },
+    { ms: 600, label: 'FCP', color: '#50fa7b', desc: 'First text/image painted!' },
+    { ms: 1200, label: 'LCP', color: '#f7971e', desc: 'Hero image/heading fully painted' },
+    { ms: 1800, label: 'TTI', color: '#ff6584', desc: 'JavaScript loaded, page interactive' },
+    { ms: 2200, label: 'Load Complete', color: '#6c63ff', desc: 'All resources loaded' },
+  ];
+
+  let i = 0;
+  const tick = () => {
+    if (i >= stages.length) return;
+    const s = stages[i];
+    inner.innerHTML += `
+      <div style="display:flex;align-items:center;gap:0.75rem;margin:0.5rem 0;opacity:0;transition:opacity 0.3s;animation:fadeIn 0.3s forwards">
+        <div style="min-width:60px;text-align:right;font-size:0.78rem;color:var(--text-muted)">${s.ms}ms</div>
+        <div style="width:14px;height:14px;border-radius:50%;background:${s.color};flex-shrink:0"></div>
+        <div>
+          <strong style="color:${s.color}">${s.label}</strong>
+          <span style="color:var(--text-muted);font-size:0.82rem;margin-left:0.5rem">${s.desc}</span>
+        </div>
+      </div>`;
+    i++;
+    setTimeout(tick, 600);
+  };
+
+  tick();
+}
+
+// ══════════════════════════════════════════════════════
+//  VITAL FIX PANELS
+// ══════════════════════════════════════════════════════
+const vitalFixes = {
+  lcp: {
+    title: '🖼️ Fixing Poor LCP (5.2s → target <2.5s)',
+    fixes: [
+      { label: 'Preload hero image', code: '<link rel="preload" href="/hero.jpg" as="image">', gain: '~0.8s' },
+      { label: 'Use CDN for images', code: '<img src="https://cdn.example.com/hero.jpg">', gain: '~1.0s' },
+      { label: 'Optimize image format', code: '<img src="hero.webp"> <!-- 30% smaller -->', gain: '~0.5s' },
+      { label: 'Reduce server TTFB', code: '// Edge caching, HTTP/2, compression', gain: '~0.5s' },
+    ]
+  },
+  inp: {
+    title: '🖱️ Fixing Needs Work INP (380ms → target <200ms)',
+    fixes: [
+      { label: 'Break up long tasks', code: 'await scheduler.yield(); // after each chunk', gain: '~100ms' },
+      { label: 'Debounce event handlers', code: 'input.addEventListener("input", debounce(fn, 100))', gain: '~80ms' },
+      { label: 'Use Web Worker', code: 'const worker = new Worker("heavy.js")', gain: '~150ms' },
+      { label: 'Reduce JS bundle', code: '// Remove unused deps, code-split routes', gain: '~60ms' },
+    ]
+  },
+  cls: {
+    title: '📐 Fixing Poor CLS (0.31 → target <0.1)',
+    fixes: [
+      { label: 'Set image dimensions', code: '<img width="800" height="400" src="...">',  gain: '-0.12' },
+      { label: 'Reserve ad space', code: '.ad-slot { min-height: 90px; }', gain: '-0.08' },
+      { label: 'Use aspect-ratio CSS', code: '.hero { aspect-ratio: 16/9; }', gain: '-0.06' },
+      { label: 'Preload fonts', code: '<link rel="preload" href="font.woff2" as="font">', gain: '-0.05' },
+    ]
+  }
+};
+
+function showVitalFix(type) {
+  const fix = vitalFixes[type];
+  const panel = document.getElementById('vitalFixPanel');
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="tip" style="margin-top:1rem">
+      <h4>${fix.title}</h4>
+      ${fix.fixes.map(f => `
+        <div style="margin-bottom:0.75rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem">
+            <span style="font-size:0.88rem;color:var(--text)">${f.label}</span>
+            <span class="tag tag-green">Saves ${f.gain}</span>
+          </div>
+          <pre style="margin:0"><code style="font-size:0.78rem">${f.code}</code></pre>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  LIVE CWV
+// ══════════════════════════════════════════════════════
+function runLiveCWV() {
+  const results = document.getElementById('cwvResults');
+  const out = document.getElementById('cwvOutput');
+  results.style.display = 'block';
+
+  out.innerHTML = '<p style="color:var(--text-muted)">Measuring...</p>';
+
+  const metrics = [];
+
+  // FCP
+  try {
+    const fcp = performance.getEntriesByName('first-contentful-paint')[0];
+    if (fcp) metrics.push({ name: 'FCP', value: fcp.startTime.toFixed(0) + 'ms', good: fcp.startTime < 1800, poor: fcp.startTime > 3000 });
+  } catch(e) {}
+
+  // Navigation timing
+  try {
+    const nav = performance.getEntriesByType('navigation')[0];
+    if (nav) {
+      const ttfb = nav.responseStart - nav.requestStart;
+      metrics.push({ name: 'TTFB', value: ttfb.toFixed(0) + 'ms', good: ttfb < 800, poor: ttfb > 1800 });
+      const domLoad = nav.domContentLoadedEventEnd - nav.fetchStart;
+      metrics.push({ name: 'DOM Ready', value: domLoad.toFixed(0) + 'ms', good: domLoad < 1500, poor: domLoad > 3000 });
+    }
+  } catch(e) {}
+
+  // Long tasks
+  const longTasks = performance.getEntriesByType('longtask');
+  metrics.push({ name: 'Long Tasks', value: longTasks.length + ' found', good: longTasks.length === 0, poor: longTasks.length > 3 });
+
+  if (metrics.length === 0) {
+    out.innerHTML = '<p style="color:var(--warning)">PerformanceObserver APIs not available in this context. In a real page, these would show live metrics!</p>';
+    return;
+  }
+
+  out.innerHTML = metrics.map(m => {
+    const color = m.good ? 'var(--success)' : m.poor ? 'var(--error)' : 'var(--warning)';
+    const icon = m.good ? '✅' : m.poor ? '❌' : '⚠️';
+    return `
+      <div style="display:flex;justify-content:space-between;padding:0.5rem;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text-muted)">${icon} ${m.name}</span>
+        <strong style="color:${color}">${m.value}</strong>
+      </div>`;
+  }).join('') + `
+    <div style="padding:0.75rem;background:var(--surface2);border-radius:6px;margin-top:0.75rem;font-size:0.82rem;color:var(--text-muted)">
+      💡 For LCP, INP & CLS — these require user interaction and longer page observation. Use the web-vitals library or Chrome DevTools for complete data.
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+//  LIGHTHOUSE SIMULATOR
+// ══════════════════════════════════════════════════════
+function calcLighthouse() {
+  const issues = [
+    { id: 'iss1', pts: 15 },
+    { id: 'iss2', pts: 20 },
+    { id: 'iss3', pts: 25 },
+    { id: 'iss4', pts: 10 },
+    { id: 'iss5', pts: 15 },
+  ];
+
+  let score = 100;
+  issues.forEach(({ id, pts }) => {
+    const cb = document.getElementById(id);
+    if (cb && cb.checked) score -= pts;
+  });
+
+  score = Math.max(0, score);
+  const numEl = document.getElementById('lhScoreNum');
+  const ratingEl = document.getElementById('lhRating');
+  const scoreEl = document.getElementById('lhScoreDisplay');
+
+  if (numEl) numEl.textContent = score;
+
+  const color = score >= 90 ? 'var(--success)' : score >= 50 ? 'var(--warning)' : 'var(--error)';
+  const rating = score >= 90 ? 'Good ✅' : score >= 50 ? 'Needs Improvement ⚠️' : 'Poor ❌';
+
+  if (scoreEl) {
+    scoreEl.style.borderColor = color;
+    scoreEl.style.color = color;
+  }
+  if (ratingEl) {
+    ratingEl.style.color = color;
+    ratingEl.textContent = rating;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  BUDGET CHECKER
+// ══════════════════════════════════════════════════════
+function checkBudget() {
+  const jsKB = parseInt(document.getElementById('jsSize')?.value || 180);
+  const cssKB = parseInt(document.getElementById('cssSize')?.value || 45);
+  const imgKB = parseInt(document.getElementById('imgSize')?.value || 300);
+  const lcpMs = parseInt(document.getElementById('lcpTime')?.value || 2200);
+
+  const budgets = [
+    { name: 'JS Bundle', actual: jsKB, limit: 200, unit: 'KB' },
+    { name: 'CSS Size', actual: cssKB, limit: 50, unit: 'KB' },
+    { name: 'Images', actual: imgKB, limit: 500, unit: 'KB' },
+    { name: 'Total', actual: jsKB + cssKB + imgKB, limit: 800, unit: 'KB' },
+    { name: 'LCP', actual: lcpMs, limit: 2500, unit: 'ms' },
+  ];
+
+  const out = document.getElementById('budgetResults');
+  if (!out) return;
+
+  const passed = budgets.filter(b => b.actual <= b.limit).length;
+  const total = budgets.length;
+  const allPass = passed === total;
+
+  out.innerHTML = `
+    <div style="padding:0.75rem;border-radius:8px;margin-bottom:1rem;background:${allPass ? '#1a3a2a' : '#3a1a1a'};border:1px solid ${allPass ? 'var(--success)' : 'var(--error)'}">
+      <strong style="color:${allPass ? 'var(--success)' : 'var(--error)'}">
+        ${allPass ? '✅ ALL BUDGETS PASSING — Ready to deploy!' : `❌ ${total - passed} BUDGET(S) EXCEEDED — Build would fail!`}
+      </strong>
+    </div>
+    ${budgets.map(b => {
+      const pct = Math.min(100, (b.actual / b.limit) * 110);
+      const pass = b.actual <= b.limit;
+      const color = pass ? 'var(--success)' : 'var(--error)';
+      const over = b.actual > b.limit ? ` (+${b.actual - b.limit}${b.unit} over!)` : '';
+      return `
+        <div style="margin-bottom:0.6rem">
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:0.2rem">
+            <span style="color:var(--text-muted)">${pass ? '✅' : '❌'} ${b.name}</span>
+            <span style="color:${color}">${b.actual}${b.unit} / ${b.limit}${b.unit} limit${over}</span>
+          </div>
+          <div class="metric-bar-container">
+            <div class="metric-bar" style="width:${pct}%;background:${color}"></div>
+          </div>
+        </div>`;
+    }).join('')}`;
+}
+
+// ══════════════════════════════════════════════════════
+//  EXERCISES
+// ══════════════════════════════════════════════════════
+const exerciseScores = new Set();
+
+function updateExerciseProgress() {
+  const total = 6;
+  const done = exerciseScores.size;
+  document.getElementById('exerciseProgress').style.width = (done / total * 100) + '%';
+  document.getElementById('exerciseScore').textContent = `${done}/${total}`;
+}
+
+function showSolution(num) {
+  const sol = document.getElementById(`ex${num}Solution`);
+  sol.style.display = sol.style.display === 'none' ? 'block' : 'none';
+  exerciseScores.add(num);
+  updateExerciseProgress();
+}
+
+function runExercise(num) {
+  const code = document.getElementById(`ex${num}Code`).value;
+  const outId = `ex${num}Output`;
+  clearOutput(outId);
+
+  if (!code.trim()) {
+    appendOutput(outId, '⚠️ Please write some code first!', 'output-warn');
+    return;
+  }
+
+  try {
+    // Provide a simulated environment
+    const origLog = console.log;
+    const origTime = console.time;
+    const origTimeEnd = console.timeEnd;
+    const logs = [];
+
+    console.log = (...args) => logs.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+    const timers = {};
+    console.time = (label) => { timers[label] = performance.now(); };
+    console.timeEnd = (label) => {
+      if (timers[label]) {
+        const ms = (performance.now() - timers[label]).toFixed(2);
+        logs.push(`${label}: ${ms}ms`);
+      }
+    };
+
+    // Execute
+    const fn = new Function('performance', code + '\n// Auto-execute last defined function if possible');
+    fn(performance);
+
+    console.log = origLog;
+    console.time = origTime;
+    console.timeEnd = origTimeEnd;
+
+    if (logs.length > 0) {
+      logs.forEach(l => appendOutput(outId, l, 'output-info'));
+      appendOutput(outId, '', '');
+      appendOutput(outId, '✅ Code ran! Compare with the solution.', 'output-info');
+      exerciseScores.add(num);
+      updateExerciseProgress();
+    } else {
+      appendOutput(outId, '⚠️ Code ran but produced no output. Add console.log() to see results!', 'output-warn');
+    }
+  } catch (err) {
+    appendOutput(outId, '❌ Error: ' + err.message, 'output-error');
+    appendOutput(outId, '💡 Tip: Check your syntax and make sure functions are defined properly.', 'output-warn');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  QUIZ
+// ══════════════════════════════════════════════════════
+let quizBuilt = false;
+let quizScoreCount = 0;
+const quizAnswered = new Set();
+
+const questions = [
+  {
+    q: "What is the 'Good' threshold for LCP (Largest Contentful Paint)?",
+    opts: ["1.0 seconds", "2.5 seconds", "4.0 seconds", "1.8 seconds"],
+    correct: 1,
+    explanation: "LCP Good = <2.5s. This is one of Google's three Core Web Vitals. It measures when the largest visible element (usually a hero image) finishes loading."
+  },
+  {
+    q: "Which performance.now() alternative is WORSE for measuring code execution time?",
+    opts: ["performance.mark()", "Date.now()", "performance.measure()", "console.time()"],
+    correct: 1,
+    explanation: "Date.now() only has millisecond precision and can be affected by system clock adjustments. performance.now() provides sub-millisecond precision on a monotonic clock."
+  },
+  {
+    q: "What does 'layout thrashing' mean?",
+    opts: [
+      "Using too many CSS animations",
+      "Alternating DOM reads and writes in a loop, causing multiple forced layout recalculations",
+      "Having too many DOM elements on the page",
+      "Using inline styles instead of classes"
+    ],
+    correct: 1,
+    explanation: "Layout thrashing occurs when you alternate between reading layout properties (offsetHeight, getBoundingClientRect) and writing to the DOM in a loop. Each read after a write forces the browser to recalculate layout synchronously."
+  },
+  {
+    q: "What does TBT (Total Blocking Time) measure in Lighthouse?",
+    opts: [
+      "Total time pages spend loading images",
+      "Time CSS blocks rendering",
+      "Total time where the main thread was blocked by tasks >50ms",
+      "Network request blocking time"
+    ],
+    correct: 2,
+    explanation: "TBT measures the total time the main thread was blocked by Long Tasks (>50ms). It has the HIGHEST weight (30%) in the Lighthouse performance score. High TBT = janky, unresponsive page."
+  },
+  {
+    q: "When measuring CLS, why must you check entry.hadRecentInput?",
+    opts: [
+      "To filter out server-side rendering shifts",
+      "To ignore layout shifts that occur as a result of recent user interaction",
+      "To check if the user is on mobile",
+      "It's not necessary, just a best practice"
+    ],
+    correct: 1,
+    explanation: "Layout shifts that happen after user interaction (like clicking a button that expands content) are expected. The CLS metric should ONLY count unexpected shifts. hadRecentInput = true means the shift was caused by user input and should be excluded."
+  },
+  {
+    q: "What metric replaced FID (First Input Delay) as a Core Web Vital in 2024?",
+    opts: ["TTI", "TBT", "INP", "FCP"],
+    correct: 2,
+    explanation: "INP (Interaction to Next Paint) replaced FID as of March 2024. While FID only measured the first interaction, INP measures ALL interactions throughout the page lifetime and represents overall responsiveness."
+  },
+  {
+    q: "What's the best way to handle CPU-intensive work in JavaScript without blocking the UI?",
+    opts: [
+      "Use async/await",
+      "Use setInterval with small chunks",
+      "Use Web Workers to run code on a separate thread",
+      "Use requestAnimationFrame"
+    ],
+    correct: 2,
+    explanation: "Web Workers run JavaScript on a completely separate thread, so heavy computation doesn't block the main thread. async/await doesn't help with CPU work (only I/O). requestAnimationFrame is for animation timing."
+  },
+  {
+    q: "In Lighthouse, which metric has the HIGHEST weight (30%) in the performance score?",
+    opts: ["LCP", "FCP", "Speed Index", "Total Blocking Time (TBT)"],
+    correct: 3,
+    explanation: "TBT has 30% weight, making it the most important factor in the Lighthouse score. LCP and CLS each have 25%, FCP has 10%, Speed Index has 10%. Focus on reducing TBT by breaking up long JavaScript tasks."
+  },
+  {
+    q: "What happens if you measure performance in development mode (npm run dev)?",
+    opts: [
+      "Results are identical to production",
+      "Results are slightly faster than production",
+      "Results can be 2-10x slower due to extra dev tooling and checks",
+      "Only network metrics are affected"
+    ],
+    correct: 2,
+    explanation: "Dev mode includes extra runtime checks, React PropTypes validation, warning systems, non-minified code, and unoptimized assets. ALWAYS profile production builds (npm run build) and use CPU throttling (4x) to simulate mobile devices."
+  },
+  {
+    q: "Which PerformanceObserver entry type is used to detect 'Long Tasks' (tasks >50ms)?",
+    opts: [
+      "'paint'",
+      "'longtask'",
+      "'long-animation-frame'",
+      "'navigation'"
+    ],
+    correct: 1,
+    explanation: "The 'longtask' entry type fires whenever a task takes longer than 50ms. Long tasks block the main thread and prevent the browser from responding to user input. Reducing long tasks improves INP and TBT."
+  }
+];
+
+function buildQuiz() {
+  quizBuilt = true;
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+
+  questions.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.id = `q${qi}`;
+    div.innerHTML = `
+      <h3 style="color:var(--text);margin-top:0">Q${qi + 1}: ${q.q}</h3>
+      <div id="opts${qi}">
+        ${q.opts.map((opt, oi) => `
+          <div class="quiz-option" onclick="answerQuiz(${qi}, ${oi})">
+            <span style="color:var(--accent);font-weight:700;margin-right:0.5rem">${String.fromCharCode(65 + oi)}.</span> ${opt}
+          </div>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="fb${qi}"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function answerQuiz(qi, selected) {
+  if (quizAnswered.has(qi)) return;
+  quizAnswered.add(qi);
+
+  const q = questions[qi];
+  const opts = document.querySelectorAll(`#opts${qi} .quiz-option`);
+  const fb = document.getElementById(`fb${qi}`);
+
+  opts.forEach((opt, i) => {
+    if (i === q.correct) opt.classList.add('correct');
+    else if (i === selected) opt.classList.add('wrong');
+    opt.style.cursor = 'default';
+  });
+
+  const correct = selected === q.correct;
+  if (correct) quizScoreCount++;
+
+  fb.className = `quiz-feedback show ${correct ? 'correct' : 'wrong'}`;
+  fb.innerHTML = `${correct ? '✅ Correct!' : '❌ Not quite.'} ${q.explanation}`;
+
+  document.getElementById('quizProgress').style.width = (quizAnswered.size / questions.length * 100) + '%';
+  document.getElementById('quizScore').textContent = `${quizScoreCount}/${quizAnswered.size}`;
+}
+
+// ══════════════════════════════════════════════════════
+//  ACCORDION
+// ══════════════════════════════════════════════════════
+function toggleAccordion(header) {
+  const item = header.parentElement;
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.accordion-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  updateSimulator();
+  checkBudget();
+  calcLighthouse();
+});
+</script>
+</body>
+</html>

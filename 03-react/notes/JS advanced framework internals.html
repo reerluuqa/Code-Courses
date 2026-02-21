@@ -1,0 +1,2979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Framework Internals - Master Class</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #111827;
+    --bg-card: #1a2236;
+    --bg-card-hover: #1e2a42;
+    --accent-blue: #3b82f6;
+    --accent-purple: #8b5cf6;
+    --accent-green: #10b981;
+    --accent-orange: #f59e0b;
+    --accent-red: #ef4444;
+    --accent-cyan: #06b6d4;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border: #2d3748;
+    --border-light: #374151;
+    --code-bg: #0d1117;
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NAVIGATION */
+  .top-nav {
+    background: rgba(17, 24, 39, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    min-height: 60px;
+  }
+
+  .nav-logo {
+    font-size: 1.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+    margin-right: 12px;
+  }
+
+  .nav-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+  }
+
+  /* MAIN LAYOUT */
+  .main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1));
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .hero h1 {
+    font-size: 2.8rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 16px;
+  }
+
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 24px;
+    line-height: 1.7;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent-blue);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    transition: all 0.3s;
+  }
+
+  .card:hover { border-color: var(--accent-blue); }
+
+  .card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent-blue);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+    gap: 24px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+    margin: 12px 0;
+  }
+
+  .code-block .comment { color: #6a9955; }
+  .code-block .keyword { color: #569cd6; }
+  .code-block .string { color: #ce9178; }
+  .code-block .number { color: #b5cea8; }
+  .code-block .function { color: #dcdcaa; }
+  .code-block .class-name { color: #4ec9b0; }
+  .code-block .tag { color: #f28b82; }
+  .code-block .attr { color: #86c1b9; }
+
+  .code-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    font-family: sans-serif;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+  }
+
+  .tab:hover { color: var(--text-primary); }
+  .tab.active {
+    color: var(--accent-blue);
+    border-bottom-color: var(--accent-blue);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* VISUAL DIAGRAMS */
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+
+  .diagram .box {
+    display: inline-block;
+    border: 1px solid var(--accent-blue);
+    border-radius: 6px;
+    padding: 4px 12px;
+    color: var(--accent-blue);
+    margin: 2px;
+  }
+
+  .diagram .box-green {
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+  }
+
+  .diagram .box-orange {
+    border-color: var(--accent-orange);
+    color: var(--accent-orange);
+  }
+
+  .diagram .box-purple {
+    border-color: var(--accent-purple);
+    color: var(--accent-purple);
+  }
+
+  .diagram .arrow {
+    color: var(--text-muted);
+    margin: 0 8px;
+  }
+
+  /* STEP CARDS */
+  .step-card {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    align-items: flex-start;
+  }
+
+  .step-num {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+  }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-blue { background: rgba(59,130,246,0.2); color: var(--accent-blue); border: 1px solid rgba(59,130,246,0.3); }
+  .badge-green { background: rgba(16,185,129,0.2); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-orange { background: rgba(245,158,11,0.2); color: var(--accent-orange); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-red { background: rgba(239,68,68,0.2); color: var(--accent-red); border: 1px solid rgba(239,68,68,0.3); }
+  .badge-purple { background: rgba(139,92,246,0.2); color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.3); }
+
+  /* INTERACTIVE DEMO */
+  .demo-box {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+
+  .demo-output {
+    background: rgba(16,185,129,0.05);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    min-height: 60px;
+    white-space: pre-wrap;
+    color: var(--accent-green);
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--accent-blue);
+    color: white;
+  }
+
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+
+  .btn-green {
+    background: var(--accent-green);
+    color: white;
+  }
+
+  .btn-green:hover { background: #059669; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+  }
+
+  .btn-outline:hover { background: var(--accent-blue); color: white; }
+
+  .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+  /* QUIZ */
+  .quiz-question {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .quiz-q {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+
+  .quiz-options {
+    display: grid;
+    gap: 10px;
+  }
+
+  .quiz-option {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .quiz-option:hover { border-color: var(--accent-blue); background: var(--bg-card-hover); }
+  .quiz-option.correct { border-color: var(--accent-green); background: rgba(16,185,129,0.1); color: var(--accent-green); }
+  .quiz-option.wrong { border-color: var(--accent-red); background: rgba(239,68,68,0.1); color: var(--accent-red); }
+  .quiz-option.disabled { pointer-events: none; }
+
+  .option-label {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .quiz-feedback {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--accent-green); }
+  .quiz-feedback.wrong { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--accent-red); }
+
+  /* SCORE TRACKER */
+  .score-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .score-info {
+    font-size: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .score-num {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent-green);
+  }
+
+  /* CHEAT SHEET */
+  .cheat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .cheat-item:last-child { border-bottom: none; }
+  .cheat-concept { color: var(--text-primary); font-weight: 600; font-size: 0.9rem; min-width: 200px; }
+  .cheat-desc { color: var(--text-secondary); font-size: 0.85rem; flex: 1; line-height: 1.5; }
+
+  /* PITFALLS */
+  .pitfall-card {
+    border-left: 4px solid var(--accent-red);
+    background: rgba(239,68,68,0.05);
+    border-radius: 0 12px 12px 0;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .pitfall-title {
+    color: var(--accent-red);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fix-card {
+    border-left: 4px solid var(--accent-green);
+    background: rgba(16,185,129,0.05);
+    border-radius: 0 12px 12px 0;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .fix-title {
+    color: var(--accent-green);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* PROGRESS */
+  .progress-track {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+
+  .progress-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.3s;
+  }
+
+  .progress-dot.done { background: var(--accent-green); }
+  .progress-dot.current { background: var(--accent-blue); box-shadow: 0 0 8px var(--accent-blue); }
+
+  /* EXERCISE */
+  .exercise-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .exercise-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-purple);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 0.85rem;
+    padding: 16px;
+    resize: vertical;
+    min-height: 140px;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+
+  textarea:focus { border-color: var(--accent-blue); }
+
+  /* COMPARISON TABLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+  }
+
+  th {
+    background: rgba(59,130,246,0.1);
+    color: var(--accent-blue);
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  tr:hover td { background: rgba(59,130,246,0.03); }
+
+  /* INTERACTIVE VDOM DEMO */
+  .vdom-demo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+
+  .vdom-panel {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .vdom-panel h4 {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .vdom-node {
+    font-family: monospace;
+    font-size: 0.83rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 3px 0;
+    transition: all 0.4s;
+  }
+
+  .vdom-node.unchanged { color: var(--text-secondary); }
+  .vdom-node.changed { color: var(--accent-orange); background: rgba(245,158,11,0.1); }
+  .vdom-node.added { color: var(--accent-green); background: rgba(16,185,129,0.1); }
+  .vdom-node.removed { color: var(--accent-red); background: rgba(239,68,68,0.1); text-decoration: line-through; }
+
+  /* ANIMATION */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in { animation: fadeIn 0.4s ease; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .pulse { animation: pulse 1.5s infinite; }
+
+  /* FLOW DIAGRAM */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 16px 0;
+    justify-content: center;
+  }
+
+  .flow-box {
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    color: var(--accent-blue);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .flow-arrow {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    padding: 0 8px;
+  }
+
+  .highlight-box {
+    background: rgba(139,92,246,0.1);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 12px 0;
+  }
+
+  .highlight-box p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.7; }
+  .highlight-box strong { color: var(--accent-purple); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 1.8rem; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .vdom-demo { grid-template-columns: 1fr; }
+    .cheat-item { flex-direction: column; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .inline-code {
+    font-family: monospace;
+    background: rgba(255,255,255,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: var(--accent-cyan);
+  }
+
+  .section-header {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .section-sub {
+    color: var(--text-muted);
+    margin-bottom: 32px;
+    font-size: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVIGATION -->
+<nav class="top-nav">
+  <div class="nav-logo">⚙️ Framework Internals</div>
+  <button class="nav-btn active" onclick="showSection('home')">🏠 Home</button>
+  <button class="nav-btn" onclick="showSection('concepts')">📚 Core Concepts</button>
+  <button class="nav-btn" onclick="showSection('vdom')">🌳 Virtual DOM</button>
+  <button class="nav-btn" onclick="showSection('reconciliation')">🔄 Reconciliation</button>
+  <button class="nav-btn" onclick="showSection('reactivity')">⚡ Reactivity</button>
+  <button class="nav-btn" onclick="showSection('architecture')">🏗️ Architecture</button>
+  <button class="nav-btn" onclick="showSection('exercises')">💪 Exercises</button>
+  <button class="nav-btn" onclick="showSection('quiz')">🧠 Quiz</button>
+  <button class="nav-btn" onclick="showSection('pitfalls')">⚠️ Pitfalls</button>
+  <button class="nav-btn" onclick="showSection('cheatsheet')">📋 Cheat Sheet</button>
+</nav>
+
+<div class="main-container">
+
+<!-- ==================== HOME ==================== -->
+<section id="home" class="section active fade-in">
+  <div class="hero">
+    <h1>Framework Internals</h1>
+    <p>Master how React, Vue & Angular work under the hood. Understand Virtual DOM, Reconciliation, Reactivity systems, and Framework Architecture — the knowledge that separates senior from junior devs.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">10</div><div class="stat-label">Core Topics</div></div>
+      <div class="stat"><div class="stat-num">25+</div><div class="stat-label">Code Examples</div></div>
+      <div class="stat"><div class="stat-num">20</div><div class="stat-label">Quiz Questions</div></div>
+      <div class="stat"><div class="stat-num">15</div><div class="stat-label">Exercises</div></div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card" onclick="showSection('vdom')" style="cursor:pointer">
+      <div class="card-title">🌳 Virtual DOM</div>
+      <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6">Learn how frameworks use JS objects to represent the real DOM and minimize expensive browser operations.</p>
+      <br><span class="badge badge-blue">Beginner Friendly</span>
+    </div>
+    <div class="card" onclick="showSection('reconciliation')" style="cursor:pointer">
+      <div class="card-title">🔄 Reconciliation</div>
+      <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6">Understand the diffing algorithm that determines what actually changes in the DOM — React's secret sauce.</p>
+      <br><span class="badge badge-orange">Intermediate</span>
+    </div>
+    <div class="card" onclick="showSection('reactivity')" style="cursor:pointer">
+      <div class="card-title">⚡ Reactivity</div>
+      <p style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6">Explore how Vue's reactive system and Angular's change detection automatically update the UI.</p>
+      <br><span class="badge badge-purple">Advanced</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗺️ Learning Path</div>
+    <div class="flow">
+      <div class="flow-box">JS Basics</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">DOM APIs</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Virtual DOM</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Reconciliation</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Reactivity</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Architecture</div>
+    </div>
+    <div class="highlight-box">
+      <p><strong>Why does this matter for your interview?</strong> Senior engineers at top companies ask "how does React actually work?" They want to know if you understand <strong>WHY keys matter</strong>, why <strong>state mutation is bad</strong>, and how <strong>reactivity prevents unnecessary renders</strong>. This module gives you those answers.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CORE CONCEPTS ==================== -->
+<section id="concepts" class="section fade-in">
+  <div class="section-header">📚 Core Concepts Overview</div>
+  <div class="section-sub">The mental models you need before going deeper</div>
+
+  <div class="card">
+    <div class="card-title">🤔 The Fundamental Problem Frameworks Solve</div>
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div>
+        <strong>State → UI mapping is painful</strong>
+        <p style="color:var(--text-secondary);margin-top:6px;line-height:1.6">Without frameworks, you manually call <span class="inline-code">document.getElementById</span>, update text, handle events — it becomes spaghetti code as apps grow.</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div>
+        <strong>DOM manipulation is slow</strong>
+        <p style="color:var(--text-secondary);margin-top:6px;line-height:1.6">Every time you touch the real DOM, the browser must recalculate layout (reflow) and repaint. Frameworks batch and minimize these operations.</p>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div>
+        <strong>The solution: Declarative UI + Smart Updating</strong>
+        <p style="color:var(--text-secondary);margin-top:6px;line-height:1.6">You describe WHAT you want (not HOW to get there). The framework figures out the minimal DOM changes needed.</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px">
+      <div>
+        <div class="code-label">❌ Imperative (Manual DOM)</div>
+        <div class="code-block">
+<span class="comment">// You must track and update EVERYTHING manually</span>
+<span class="keyword">let</span> count = <span class="number">0</span>;
+<span class="keyword">const</span> btn = document.<span class="function">getElementById</span>(<span class="string">'btn'</span>);
+<span class="keyword">const</span> display = document.<span class="function">getElementById</span>(<span class="string">'display'</span>);
+
+btn.<span class="function">addEventListener</span>(<span class="string">'click'</span>, () => {
+  count++;
+  display.textContent = count; <span class="comment">// Manual update!</span>
+  <span class="comment">// Imagine 50 related elements to update...</span>
+  <span class="comment">// This becomes unmanageable</span>
+});
+        </div>
+      </div>
+      <div>
+        <div class="code-label">✅ Declarative (React-style)</div>
+        <div class="code-block">
+<span class="comment">// You just describe the UI as a function of state</span>
+<span class="keyword">function</span> <span class="function">Counter</span>() {
+  <span class="keyword">const</span> [count, setCount] = <span class="function">useState</span>(<span class="number">0</span>);
+  
+  <span class="comment">// Framework handles ALL DOM updates</span>
+  <span class="comment">// You just say WHAT the UI looks like</span>
+  <span class="keyword">return</span> (
+    &lt;<span class="tag">div</span>&gt;
+      &lt;<span class="tag">p</span>&gt;{count}&lt;/<span class="tag">p</span>&gt;
+      &lt;<span class="tag">button</span> <span class="attr">onClick</span>={() => <span class="function">setCount</span>(count + <span class="number">1</span>)}&gt;
+        Increment
+      &lt;/<span class="tag">button</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏗️ Framework Comparison at a Glance</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Concept</th>
+          <th>React</th>
+          <th>Vue</th>
+          <th>Angular</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>UI Updates</strong></td>
+          <td>Virtual DOM + Reconciliation</td>
+          <td>Virtual DOM + Reactive Proxies</td>
+          <td>Zone.js + Change Detection</td>
+        </tr>
+        <tr>
+          <td><strong>Reactivity</strong></td>
+          <td>Explicit (useState, useReducer)</td>
+          <td>Implicit (Proxy-based)</td>
+          <td>Implicit (Zone.js patches async)</td>
+        </tr>
+        <tr>
+          <td><strong>Component Model</strong></td>
+          <td>Functions / Classes</td>
+          <td>Options API / Composition API</td>
+          <td>Decorators / Dependency Injection</td>
+        </tr>
+        <tr>
+          <td><strong>State Management</strong></td>
+          <td>useState, Redux, Zustand</td>
+          <td>ref, reactive, Pinia</td>
+          <td>Services, NgRx</td>
+        </tr>
+        <tr>
+          <td><strong>Diffing</strong></td>
+          <td>Fiber reconciler</td>
+          <td>Snabbdom-based</td>
+          <td>Incremental DOM</td>
+        </tr>
+        <tr>
+          <td><strong>Philosophy</strong></td>
+          <td>Library (bring your own)</td>
+          <td>Progressive framework</td>
+          <td>Full opinionated framework</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧩 The Core Loop (All Frameworks)</div>
+    <div class="flow" style="flex-direction:column; align-items:stretch; max-width:500px; margin:0 auto">
+      <div class="flow-box" style="text-align:center; margin:4px 0">📝 State Changes (user input, API, timer)</div>
+      <div style="text-align:center;color:var(--text-muted);font-size:1.5rem">↓</div>
+      <div class="flow-box" style="text-align:center;margin:4px 0">🔔 Framework Notified</div>
+      <div style="text-align:center;color:var(--text-muted);font-size:1.5rem">↓</div>
+      <div class="flow-box" style="text-align:center;margin:4px 0">🌳 New Virtual DOM Created</div>
+      <div style="text-align:center;color:var(--text-muted);font-size:1.5rem">↓</div>
+      <div class="flow-box" style="text-align:center;margin:4px 0">🔍 Diff old vs new VDOM</div>
+      <div style="text-align:center;color:var(--text-muted);font-size:1.5rem">↓</div>
+      <div class="flow-box" style="text-align:center;margin:4px 0">⚡ Patch only changed real DOM nodes</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== VIRTUAL DOM ==================== -->
+<section id="vdom" class="section fade-in">
+  <div class="section-header">🌳 Virtual DOM</div>
+  <div class="section-sub">A lightweight JavaScript representation of the real DOM</div>
+
+  <div class="card">
+    <div class="card-title">💡 What IS the Virtual DOM?</div>
+    <div class="highlight-box">
+      <p>The Virtual DOM is <strong>just a plain JavaScript object</strong> that describes what the real DOM should look like. It's cheap to create (just JS object allocation) vs expensive real DOM operations.</p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="code-label">Real DOM (expensive)</div>
+        <div class="code-block">
+<span class="comment">// Real DOM node has 200+ properties</span>
+<span class="comment">// Heavy browser object, causes reflow/repaint</span>
+&lt;<span class="tag">div</span> <span class="attr">class</span>=<span class="string">"container"</span>&gt;
+  &lt;<span class="tag">h1</span>&gt;Hello&lt;/<span class="tag">h1</span>&gt;
+  &lt;<span class="tag">p</span>&gt;World&lt;/<span class="tag">p</span>&gt;
+&lt;/<span class="tag">div</span>&gt;
+
+<span class="comment">// Browser must:</span>
+<span class="comment">// 1. Parse HTML</span>
+<span class="comment">// 2. Create DOM node objects (~200 props each)</span>
+<span class="comment">// 3. Build layout tree</span>
+<span class="comment">// 4. Paint pixels</span>
+        </div>
+      </div>
+      <div>
+        <div class="code-label">Virtual DOM (cheap JS object)</div>
+        <div class="code-block">
+<span class="comment">// Virtual DOM = just a JS object tree</span>
+<span class="comment">// Extremely fast to create and compare</span>
+<span class="keyword">const</span> vdom = {
+  type: <span class="string">'div'</span>,
+  props: { className: <span class="string">'container'</span> },
+  children: [
+    {
+      type: <span class="string">'h1'</span>,
+      props: {},
+      children: [<span class="string">'Hello'</span>]
+    },
+    {
+      type: <span class="string">'p'</span>,
+      props: {},
+      children: [<span class="string">'World'</span>]
+    }
+  ]
+};
+<span class="comment">// ~5 properties, pure JS, no browser overhead</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔬 How React.createElement Works</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'vdom-tabs','jsx')">JSX Syntax</button>
+      <button class="tab" onclick="switchTab(this,'vdom-tabs','compiled')">Compiled JS</button>
+      <button class="tab" onclick="switchTab(this,'vdom-tabs','manual')">Manual VDOM</button>
+    </div>
+    <div id="vdom-tabs">
+      <div class="tab-content active" id="tab-jsx">
+        <div class="code-label">What you write (JSX)</div>
+        <div class="code-block">
+<span class="comment">// This JSX is just syntactic sugar</span>
+<span class="keyword">function</span> <span class="function">App</span>() {
+  <span class="keyword">return</span> (
+    &lt;<span class="tag">div</span> <span class="attr">className</span>=<span class="string">"app"</span>&gt;
+      &lt;<span class="tag">h1</span>&gt;Hello World&lt;/<span class="tag">h1</span>&gt;
+      &lt;<span class="tag">button</span> <span class="attr">onClick</span>={<span class="function">handleClick</span>}&gt;
+        Click me
+      &lt;/<span class="tag">button</span>&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+
+<span class="comment">// Babel transforms this BEFORE it runs in browser</span>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-compiled">
+        <div class="code-label">What Babel compiles it to</div>
+        <div class="code-block">
+<span class="comment">// Babel transforms JSX to createElement calls</span>
+<span class="keyword">function</span> <span class="function">App</span>() {
+  <span class="keyword">return</span> React.<span class="function">createElement</span>(
+    <span class="string">'div'</span>,
+    { className: <span class="string">'app'</span> },
+    React.<span class="function">createElement</span>(
+      <span class="string">'h1'</span>,
+      <span class="keyword">null</span>,
+      <span class="string">'Hello World'</span>
+    ),
+    React.<span class="function">createElement</span>(
+      <span class="string">'button'</span>,
+      { onClick: handleClick },
+      <span class="string">'Click me'</span>
+    )
+  );
+}
+<span class="comment">// createElement returns a plain JS object (VDOM node)</span>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-manual">
+        <div class="code-label">Build your own mini Virtual DOM</div>
+        <div class="code-block">
+<span class="comment">// Simplified createElement - returns VDOM node object</span>
+<span class="keyword">function</span> <span class="function">createElement</span>(type, props, ...children) {
+  <span class="keyword">return</span> { type, props: props || {}, children };
+}
+
+<span class="comment">// Render VDOM to real DOM</span>
+<span class="keyword">function</span> <span class="function">render</span>(vnode, container) {
+  <span class="keyword">if</span> (<span class="keyword">typeof</span> vnode === <span class="string">'string'</span>) {
+    container.<span class="function">appendChild</span>(
+      document.<span class="function">createTextNode</span>(vnode)
+    );
+    <span class="keyword">return</span>;
+  }
+
+  <span class="keyword">const</span> el = document.<span class="function">createElement</span>(vnode.type);
+  
+  <span class="comment">// Set props/attributes</span>
+  Object.<span class="function">entries</span>(vnode.props).<span class="function">forEach</span>(([key, val]) => {
+    <span class="keyword">if</span> (key.<span class="function">startsWith</span>(<span class="string">'on'</span>)) {
+      <span class="comment">// Event handler: onClick → click</span>
+      el.<span class="function">addEventListener</span>(key.<span class="function">slice</span>(<span class="number">2</span>).<span class="function">toLowerCase</span>(), val);
+    } <span class="keyword">else</span> {
+      el[key] = val;
+    }
+  });
+  
+  <span class="comment">// Recursively render children</span>
+  vnode.children.<span class="function">forEach</span>(child => <span class="function">render</span>(child, el));
+  container.<span class="function">appendChild</span>(el);
+}
+
+<span class="comment">// Usage</span>
+<span class="keyword">const</span> vdom = <span class="function">createElement</span>(<span class="string">'div'</span>, { className: <span class="string">'app'</span> },
+  <span class="function">createElement</span>(<span class="string">'h1'</span>, <span class="keyword">null</span>, <span class="string">'Hello!'</span>)
+);
+<span class="function">render</span>(vdom, document.<span class="function">getElementById</span>(<span class="string">'root'</span>));
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎮 Interactive: Watch VDOM Diffing</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px">Click the button to change state and see which VDOM nodes are marked as changed vs unchanged:</p>
+    <div class="vdom-demo">
+      <div class="vdom-panel">
+        <h4>🔵 Old VDOM (before update)</h4>
+        <div id="old-vdom">
+          <div class="vdom-node unchanged">div.container</div>
+          <div class="vdom-node unchanged" style="margin-left:20px">h1 → "Hello"</div>
+          <div class="vdom-node unchanged" style="margin-left:20px">p → "Count: 0"</div>
+          <div class="vdom-node unchanged" style="margin-left:20px">button → "Click me"</div>
+        </div>
+      </div>
+      <div class="vdom-panel">
+        <h4>🟢 New VDOM (after update)</h4>
+        <div id="new-vdom">
+          <div class="vdom-node unchanged">div.container</div>
+          <div class="vdom-node unchanged" style="margin-left:20px">h1 → "Hello"</div>
+          <div class="vdom-node unchanged" style="margin-left:20px">p → "Count: 0"</div>
+          <div class="vdom-node unchanged" style="margin-left:20px">button → "Click me"</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-primary btn-sm" onclick="simulateVdomUpdate()">🔄 Simulate State Change</button>
+      <button class="btn btn-outline btn-sm" onclick="resetVdom()">↺ Reset</button>
+    </div>
+    <div id="vdom-explanation" class="demo-output" style="margin-top:12px">Click "Simulate State Change" to see the diff process...</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Why Virtual DOM Is Fast (And When It's Not)</div>
+    <div class="grid-2">
+      <div>
+        <div class="fix-card">
+          <div class="fix-title">✅ Fast Because:</div>
+          <ul style="color:var(--text-secondary);font-size:0.88rem;line-height:2;list-style:none;padding-left:16px">
+            <li>• JS object comparison is cheap</li>
+            <li>• Batches multiple DOM updates into one</li>
+            <li>• Only touches changed nodes</li>
+            <li>• Avoids unnecessary layout recalculations</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="pitfall-card">
+          <div class="pitfall-title">⚠️ NOT Always Fastest:</div>
+          <ul style="color:var(--text-secondary);font-size:0.88rem;line-height:2;list-style:none;padding-left:16px">
+            <li>• Creating VDOM itself has overhead</li>
+            <li>• Simple apps: direct DOM can be faster</li>
+            <li>• Svelte avoids VDOM entirely</li>
+            <li>• Solid.js uses fine-grained reactivity</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== RECONCILIATION ==================== -->
+<section id="reconciliation" class="section fade-in">
+  <div class="section-header">🔄 Reconciliation</div>
+  <div class="section-sub">The diffing algorithm that makes React efficient</div>
+
+  <div class="card">
+    <div class="card-title">🧠 The Core Idea</div>
+    <div class="highlight-box">
+      <p>Reconciliation is the process of <strong>comparing old VDOM vs new VDOM</strong> and computing the minimal set of real DOM changes needed. React's algorithm is O(n) — it makes smart assumptions to avoid O(n³) tree diffing.</p>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div>
+        <strong>Rule 1: Different element types → Replace entirely</strong>
+        <p style="color:var(--text-secondary);margin-top:6px;line-height:1.6">If <span class="inline-code">&lt;div&gt;</span> becomes <span class="inline-code">&lt;span&gt;</span>, React tears down the old subtree and builds a new one. No point diffing children.</p>
+        <div class="code-block" style="margin-top:10px">
+<span class="comment">// Old tree:</span>    &lt;<span class="tag">div</span>&gt;&lt;<span class="tag">Counter</span> /&gt;&lt;/<span class="tag">div</span>&gt;
+<span class="comment">// New tree:</span>    &lt;<span class="tag">span</span>&gt;&lt;<span class="tag">Counter</span> /&gt;&lt;/<span class="tag">span</span>&gt;
+<span class="comment">// Result: div + Counter destroyed. New span + Counter created.</span>
+<span class="comment">// Counter loses its state! div → span causes FULL rebuild</span>
+        </div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div>
+        <strong>Rule 2: Same element type → Update props only</strong>
+        <p style="color:var(--text-secondary);margin-top:6px;line-height:1.6">React keeps the same DOM node and only updates changed attributes/properties. Much cheaper!</p>
+        <div class="code-block" style="margin-top:10px">
+<span class="comment">// Old: &lt;div className="old" title="A"&gt;</span>
+<span class="comment">// New: &lt;div className="new" title="A"&gt;</span>
+<span class="comment">// Result: React updates ONLY className. title unchanged. 1 DOM write.</span>
+        </div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div>
+        <strong>Rule 3: Keys for lists</strong>
+        <p style="color:var(--text-secondary);margin-top:6px;line-height:1.6">When diffing lists, React uses <span class="inline-code">key</span> props to match old nodes to new nodes efficiently.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔑 The Keys Problem — Critical Interview Topic</div>
+    <div class="grid-2">
+      <div>
+        <div class="code-label">❌ No Keys (or index as key) — WRONG</div>
+        <div class="code-block">
+<span class="comment">// List: [A, B, C] → [X, A, B, C] (prepend X)</span>
+
+<span class="comment">// Without keys, React compares by POSITION:</span>
+<span class="comment">// Position 0: A→X  (update text, keep input state!)</span>
+<span class="comment">// Position 1: B→A  (update text)</span>
+<span class="comment">// Position 2: C→B  (update text)</span>
+<span class="comment">// Position 3: ---→C (create new)</span>
+<span class="comment">// 3 DOM mutations + wrong state!</span>
+
+{items.<span class="function">map</span>((item, index) => (
+  &lt;<span class="tag">li</span> <span class="attr">key</span>={index}&gt;  <span class="comment">// ❌ index key is BAD</span>
+    &lt;<span class="tag">input</span> /&gt;  <span class="comment">// input state is WRONG now</span>
+    {item}
+  &lt;/<span class="tag">li</span>&gt;
+))}
+        </div>
+      </div>
+      <div>
+        <div class="code-label">✅ Stable Keys — CORRECT</div>
+        <div class="code-block">
+<span class="comment">// List: [A, B, C] → [X, A, B, C] (prepend X)</span>
+
+<span class="comment">// With stable keys, React matches correctly:</span>
+<span class="comment">// key="A" found at pos 1 (was pos 0) → move it</span>
+<span class="comment">// key="B" found at pos 2 (was pos 1) → move it</span>
+<span class="comment">// key="C" found at pos 3 (was pos 2) → move it</span>
+<span class="comment">// key="X" not found → create new</span>
+<span class="comment">// 0 updates! Just 1 create + 3 moves</span>
+
+{items.<span class="function">map</span>(item => (
+  &lt;<span class="tag">li</span> <span class="attr">key</span>={item.id}&gt;  <span class="comment">// ✅ stable unique ID</span>
+    &lt;<span class="tag">input</span> /&gt;  <span class="comment">// input state preserved!</span>
+    {item.name}
+  &lt;/<span class="tag">li</span>&gt;
+))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚀 React Fiber — Modern Reconciliation</div>
+    <div class="highlight-box">
+      <p>Before React 16, reconciliation was <strong>synchronous and blocking</strong>. The browser couldn't interrupt it, causing janky animations. React Fiber reimagined reconciliation as <strong>interruptible, prioritized work</strong>.</p>
+    </div>
+
+    <div class="code-block">
+<span class="comment">// React Fiber: Units of work that can be paused/resumed</span>
+<span class="comment">// Every VDOM node becomes a "Fiber" object</span>
+
+<span class="keyword">const</span> fiber = {
+  type: <span class="string">'div'</span>,          <span class="comment">// Element type</span>
+  key: <span class="keyword">null</span>,            <span class="comment">// Reconciliation key</span>
+  child: fiberChild,    <span class="comment">// First child fiber</span>
+  sibling: fiberSib,   <span class="comment">// Next sibling fiber</span>
+  <span class="keyword">return</span>: parentFiber, <span class="comment">// Parent fiber</span>
+  stateNode: domNode,  <span class="comment">// Actual DOM node</span>
+  pendingProps: {},     <span class="comment">// Props being applied</span>
+  memoizedProps: {},    <span class="comment">// Last committed props</span>
+  memoizedState: {},    <span class="comment">// Last committed state</span>
+  effectTag: <span class="string">'UPDATE'</span>  <span class="comment">// What needs to happen: PLACE, UPDATE, DELETE</span>
+};
+
+<span class="comment">// React works through the fiber tree using requestIdleCallback-like scheduling</span>
+<span class="comment">// High priority: user input, animations</span>
+<span class="comment">// Low priority: data fetching results, background updates</span>
+
+<span class="comment">// This is what enables:</span>
+<span class="comment">// ✅ Concurrent Mode</span>
+<span class="comment">// ✅ Suspense</span>
+<span class="comment">// ✅ Time Slicing</span>
+<span class="comment">// ✅ useTransition</span>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px">
+      <div>
+        <div class="code-label">Two phases of Fiber</div>
+        <div class="code-block">
+<span class="comment">// Phase 1: RENDER (interruptible)</span>
+<span class="comment">// - Traverse fiber tree</span>
+<span class="comment">// - Call component functions</span>
+<span class="comment">// - Diff old vs new fibers</span>
+<span class="comment">// - Build "effect list"</span>
+<span class="comment">// - Can be PAUSED if high-priority work arrives</span>
+
+<span class="comment">// Phase 2: COMMIT (synchronous, fast)</span>
+<span class="comment">// - Apply all effects to real DOM</span>
+<span class="comment">// - Run useLayoutEffect</span>
+<span class="comment">// - CANNOT be interrupted (avoids partial UI)</span>
+<span class="comment">// - Then run useEffect async</span>
+        </div>
+      </div>
+      <div>
+        <div class="code-label">Priority Levels</div>
+        <div class="code-block">
+<span class="comment">// React has 5 priority lanes:</span>
+<span class="comment">// 1. SyncLane: critical (flushSync)</span>
+<span class="comment">// 2. InputContinuousLane: typing</span>
+<span class="comment">// 3. DefaultLane: setState calls</span>
+<span class="comment">// 4. TransitionLane: useTransition</span>
+<span class="comment">// 5. IdleLane: offscreen work</span>
+
+<span class="keyword">function</span> <span class="function">App</span>() {
+  <span class="keyword">const</span> [urgent, setUrgent] = <span class="function">useState</span>();
+  <span class="keyword">const</span> [slow, startTransition] = <span class="function">useTransition</span>();
+  
+  <span class="comment">// This is low-priority (can be interrupted)</span>
+  startTransition(() => <span class="function">setExpensiveState</span>(val));
+}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== REACTIVITY ==================== -->
+<section id="reactivity" class="section fade-in">
+  <div class="section-header">⚡ Reactivity Systems</div>
+  <div class="section-sub">How frameworks know when to update the UI</div>
+
+  <div class="card">
+    <div class="card-title">🔔 The Reactivity Problem</div>
+    <div class="highlight-box">
+      <p>How does a framework know that <strong>data changed</strong> and the UI needs updating? Different frameworks use completely different strategies — this is the heart of framework design.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚛️ React: Explicit Reactivity (Pull-based)</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;line-height:1.6">React uses <strong>explicit state calls</strong>. You must call <span class="inline-code">setState</span>. React doesn't watch your data — it just re-runs your component function when you tell it to.</p>
+
+    <div class="code-block">
+<span class="comment">// React's approach: YOU notify React when state changes</span>
+<span class="comment">// React re-runs the entire component function</span>
+
+<span class="keyword">function</span> <span class="function">Counter</span>() {
+  <span class="keyword">const</span> [count, setCount] = <span class="function">useState</span>(<span class="number">0</span>);
+  
+  <span class="comment">// ❌ This does NOT trigger a re-render!</span>
+  <span class="keyword">let</span> x = count;
+  x = <span class="number">42</span>; <span class="comment">// React has no idea this changed</span>
+  
+  <span class="comment">// ❌ This does NOT trigger a re-render!</span>
+  count = <span class="number">42</span>; <span class="comment">// You can't mutate state directly</span>
+  
+  <span class="comment">// ✅ THIS triggers a re-render</span>
+  <span class="function">setCount</span>(<span class="number">42</span>); <span class="comment">// React knows to re-render</span>
+  
+  <span class="comment">// When component re-runs:</span>
+  <span class="comment">// React calls Counter() again</span>
+  <span class="comment">// Gets new VDOM</span>
+  <span class="comment">// Reconciles with old VDOM</span>
+  <span class="comment">// Updates changed DOM nodes</span>
+}
+
+<span class="comment">// React 19 introduces new "Actions" pattern for async state</span>
+<span class="keyword">function</span> <span class="function">Counter</span>() {
+  <span class="keyword">const</span> [optimistic, addOptimistic] = <span class="function">useOptimistic</span>(state);
+  <span class="comment">// Optimistic UI updates before server confirms!</span>
+}
+    </div>
+
+    <div class="code-block" style="margin-top:12px">
+<span class="comment">// How useState actually works (simplified)</span>
+<span class="keyword">let</span> stateStorage = []; <span class="comment">// React keeps state outside component</span>
+<span class="keyword">let</span> hookIndex = <span class="number">0</span>;
+
+<span class="keyword">function</span> <span class="function">useState</span>(initialValue) {
+  <span class="keyword">const</span> index = hookIndex;
+  hookIndex++;
+  
+  <span class="comment">// First render: initialize</span>
+  <span class="keyword">if</span> (stateStorage[index] === undefined) {
+    stateStorage[index] = initialValue;
+  }
+  
+  <span class="keyword">const</span> setState = (newValue) => {
+    stateStorage[index] = newValue;
+    <span class="function">rerenderComponent</span>(); <span class="comment">// Triggers reconciliation</span>
+  };
+  
+  <span class="keyword">return</span> [stateStorage[index], setState];
+}
+<span class="comment">// This is why hooks must be called in the same ORDER every render!</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💚 Vue: Implicit Reactivity (Proxy-based)</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;line-height:1.6">Vue 3 uses <strong>ES6 Proxy</strong> to intercept property reads/writes automatically. You just mutate objects normally — Vue detects it.</p>
+
+    <div class="code-block">
+<span class="comment">// Vue 3 Reactivity simplified implementation</span>
+<span class="keyword">let</span> activeEffect = <span class="keyword">null</span>; <span class="comment">// Currently running computed/watcher</span>
+
+<span class="keyword">function</span> <span class="function">reactive</span>(obj) {
+  <span class="keyword">const</span> deps = <span class="keyword">new</span> <span class="class-name">Map</span>(); <span class="comment">// property → Set of effects</span>
+  
+  <span class="keyword">return</span> <span class="keyword">new</span> <span class="class-name">Proxy</span>(obj, {
+    <span class="comment">// Called when you READ a property</span>
+    <span class="function">get</span>(target, key) {
+      <span class="comment">// Track: "this effect depends on this key"</span>
+      <span class="keyword">if</span> (activeEffect) {
+        <span class="keyword">if</span> (!deps.<span class="function">has</span>(key)) deps.<span class="function">set</span>(key, <span class="keyword">new</span> <span class="class-name">Set</span>());
+        deps.<span class="function">get</span>(key).<span class="function">add</span>(activeEffect);
+      }
+      <span class="keyword">return</span> target[key];
+    },
+    
+    <span class="comment">// Called when you WRITE a property</span>
+    <span class="function">set</span>(target, key, value) {
+      target[key] = value;
+      <span class="comment">// Notify: "all effects tracking this key, re-run!"</span>
+      deps.<span class="function">get</span>(key)?.<span class="function">forEach</span>(effect => <span class="function">effect</span>());
+      <span class="keyword">return</span> <span class="keyword">true</span>;
+    }
+  });
+}
+
+<span class="keyword">function</span> <span class="function">watchEffect</span>(fn) {
+  activeEffect = fn; <span class="comment">// Mark as current effect</span>
+  <span class="function">fn</span>();              <span class="comment">// Run to collect dependencies (reads)</span>
+  activeEffect = <span class="keyword">null</span>; <span class="comment">// Clear</span>
+}
+
+<span class="comment">// Usage - automatic tracking!</span>
+<span class="keyword">const</span> state = <span class="function">reactive</span>({ count: <span class="number">0</span>, name: <span class="string">'Alice'</span> });
+
+<span class="function">watchEffect</span>(() => {
+  <span class="comment">// Runs immediately, reads state.count → tracked!</span>
+  console.<span class="function">log</span>(<span class="string">`Count: ${state.count}`</span>);
+});
+
+state.count = <span class="number">1</span>; <span class="comment">// Proxy setter fires → effect re-runs!</span>
+state.name = <span class="string">'Bob'</span>; <span class="comment">// Effect NOT re-run (didn't read name)</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔴 Angular: Zone.js Change Detection</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;line-height:1.6">Angular uses <strong>Zone.js</strong> to monkey-patch async APIs (setTimeout, fetch, event listeners). After any async operation, Angular checks ALL components for changes.</p>
+
+    <div class="code-block">
+<span class="comment">// Zone.js patches async APIs to track async work</span>
+<span class="comment">// Angular's approach: "Something async happened? Check everything!"</span>
+
+<span class="comment">// Zone.js essentially does this to async APIs:</span>
+<span class="keyword">const</span> originalSetTimeout = window.setTimeout;
+window.setTimeout = <span class="keyword">function</span>(callback, delay) {
+  <span class="keyword">return</span> <span class="function">originalSetTimeout</span>(() => {
+    <span class="function">callback</span>();
+    angularZone.<span class="function">triggerChangeDetection</span>(); <span class="comment">// Check all components!</span>
+  }, delay);
+};
+
+<span class="comment">// Angular Component</span>
+@Component({
+  template: <span class="string">`&lt;p&gt;{{count}}&lt;/p&gt;`</span>
+})
+<span class="keyword">class</span> <span class="class-name">Counter</span> {
+  count = <span class="number">0</span>;
+  
+  <span class="function">increment</span>() {
+    this.count++; <span class="comment">// No special call needed!</span>
+    <span class="comment">// Zone.js detects event handler ran</span>
+    <span class="comment">// Angular runs change detection</span>
+    <span class="comment">// Template re-evaluated</span>
+    <span class="comment">// DOM updated if changed</span>
+  }
+}
+
+<span class="comment">// OnPush strategy - more efficient</span>
+@Component({ changeDetection: ChangeDetectionStrategy.OnPush })
+<span class="keyword">class</span> <span class="class-name">OptimizedComponent</span> {
+  <span class="comment">// Only checked when:</span>
+  <span class="comment">// 1. @Input() reference changes</span>
+  <span class="comment">// 2. Observable emits (async pipe)</span>
+  <span class="comment">// 3. Manually triggered (markForCheck)</span>
+}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Reactivity Strategy Comparison</div>
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>React</th><th>Vue 3</th><th>Angular</th><th>Svelte</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Mechanism</td>
+          <td>Explicit setState</td>
+          <td>ES6 Proxy</td>
+          <td>Zone.js patching</td>
+          <td>Compiler transforms</td>
+        </tr>
+        <tr>
+          <td>Detection</td>
+          <td>You must call it</td>
+          <td>Auto (property access)</td>
+          <td>Auto (after async)</td>
+          <td>Auto (compile time)</td>
+        </tr>
+        <tr>
+          <td>Granularity</td>
+          <td>Component level</td>
+          <td>Property level</td>
+          <td>Component tree</td>
+          <td>Variable level</td>
+        </tr>
+        <tr>
+          <td>Runtime overhead</td>
+          <td>VDOM diffing</td>
+          <td>Proxy + VDOM diff</td>
+          <td>Full tree check</td>
+          <td>None (compiled away)</td>
+        </tr>
+        <tr>
+          <td>Mental model</td>
+          <td>Functional</td>
+          <td>Observable objects</td>
+          <td>MVC + DI</td>
+          <td>Assignments = reactivity</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<section id="architecture" class="section fade-in">
+  <div class="section-header">🏗️ Framework Architecture</div>
+  <div class="section-sub">How the pieces fit together at scale</div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(this,'arch-tabs','react-arch')">React Architecture</button>
+    <button class="tab" onclick="switchTab(this,'arch-tabs','vue-arch')">Vue Architecture</button>
+    <button class="tab" onclick="switchTab(this,'arch-tabs','angular-arch')">Angular Architecture</button>
+    <button class="tab" onclick="switchTab(this,'arch-tabs','patterns')">Common Patterns</button>
+  </div>
+
+  <div id="arch-tabs">
+    <div class="tab-content active" id="tab-react-arch">
+      <div class="card">
+        <div class="card-title">⚛️ React's Layered Architecture</div>
+        <div class="diagram">
+<div style="text-align:center;margin-bottom:12px;color:var(--text-muted);font-size:0.8rem">REACT ARCHITECTURE LAYERS</div>
+<div style="text-align:center"><span class="box">Your Components (JSX)</span></div>
+<div style="text-align:center;color:var(--text-muted)">↓ Babel transforms JSX → createElement calls</div>
+<div style="text-align:center"><span class="box">React Core (react package)</span></div>
+<div style="text-align:center;color:var(--text-muted)">↓ Creates Fiber tree, schedules work</div>
+<div style="text-align:center"><span class="box">React Reconciler (react-reconciler)</span></div>
+<div style="text-align:center;color:var(--text-muted)">↓ Finds minimal changes (diff)</div>
+<div style="text-align:center">
+  <span class="box-green">React DOM</span>&nbsp;&nbsp;
+  <span class="box-orange">React Native</span>&nbsp;&nbsp;
+  <span class="box-purple">React Three Fiber</span>
+</div>
+<div style="text-align:center;color:var(--text-muted)">↓ Applies changes to target platform</div>
+<div style="text-align:center"><span class="box">Browser DOM / Native Views / WebGL</span></div>
+        </div>
+
+        <div class="code-block" style="margin-top:16px">
+<span class="comment">// React's key packages (separate npm packages):</span>
+<span class="comment">// react            → Component model, hooks, createElement</span>
+<span class="comment">// react-dom        → DOM-specific rendering, reconciler</span>
+<span class="comment">// react-reconciler → Generic reconciler (used by custom renderers)</span>
+<span class="comment">// scheduler        → Cooperative scheduling (priority queue)</span>
+
+<span class="comment">// The reconciler is platform-agnostic!</span>
+<span class="comment">// That's why React Native works without a browser</span>
+<span class="keyword">const</span> customRenderer = <span class="function">createReconciler</span>({
+  <span class="comment">// You provide these platform-specific methods:</span>
+  <span class="function">createInstance</span>(type, props) { <span class="comment">/* create canvas node, native view, etc */</span> },
+  <span class="function">appendChild</span>(parent, child) { <span class="comment">/* add to canvas, native, etc */</span> },
+  <span class="function">commitUpdate</span>(instance, props) { <span class="comment">/* update in target environment */</span> },
+  <span class="comment">// ... more lifecycle methods</span>
+});
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚛️ React Component Lifecycle (Hooks)</div>
+        <div class="code-block">
+<span class="keyword">function</span> <span class="function">LifecycleDemo</span>({ id }) {
+  <span class="comment">// 1. STATE - persists between renders</span>
+  <span class="keyword">const</span> [data, setData] = <span class="function">useState</span>(<span class="keyword">null</span>);
+  
+  <span class="comment">// 2. REFS - mutable, doesn't trigger re-render</span>
+  <span class="keyword">const</span> timerRef = <span class="function">useRef</span>(<span class="keyword">null</span>);
+  
+  <span class="comment">// 3. DERIVED STATE - computed on every render</span>
+  <span class="keyword">const</span> processedData = <span class="function">useMemo</span>(() => {
+    <span class="keyword">return</span> data?.<span class="function">map</span>(x => x * <span class="number">2</span>);
+  }, [data]); <span class="comment">// Only recomputes when data changes</span>
+  
+  <span class="comment">// 4. SIDE EFFECTS after render</span>
+  <span class="function">useEffect</span>(() => {
+    <span class="comment">// Runs AFTER DOM is painted</span>
+    <span class="comment">// Equivalent to componentDidMount + componentDidUpdate</span>
+    <span class="function">fetchData</span>(id).<span class="function">then</span>(setData);
+    
+    <span class="comment">// Cleanup: runs before next effect or unmount</span>
+    <span class="keyword">return</span> () => {
+      <span class="function">cancelFetch</span>(); <span class="comment">// Equivalent to componentWillUnmount</span>
+    };
+  }, [id]); <span class="comment">// Re-runs when id changes</span>
+  
+  <span class="comment">// 5. LAYOUT EFFECTS - synchronous, before paint</span>
+  <span class="function">useLayoutEffect</span>(() => {
+    <span class="comment">// For DOM measurements - runs before browser paints</span>
+    <span class="comment">// Use when you need to read layout and synchronously update</span>
+    <span class="keyword">const</span> rect = ref.current.<span class="function">getBoundingClientRect</span>();
+    <span class="function">setWidth</span>(rect.width);
+  }, []);
+  
+  <span class="keyword">return</span> &lt;<span class="tag">div</span>&gt;{processedData}&lt;/<span class="tag">div</span>&gt;;
+}
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-vue-arch">
+      <div class="card">
+        <div class="card-title">💚 Vue 3 Architecture</div>
+        <div class="diagram">
+<div style="text-align:center;color:var(--text-muted);font-size:0.8rem;margin-bottom:12px">VUE 3 ARCHITECTURE</div>
+<div style="text-align:center"><span class="box">Single File Components (.vue)</span></div>
+<div style="text-align:center;color:var(--text-muted)">↓ @vue/compiler-sfc transforms</div>
+<div style="text-align:center">
+  <span class="box">Template Compiler</span>&nbsp;
+  <span class="box-green">Script Setup</span>&nbsp;
+  <span class="box-orange">Style Scoping</span>
+</div>
+<div style="text-align:center;color:var(--text-muted)">↓</div>
+<div style="text-align:center"><span class="box">@vue/reactivity (Proxy-based)</span></div>
+<div style="text-align:center;color:var(--text-muted)">↓</div>
+<div style="text-align:center"><span class="box">@vue/runtime-core (VDOM + Scheduler)</span></div>
+<div style="text-align:center;color:var(--text-muted)">↓</div>
+<div style="text-align:center">
+  <span class="box-green">@vue/runtime-dom</span>&nbsp;&nbsp;
+  <span class="box-orange">Vue Native</span>
+</div>
+        </div>
+
+        <div class="code-block" style="margin-top:16px">
+<span class="comment">// Vue Composition API - component architecture</span>
+<span class="comment">// &lt;script setup&gt; is compiled to a setup() function</span>
+&lt;<span class="tag">script</span> <span class="attr">setup</span>&gt;
+<span class="keyword">import</span> { ref, computed, watch, onMounted, onUnmounted } 
+  <span class="keyword">from</span> <span class="string">'vue'</span>;
+
+<span class="comment">// ref() wraps primitives in reactive container</span>
+<span class="keyword">const</span> count = <span class="function">ref</span>(<span class="number">0</span>);  <span class="comment">// { value: 0 } (Proxy)</span>
+
+<span class="comment">// reactive() for objects - Proxy wraps the object</span>
+<span class="keyword">const</span> state = <span class="function">reactive</span>({ name: <span class="string">'Alice'</span>, age: <span class="number">30</span> });
+
+<span class="comment">// computed() - lazy, cached, tracks dependencies</span>
+<span class="keyword">const</span> doubled = <span class="function">computed</span>(() => count.value * <span class="number">2</span>);
+
+<span class="comment">// watch() - side effects on reactive data</span>
+<span class="function">watch</span>(count, (newVal, oldVal) => {
+  console.<span class="function">log</span>(<span class="string">`changed: ${oldVal} → ${newVal}`</span>);
+});
+
+<span class="comment">// Lifecycle hooks</span>
+<span class="function">onMounted</span>(() => console.<span class="function">log</span>(<span class="string">'mounted!'</span>));
+<span class="function">onUnmounted</span>(() => console.<span class="function">log</span>(<span class="string">'cleanup!'</span>));
+&lt;/<span class="tag">script</span>&gt;
+
+&lt;<span class="tag">template</span>&gt;
+  <span class="comment">&lt;!-- Template is compiled to optimized render function --&gt;</span>
+  &lt;<span class="tag">div</span>&gt;{{ count }}&lt;/<span class="tag">div</span>&gt;  <span class="comment">&lt;!-- auto-unwraps ref! --&gt;</span>
+  &lt;<span class="tag">div</span>&gt;{{ doubled }}&lt;/<span class="tag">div</span>&gt;
+&lt;/<span class="tag">template</span>&gt;
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-angular-arch">
+      <div class="card">
+        <div class="card-title">🔴 Angular Architecture</div>
+        <div class="code-block">
+<span class="comment">// Angular is a full MVC framework with Dependency Injection</span>
+
+<span class="comment">// 1. MODULE - groups related components/services</span>
+@NgModule({
+  declarations: [AppComponent, UserComponent],
+  imports: [BrowserModule, HttpClientModule],
+  providers: [UserService],
+  bootstrap: [AppComponent]
+})
+<span class="keyword">class</span> <span class="class-name">AppModule</span> {}
+
+<span class="comment">// 2. COMPONENT - UI unit</span>
+@Component({
+  selector: <span class="string">'app-user'</span>,
+  template: <span class="string">`
+    &lt;div *ngIf="user"&gt;{{user.name}}&lt;/div&gt;
+    &lt;ul&gt;
+      &lt;li *ngFor="let item of items; trackBy: trackById"&gt;
+        {{item.name}}
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  `</span>,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+<span class="keyword">class</span> <span class="class-name">UserComponent</span> {
+  <span class="comment">// 3. DEPENDENCY INJECTION - services injected automatically</span>
+  <span class="keyword">constructor</span>(<span class="keyword">private</span> userService: UserService) {}
+  
+  <span class="comment">// 4. LIFECYCLE HOOKS</span>
+  <span class="function">ngOnInit</span>() { this.userService.<span class="function">getUser</span>().<span class="function">subscribe</span>(...); }
+  <span class="function">ngOnDestroy</span>() { this.subscription.<span class="function">unsubscribe</span>(); }
+}
+
+<span class="comment">// 5. SERVICE - business logic, shared state</span>
+@Injectable({ providedIn: <span class="string">'root'</span> }) <span class="comment">// Singleton!</span>
+<span class="keyword">class</span> <span class="class-name">UserService</span> {
+  <span class="keyword">private</span> users$ = <span class="keyword">new</span> <span class="class-name">BehaviorSubject</span>([]);
+  
+  <span class="function">getUsers</span>() { <span class="keyword">return</span> this.http.<span class="function">get</span>(<span class="string">'/api/users'</span>); }
+}
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tab-patterns">
+      <div class="card">
+        <div class="card-title">🔧 Common Patterns Across Frameworks</div>
+        <div class="code-block">
+<span class="comment">// PATTERN 1: Render Props / Slots / Content Projection</span>
+
+<span class="comment">// React: Render Props</span>
+<span class="keyword">function</span> <span class="function">DataFetcher</span>({ url, render }) {
+  <span class="keyword">const</span> [data, setData] = <span class="function">useState</span>(<span class="keyword">null</span>);
+  <span class="comment">// ... fetch logic ...</span>
+  <span class="keyword">return</span> <span class="function">render</span>(data); <span class="comment">// Consumer controls UI</span>
+}
+<span class="comment">// Usage: &lt;DataFetcher url="/api" render={data =&gt; &lt;p&gt;{data}&lt;/p&gt;} /&gt;</span>
+
+<span class="comment">// Vue: Slots</span>
+<span class="comment">// &lt;DataFetcher&gt;&lt;template #default="{data}"&gt;{{data}}&lt;/template&gt;&lt;/DataFetcher&gt;</span>
+
+<span class="comment">// Angular: ng-content</span>
+<span class="comment">// &lt;data-fetcher&gt;&lt;ng-template let-data&gt;{{data}}&lt;/ng-template&gt;&lt;/data-fetcher&gt;</span>
+        </div>
+        <div class="code-block">
+<span class="comment">// PATTERN 2: Higher-Order Components (HOC) vs Custom Hooks vs Composables</span>
+
+<span class="comment">// React HOC (older pattern)</span>
+<span class="keyword">function</span> <span class="function">withAuth</span>(Component) {
+  <span class="keyword">return</span> <span class="keyword">function</span> <span class="function">AuthWrapper</span>(props) {
+    <span class="keyword">const</span> user = <span class="function">useAuth</span>();
+    <span class="keyword">return</span> user ? &lt;<span class="tag">Component</span> {...props} user={user} /&gt; : &lt;<span class="tag">Login</span> /&gt;;
+  };
+}
+
+<span class="comment">// React Custom Hook (modern pattern)</span>
+<span class="keyword">function</span> <span class="function">useAuth</span>() {
+  <span class="keyword">const</span> [user, setUser] = <span class="function">useState</span>(<span class="keyword">null</span>);
+  <span class="comment">// ... auth logic ...</span>
+  <span class="keyword">return</span> { user, login, logout };
+}
+
+<span class="comment">// Vue Composable</span>
+<span class="keyword">function</span> <span class="function">useAuth</span>() {
+  <span class="keyword">const</span> user = <span class="function">ref</span>(<span class="keyword">null</span>);
+  <span class="comment">// ... auth logic ...</span>
+  <span class="keyword">return</span> { user, login, logout };
+}
+
+<span class="comment">// Angular Service (via DI)</span>
+@Injectable() <span class="keyword">class</span> <span class="class-name">AuthService</span> { user$ = <span class="keyword">new</span> <span class="class-name">BehaviorSubject</span>(<span class="keyword">null</span>); }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== EXERCISES ==================== -->
+<section id="exercises" class="section fade-in">
+  <div class="section-header">💪 Hands-On Exercises</div>
+  <div class="section-sub">Build understanding by implementing concepts yourself</div>
+
+  <div class="exercise-box">
+    <div class="exercise-title">🌳 Exercise 1: Build a Mini Virtual DOM</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;line-height:1.6">Implement a <span class="inline-code">createElement</span> function that creates VDOM nodes and a <span class="inline-code">render</span> function that converts them to real DOM. Test it with a simple component tree.</p>
+    <div class="code-label">Your task: Fill in the missing logic</div>
+    <textarea id="ex1" spellcheck="false">// Exercise 1: Mini Virtual DOM
+// Complete the implementation
+
+function createElement(type, props, ...children) {
+  // TODO: Return a VDOM node object with:
+  // - type (string like 'div', 'p', etc)
+  // - props (object with className, onClick, etc)
+  // - children (array of child nodes or strings)
+  
+  return {
+    // your code here
+  };
+}
+
+function render(vnode, container) {
+  // TODO: Convert vnode to real DOM and append to container
+  // Handle: string text nodes, element nodes
+  // Set: attributes, event listeners (keys starting with 'on')
+  // Recursively render children
+  
+  // your code here
+}
+
+// Test it:
+const vdom = createElement('div', { className: 'app' },
+  createElement('h1', null, 'Hello World'),
+  createElement('p', null, 'Count: ', '0'),
+  createElement('button', { onClick: () => alert('clicked!') }, 'Click me')
+);
+
+const container = document.createElement('div');
+render(vdom, container);
+console.log(container.innerHTML);
+// Expected: <div class="app"><h1>Hello World</h1><p>Count: 0</p><button>Click me</button></div></textarea>
+    <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="runExercise('ex1','ex1-out')">▶ Run</button>
+      <button class="btn btn-outline" onclick="showSolution(1)">💡 Show Solution</button>
+    </div>
+    <div class="demo-output" id="ex1-out">Output will appear here...</div>
+    <div id="sol1" style="display:none">
+      <div class="code-label" style="margin-top:16px">✅ Solution</div>
+      <div class="code-block">
+<span class="keyword">function</span> <span class="function">createElement</span>(type, props, ...children) {
+  <span class="keyword">return</span> {
+    type,
+    props: props || {},
+    children: children.<span class="function">flat</span>().<span class="function">filter</span>(c => c !== <span class="keyword">null</span> && c !== <span class="keyword">undefined</span>)
+  };
+}
+
+<span class="keyword">function</span> <span class="function">render</span>(vnode, container) {
+  <span class="keyword">if</span> (<span class="keyword">typeof</span> vnode === <span class="string">'string'</span> || <span class="keyword">typeof</span> vnode === <span class="string">'number'</span>) {
+    container.<span class="function">appendChild</span>(document.<span class="function">createTextNode</span>(String(vnode)));
+    <span class="keyword">return</span>;
+  }
+  
+  <span class="keyword">const</span> el = document.<span class="function">createElement</span>(vnode.type);
+  
+  Object.<span class="function">entries</span>(vnode.props).<span class="function">forEach</span>(([key, value]) => {
+    <span class="keyword">if</span> (key === <span class="string">'className'</span>) el.className = value;
+    <span class="keyword">else</span> <span class="keyword">if</span> (key.<span class="function">startsWith</span>(<span class="string">'on'</span>)) {
+      el.<span class="function">addEventListener</span>(key.<span class="function">slice</span>(<span class="number">2</span>).<span class="function">toLowerCase</span>(), value);
+    } <span class="keyword">else</span> el.<span class="function">setAttribute</span>(key, value);
+  });
+  
+  vnode.children.<span class="function">forEach</span>(child => <span class="function">render</span>(child, el));
+  container.<span class="function">appendChild</span>(el);
+}
+      </div>
+    </div>
+  </div>
+
+  <div class="exercise-box">
+    <div class="exercise-title">⚡ Exercise 2: Build a Reactive System</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;line-height:1.6">Implement a basic Vue-like reactivity system using <span class="inline-code">Proxy</span>. When reactive data changes, registered watchers should automatically re-run.</p>
+    <textarea id="ex2" spellcheck="false">// Exercise 2: Proxy-based Reactivity
+// Make the watchers auto-run when state changes
+
+function reactive(obj) {
+  // TODO: Return a Proxy that:
+  // 1. On GET: track which effect is currently running (if any)
+  // 2. On SET: notify all effects that depend on this key
+  
+  const deps = new Map(); // key -> Set of effects
+  
+  return new Proxy(obj, {
+    get(target, key) {
+      // TODO: track dependency
+      return target[key];
+    },
+    set(target, key, value) {
+      // TODO: trigger effects
+      target[key] = value;
+      return true;
+    }
+  });
+}
+
+let activeEffect = null;
+
+function watchEffect(fn) {
+  // TODO: Set activeEffect, run fn (to collect deps), then clear
+}
+
+// Test:
+const state = reactive({ count: 0, name: 'Alice' });
+
+watchEffect(() => {
+  console.log('Count effect:', state.count); // Should run when count changes
+});
+
+watchEffect(() => {
+  console.log('Name effect:', state.name); // Should run when name changes
+});
+
+state.count = 1; // Should trigger first effect only
+state.name = 'Bob'; // Should trigger second effect only
+state.count = 2; // Should trigger first effect only</textarea>
+    <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="runExercise('ex2','ex2-out')">▶ Run</button>
+      <button class="btn btn-outline" onclick="showSolution(2)">💡 Show Solution</button>
+    </div>
+    <div class="demo-output" id="ex2-out">Output will appear here...</div>
+    <div id="sol2" style="display:none">
+      <div class="code-label" style="margin-top:16px">✅ Solution</div>
+      <div class="code-block">
+<span class="keyword">let</span> activeEffect = <span class="keyword">null</span>;
+
+<span class="keyword">function</span> <span class="function">reactive</span>(obj) {
+  <span class="keyword">const</span> deps = <span class="keyword">new</span> <span class="class-name">Map</span>();
+  
+  <span class="keyword">return</span> <span class="keyword">new</span> <span class="class-name">Proxy</span>(obj, {
+    <span class="function">get</span>(target, key) {
+      <span class="keyword">if</span> (activeEffect) {
+        <span class="keyword">if</span> (!deps.<span class="function">has</span>(key)) deps.<span class="function">set</span>(key, <span class="keyword">new</span> <span class="class-name">Set</span>());
+        deps.<span class="function">get</span>(key).<span class="function">add</span>(activeEffect);
+      }
+      <span class="keyword">return</span> target[key];
+    },
+    <span class="function">set</span>(target, key, value) {
+      target[key] = value;
+      deps.<span class="function">get</span>(key)?.<span class="function">forEach</span>(effect => <span class="function">effect</span>());
+      <span class="keyword">return</span> <span class="keyword">true</span>;
+    }
+  });
+}
+
+<span class="keyword">function</span> <span class="function">watchEffect</span>(fn) {
+  activeEffect = fn;
+  <span class="function">fn</span>(); <span class="comment">// Run once to collect deps</span>
+  activeEffect = <span class="keyword">null</span>;
+}
+      </div>
+    </div>
+  </div>
+
+  <div class="exercise-box">
+    <div class="exercise-title">🔄 Exercise 3: Simple Reconciler (Diff Algorithm)</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;line-height:1.6">Implement a basic diffing function that compares two VDOM trees and returns a list of patches (operations) needed to update the real DOM.</p>
+    <textarea id="ex3" spellcheck="false">// Exercise 3: VDOM Diffing
+// Return an array of patch operations
+
+function diff(oldVNode, newVNode) {
+  const patches = [];
+  
+  // TODO: Compare oldVNode and newVNode
+  // Return patches array with objects like:
+  // { type: 'REPLACE', node: newVNode }
+  // { type: 'UPDATE_PROPS', props: {changed props} }
+  // { type: 'UPDATE_TEXT', text: 'new text' }
+  // { type: 'REMOVE' }
+  // { type: 'ADD', node: newVNode }
+  
+  // Cases to handle:
+  // 1. Both are strings/numbers: check if text changed
+  // 2. Old exists, new doesn't: REMOVE
+  // 3. Old doesn't exist, new does: ADD
+  // 4. Different types: REPLACE
+  // 5. Same type: check props diff, then recurse on children
+  
+  return patches;
+}
+
+// Test:
+const oldTree = { type: 'div', props: { class: 'old' }, children: ['Hello'] };
+const newTree = { type: 'div', props: { class: 'new' }, children: ['World'] };
+console.log(diff(oldTree, newTree));
+// Expected: [{ type: 'UPDATE_PROPS', props: { class: 'new' } }, 
+//            child diffs...]</textarea>
+    <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="runExercise('ex3','ex3-out')">▶ Run</button>
+      <button class="btn btn-outline" onclick="showSolution(3)">💡 Show Solution</button>
+    </div>
+    <div class="demo-output" id="ex3-out">Output will appear here...</div>
+    <div id="sol3" style="display:none">
+      <div class="code-label" style="margin-top:16px">✅ Solution</div>
+      <div class="code-block">
+<span class="keyword">function</span> <span class="function">diff</span>(oldVNode, newVNode) {
+  <span class="keyword">const</span> patches = [];
+
+  <span class="keyword">if</span> (!newVNode) { patches.<span class="function">push</span>({ type: <span class="string">'REMOVE'</span> }); <span class="keyword">return</span> patches; }
+  <span class="keyword">if</span> (!oldVNode) { patches.<span class="function">push</span>({ type: <span class="string">'ADD'</span>, node: newVNode }); <span class="keyword">return</span> patches; }
+  
+  <span class="keyword">if</span> (<span class="keyword">typeof</span> oldVNode !== <span class="keyword">typeof</span> newVNode ||
+      (<span class="keyword">typeof</span> oldVNode === <span class="string">'string'</span> && oldVNode !== newVNode)) {
+    patches.<span class="function">push</span>({ type: <span class="string">'REPLACE'</span>, node: newVNode });
+    <span class="keyword">return</span> patches;
+  }
+  
+  <span class="keyword">if</span> (<span class="keyword">typeof</span> oldVNode === <span class="string">'string'</span>) <span class="keyword">return</span> patches;
+  
+  <span class="keyword">if</span> (oldVNode.type !== newVNode.type) {
+    patches.<span class="function">push</span>({ type: <span class="string">'REPLACE'</span>, node: newVNode });
+    <span class="keyword">return</span> patches;
+  }
+  
+  <span class="comment">// Same type: check props</span>
+  <span class="keyword">const</span> changedProps = {};
+  <span class="keyword">const</span> allKeys = <span class="keyword">new</span> <span class="class-name">Set</span>([...Object.<span class="function">keys</span>(oldVNode.props), ...Object.<span class="function">keys</span>(newVNode.props)]);
+  allKeys.<span class="function">forEach</span>(key => {
+    <span class="keyword">if</span> (oldVNode.props[key] !== newVNode.props[key]) changedProps[key] = newVNode.props[key];
+  });
+  <span class="keyword">if</span> (Object.<span class="function">keys</span>(changedProps).length) patches.<span class="function">push</span>({ type: <span class="string">'UPDATE_PROPS'</span>, props: changedProps });
+  
+  <span class="comment">// Recurse on children</span>
+  <span class="keyword">const</span> maxLen = Math.<span class="function">max</span>(oldVNode.children.length, newVNode.children.length);
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i < maxLen; i++) {
+    <span class="keyword">const</span> childPatches = <span class="function">diff</span>(oldVNode.children[i], newVNode.children[i]);
+    <span class="keyword">if</span> (childPatches.length) patches.<span class="function">push</span>({ type: <span class="string">'CHILD'</span>, index: i, patches: childPatches });
+  }
+  
+  <span class="keyword">return</span> patches;
+}
+      </div>
+    </div>
+  </div>
+
+  <div class="exercise-box">
+    <div class="exercise-title">🧠 Exercise 4: useState Implementation</div>
+    <p style="color:var(--text-secondary);margin-bottom:16px;line-height:1.6">Implement a simplified version of React's <span class="inline-code">useState</span> hook that stores state outside the component and triggers re-renders.</p>
+    <textarea id="ex4" spellcheck="false">// Exercise 4: Implement useState
+// State must persist between renders and trigger re-renders
+
+const stateStorage = [];
+let hookIndex = 0;
+let renderFn = null; // Set by the component runner
+
+function useState(initialValue) {
+  // TODO: 
+  // 1. Store state at current hookIndex in stateStorage
+  // 2. Initialize to initialValue if not yet set
+  // 3. Return [currentValue, setter function]
+  // 4. Setter should update stateStorage and trigger re-render
+  // IMPORTANT: hookIndex must be saved in closure!
+}
+
+function runComponent(component) {
+  hookIndex = 0; // Reset before each render!
+  renderFn = runComponent.bind(null, component);
+  console.log('--- RENDER ---');
+  component();
+}
+
+// Test component
+function Counter() {
+  const [count, setCount] = useState(0);
+  const [name, setName] = useState('World');
+  
+  console.log(`Count: ${count}, Name: ${name}`);
+  
+  // Simulate clicking after first render
+  if (count === 0) {
+    setTimeout(() => setCount(1), 100);
+    setTimeout(() => setCount(2), 200);
+  }
+}
+
+runComponent(Counter);
+// Should print:
+// --- RENDER ---
+// Count: 0, Name: World
+// --- RENDER ---
+// Count: 1, Name: World
+// --- RENDER ---
+// Count: 2, Name: World</textarea>
+    <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="runExercise('ex4','ex4-out')">▶ Run</button>
+      <button class="btn btn-outline" onclick="showSolution(4)">💡 Show Solution</button>
+    </div>
+    <div class="demo-output" id="ex4-out">Output will appear here...</div>
+    <div id="sol4" style="display:none">
+      <div class="code-label" style="margin-top:16px">✅ Solution</div>
+      <div class="code-block">
+<span class="keyword">function</span> <span class="function">useState</span>(initialValue) {
+  <span class="keyword">const</span> index = hookIndex; <span class="comment">// CAPTURE in closure!</span>
+  hookIndex++;
+  
+  <span class="keyword">if</span> (stateStorage[index] === undefined) {
+    stateStorage[index] = initialValue;
+  }
+  
+  <span class="keyword">const</span> setState = (newValue) => {
+    stateStorage[index] = newValue;
+    <span class="keyword">if</span> (renderFn) <span class="function">renderFn</span>(); <span class="comment">// Trigger re-render</span>
+  };
+  
+  <span class="keyword">return</span> [stateStorage[index], setState];
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== QUIZ ==================== -->
+<section id="quiz" class="section fade-in">
+  <div class="section-header">🧠 Knowledge Quiz</div>
+  <div class="section-sub">Test your understanding of framework internals</div>
+
+  <div class="score-bar">
+    <div class="score-info">Score: <span class="score-num" id="score-display">0</span> / <span id="total-display">0</span></div>
+    <div>
+      <span id="score-percent" style="color:var(--text-muted);font-size:0.9rem"></span>
+      <button class="btn btn-outline btn-sm" style="margin-left:16px" onclick="resetQuiz()">↺ Reset Quiz</button>
+    </div>
+  </div>
+
+  <div id="quiz-container"></div>
+</section>
+
+<!-- ==================== PITFALLS ==================== -->
+<section id="pitfalls" class="section fade-in">
+  <div class="section-header">⚠️ Common Mistakes & Pitfalls</div>
+  <div class="section-sub">What trips up developers in interviews and production</div>
+
+  <div class="card">
+    <div class="card-title">🔑 Pitfall 1: Keys — The #1 React Mistake</div>
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Using array index as key</div>
+      <div class="code-block">
+<span class="comment">// THIS IS WRONG when list can reorder/insert/delete</span>
+items.<span class="function">map</span>((item, index) => &lt;<span class="tag">TodoItem</span> <span class="attr">key</span>={index} item={item} /&gt;)
+
+<span class="comment">// What happens when you prepend an item?</span>
+<span class="comment">// Before: [{id:1,"A"}, {id:2,"B"}] indexes: [0, 1]</span>
+<span class="comment">// After:  [{id:3,"C"}, {id:1,"A"}, {id:2,"B"}] indexes: [0, 1, 2]</span>
+<span class="comment">// React sees: key=0 changed (A→C), key=1 changed (B→A), key=2 is new</span>
+<span class="comment">// BAD: Destroys component state for A and B!</span>
+      </div>
+    </div>
+    <div class="fix-card">
+      <div class="fix-title">✅ Use stable unique IDs</div>
+      <div class="code-block">
+items.<span class="function">map</span>(item => &lt;<span class="tag">TodoItem</span> <span class="attr">key</span>={item.id} item={item} /&gt;)
+
+<span class="comment">// Now React correctly identifies each item by ID</span>
+<span class="comment">// Before: [{id:1,"A"}, {id:2,"B"}]</span>
+<span class="comment">// After:  [{id:3,"C"}, {id:1,"A"}, {id:2,"B"}]</span>
+<span class="comment">// React sees: key=3 is NEW, key=1 moved, key=2 moved</span>
+<span class="comment">// GOOD: Component state preserved for A and B!</span>
+
+<span class="comment">// Exception: index IS ok if list is static and never reorders</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔀 Pitfall 2: Mutating State Directly</div>
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Mutating React state</div>
+      <div class="code-block">
+<span class="comment">// NEVER mutate state directly in React!</span>
+<span class="keyword">const</span> [items, setItems] = <span class="function">useState</span>([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]);
+
+<span class="comment">// ❌ All of these are WRONG</span>
+items.<span class="function">push</span>(<span class="number">4</span>);         <span class="comment">// mutates array - no re-render!</span>
+items[<span class="number">0</span>] = <span class="number">99</span>;        <span class="comment">// mutates - no re-render!</span>
+<span class="function">setItems</span>(items);      <span class="comment">// same reference! React bails out</span>
+
+<span class="keyword">const</span> [user, setUser] = <span class="function">useState</span>({ name: <span class="string">'Alice'</span> });
+user.name = <span class="string">'Bob'</span>;    <span class="comment">// ❌ mutates object - no re-render!</span>
+<span class="function">setUser</span>(user);        <span class="comment">// same reference! still won't re-render</span>
+
+<span class="comment">// WHY? React uses Object.is() (===) to compare old/new state</span>
+<span class="comment">// Same reference = no change detected = no re-render</span>
+      </div>
+    </div>
+    <div class="fix-card">
+      <div class="fix-title">✅ Always return new references</div>
+      <div class="code-block">
+<span class="comment">// ✅ Arrays: create new array</span>
+<span class="function">setItems</span>([...items, <span class="number">4</span>]);              <span class="comment">// spread + add</span>
+<span class="function">setItems</span>(items.<span class="function">filter</span>(x => x !== <span class="number">2</span>)); <span class="comment">// filter returns new array</span>
+<span class="function">setItems</span>(items.<span class="function">map</span>(x => x === <span class="number">1</span> ? <span class="number">99</span> : x)); <span class="comment">// map returns new array</span>
+
+<span class="comment">// ✅ Objects: spread to new object</span>
+<span class="function">setUser</span>({ ...user, name: <span class="string">'Bob'</span> }); <span class="comment">// new object reference</span>
+
+<span class="comment">// ✅ Nested objects (be careful!)</span>
+<span class="function">setUser</span>(prev => ({
+  ...prev,
+  address: { ...prev.address, city: <span class="string">'NYC'</span> } <span class="comment">// deep spread needed!</span>
+}));
+
+<span class="comment">// Or use immer for complex mutations</span>
+<span class="keyword">import</span> { produce } <span class="keyword">from</span> <span class="string">'immer'</span>;
+<span class="function">setUser</span>(<span class="function">produce</span>(draft => { draft.address.city = <span class="string">'NYC'</span>; }));
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏃 Pitfall 3: Stale Closures in useEffect</div>
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Stale closure captures old value</div>
+      <div class="code-block">
+<span class="keyword">function</span> <span class="function">Timer</span>() {
+  <span class="keyword">const</span> [count, setCount] = <span class="function">useState</span>(<span class="number">0</span>);
+  
+  <span class="function">useEffect</span>(() => {
+    <span class="comment">// ❌ This closure captures count = 0 forever!</span>
+    <span class="keyword">const</span> id = <span class="function">setInterval</span>(() => {
+      <span class="function">setCount</span>(count + <span class="number">1</span>); <span class="comment">// Always 0 + 1 = 1, never increases!</span>
+      console.<span class="function">log</span>(count); <span class="comment">// Always logs 0!</span>
+    }, <span class="number">1000</span>);
+    <span class="keyword">return</span> () => <span class="function">clearInterval</span>(id);
+  }, []); <span class="comment">// Empty deps: runs once, captures count=0</span>
+}
+      </div>
+    </div>
+    <div class="fix-card">
+      <div class="fix-title">✅ Use functional updater or add to deps</div>
+      <div class="code-block">
+<span class="comment">// ✅ Option 1: Functional updater (gets fresh state)</span>
+<span class="function">useEffect</span>(() => {
+  <span class="keyword">const</span> id = <span class="function">setInterval</span>(() => {
+    <span class="function">setCount</span>(prev => prev + <span class="number">1</span>); <span class="comment">// Always gets current value</span>
+  }, <span class="number">1000</span>);
+  <span class="keyword">return</span> () => <span class="function">clearInterval</span>(id);
+}, []); <span class="comment">// Safe! Doesn't need count in deps</span>
+
+<span class="comment">// ✅ Option 2: useRef to always get current value</span>
+<span class="keyword">const</span> countRef = <span class="function">useRef</span>(count);
+<span class="function">useEffect</span>(() => { countRef.current = count; });
+
+<span class="function">useEffect</span>(() => {
+  <span class="keyword">const</span> id = <span class="function">setInterval</span>(() => {
+    console.<span class="function">log</span>(countRef.current); <span class="comment">// Always fresh!</span>
+  }, <span class="number">1000</span>);
+  <span class="keyword">return</span> () => <span class="function">clearInterval</span>(id);
+}, []); <span class="comment">// Ref doesn't change</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">♾️ Pitfall 4: Infinite useEffect Loops</div>
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Object/Array in dependency array</div>
+      <div class="code-block">
+<span class="comment">// ❌ INFINITE LOOP! New object created every render</span>
+<span class="keyword">function</span> <span class="function">Component</span>() {
+  <span class="keyword">const</span> config = { threshold: <span class="number">0.5</span> }; <span class="comment">// New object every render!</span>
+  
+  <span class="function">useEffect</span>(() => {
+    <span class="function">doSomething</span>(config);
+    <span class="function">setSomeState</span>(result); <span class="comment">// Triggers re-render</span>
+  }, [config]); <span class="comment">// config !== config (different reference) → reruns</span>
+  <span class="comment">// Re-render → new config → effect runs → state updates → re-render → ...</span>
+}
+
+<span class="comment">// ❌ Also bad: function in deps (new function every render)</span>
+<span class="keyword">const</span> cb = () => doThing(); <span class="comment">// new function every render</span>
+<span class="function">useEffect</span>(() => { <span class="function">cb</span>(); }, [cb]); <span class="comment">// infinite!</span>
+      </div>
+    </div>
+    <div class="fix-card">
+      <div class="fix-title">✅ Use useMemo/useCallback or primitives</div>
+      <div class="code-block">
+<span class="comment">// ✅ Option 1: Move object outside component</span>
+<span class="keyword">const</span> CONFIG = { threshold: <span class="number">0.5</span> }; <span class="comment">// Created once, stable reference</span>
+
+<span class="comment">// ✅ Option 2: useMemo for expensive objects</span>
+<span class="keyword">const</span> config = <span class="function">useMemo</span>(() => ({ threshold }), [threshold]);
+<span class="function">useEffect</span>(() => { <span class="function">doSomething</span>(config); }, [config]); <span class="comment">// Only when threshold changes</span>
+
+<span class="comment">// ✅ Option 3: useCallback for functions</span>
+<span class="keyword">const</span> cb = <span class="function">useCallback</span>(() => <span class="function">doThing</span>(id), [id]);
+<span class="function">useEffect</span>(() => { <span class="function">cb</span>(); }, [cb]); <span class="comment">// Only when id changes</span>
+
+<span class="comment">// ✅ Option 4: Use primitive values as deps</span>
+<span class="function">useEffect</span>(() => { <span class="function">doSomething</span>({ threshold }); }, [threshold]); <span class="comment">// number, stable</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 Pitfall 5: Conditional Hook Calls</div>
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Hooks inside conditions or loops</div>
+      <div class="code-block">
+<span class="keyword">function</span> <span class="function">Component</span>({ isLoggedIn }) {
+  <span class="comment">// ❌ BREAKS THE RULES OF HOOKS!</span>
+  <span class="keyword">if</span> (isLoggedIn) {
+    <span class="keyword">const</span> [user, setUser] = <span class="function">useState</span>(<span class="keyword">null</span>); <span class="comment">// Conditional hook!</span>
+  }
+  
+  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i < <span class="number">3</span>; i++) {
+    <span class="function">useEffect</span>(() => {}); <span class="comment">// Hook in loop! Different count each render</span>
+  }
+  
+  <span class="keyword">return</span> <span class="function">earlyReturn</span>();
+  <span class="function">useEffect</span>(() => {}); <span class="comment">// After return! Never called!</span>
+}
+
+<span class="comment">// WHY? React tracks hooks by CALL ORDER</span>
+<span class="comment">// If order changes between renders, state gets mixed up</span>
+<span class="comment">// Hook 1 might get Hook 2's state!</span>
+      </div>
+    </div>
+    <div class="fix-card">
+      <div class="fix-title">✅ Always call hooks at top level</div>
+      <div class="code-block">
+<span class="keyword">function</span> <span class="function">Component</span>({ isLoggedIn }) {
+  <span class="comment">// ✅ Hook always called, condition is INSIDE</span>
+  <span class="keyword">const</span> [user, setUser] = <span class="function">useState</span>(<span class="keyword">null</span>);
+  
+  <span class="function">useEffect</span>(() => {
+    <span class="keyword">if</span> (isLoggedIn) { <span class="comment">// Condition inside effect ✅</span>
+      <span class="function">fetchUser</span>().<span class="function">then</span>(setUser);
+    }
+  }, [isLoggedIn]);
+  
+  <span class="comment">// ✅ Conditional RENDERING, not conditional hooks</span>
+  <span class="keyword">if</span> (!isLoggedIn) <span class="keyword">return</span> &lt;<span class="tag">Login</span> /&gt;;
+  
+  <span class="keyword">return</span> &lt;<span class="tag">Dashboard</span> user={user} /&gt;;
+}
+
+<span class="comment">// ESLint plugin: eslint-plugin-react-hooks enforces this!</span>
+<span class="comment">// Install: npm install eslint-plugin-react-hooks</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📉 Pitfall 6: Performance — Missing React.memo</div>
+    <div class="pitfall-card">
+      <div class="pitfall-title">❌ Re-rendering whole tree unnecessarily</div>
+      <div class="code-block">
+<span class="comment">// Parent re-renders every second</span>
+<span class="keyword">function</span> <span class="function">Parent</span>() {
+  <span class="keyword">const</span> [time, setTime] = <span class="function">useState</span>(Date.<span class="function">now</span>());
+  
+  <span class="comment">// ❌ Every 1s, EVERY child re-renders even if their props didn't change</span>
+  <span class="keyword">return</span> &lt;<span class="tag">div</span>&gt;
+    &lt;<span class="tag">ExpensiveChart</span> data={staticData} /&gt; <span class="comment">// Re-renders every second!</span>
+    &lt;<span class="tag">ExpensiveTable</span> rows={staticRows} /&gt; <span class="comment">// Re-renders every second!</span>
+    &lt;<span class="tag">Clock</span> time={time} /&gt;  {/* only this needs to re-render */}
+  &lt;/<span class="tag">div</span>&gt;;
+}
+      </div>
+    </div>
+    <div class="fix-card">
+      <div class="fix-title">✅ Memoize expensive pure components</div>
+      <div class="code-block">
+<span class="comment">// ✅ React.memo: skip re-render if props unchanged</span>
+<span class="keyword">const</span> ExpensiveChart = React.<span class="function">memo</span>(<span class="keyword">function</span> <span class="function">Chart</span>({ data }) {
+  <span class="comment">// Only re-renders when 'data' reference changes</span>
+  <span class="keyword">return</span> &lt;<span class="tag">canvas</span>&gt;...&lt;/<span class="tag">canvas</span>&gt;;
+});
+
+<span class="comment">// ✅ But don't overuse! memo has overhead too.</span>
+<span class="comment">// Profile first, then optimize.</span>
+<span class="comment">// memo is most useful when:</span>
+<span class="comment">// 1. Component renders often with same props</span>
+<span class="comment">// 2. Component is expensive to render</span>
+<span class="comment">// 3. Props are primitives or stable references</span>
+
+<span class="comment">// ✅ State colocation: move state DOWN</span>
+<span class="keyword">function</span> <span class="function">Parent</span>() {
+  <span class="keyword">return</span> &lt;<span class="tag">div</span>&gt;
+    &lt;<span class="tag">ExpensiveChart</span> data={staticData} /&gt;
+    &lt;<span class="tag">Clock</span> /&gt; {/* Clock manages its own time state! */}
+  &lt;/<span class="tag">div</span>&gt;;
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHEAT SHEET ==================== -->
+<section id="cheatsheet" class="section fade-in">
+  <div class="section-header">📋 Ultimate Cheat Sheet</div>
+  <div class="section-sub">Quick reference for interviews and daily development</div>
+
+  <div class="card">
+    <div class="card-title">🌳 Virtual DOM — Key Facts</div>
+    <div class="cheat-item">
+      <div class="cheat-concept">What is VDOM?</div>
+      <div class="cheat-desc">A plain JavaScript object tree that represents the real DOM. Cheap to create (just object allocation), expensive to update real DOM (browser reflow/repaint).</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">createElement</div>
+      <div class="cheat-desc">Returns <span class="inline-code">{ type, props, children }</span> — a VDOM node. JSX compiles to <span class="inline-code">React.createElement()</span> calls via Babel.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">VDOM Assumptions</div>
+      <div class="cheat-desc">1) Different types = full rebuild. 2) Stable keys = efficient list updates. 3) Updates are batched before DOM writes.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Does Svelte use VDOM?</div>
+      <div class="cheat-desc">No! Svelte compiles components to direct DOM manipulation at build time. No runtime VDOM overhead. Solid.js also skips VDOM using fine-grained reactivity.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 Reconciliation — Key Facts</div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Reconciliation</div>
+      <div class="cheat-desc">The process of comparing old VDOM vs new VDOM to compute minimal DOM changes. React's algorithm is O(n) with heuristic assumptions.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">React Fiber</div>
+      <div class="cheat-desc">Reimplemented reconciler (React 16+). Each VDOM node becomes a "fiber" object. Work is split into interruptible chunks. Enables Concurrent Mode, Suspense, useTransition.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Two Phases</div>
+      <div class="cheat-desc"><strong>Render phase</strong>: Interruptible, traverses fiber tree, builds effect list. <strong>Commit phase</strong>: Synchronous, applies effects to real DOM.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Key prop rule</div>
+      <div class="cheat-desc">Must be stable, unique among siblings. Never use array index when list can reorder/insert/delete. React uses keys to match old fibers to new ones in lists.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Bailout optimization</div>
+      <div class="cheat-desc">React skips re-rendering a subtree if props are the same AND component is wrapped in <span class="inline-code">React.memo()</span> or is a PureComponent.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Reactivity — Key Facts</div>
+    <div class="cheat-item">
+      <div class="cheat-concept">React Reactivity</div>
+      <div class="cheat-desc">Explicit. You call <span class="inline-code">setState()</span>. React re-runs the component function. Uses <span class="inline-code">Object.is()</span> to compare old/new state — same reference = no update.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Vue Reactivity</div>
+      <div class="cheat-desc">Implicit via ES6 Proxy. GET = track dependency. SET = notify dependents. Automatically tracks which reactive data a computed/watcher reads.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Angular Reactivity</div>
+      <div class="cheat-desc">Zone.js monkey-patches async APIs. After any async operation, Angular runs change detection on the component tree. OnPush strategy reduces checks.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Hooks Call Order</div>
+      <div class="cheat-desc">React tracks hooks by call order (not names). MUST be called unconditionally at top level. This is why they can't be in if/loops/after returns.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">Stale Closures</div>
+      <div class="cheat-desc">useEffect callbacks capture variables at the time they run. Use functional updater <span class="inline-code">setState(prev => ...)</span> or add to dependency array to get fresh values.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔧 API Quick Reference</div>
+    <div class="cheat-item">
+      <div class="cheat-concept">useState</div>
+      <div class="cheat-desc">Returns [value, setter]. State persists across renders (stored outside component in React's internal array). Never mutate directly.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">useEffect</div>
+      <div class="cheat-desc">Runs AFTER render. Return cleanup function. Deps array: [] = once, [x] = when x changes, omitted = every render. Never lie about deps.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">useLayoutEffect</div>
+      <div class="cheat-desc">Runs synchronously BEFORE browser paints. Use for DOM measurements. Blocks visual update until done. Prefer useEffect for most cases.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">useMemo</div>
+      <div class="cheat-desc">Caches computed value. Only recomputes when deps change. Use for expensive calculations or stable object references. Don't overuse.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">useCallback</div>
+      <div class="cheat-desc">Caches function reference. Only recreates when deps change. Useful when passing callbacks to memoized children or as effect dependencies.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">useRef</div>
+      <div class="cheat-desc">Mutable container, doesn't trigger re-render. Two uses: 1) DOM node refs, 2) Instance variables that persist across renders.</div>
+    </div>
+    <div class="cheat-item">
+      <div class="cheat-concept">React.memo()</div>
+      <div class="cheat-desc">HOC that memoizes component. Skips re-render if props are shallow-equal. Works with functional components. Like PureComponent for functions.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎯 Interview Answer Templates</div>
+    <div class="demo-box">
+      <strong style="color:var(--accent-orange)">Q: "How does React know when to re-render?"</strong>
+      <div class="demo-output" style="margin-top:8px">"React re-renders when state or props change. For state, it uses Object.is() comparison — if you call setState with the same reference, React bails out. For function components, any parent re-render also triggers child re-renders unless the child is wrapped in React.memo(). React doesn't watch your data — you must explicitly call setState to trigger the update cycle."</div>
+    </div>
+    <div class="demo-box">
+      <strong style="color:var(--accent-orange)">Q: "Explain the Virtual DOM"</strong>
+      <div class="demo-output" style="margin-top:8px">"The Virtual DOM is a lightweight JavaScript object tree that mirrors the real DOM. When state changes, React creates a new VDOM tree, diffs it against the old one (reconciliation), and computes the minimal set of real DOM operations needed. This batches DOM updates, reducing expensive reflows. The key benefit isn't raw speed — it's predictability and developer ergonomics with a declarative programming model."</div>
+    </div>
+    <div class="demo-box">
+      <strong style="color:var(--accent-orange)">Q: "Why can't you use array index as a key?"</strong>
+      <div class="demo-output" style="margin-top:8px">"When you insert, delete, or reorder list items, index-based keys cause React to match wrong old nodes to new nodes. For example, if you prepend an item, key=0 now refers to a different item. React 'updates' the existing node instead of creating a new one, corrupting component state like form inputs. Stable unique IDs let React correctly identify which items moved vs which are new."</div>
+    </div>
+    <div class="demo-box">
+      <strong style="color:var(--accent-orange)">Q: "React vs Vue vs Angular — reactivity differences?"</strong>
+      <div class="demo-output" style="margin-top:8px">"React uses explicit reactivity — you call setState(), React re-renders. Simple mental model but you must be explicit. Vue 3 uses ES6 Proxies for implicit reactivity — it intercepts property reads to track dependencies and property writes to trigger updates automatically. Angular uses Zone.js, which monkey-patches async APIs so Angular knows when something might have changed, then runs change detection. For performance, Angular's OnPush strategy and React's memo/useMemo serve similar purposes — reducing unnecessary checks."</div>
+    </div>
+  </div>
+</section>
+
+</div><!-- end main-container -->
+
+<script>
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  
+  const section = document.getElementById(id);
+  if (section) {
+    section.classList.add('active');
+    section.classList.remove('fade-in');
+    void section.offsetWidth;
+    section.classList.add('fade-in');
+  }
+  
+  const navBtns = document.querySelectorAll('.nav-btn');
+  navBtns.forEach(btn => {
+    if (btn.getAttribute('onclick')?.includes(id)) btn.classList.add('active');
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(btn, containerId, tabId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  const tabButtons = btn.closest('.tabs') ? btn.closest('.tabs').querySelectorAll('.tab') : [];
+  tabButtons.forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const target = document.getElementById('tab-' + tabId);
+  if (target) target.classList.add('active');
+}
+
+// ============================================================
+// VIRTUAL DOM INTERACTIVE DEMO
+// ============================================================
+let vdomCount = 0;
+
+function simulateVdomUpdate() {
+  vdomCount++;
+  const oldVdom = document.getElementById('old-vdom');
+  const newVdom = document.getElementById('new-vdom');
+  const explanation = document.getElementById('vdom-explanation');
+  
+  oldVdom.innerHTML = newVdom.innerHTML;
+  
+  const scenarios = [
+    {
+      nodes: [
+        { text: 'div.container', cls: 'unchanged' },
+        { text: 'h1 → "Hello"', cls: 'unchanged', indent: true },
+        { text: `p → "Count: ${vdomCount - 1}"`, cls: 'changed', indent: true },
+        { text: 'button → "Click me"', cls: 'unchanged', indent: true }
+      ],
+      newNodes: [
+        { text: 'div.container', cls: 'unchanged' },
+        { text: 'h1 → "Hello"', cls: 'unchanged', indent: true },
+        { text: `p → "Count: ${vdomCount}"`, cls: 'changed', indent: true },
+        { text: 'button → "Click me"', cls: 'unchanged', indent: true }
+      ],
+      explanation: `🔍 Diffing Result:\n✅ div.container — SAME (no DOM update)\n✅ h1 text — SAME (no DOM update)\n🟡 p text — CHANGED: "${vdomCount - 1}" → "${vdomCount}"\n   → React calls: domNode.textContent = "${vdomCount}"\n✅ button — SAME (no DOM update)\n\n⚡ Real DOM updates: 1 (just the text node!)`
+    },
+    {
+      nodes: [
+        { text: 'div.container', cls: 'unchanged' },
+        { text: 'h1 → "Hello"', cls: 'unchanged', indent: true },
+        { text: `p → "Count: ${vdomCount - 1}"`, cls: 'unchanged', indent: true },
+        { text: 'button → "Click me"', cls: 'unchanged', indent: true }
+      ],
+      newNodes: [
+        { text: 'div.container.active', cls: 'changed' },
+        { text: 'h1 → "Hello"', cls: 'unchanged', indent: true },
+        { text: `p → "Count: ${vdomCount}"`, cls: 'changed', indent: true },
+        { text: 'button → "Click me" [disabled]', cls: 'changed', indent: true }
+      ],
+      explanation: `🔍 Diffing Result:\n🟡 div.container — CHANGED: class added "active"\n   → domNode.classList.add("active")\n✅ h1 text — SAME (no DOM update)\n🟡 p text — CHANGED (counter updated)\n   → domNode.textContent updated\n🟡 button — CHANGED: disabled attr added\n   → domNode.disabled = true\n\n⚡ Real DOM updates: 3 targeted changes!`
+    }
+  ];
+  
+  const scenario = scenarios[vdomCount % 2];
+  
+  // Update old VDOM
+  oldVdom.innerHTML = scenario.nodes.map(n =>
+    `<div class="vdom-node ${n.cls}" style="${n.indent ? 'margin-left:20px' : ''}">${n.text}</div>`
+  ).join('');
+  
+  // Update new VDOM with animation
+  newVdom.innerHTML = scenario.newNodes.map(n =>
+    `<div class="vdom-node ${n.cls}" style="${n.indent ? 'margin-left:20px' : ''}">${n.text}</div>`
+  ).join('');
+  
+  explanation.textContent = scenario.explanation;
+}
+
+function resetVdom() {
+  vdomCount = 0;
+  document.getElementById('old-vdom').innerHTML = `
+    <div class="vdom-node unchanged">div.container</div>
+    <div class="vdom-node unchanged" style="margin-left:20px">h1 → "Hello"</div>
+    <div class="vdom-node unchanged" style="margin-left:20px">p → "Count: 0"</div>
+    <div class="vdom-node unchanged" style="margin-left:20px">button → "Click me"</div>`;
+  document.getElementById('new-vdom').innerHTML = document.getElementById('old-vdom').innerHTML;
+  document.getElementById('vdom-explanation').textContent = 'Click "Simulate State Change" to see the diff process...';
+}
+
+// ============================================================
+// EXERCISES
+// ============================================================
+function runExercise(inputId, outputId) {
+  const code = document.getElementById(inputId).value;
+  const output = document.getElementById(outputId);
+  const logs = [];
+  
+  const originalLog = console.log;
+  const originalError = console.error;
+  console.log = (...args) => logs.push(args.map(a => 
+    typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)
+  ).join(' '));
+  console.error = (...args) => logs.push('ERROR: ' + args.join(' '));
+  
+  try {
+    new Function(code)();
+    setTimeout(() => {
+      console.log = originalLog;
+      console.error = originalError;
+      output.textContent = logs.length ? logs.join('\n') : '(No console.log output)';
+      output.style.color = 'var(--accent-green)';
+    }, 350);
+  } catch(e) {
+    console.log = originalLog;
+    console.error = originalError;
+    output.textContent = '❌ Error: ' + e.message;
+    output.style.color = 'var(--accent-red)';
+  }
+}
+
+function showSolution(num) {
+  const sol = document.getElementById('sol' + num);
+  if (sol) {
+    sol.style.display = sol.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+// ============================================================
+// QUIZ DATA
+// ============================================================
+const quizData = [
+  {
+    q: "What does React's Virtual DOM primarily accomplish?",
+    opts: [
+      "Makes JavaScript execution 10x faster",
+      "Batches and minimizes real DOM operations by maintaining a JS object representation",
+      "Replaces the need for JavaScript entirely",
+      "Communicates directly with the GPU for rendering"
+    ],
+    correct: 1,
+    explanation: "The VDOM is a JavaScript object tree. React diffs old vs new VDOM, then makes only the necessary real DOM changes. Real DOM ops trigger reflow/repaint — minimizing them is the key benefit."
+  },
+  {
+    q: "When React compares: `<div className='a'>` vs `<span className='a'>` — what happens?",
+    opts: [
+      "React updates only the className attribute",
+      "React tears down the div subtree and builds a new span subtree from scratch",
+      "React keeps the same DOM node and changes the tag type",
+      "React skips the update since className is the same"
+    ],
+    correct: 1,
+    explanation: "Different element types → React destroys the old tree and creates a new one. This means component state in the old subtree is LOST. React assumes different types mean fundamentally different structure."
+  },
+  {
+    q: "Why is using array index as a `key` prop problematic?",
+    opts: [
+      "Index keys cause infinite loops",
+      "React doesn't support numeric keys",
+      "When list items reorder/insert/delete, React incorrectly matches old nodes to new positions, corrupting component state",
+      "Index keys are too slow to compute"
+    ],
+    correct: 2,
+    explanation: "Keys identify items by identity, not position. With index keys, prepending an item makes key=0 map to a DIFFERENT item. React updates instead of creating, mixing up state like form input values."
+  },
+  {
+    q: "What is React Fiber's main innovation over the original reconciler?",
+    opts: [
+      "It uses WebAssembly for faster diffing",
+      "It makes reconciliation work interruptible and priority-based, enabling Concurrent Mode",
+      "It removes the need for Virtual DOM entirely",
+      "It uses Web Workers to run reconciliation off the main thread"
+    ],
+    correct: 1,
+    explanation: "Fiber reimagined reconciliation as units of work that can be paused, resumed, and prioritized. This enables Concurrent Mode, Suspense, and useTransition — features impossible with synchronous blocking reconciliation."
+  },
+  {
+    q: "How does Vue 3's reactivity system track which data a computed property depends on?",
+    opts: [
+      "By scanning the source code at build time",
+      "By requiring developers to explicitly declare dependencies",
+      "Using ES6 Proxy GET traps — when a computed runs, all reactive data it reads are tracked automatically",
+      "By using Object.defineProperty setters"
+    ],
+    correct: 2,
+    explanation: "Vue 3 uses Proxy GET to intercept property reads. When an effect/computed runs, it sets activeEffect, reads from reactive objects (triggering GET traps), which record the dependency. This is fully automatic!"
+  },
+  {
+    q: "What is a 'stale closure' in React hooks?",
+    opts: [
+      "A closure that leaks memory by holding DOM references",
+      "When a useEffect callback captures an old value of a variable that has since changed",
+      "A component that hasn't been re-rendered in over 5 minutes",
+      "An effect that runs after the component unmounts"
+    ],
+    correct: 1,
+    explanation: "Closures capture variables at the time they're created. If useEffect runs once (empty deps []), its closure forever sees the initial value of state. The fix: use functional setState(prev => ...) or add the variable to deps."
+  },
+  {
+    q: "How does Angular's Zone.js enable change detection?",
+    opts: [
+      "It uses the same Proxy approach as Vue",
+      "It monkey-patches async APIs (setTimeout, fetch, events) so Angular knows when async work finishes and can check for changes",
+      "It uses a background WebWorker to watch for variable mutations",
+      "Developers manually call zone.detect() after each operation"
+    ],
+    correct: 1,
+    explanation: "Zone.js wraps async APIs at app startup. When patched functions complete, they trigger Angular's change detection cycle. This means ANY async operation (setTimeout, XHR, click events) automatically triggers a check — no explicit calls needed."
+  },
+  {
+    q: "Why must React hooks be called at the top level (not inside if/loops)?",
+    opts: [
+      "It's just a stylistic convention for readability",
+      "Hooks use global variables that conflict with conditionals",
+      "React tracks hooks by call ORDER — conditional calls change the order between renders, mixing up which state belongs to which hook",
+      "JavaScript doesn't support closures inside conditionals"
+    ],
+    correct: 2,
+    explanation: "React stores hook state in an array indexed by call order. Hook 1 is index 0, hook 2 is index 1, etc. If a conditional means hook 3 sometimes runs and sometimes doesn't, indices shift and React assigns wrong state to wrong hooks."
+  },
+  {
+    q: "What is the difference between `useEffect` and `useLayoutEffect`?",
+    opts: [
+      "useLayoutEffect runs in a Web Worker, useEffect on main thread",
+      "useLayoutEffect fires synchronously after DOM mutations but BEFORE the browser paints; useEffect fires asynchronously AFTER the paint",
+      "useLayoutEffect runs before the component renders, useEffect after",
+      "They are identical — useLayoutEffect is just deprecated syntax"
+    ],
+    correct: 1,
+    explanation: "useLayoutEffect is synchronous and blocks painting — use it for DOM measurements to avoid visual flicker. useEffect is async and runs after paint — use it for data fetching, subscriptions, etc. Prefer useEffect for most cases."
+  },
+  {
+    q: "What does `React.memo()` do?",
+    opts: [
+      "Saves component state to localStorage for persistence",
+      "Caches the JSX output and always returns the same HTML",
+      "Wraps a component to skip re-rendering if props haven't changed (shallow comparison)",
+      "Enables server-side rendering for the component"
+    ],
+    correct: 2,
+    explanation: "React.memo() is a HOC that wraps your component. Before re-rendering, React does a shallow prop comparison (Object.is for each prop). If all props are the same, React reuses the last render result without calling the function."
+  },
+  {
+    q: "In React's reconciliation, what does the 'commit phase' do?",
+    opts: [
+      "Computes the diff between old and new VDOM trees",
+      "Synchronously applies the computed DOM changes to the real DOM — this phase cannot be interrupted",
+      "Commits component state to a Redux store",
+      "Runs useEffect hooks before the render"
+    ],
+    correct: 1,
+    explanation: "React has two phases: RENDER (interruptible — traverses fiber tree, computes diffs) and COMMIT (synchronous — applies changes to real DOM, runs useLayoutEffect). Commit is synchronous to prevent partially-updated UIs."
+  },
+  {
+    q: "What is the correct way to update an object in React state?",
+    opts: [
+      "state.user.name = 'Bob'; setState(state);",
+      "setState(Object.assign(state, { name: 'Bob' }));",
+      "setState(prev => ({ ...prev, user: { ...prev.user, name: 'Bob' } }));",
+      "state = { ...state, user: { ...state.user, name: 'Bob' } };"
+    ],
+    correct: 2,
+    explanation: "React uses Object.is() (reference equality) to detect state changes. Mutating and passing the same object reference = no update. You MUST create new object references. Spread syntax creates new references at every level that changed."
+  },
+  {
+    q: "Which framework uses a Proxy-based reactivity system that automatically tracks dependencies?",
+    opts: [
+      "React 18",
+      "Angular 15+",
+      "Vue 3",
+      "React Native"
+    ],
+    correct: 2,
+    explanation: "Vue 3's @vue/reactivity package uses ES6 Proxy to intercept property reads (track dependencies) and writes (trigger updates). Angular uses Zone.js. React uses explicit setState(). Svelte has no runtime reactivity — it's compiled."
+  },
+  {
+    q: "What is 'reconciliation' in React?",
+    opts: [
+      "The process of syncing React state to a database",
+      "Merging multiple components into one",
+      "The algorithm that compares old and new Virtual DOM trees to compute minimal real DOM changes",
+      "Converting JSX to regular JavaScript"
+    ],
+    correct: 2,
+    explanation: "Reconciliation is React's diffing algorithm. It compares the previous VDOM tree to the new one, identifies what changed (insertions, updates, deletions), then applies only those changes to the real DOM. This is O(n) due to React's heuristics."
+  },
+  {
+    q: "Why might you want to use Angular's `ChangeDetectionStrategy.OnPush`?",
+    opts: [
+      "It disables change detection entirely for faster performance",
+      "It limits change detection to run only when @Input() references change or an Observable emits — reducing unnecessary checks",
+      "It pushes state changes to a remote server automatically",
+      "It makes the component re-render on EVERY change detection cycle"
+    ],
+    correct: 1,
+    explanation: "Default Angular runs change detection on EVERY component after ANY async event. OnPush is opt-in optimization: only check this component when its @Input() reference changes, when an async pipe Observable emits, or when manually triggered via markForCheck()."
+  },
+  {
+    q: "JSX is compiled by Babel to what kind of function calls?",
+    opts: [
+      "document.createElement() calls",
+      "React.createElement() calls that return plain JavaScript objects",
+      "innerHTML assignments",
+      "jQuery DOM manipulation calls"
+    ],
+    correct: 1,
+    explanation: "Babel transforms `<div className='x'>Hello</div>` into `React.createElement('div', {className: 'x'}, 'Hello')`. These calls return plain JS objects — the Virtual DOM nodes. They're NOT real DOM elements."
+  },
+  {
+    q: "What is a React 'fiber'?",
+    opts: [
+      "A CSS animation library built into React",
+      "A unit of work representing a VDOM node, containing type, props, state, and links to parent/child/sibling fibers — enabling interruptible rendering",
+      "A networking layer for real-time data",
+      "A type of React component that extends Web Components"
+    ],
+    correct: 1,
+    explanation: "Each VDOM node maps to a Fiber object with: type, key, props, state, effectTag (what needs doing), stateNode (real DOM node), and pointers to child/sibling/parent fibers. This linked list structure allows React to pause and resume work."
+  },
+  {
+    q: "What problem does `useCallback` solve?",
+    opts: [
+      "It makes async callbacks synchronous",
+      "It prevents function callbacks from being garbage collected",
+      "It returns a memoized function reference so callbacks don't change on every render, preventing unnecessary child re-renders or effect re-runs",
+      "It converts callback-style APIs to Promises"
+    ],
+    correct: 2,
+    explanation: "Every render creates new function instances. If you pass a function as a prop to a memoized child, or as a dependency to useEffect, a new function = reference change = child re-renders or effect re-runs. useCallback caches the function, only recreating when deps change."
+  },
+  {
+    q: "Svelte's approach to updating the DOM differs from React/Vue because:",
+    opts: [
+      "Svelte uses a more advanced Virtual DOM algorithm",
+      "Svelte compiles components to direct, targeted DOM operations at build time — no runtime VDOM or reactivity system needed",
+      "Svelte uses WebAssembly for DOM manipulation",
+      "Svelte only works with server-side rendering"
+    ],
+    correct: 1,
+    explanation: "Svelte is a compiler. At build time, it analyzes your component and generates JavaScript that directly updates the specific DOM nodes that can change. Zero runtime framework overhead — making Svelte bundles tiny and updates very fast."
+  },
+  {
+    q: "In Vue 3, what is the difference between `ref()` and `reactive()`?",
+    opts: [
+      "ref() is for template refs (DOM nodes), reactive() is for state",
+      "ref() wraps any value (including primitives) in a reactive container accessed via .value; reactive() creates a reactive Proxy of an object — not suitable for primitives",
+      "They are identical, ref() is just shorthand for reactive()",
+      "reactive() is deprecated in Vue 3, use ref() for everything"
+    ],
+    correct: 1,
+    explanation: "Proxies can't wrap primitives (numbers, strings). ref() solves this by wrapping the value in { value: yourValue } — a Proxy-able object. reactive() directly proxies objects/arrays. In templates, ref() auto-unwraps .value. Use ref() for primitives, reactive() for objects."
+  }
+];
+
+// ============================================================
+// QUIZ SYSTEM
+// ============================================================
+let quizScore = 0;
+let quizAnswered = 0;
+
+function initQuiz() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  quizScore = 0;
+  quizAnswered = 0;
+  updateScore();
+  
+  quizData.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.id = 'q' + qi;
+    
+    const labels = ['A', 'B', 'C', 'D'];
+    div.innerHTML = `
+      <div class="quiz-q">
+        <span class="badge badge-blue" style="margin-right:10px">Q${qi + 1}</span>
+        ${q.q}
+      </div>
+      <div class="quiz-options">
+        ${q.opts.map((opt, oi) => `
+          <button class="quiz-option" onclick="answerQuiz(${qi}, ${oi})">
+            <span class="option-label">${labels[oi]}</span>
+            ${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="feedback-${qi}"></div>
+    `;
+    container.appendChild(div);
+  });
+  
+  document.getElementById('total-display').textContent = quizData.length;
+}
+
+function answerQuiz(qi, chosen) {
+  const q = quizData[qi];
+  const qEl = document.getElementById('q' + qi);
+  const feedback = document.getElementById('feedback-' + qi);
+  const options = qEl.querySelectorAll('.quiz-option');
+  
+  if (qEl.dataset.answered) return;
+  qEl.dataset.answered = '1';
+  quizAnswered++;
+  
+  options.forEach((opt, oi) => {
+    opt.classList.add('disabled');
+    if (oi === q.correct) opt.classList.add('correct');
+    else if (oi === chosen && chosen !== q.correct) opt.classList.add('wrong');
+  });
+  
+  const isCorrect = chosen === q.correct;
+  if (isCorrect) quizScore++;
+  
+  feedback.className = `quiz-feedback show ${isCorrect ? 'correct' : 'wrong'}`;
+  feedback.innerHTML = `
+    <strong>${isCorrect ? '✅ Correct!' : '❌ Not quite.'}</strong><br>
+    ${q.explanation}
+  `;
+  
+  updateScore();
+}
+
+function updateScore() {
+  document.getElementById('score-display').textContent = quizScore;
+  const pct = quizAnswered > 0 ? Math.round((quizScore / quizAnswered) * 100) : 0;
+  const el = document.getElementById('score-percent');
+  el.textContent = quizAnswered > 0 ? `${quizAnswered} answered • ${pct}% correct` : '';
+  el.style.color = pct >= 80 ? 'var(--accent-green)' : pct >= 60 ? 'var(--accent-orange)' : 'var(--accent-red)';
+}
+
+function resetQuiz() {
+  initQuiz();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  initQuiz();
+});
+</script>
+</body>
+</html>

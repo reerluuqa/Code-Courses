@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Mastery Bootcamp - JavaScript Edition</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #e2e8f0;
+            --code-bg: #1e293b;
+            --card-bg: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--darker);
+            color: var(--light);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--dark);
+            border-right: 1px solid #334155;
+            padding: 1.5rem;
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .progress-container {
+            background: #334155;
+            border-radius: 999px;
+            height: 8px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .module-list {
+            list-style: none;
+        }
+
+        .module-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .module-item:hover {
+            background: #334155;
+            border-color: var(--primary);
+        }
+
+        .module-item.active {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .module-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .module-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .xp-badge {
+            background: linear-gradient(135deg, var(--warning), #f97316);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Code Editor */
+        .code-editor {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            margin: 1rem 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .code-header {
+            background: #161b22;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .code-lang {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #8b949e;
+            font-weight: bold;
+        }
+
+        .code-content {
+            padding: 1.5rem;
+            overflow-x: auto;
+            line-height: 1.6;
+        }
+
+        .code-line {
+            counter-increment: line;
+            padding-left: 3rem;
+            position: relative;
+            min-height: 1.6rem;
+        }
+
+        .code-line::before {
+            content: counter(line);
+            position: absolute;
+            left: 0;
+            width: 2rem;
+            text-align: right;
+            color: #484f58;
+            user-select: none;
+        }
+
+        .comment { color: #8b949e; font-style: italic; }
+        .keyword { color: #ff7b72; }
+        .string { color: #a5d6ff; }
+        .function { color: #d2a8ff; }
+        .number { color: #79c0ff; }
+        .danger-line { background: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--danger); }
+
+        /* Interactive Elements */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5558e0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Quiz */
+        .quiz-option {
+            background: #334155;
+            border: 2px solid transparent;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--danger);
+        }
+
+        /* Pipeline Visualizer */
+        .pipeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 1rem;
+            border: 2px dashed #334155;
+            position: relative;
+        }
+
+        .pipeline-stage {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: var(--dark);
+            border: 2px solid #334155;
+            border-radius: 0.5rem;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pipeline-stage.active {
+            border-color: var(--success);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .pipeline-stage.failed {
+            border-color: var(--danger);
+            animation: shake 0.5s;
+        }
+
+        .pipeline-arrow {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin: 0 1rem;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #000;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            font-family: 'Consolas', monospace;
+            color: #00ff00;
+            margin: 1rem 0;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .terminal-error { color: #ff6b6b; }
+        .terminal-warn { color: #ffd93d; }
+        .terminal-info { color: #74b9ff; }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Exercise Area */
+        .exercise-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                height: auto;
+                position: relative;
+            }
+            .exercise-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 2px dotted var(--primary);
+            cursor: help;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            white-space: nowrap;
+            border: 1px solid var(--primary);
+            z-index: 1000;
+            font-size: 0.875rem;
+        }
+
+        /* Success Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 1rem;
+            text-align: center;
+            max-width: 500px;
+            border: 2px solid var(--success);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <span>🚀</span>
+                <span>CI/CD Mastery</span>
+            </div>
+
+            <div style="margin-bottom: 0.5rem; font-size: 0.875rem; color: #64748b;">
+                Progress: <span id="progress-text">0%</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="main-progress"></div>
+            </div>
+
+            <ul class="module-list" id="module-list">
+                <!-- Generated by JS -->
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1 id="page-title">Welcome to CI/CD Mastery</h1>
+                    <p style="color: #64748b; margin-top: 0.5rem;" id="page-subtitle">Master deployment workflows for competitive engineering roles</p>
+                </div>
+                <div class="xp-badge">
+                    <span>⚡</span>
+                    <span id="xp-display">0 XP</span>
+                </div>
+            </header>
+
+            <div id="content-area">
+                <!-- Dynamic content -->
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="success-modal">
+        <div class="modal">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+            <h2 style="margin-bottom: 1rem; color: var(--success);">Module Complete!</h2>
+            <p style="margin-bottom: 2rem; color: #94a3b8;">You've mastered this section. Ready for the next challenge?</p>
+            <button class="btn btn-primary" onclick="app.nextModule()">Continue Learning</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * CI/CD Mastery Bootcamp
+         * A comprehensive vanilla JS learning application
+         */
+        const State = {
+            currentModule: 0,
+            xp: 0,
+            completedModules: [],
+            answers: {}
+        };
+
+        const Modules = [
+            {
+                id: 'intro',
+                title: 'CI/CD Foundations',
+                icon: '🏗️',
+                description: 'Understand the pipeline lifecycle',
+                content: `
+                    <div class="card">
+                        <div class="card-title">What is CI/CD?</div>
+                        <p style="margin-bottom: 1rem;">
+                            <strong>Continuous Integration (CI)</strong> is the practice of merging all developers' working copies to a shared mainline several times a day.
+                            <strong>Continuous Deployment (CD)</strong> automatically deploys validated code to production.
+                        </p>
+                        <div class="pipeline" id="intro-pipeline">
+                            <div class="pipeline-stage" data-stage="code">
+                                <div style="font-size: 2rem;">💻</div>
+                                <div>Code</div>
+                                <small style="color: #64748b;">git push</small>
+                            </div>
+                            <div class="pipeline-arrow">→</div>
+                            <div class="pipeline-stage" data-stage="build">
+                                <div style="font-size: 2rem;">🔨</div>
+                                <div>Build</div>
+                                <small style="color: #64748b;">npm run build</small>
+                            </div>
+                            <div class="pipeline-arrow">→</div>
+                            <div class="pipeline-stage" data-stage="test">
+                                <div style="font-size: 2rem;">🧪</div>
+                                <div>Test</div>
+                                <small style="color: #64748b;">npm test</small>
+                            </div>
+                            <div class="pipeline-arrow">→</div>
+                            <div class="pipeline-stage" data-stage="deploy">
+                                <div style="font-size: 2rem;">🚀</div>
+                                <div>Deploy</div>
+                                <small style="color: #64748b;">Production</small>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.simulatePipeline()">Run Pipeline Simulation</button>
+                        <div class="terminal hidden" id="pipeline-terminal"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">⚠️ Common Pitfall: The "Works on My Machine" Syndrome</div>
+                        <p style="margin-bottom: 1rem;">
+                            This is the #1 killer of CI/CD pipelines. If your app works locally but fails in CI, you likely have:
+                        </p>
+                        <ul style="margin-left: 1.5rem; margin-bottom: 1rem; color: #94a3b8;">
+                            <li>Environment-specific dependencies</li>
+                            <li>Hardcoded local paths</li>
+                            <li>Missing environment variables</li>
+                            <li>Case sensitivity issues (Linux CI vs Windows/Mac local)</li>
+                        </ul>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">javascript</span>
+                                <span class="badge badge-danger">ANTI-PATTERN</span>
+                            </div>
+                            <div class="code-content">
+                                <div class="code-line"><span class="comment">// ❌ BAD: Hardcoded local path</span></div>
+                                <div class="code-line danger-line">const dbPath = <span class="string">'C:\\Users\\John\\Documents\\app.db'</span>;</div>
+                                <div class="code-line"></div>
+                                <div class="code-line"><span class="comment">// ✅ GOOD: Environment variable</span></div>
+                                <div class="code-line">const dbPath = process.env.DATABASE_PATH || <span class="string">'./default.db'</span>;</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Quick Quiz</div>
+                        <div id="quiz-1">
+                            <p style="margin-bottom: 1rem;">1. What is the primary goal of Continuous Integration?</p>
+                            <div class="quiz-option" onclick="app.checkAnswer(this, false)"> A. Deploy code to production automatically </div>
+                            <div class="quiz-option" onclick="app.checkAnswer(this, true)"> B. Detect integration errors as quickly as possible </div>
+                            <div class="quiz-option" onclick="app.checkAnswer(this, false)"> C. Replace manual testing completely </div>
+                        </div>
+                    </div>
+                `,
+                onMount: () => {
+                    // Any specific initialization
+                }
+            },
+            {
+                id: 'github-actions',
+                title: 'GitHub Actions Deep Dive',
+                icon: '⚙️',
+                description: 'Workflow syntax, triggers, and best practices',
+                content: `
+                    <div class="card">
+                        <div class="card-title">GitHub Actions Workflow Structure</div>
+                        <p style="margin-bottom: 1rem;">
+                            GitHub Actions uses YAML files stored in <code>.github/workflows/</code>. Understanding the hierarchy is crucial:
+                        </p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">yaml</span>
+                            </div>
+                            <div class="code-content">
+                                <div class="code-line"><span class="comment"># .github/workflows/main.yml</span></div>
+                                <div class="code-line"><span class="function">name</span>: <span class="string">CI Pipeline</span></div>
+                                <div class="code-line"></div>
+                                <div class="code-line"><span class="function">on</span>: <span class="comment"># Triggers</span></div>
+                                <div class="code-line">    <span class="function">push</span>:</div>
+                                <div class="code-line">        <span class="function">branches</span>: [ main, develop ]</div>
+                                <div class="code-line">    <span class="function">pull_request</span>:</div>
+                                <div class="code-line">        <span class="function">branches</span>: [ main ]</div>
+                                <div class="code-line"></div>
+                                <div class="code-line"><span class="function">jobs</span>: <span class="comment"># Parallelizable units</span></div>
+                                <div class="code-line">    <span class="function">build</span>:</div>
+                                <div class="code-line">        <span class="function">runs-on</span>: <span class="string">ubuntu-latest</span></div>
+                                <div class="code-line">        <span class="function">steps</span>: <span class="comment"># Sequential commands</span></div>
+                                <div class="code-line">            - <span class="function">uses</span>: <span class="string">actions/checkout@v3</span></div>
+                                <div class="code-line">            - <span class="function">name</span>: <span class="string">Setup Node</span></div>
+                                <div class="code-line">              <span class="function">uses</span>: <span class="string">actions/setup-node@v3</span></div>
+                                <div class="code-line">              <span class="function">with</span>:</div>
+                                <div class="code-line">                  <span class="function">node-version</span>: <span class="string">'18'</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🛡️ Security Exercise: Find the Vulnerability</div>
+                        <p style="margin-bottom: 1rem;">
+                            This workflow has a critical security flaw. Can you spot it?
+                            <span class="tooltip" data-tip="Think about untrusted input">💡 Hint</span>
+                        </p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">yaml</span>
+                                <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;" onclick="app.revealVulnerability()">Reveal Issue</button>
+                            </div>
+                            <div class="code-content" id="vuln-code">
+                                <div class="code-line"><span class="function">name</span>: <span class="string">PR Checker</span></div>
+                                <div class="code-line"><span class="function">on</span>:</div>
+                                <div class="code-line">    <span class="function">pull_request_target</span>: <span class="comment"># ⚠️ Dangerous trigger</span></div>
+                                <div class="code-line">        <span class="function">types</span>: [opened, synchronize]</div>
+                                <div class="code-line"></div>
+                                <div class="code-line"><span class="function">jobs</span>:</div>
+                                <div class="code-line">    <span class="function">build</span>:</div>
+                                <div class="code-line">        <span class="function">runs-on</span>: <span class="string">ubuntu-latest</span></div>
+                                <div class="code-line">        <span class="function">steps</span>:</div>
+                                <div class="code-line">            - <span class="function">uses</span>: <span class="string">actions/checkout@v3</span></div>
+                                <div class="code-line danger-line" id="vuln-line">            - <span class="function">run</span>: <span class="string">npm install</span></div>
+                                <div class="code-line danger-line" id="vuln-line2">            - <span class="function">run</span>: <span class="string">npm test</span></div>
+                            </div>
+                        </div>
+                        <div id="vuln-explanation" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--danger); border-radius: 0.25rem;">
+                            <strong>🚨 Critical Issue:</strong> Using <code>pull_request_target</code> with automatic checkout and script execution allows attackers to exfiltrate secrets (like <code>GITHUB_TOKEN</code>) by modifying workflow files in a PR. Always use <code>pull_request</code> for untrusted code, or explicitly checkout the base repo, not the PR ref.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Matrix Builds Exercise</div>
+                        <p style="margin-bottom: 1rem;">
+                            Configure a matrix strategy to test across multiple Node.js versions and OS combinations. This ensures your JavaScript works everywhere.
+                        </p>
+                        <div class="exercise-area">
+                            <div>
+                                <h4 style="margin-bottom: 1rem;">Complete the workflow:</h4>
+                                <div class="code-editor">
+                                    <div class="code-content" style="padding: 1rem;">
+                                        <div class="code-line">strategy:</div>
+                                        <div class="code-line">  matrix:</div>
+                                        <div class="code-line">    node: [14, 16, 18]</div>
+                                        <div class="code-line">    os: [ubuntu, windows]</div>
+                                        <div class="code-line">runs-on: \${{ matrix.??? }}-latest</div>
+                                    </div>
+                                </div>
+                                <div style="margin-top: 1rem;">
+                                    <input type="text" id="matrix-answer" placeholder="Enter property name..." style="padding: 0.5rem; border-radius: 0.25rem; border: 1px solid #334155; background: #0f172a; color: white; width: 200px;">
+                                    <button class="btn btn-primary" onclick="app.checkMatrix()" style="margin-left: 0.5rem;">Check</button>
+                                </div>
+                                <div id="matrix-feedback" style="margin-top: 0.5rem;"></div>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: 1rem;">Why this matters:</h4>
+                                <ul style="color: #94a3b8; line-height: 2;">
+                                    <li>Node 14 vs 18 have different features</li>
+                                    <li>Path handling differs on Windows vs Linux</li>
+                                    <li>Case sensitivity issues (file names)</li>
+                                    <li>Environment variable syntax</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Caching Strategy Quiz</div>
+                        <p>What's wrong with this caching configuration?</p>
+                        <div class="code-editor" style="margin: 1rem 0;">
+                            <div class="code-content">
+                                <div class="code-line">- uses: actions/cache@v3</div>
+                                <div class="code-line">  with:</div>
+                                <div class="code-line">    path: node_modules</div>
+                                <div class="code-line">    key: \${{ runner.os }}-node</div>
+                            </div>
+                        </div>
+                        <div id="cache-quiz">
+                            <div class="quiz-option" onclick="app.checkAnswer(this, false)"> A. It caches too much data </div>
+                            <div class="quiz-option" onclick="app.checkAnswer(this, true)"> B. The cache key is not unique enough (no hash of lock file) </div>
+                            <div class="quiz-option" onclick="app.checkAnswer(this, false)"> C. It should cache the entire repository </div>
+                        </div>
+                        <div id="cache-explanation" style="display: none; margin-top: 1rem; font-size: 0.9rem; color: #94a3b8;">
+                            Without hashing package-lock.json (or yarn.lock), the cache never invalidates when dependencies change. Use: <code>key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}</code>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'testing',
+                title: 'Automated Testing',
+                icon: '🧪',
+                description: 'Unit, integration, and E2E testing in pipelines',
+                content: `
+                    <div class="card">
+                        <div class="card-title">The Testing Pyramid in CI</div>
+                        <div style="display: flex; align-items: flex-end; justify-content: center; gap: 2rem; margin: 2rem 0; height: 300px;">
+                            <div style="flex: 1; background: linear-gradient(to top, var(--primary), transparent); height: 20%; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem 0.5rem 0 0; position: relative;">
+                                <span style="position: absolute; bottom: -30px; font-weight: bold;">E2E</span>
+                                <span style="position: absolute; top: -30px; font-size: 0.875rem; color: #64748b;">Slow, Expensive</span>
+                            </div>
+                            <div style="flex: 1; background: linear-gradient(to top, var(--secondary), transparent); height: 50%; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem 0.5rem 0 0; position: relative;">
+                                <span style="position: absolute; bottom: -30px; font-weight: bold;">Integration</span>
+                            </div>
+                            <div style="flex: 1; background: linear-gradient(to top, var(--success), transparent); height: 90%; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem 0.5rem 0 0; position: relative;">
+                                <span style="position: absolute; bottom: -30px; font-weight: bold;">Unit</span>
+                                <span style="position: absolute; top: -30px; font-size: 0.875rem; color: #64748b;">Fast, Cheap</span>
+                            </div>
+                        </div>
+                        <p style="text-align: center; color: #94a3b8; margin-top: 2rem;">
+                            Run unit tests first in CI. If they fail, fail fast before running expensive E2E tests.
+                        </p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">⚠️ Pitfall: Flaky Tests</div>
+                        <p style="margin-bottom: 1rem;">
+                            Flaky tests (tests that pass/fail randomly) destroy trust in CI. Common causes in JS:
+                        </p>
+                        <div class="exercise-area">
+                            <div class="code-editor">
+                                <div class="code-header">
+                                    <span class="code-lang">javascript</span>
+                                    <span class="badge badge-warning">FLAKY</span>
+                                </div>
+                                <div class="code-content">
+                                    <div class="code-line"><span class="comment">// ❌ Race condition</span></div>
+                                    <div class="code-line">test(<span class="string">'loads data'</span>, async () => {</div>
+                                    <div class="code-line">  render(<span class="string">"&lt;App /&gt;"</span>);</div>
+                                    <div class="code-line danger-line">  await wait(1000); <span class="comment">// Arbitrary wait</span></div>
+                                    <div class="code-line">  expect(screen.getByText(<span class="string">'Loaded'</span>)).toBeTruthy();</div>
+                                    <div class="code-line">});</div>
+                                </div>
+                            </div>
+                            <div class="code-editor">
+                                <div class="code-header">
+                                    <span class="code-lang">javascript</span>
+                                    <span class="badge badge-success">STABLE</span>
+                                </div>
+                                <div class="code-content">
+                                    <div class="code-line"><span class="comment">// ✅ Proper waiting</span></div>
+                                    <div class="code-line">test(<span class="string">'loads data'</span>, async () => {</div>
+                                    <div class="code-line">  render(<span class="string">"&lt;App /&gt;"</span>);</div>
+                                    <div class="code-line">  await waitFor(() =></div>
+                                    <div class="code-line">    expect(screen.getByText(<span class="string">'Loaded'</span>)).toBeTruthy()</div>
+                                    <div class="code-line">  );</div>
+                                    <div class="code-line">});</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(245, 158, 11, 0.1); border-radius: 0.5rem; border-left: 4px solid var(--warning);">
+                            <strong>💡 Pro Tip:</strong> In CI, always use <code>--runInBand</code> (Jest) to run tests serially. Parallel tests in resource-constrained CI environments cause timeouts and flakes.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Coverage Gates</div>
+                        <p>Implement a coverage threshold that fails the build if code coverage drops below 80%.</p>
+                        <div class="code-editor" style="margin: 1rem 0;">
+                            <div class="code-content">
+                                <div class="code-line"><span class="comment">// jest.config.js</span></div>
+                                <div class="code-line"><span class="function">module.exports</span> = {</div>
+                                <div class="code-line">  <span class="function">coverageThreshold</span>: {</div>
+                                <div class="code-line">    <span class="function">global</span>: {</div>
+                                <div class="code-line">      <span class="function">branches</span>: <span class="number">80</span>,</div>
+                                <div class="code-line">      <span class="function">functions</span>: <span class="number">80</span>,</div>
+                                <div class="code-line">      <span class="function">lines</span>: <span class="number">80</span>,</div>
+                                <div class="code-line">      <span class="function">statements</span>: <span class="number">80</span></div>
+                                <div class="code-line">    }</div>
+                                <div class="code-line">  }</div>
+                                <div class="code-line">};</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="app.simulateCoverage()">Simulate Coverage Report</button>
+                        <div class="terminal hidden" id="coverage-terminal"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Test Strategy Decision Tree</div>
+                        <p>Select the appropriate test type for each scenario:</p>
+                        <div id="test-scenarios" style="margin-top: 1rem;">
+                            <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem;">
+                                <p style="margin-bottom: 0.5rem;"><strong>Scenario 1:</strong> Testing that a utility function formats dates correctly</p>
+                                <select onchange="app.checkTestType(this, 'unit')" style="padding: 0.5rem; border-radius: 0.25rem; background: #0f172a; color: white; border: 1px solid #334155;">
+                                    <option value="">Select test type...</option>
+                                    <option value="e2e">E2E Test</option>
+                                    <option value="integration">Integration Test</option>
+                                    <option value="unit">Unit Test</option>
+                                </select>
+                                <span class="feedback" style="margin-left: 1rem;"></span>
+                            </div>
+                            <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem;">
+                                <p style="margin-bottom: 0.5rem;"><strong>Scenario 2:</strong> Testing user login flow from UI to database</p>
+                                <select onchange="app.checkTestType(this, 'integration')" style="padding: 0.5rem; border-radius: 0.25rem; background: #0f172a; color: white; border: 1px solid #334155;">
+                                    <option value="">Select test type...</option>
+                                    <option value="e2e">E2E Test</option>
+                                    <option value="integration">Integration Test</option>
+                                    <option value="unit">Unit Test</option>
+                                </select>
+                                <span class="feedback" style="margin-left: 1rem;"></span>
+                            </div>
+                            <div style="padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 0.5rem;">
+                                <p style="margin-bottom: 0.5rem;"><strong>Scenario 3:</strong> Testing complete purchase flow in a browser</p>
+                                <select onchange="app.checkTestType(this, 'e2e')" style="padding: 0.5rem; border-radius: 0.25rem; background: #0f172a; color: white; border: 1px solid #334155;">
+                                    <option value="">Select test type...</option>
+                                    <option value="e2e">E2E Test</option>
+                                    <option value="integration">Integration Test</option>
+                                    <option value="unit">Unit Test</option>
+                                </select>
+                                <span class="feedback" style="margin-left: 1rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'deployment',
+                title: 'Deployment Strategies',
+                icon: '🚀',
+                description: 'Blue-green, Canary, and Rolling deployments',
+                content: `
+                    <div class="card">
+                        <div class="card-title">Deployment Strategy Simulator</div>
+                        <p style="margin-bottom: 1.5rem;">
+                            Choose the right strategy for each scenario. This is crucial for zero-downtime deployments.
+                        </p>
+                        <div id="deployment-game">
+                            <div class="scenario" style="margin-bottom: 2rem;">
+                                <h3 style="color: var(--primary); margin-bottom: 1rem;">Scenario 1: Critical Payment API</h3>
+                                <p style="margin-bottom: 1rem; color: #94a3b8;">
+                                    You need to deploy a new version of your payment processing service. If there's a bug, you need instant rollback. Downtime costs $10k/minute.
+                                </p>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                                    <button class="btn" onclick="app.checkDeployment(this, 'blue-green', 'blue-green')" style="flex-direction: column; padding: 1.5rem;">
+                                        <span style="font-size: 2rem; margin-bottom: 0.5rem;">🔵🟢</span>
+                                        <span>Blue-Green</span>
+                                    </button>
+                                    <button class="btn" onclick="app.checkDeployment(this, 'blue-green', 'canary')" style="flex-direction: column; padding: 1.5rem;">
+                                        <span style="font-size: 2rem; margin-bottom: 0.5rem;">🐤</span>
+                                        <span>Canary</span>
+                                    </button>
+                                    <button class="btn" onclick="app.checkDeployment(this, 'blue-green', 'rolling')" style="flex-direction: column; padding: 1.5rem;">
+                                        <span style="font-size: 2rem; margin-bottom: 0.5rem;">🔄</span>
+                                        <span>Rolling</span>
+                                    </button>
+                                </div>
+                                <div class="deployment-feedback" style="margin-top: 1rem;"></div>
+                            </div>
+                            <div class="scenario hidden" id="scenario-2" style="margin-bottom: 2rem;">
+                                <h3 style="color: var(--primary); margin-bottom: 1rem;">Scenario 2: High Traffic Consumer App</h3>
+                                <p style="margin-bottom: 1rem; color: #94a3b8;">
+                                    New feature needs A/B testing with real users. You want to test with 5% of traffic first, monitoring error rates before full rollout.
+                                </p>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                                    <button class="btn" onclick="app.checkDeployment(this, 'canary', 'blue-green')" style="flex-direction: column; padding: 1.5rem;">
+                                        <span style="font-size: 2rem; margin-bottom: 0.5rem;">🔵🟢</span>
+                                        <span>Blue-Green</span>
+                                    </button>
+                                    <button class="btn" onclick="app.checkDeployment(this, 'canary', 'canary')" style="flex-direction: column; padding: 1.5rem;">
+                                        <span style="font-size: 2rem; margin-bottom: 0.5rem;">🐤</span>
+                                        <span>Canary</span>
+                                    </button>
+                                    <button class="btn" onclick="app.checkDeployment(this, 'canary', 'rolling')" style="flex-direction: column; padding: 1.5rem;">
+                                        <span style="font-size: 2rem; margin-bottom: 0.5rem;">🔄</span>
+                                        <span>Rolling</span>
+                                    </button>
+                                </div>
+                                <div class="deployment-feedback" style="margin-top: 1rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Feature Flags vs Branching</div>
+                        <div class="exercise-area">
+                            <div>
+                                <h4 style="margin-bottom: 1rem;">Git Flow (Anti-pattern in CI/CD)</h4>
+                                <div class="code-editor">
+                                    <div class="code-content">
+                                        <div class="code-line">main</div>
+                                        <div class="code-line">  \\</div>
+                                        <div class="code-line">   develop</div>
+                                        <div class="code-line">   / \\</div>
+                                        <div class="code-line">feature feature</div>
+                                        <div class="code-line">  \\   /</div>
+                                        <div class="code-line">   release</div>
+                                        <div class="code-line">   / \\</div>
+                                        <div class="code-line">hotfix deploy</div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 1rem; font-size: 0.9rem; color: #94a3b8;">
+                                    Long-lived branches cause merge hell and delayed integration.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: 1rem;">Trunk-Based Development (Modern)</h4>
+                                <div class="code-editor">
+                                    <div class="code-content">
+                                        <div class="code-line">main -------------------</div>
+                                        <div class="code-line">  |\\ |\\ |\\ |</div>
+                                        <div class="code-line">  | \\ | \\ | \\ |</div>
+                                        <div class="code-line">  |  \\|  \\|  \\|</div>
+                                        <div class="code-line">f1 f2 f3 f4 f5 f6</div>
+                                        <div class="code-line">  |   |   |   |   |   |</div>
+                                        <div class="code-line">  ---- ---- ----</div>
+                                        <div class="code-line"><span class="comment"># Flags: if (flags.newUI) { ... }</span></div>
+                                    </div>
+                                </div>
+                                <p style="margin-top: 1rem; font-size: 0.9rem; color: #94a3b8;">
+                                    Short-lived branches (1-2 days) with feature flags for incomplete features.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Database Migration Pitfalls</div>
+                        <p style="margin-bottom: 1rem;">
+                            The hardest part of deployment: database schema changes. Never break backward compatibility in a single deploy.
+                        </p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">sql</span>
+                                <span class="badge badge-danger">DANGEROUS</span>
+                            </div>
+                            <div class="code-content">
+                                <div class="code-line danger-line"><span class="comment">-- ❌ DON'T: Rename column immediately</span></div>
+                                <div class="code-line danger-line">ALTER TABLE users RENAME COLUMN username TO email;</div>
+                                <div class="code-line"></div>
+                                <div class="code-line"><span class="comment">-- ✅ DO: Expand-contract pattern</span></div>
+                                <div class="code-line"><span class="comment">-- Step 1 (Deploy 1): Add new column, keep old</span></div>
+                                <div class="code-line">ALTER TABLE users ADD COLUMN email VARCHAR(255);</div>
+                                <div class="code-line"><span class="comment">-- Step 2: Backfill data, dual-write</span></div>
+                                <div class="code-line"><span class="comment">-- Step 3 (Deploy 2): Switch reads to new column</span></div>
+                                <div class="code-line"><span class="comment">-- Step 4 (Deploy 3): Drop old column</span></div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                id: 'environment',
+                title: 'Environment Management',
+                icon: '🌍',
+                description: 'Secrets, configs, and multi-stage deployments',
+                content: `
+                    <div class="card">
+                        <div class="card-title">The Twelve-Factor App: Config</div>
+                        <p style="margin-bottom: 1rem;">
+                            Store config in environment variables, never in code. This enables the same build artifact to run in any environment.
+                        </p>
+                        <div class="exercise-area">
+                            <div class="code-editor">
+                                <div class="code-header">
+                                    <span class="code-lang">javascript</span>
+                                    <span class="badge badge-danger">WRONG</span>
+                                </div>
+                                <div class="code-content">
+                                    <div class="code-line"><span class="comment">// config.js - Hardcoded env check</span></div>
+                                    <div class="code-line">const config = {</div>
+                                    <div class="code-line danger-line">  database: process.env.NODE_ENV === 'production'</div>
+                                    <div class="code-line danger-line">    ? <span class="string">'prod-db.company.com'</span></div>
+                                    <div class="code-line danger-line">    : <span class="string">'localhost'</span>,</div>
+                                    <div class="code-line">};</div>
+                                </div>
+                            </div>
+                            <div class="code-editor">
+                                <div class="code-header">
+                                    <span class="code-lang">javascript</span>
+                                    <span class="badge badge-success">CORRECT</span>
+                                </div>
+                                <div class="code-content">
+                                    <div class="code-line"><span class="comment">// config.js - Environment agnostic</span></div>
+                                    <div class="code-line">const config = {</div>
+                                    <div class="code-line">  database: process.env.DATABASE_URL ||</div>
+                                    <div class="code-line">    <span class="function">throw new Error</span>(<span class="string">'DATABASE_URL required'</span>),</div>
+                                    <div class="code-line">  logLevel: process.env.LOG_LEVEL || <span class="string">'info'</span>,</div>
+                                    <div class="code-line">};</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Secrets Management Exercise</div>
+                        <p>Which of these is safe to commit to Git?</p>
+                        <div id="secrets-quiz" style="margin-top: 1rem;">
+                            <div class="quiz-option" onclick="app.checkSecret(this, false)"> A. AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE </div>
+                            <div class="quiz-option" onclick="app.checkSecret(this, false)"> B. DATABASE_URL=postgres://user:pass@localhost:5432/db </div>
+                            <div class="quiz-option" onclick="app.checkSecret(this, true)"> C. PORT=3000 </div>
+                            <div class="quiz-option" onclick="app.checkSecret(this, false)"> D. JWT_SECRET=my-super-secret-key-123 </div>
+                        </div>
+                        <div id="secrets-explanation" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.5rem;">
+                            <strong>Answer:</strong> Only <strong>PORT</strong> is safe. It's a configuration value, not a secret. Even if PORT is committed, it doesn't compromise security (though it limits flexibility). Never commit credentials, connection strings with passwords, or cryptographic keys.
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Environment Parity</div>
+                        <p style="margin-bottom: 1rem;">
+                            Development, Staging, and Production should be as similar as possible. Differences lead to "works on my machine" bugs.
+                        </p>
+                        <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #334155;">
+                                    <th style="text-align: left; padding: 1rem;">Aspect</th>
+                                    <th style="text-align: left; padding: 1rem;">Anti-Pattern</th>
+                                    <th style="text-align: left; padding: 1rem;">Best Practice</th>
+                                </tr>
+                            </thead>
+                            <tbody style="color: #94a3b8;">
+                                <tr style="border-bottom: 1px solid #334155;">
+                                    <td style="padding: 1rem;">Database</td>
+                                    <td style="padding: 1rem;">SQLite local, Postgres prod</td>
+                                    <td style="padding: 1rem;">Docker Compose for local with same DB</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #334155;">
+                                    <td style="padding: 1rem;">Services</td>
+                                    <td style="padding: 1rem;">Mock APIs in dev</td>
+                                    <td style="padding: 1rem;">Localstack or real service containers</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 1rem;">OS</td>
+                                    <td style="padding: 1rem;">Windows/Mac dev, Linux prod</td>
+                                    <td style="padding: 1rem;">Docker for consistent OS</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Final Challenge: Debug the Pipeline</div>
+                        <p style="margin-bottom: 1rem;">
+                            This workflow is failing in production deployment but works in staging. Find 3 issues.
+                        </p>
+                        <div class="code-editor">
+                            <div class="code-header">
+                                <span class="code-lang">yaml</span>
+                                <span>Find 3 bugs</span>
+                            </div>
+                            <div class="code-content" id="final-challenge">
+                                <div class="code-line"><span class="function">deploy</span>:</div>
+                                <div class="code-line">  <span class="function">runs-on</span>: <span class="string">ubuntu-latest</span></div>
+                                <div class="code-line">  <span class="function">environment</span>: <span class="string">production</span></div>
+                                <div class="code-line">  <span class="function">steps</span>:</div>
+                                <div class="code-line">    - <span class="function">uses</span>: <span class="string">actions/checkout@v2</span> <span class="comment"># Bug 1?</span></div>
+                                <div class="code-line">    - <span class="function">run</span>: <span class="string">npm install</span></div>
+                                <div class="code-line">    - <span class="function">run</span>: <span class="string">npm run build</span></div>
+                                <div class="code-line">    - <span class="function">run</span>: |</div>
+                                <div class="code-line">        curl -X POST https://api.production.com/deploy \</div>
+                                <div class="code-line">          -H <span class="string">"Authorization: \${{ secrets.PROD_TOKEN }}"</span> \</div>
+                                <div class="code-line">          -d <span class="string">'{"build": "\${{ github.sha }}"}'</span></div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="app.showBugHints()">Show Hints</button>
+                            <div id="bug-hints" style="display: none; margin-top: 1rem;">
+                                <ol style="margin-left: 1.5rem; color: #94a3b8; line-height: 2;">
+                                    <li>Using @v2 instead of @v4 (outdated, security risks)</li>
+                                    <li>No environment protection rules (deploys directly without approval)</li>
+                                    <li>No rollback strategy if deployment fails</li>
+                                    <li>(Bonus) No health check after deployment</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 3rem;">
+                        <button class="btn btn-success" style="font-size: 1.25rem; padding: 1rem 2rem;" onclick="app.completeCourse()">
+                            Complete Bootcamp 🎓
+                        </button>
+                    </div>
+                `
+            }
+        ];
+
+        const App = {
+            init() {
+                this.loadState();
+                this.renderModuleList();
+                this.loadModule(State.currentModule);
+                this.updateProgress();
+            },
+            loadState() {
+                const saved = localStorage.getItem('cicd-mastery-state');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    Object.assign(State, parsed);
+                }
+            },
+            saveState() {
+                localStorage.setItem('cicd-mastery-state', JSON.stringify(State));
+            },
+            renderModuleList() {
+                const list = document.getElementById('module-list');
+                list.innerHTML = Modules.map((mod, idx) => {
+                    const isLocked = idx > 0 && !State.completedModules.includes(Modules[idx-1].id);
+                    const isCompleted = State.completedModules.includes(mod.id);
+                    const isActive = idx === State.currentModule;
+                    return `
+                        <li class="module-item ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" onclick="${isLocked ? '' : `app.loadModule(${idx})`}">
+                            <span class="module-icon">${isCompleted ? '✅' : isLocked ? '🔒' : mod.icon}</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600;">${mod.title}</div>
+                                <div style="font-size: 0.75rem; color: #64748b;">${mod.description}</div>
+                            </div>
+                        </li>
+                    `;
+                }).join('');
+            },
+            loadModule(index) {
+                State.currentModule = index;
+                this.saveState();
+                this.renderModuleList();
+                const module = Modules[index];
+                document.getElementById('page-title').textContent = module.title;
+                document.getElementById('page-subtitle').textContent = module.description;
+                document.getElementById('content-area').innerHTML = module.content;
+                window.scrollTo(0, 0);
+                if (module.onMount) module.onMount();
+            },
+            updateProgress() {
+                const progress = (State.completedModules.length / Modules.length) * 100;
+                document.getElementById('main-progress').style.width = `${progress}%`;
+                document.getElementById('progress-text').textContent = `${Math.round(progress)}%`;
+                document.getElementById('xp-display').textContent = `${State.xp} XP`;
+            },
+            addXP(amount) {
+                State.xp += amount;
+                this.updateProgress();
+                this.saveState();
+            },
+            checkAnswer(element, isCorrect) {
+                const parent = element.parentElement;
+                const options = parent.querySelectorAll('.quiz-option');
+                options.forEach(opt => {
+                    opt.style.pointerEvents = 'none';
+                    if (opt === element) {
+                        opt.classList.add(isCorrect ? 'correct' : 'wrong');
+                    }
+                });
+                if (isCorrect) {
+                    this.addXP(50);
+                    setTimeout(() => {
+                        this.completeCurrentModule();
+                    }, 1000);
+                }
+            },
+            completeCurrentModule() {
+                const currentId = Modules[State.currentModule].id;
+                if (!State.completedModules.includes(currentId)) {
+                    State.completedModules.push(currentId);
+                    this.addXP(100);
+                    this.saveState();
+                    if (State.currentModule < Modules.length - 1) {
+                        document.getElementById('success-modal').classList.add('active');
+                    }
+                }
+                this.updateProgress();
+                this.renderModuleList();
+            },
+            nextModule() {
+                document.getElementById('success-modal').classList.remove('active');
+                if (State.currentModule < Modules.length - 1) {
+                    this.loadModule(State.currentModule + 1);
+                }
+            },
+            // Module 1: Pipeline Simulation
+            simulatePipeline() {
+                const terminal = document.getElementById('pipeline-terminal');
+                terminal.classList.remove('hidden');
+                terminal.innerHTML = '';
+                const stages = [
+                    { text: '> git clone https://github.com/user/app.git', delay: 500, type: 'info' },
+                    { text: 'Cloning into \'app\'...', delay: 800, type: 'info' },
+                    { text: '✓ Checkout completed', delay: 1200, type: 'success' },
+                    { text: '> npm ci', delay: 1500, type: 'info' },
+                    { text: 'added 1542 packages in 12s', delay: 2500, type: 'info' },
+                    { text: '✓ Dependencies installed', delay: 2800, type: 'success' },
+                    { text: '> npm run build', delay: 3000, type: 'info' },
+                    { text: 'Creating an optimized production build...', delay: 3500, type: 'info' },
+                    { text: 'Compiled successfully!', delay: 4500, type: 'success' },
+                    { text: '> npm test -- --coverage', delay: 4800, type: 'info' },
+                    { text: 'PASS src/utils.test.js', delay: 5200, type: 'info' },
+                    { text: 'PASS src/App.test.js', delay: 5600, type: 'info' },
+                    { text: 'Coverage: 94.5%', delay: 6000, type: 'success' },
+                    { text: '> deploying to production...', delay: 6500, type: 'info' },
+                    { text: '✓ Deployment successful! v1.2.3 live at https://app.com', delay: 7500, type: 'success' }
+                ];
+                stages.forEach(stage => {
+                    setTimeout(() => {
+                        const line = document.createElement('div');
+                        line.className = `terminal-line terminal-${stage.type || 'info'}`;
+                        line.textContent = stage.text;
+                        terminal.appendChild(line);
+                        terminal.scrollTop = terminal.scrollHeight;
+                    }, stage.delay);
+                });
+                // Animate pipeline stages
+                setTimeout(() => {
+                    document.querySelectorAll('.pipeline-stage').forEach((stage, idx) => {
+                        setTimeout(() => {
+                            stage.classList.add('active');
+                        }, idx * 1500);
+                    });
+                }, 500);
+            },
+            // Module 2: GitHub Actions
+            revealVulnerability() {
+                document.getElementById('vuln-explanation').style.display = 'block';
+                document.querySelectorAll('#vuln-line, #vuln-line2').forEach(line => {
+                    line.classList.add('danger-line');
+                });
+                this.addXP(25);
+            },
+            checkMatrix() {
+                const input = document.getElementById('matrix-answer').value.trim().toLowerCase();
+                const feedback = document.getElementById('matrix-feedback');
+                if (input === 'os') {
+                    feedback.innerHTML = '<span style="color: var(--success);">✓ Correct! The runs-on field uses the OS matrix value.</span>';
+                    feedback.innerHTML += '<div style="margin-top: 0.5rem; font-size: 0.9rem; color: #94a3b8;">This creates 6 parallel jobs: ubuntu-14, ubuntu-16, ubuntu-18, windows-14, windows-16, windows-18</div>';
+                    this.addXP(50);
+                } else {
+                    feedback.innerHTML = '<span style="color: var(--danger);">✗ Try again. Which property in the matrix defines the operating system?</span>';
+                }
+            },
+            // Module 3: Testing
+            simulateCoverage() {
+                const terminal = document.getElementById('coverage-terminal');
+                terminal.classList.remove('hidden');
+                terminal.innerHTML = '';
+                const lines = [
+                    'PASS src/components/Button.test.js',
+                    'PASS src/utils/api.test.js',
+                    'FAIL src/components/Form.test.js',
+                    '  ● Form validation › should validate email',
+                    '    expect(received).toBeGreaterThan(expected)',
+                    '    Expected: > 80',
+                    '    Received: 76.5',
+                    '',
+                    '=============================== Coverage summary ===============================',
+                    'Statements : 76.5% ( 143/187 )',
+                    'Branches   : 68.2% ( 45/66 )',
+                    'Functions  : 82.1% ( 32/39 )',
+                    'Lines      : 76.5% ( 143/187 )',
+                    '================================================================================',
+                    'ERROR: Coverage threshold for statements (80%) not met'
+                ];
+                lines.forEach((line, idx) => {
+                    setTimeout(() => {
+                        const div = document.createElement('div');
+                        div.className = 'terminal-line';
+                        if (line.includes('FAIL') || line.includes('ERROR')) div.className += ' terminal-error';
+                        else if (line.includes('PASS')) div.className += ' terminal-success';
+                        div.textContent = line || ' ';
+                        terminal.appendChild(div);
+                        terminal.scrollTop = terminal.scrollHeight;
+                    }, idx * 200);
+                });
+            },
+            checkTestType(select, correct) {
+                const feedback = select.nextElementSibling;
+                if (select.value === correct) {
+                    feedback.innerHTML = '<span style="color: var(--success);">✓ Correct!</span>';
+                    this.addXP(30);
+                } else if (select.value !== '') {
+                    feedback.innerHTML = '<span style="color: var(--danger);">✗ Think about the scope and speed requirements.</span>';
+                }
+            },
+            // Module 4: Deployment
+            checkDeployment(btn, correct, selected) {
+                const parent = btn.closest('.scenario');
+                const feedback = parent.querySelector('.deployment-feedback');
+                const buttons = parent.querySelectorAll('.btn');
+                buttons.forEach(b => b.disabled = true);
+                if (correct === selected) {
+                    btn.style.background = 'var(--success)';
+                    feedback.innerHTML = '<div style="color: var(--success); font-weight: bold;">✓ Excellent choice!</div>';
+                    this.addXP(75);
+                    if (parent.id !== 'scenario-2') {
+                        setTimeout(() => {
+                            document.getElementById('scenario-2').classList.remove('hidden');
+                        }, 1000);
+                    } else {
+                        setTimeout(() => this.completeCurrentModule(), 1000);
+                    }
+                } else {
+                    btn.style.background = 'var(--danger)';
+                    let explanation = '';
+                    if (selected === 'blue-green') explanation = 'Blue-green requires double the infrastructure. Overkill for A/B testing.';
+                    if (selected === 'rolling') explanation = 'Rolling updates gradually replace instances, making rollback slow if issues are detected.';
+                    if (selected === 'canary') explanation = 'Canary is perfect for A/B testing but risky for critical systems requiring instant rollback.';
+                    feedback.innerHTML = `<div style="color: var(--danger);"><strong>✗ Not optimal.</strong> ${explanation}</div>`;
+                    setTimeout(() => {
+                        buttons.forEach(b => {
+                            b.disabled = false;
+                            b.style.background = '';
+                        });
+                        feedback.innerHTML = '';
+                    }, 3000);
+                }
+            },
+            // Module 5: Environment
+            checkSecret(element, isCorrect) {
+                const options = document.querySelectorAll('#secrets-quiz .quiz-option');
+                options.forEach(opt => {
+                    opt.style.pointerEvents = 'none';
+                    if (opt === element) {
+                        opt.classList.add(isCorrect ? 'correct' : 'wrong');
+                    }
+                });
+                document.getElementById('secrets-explanation').style.display = 'block';
+                if (isCorrect) this.addXP(50);
+            },
+            showBugHints() {
+                document.getElementById('bug-hints').style.display = 'block';
+                this.addXP(25);
+            },
+            completeCourse() {
+                alert(`🎉 Congratulations! You've completed the CI/CD Mastery Bootcamp!\n\nTotal XP: ${State.xp}\n\nYou're now ready to design robust deployment pipelines for competitive engineering organizations.`);
+                State.completedModules.push(Modules[Modules.length - 1].id);
+                this.saveState();
+                this.updateProgress();
+            }
+        };
+
+        // Make app globally accessible
+        window.app = App;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+    </script>
+</body>
+</html>

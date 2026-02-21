@@ -1,0 +1,2870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebAssembly Basics - Interactive Learning</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1f2937;
+    --surface3: #374151;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --accent3: #06b6d4;
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
+    --text: #f9fafb;
+    --text2: #9ca3af;
+    --text3: #6b7280;
+    --border: #1f2937;
+    --wasm: #654ff0;
+    --js: #f7df1e;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: linear-gradient(135deg, #0d1117 0%, #1a1040 50%, #0d1117 100%);
+    border-bottom: 1px solid #2d1b69;
+    padding: 20px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--wasm), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--wasm), var(--accent3));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    -webkit-text-fill-color: white;
+  }
+
+  .progress-bar-container {
+    flex: 1;
+    min-width: 200px;
+    background: var(--surface2);
+    border-radius: 20px;
+    height: 8px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--wasm), var(--accent3));
+    border-radius: 20px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .progress-text {
+    font-size: 0.8rem;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  nav::-webkit-scrollbar { display: none; }
+
+  .nav-btn {
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { color: var(--accent3); border-bottom-color: var(--accent3); }
+
+  /* ─── LAYOUT ─── */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .badge-wasm { background: rgba(101,79,240,0.2); color: #a78bfa; border: 1px solid rgba(101,79,240,0.3); }
+  .badge-js { background: rgba(247,223,30,0.15); color: #fbbf24; border: 1px solid rgba(247,223,30,0.2); }
+  .badge-perf { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+  .badge-danger { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+  .badge-info { background: rgba(6,182,212,0.15); color: #22d3ee; border: 1px solid rgba(6,182,212,0.2); }
+
+  /* ─── CODE ─── */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+    margin: 12px 0;
+  }
+
+  .code-label {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 0.7rem;
+    color: var(--text3);
+    font-family: sans-serif;
+  }
+
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .num { color: #79c0ff; }
+  .cm { color: #8b949e; font-style: italic; }
+  .type { color: #ffa657; }
+  .op { color: #ff7b72; }
+  .var { color: #e6edf3; }
+  .prop { color: #79c0ff; }
+  .wasm-kw { color: #654ff0; }
+  .bool { color: #56d364; }
+
+  /* ─── ANALOGY BOX ─── */
+  .analogy {
+    background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.1));
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+
+  .analogy-title {
+    font-weight: 700;
+    color: var(--accent3);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ─── VISUAL DIAGRAMS ─── */
+  .diagram {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    text-align: center;
+    font-family: monospace;
+    font-size: 0.85rem;
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 8px 0;
+  }
+
+  .flow-box {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .flow-arrow { color: var(--text3); font-size: 1.2rem; }
+
+  .box-c { background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4); color: #93c5fd; }
+  .box-wat { background: rgba(101,79,240,0.2); border: 1px solid rgba(101,79,240,0.4); color: #c4b5fd; }
+  .box-wasm { background: rgba(101,79,240,0.3); border: 1px solid rgba(101,79,240,0.5); color: #a78bfa; }
+  .box-js { background: rgba(247,223,30,0.15); border: 1px solid rgba(247,223,30,0.3); color: #fbbf24; }
+  .box-browser { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
+  .box-cpu { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+
+  /* ─── INTERACTIVE DEMO ─── */
+  .demo-area {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+
+  .demo-title {
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--accent3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { opacity: 0.9; }
+  .btn-wasm { background: var(--wasm); color: white; }
+  .btn-wasm:hover { opacity: 0.9; }
+  .btn-warning { background: var(--warning); color: #000; }
+  .btn-warning:hover { opacity: 0.9; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+  }
+  .btn-outline:hover { background: rgba(99,102,241,0.1); }
+  .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  .output-box {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    min-height: 60px;
+    color: var(--success);
+    white-space: pre-wrap;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 10px 0;
+  }
+
+  input[type="number"], input[type="text"] {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 0.9rem;
+    width: 120px;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* ─── COMPARISON TABLE ─── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .compare-table th {
+    background: var(--surface2);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .compare-table td {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .compare-table tr:hover td { background: var(--surface2); }
+
+  .tick { color: var(--success); }
+  .cross { color: var(--error); }
+  .neutral { color: var(--warning); }
+
+  /* ─── QUIZ ─── */
+  .quiz-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+
+  .quiz-card.correct { border-color: var(--success); }
+  .quiz-card.wrong { border-color: var(--error); }
+
+  .quiz-q {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .quiz-options {
+    display: grid;
+    gap: 10px;
+  }
+
+  .quiz-opt {
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    background: var(--surface2);
+    text-align: left;
+    color: var(--text);
+  }
+
+  .quiz-opt:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(99,102,241,0.1);
+  }
+
+  .quiz-opt.selected-correct {
+    background: rgba(16,185,129,0.15);
+    border-color: var(--success);
+    color: #34d399;
+  }
+
+  .quiz-opt.selected-wrong {
+    background: rgba(239,68,68,0.15);
+    border-color: var(--error);
+    color: #f87171;
+  }
+
+  .quiz-opt.reveal-correct {
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.5);
+  }
+
+  .quiz-feedback {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #34d399; }
+  .quiz-feedback.wrong { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+
+  .score-display {
+    background: linear-gradient(135deg, var(--surface2), var(--surface3));
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  /* ─── MISTAKES ─── */
+  .mistake-card {
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border-left: 4px solid var(--error);
+    background: var(--surface);
+  }
+
+  .mistake-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: #f87171;
+    margin-bottom: 12px;
+  }
+
+  .fix-block {
+    background: rgba(16,185,129,0.05);
+    border-left: 4px solid var(--success);
+    border-radius: 0 8px 8px 0;
+    padding: 12px;
+    margin-top: 10px;
+  }
+
+  .fix-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--success);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  /* ─── CHEAT SHEET ─── */
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .cheat-section {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .cheat-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent3);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+
+  .cheat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    gap: 16px;
+    font-size: 0.83rem;
+  }
+
+  .cheat-key {
+    font-family: monospace;
+    color: #c4b5fd;
+    flex-shrink: 0;
+  }
+
+  .cheat-val { color: var(--text2); text-align: right; font-size: 0.8rem; }
+
+  /* ─── EXERCISE ─── */
+  .exercise-area {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .exercise-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .exercise-desc {
+    color: var(--text2);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  textarea {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 14px;
+    color: var(--text);
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* ─── PERFORMANCE VIZ ─── */
+  .perf-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .perf-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .perf-bar-label {
+    width: 100px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .perf-bar-bg {
+    flex: 1;
+    background: var(--surface3);
+    border-radius: 8px;
+    height: 28px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .perf-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: width 1s ease;
+    width: 0%;
+  }
+
+  .perf-bar-fill.wasm { background: linear-gradient(90deg, var(--wasm), var(--accent3)); color: white; }
+  .perf-bar-fill.js { background: linear-gradient(90deg, #f7df1e, #fbbf24); color: #000; }
+  .perf-bar-fill.native { background: linear-gradient(90deg, #ef4444, #f97316); color: white; }
+
+  /* ─── TABS ─── */
+  .tab-group {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── MEMORY VIZ ─── */
+  .memory-viz {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 16px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    overflow-x: auto;
+  }
+
+  .mem-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 3px 0;
+  }
+
+  .mem-addr { color: var(--text3); width: 60px; }
+  .mem-byte {
+    width: 30px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 0.7rem;
+  }
+  .mem-used { background: rgba(101,79,240,0.3); color: #c4b5fd; }
+  .mem-free { background: rgba(55,65,81,0.5); color: var(--text3); }
+
+  /* ─── HIGHLIGHT ─── */
+  .highlight {
+    background: rgba(246,179,82,0.15);
+    border: 1px solid rgba(246,179,82,0.3);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    margin: 12px 0;
+  }
+
+  .tip {
+    background: rgba(6,182,212,0.1);
+    border: 1px solid rgba(6,182,212,0.3);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    margin: 12px 0;
+    color: #67e8f9;
+  }
+
+  /* ─── SPINNER ─── */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 640px) {
+    .container { padding: 16px; }
+    .cheat-grid { grid-template-columns: 1fr; }
+    .flow-row { font-size: 0.75rem; }
+    .compare-table { font-size: 0.8rem; }
+  }
+
+  /* ─── ACCORDION ─── */
+  .accordion-item { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+  .accordion-btn {
+    width: 100%;
+    background: var(--surface2);
+    border: none;
+    color: var(--text);
+    padding: 14px 18px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .accordion-btn:hover { background: var(--surface3); }
+  .accordion-content {
+    display: none;
+    padding: 16px 18px;
+    background: var(--surface);
+    font-size: 0.9rem;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .accordion-content.open { display: block; }
+  .accordion-icon { transition: transform 0.3s; }
+  .accordion-btn.open .accordion-icon { transform: rotate(180deg); }
+
+  /* ─── WASM SIMULATOR ─── */
+  .wasm-sim {
+    background: #0d1117;
+    border: 1px solid var(--wasm);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .sim-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+  .stack-viz {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 4px;
+    min-height: 100px;
+    background: rgba(101,79,240,0.05);
+    border-radius: 8px;
+    padding: 8px;
+    border: 1px dashed rgba(101,79,240,0.3);
+  }
+
+  .stack-item {
+    background: rgba(101,79,240,0.3);
+    border: 1px solid rgba(101,79,240,0.5);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #c4b5fd;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    WebAssembly Masterclass
+  </div>
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+  <div class="progress-text" id="progressText">0% Complete</div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showSection('intro')">🏠 Intro</button>
+  <button class="nav-btn" onclick="showSection('basics')">📚 Basics</button>
+  <button class="nav-btn" onclick="showSection('interop')">🔗 JS Interop</button>
+  <button class="nav-btn" onclick="showSection('memory')">🧠 Memory</button>
+  <button class="nav-btn" onclick="showSection('usecases')">🎯 Use Cases</button>
+  <button class="nav-btn" onclick="showSection('performance')">⚡ Performance</button>
+  <button class="nav-btn" onclick="showSection('exercises')">💪 Exercises</button>
+  <button class="nav-btn" onclick="showSection('quiz')">🧠 Quiz</button>
+  <button class="nav-btn" onclick="showSection('mistakes')">⚠️ Mistakes</button>
+  <button class="nav-btn" onclick="showSection('cheatsheet')">📋 Cheat Sheet</button>
+</nav>
+
+<!-- ════════════════════════════════════════════════ INTRO ════════ -->
+<div class="section active" id="intro">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">⚡ What IS WebAssembly?</div>
+    <p style="color:var(--text2);line-height:1.8;margin-bottom:16px">
+      WebAssembly (WASM) is a binary instruction format that runs in the browser at near-native speed.
+      Think of it as a low-level language that browsers understand — like machine code for the web.
+    </p>
+
+    <div class="analogy">
+      <div class="analogy-title">🏗️ The Builder Analogy</div>
+      <p style="color:var(--text2);line-height:1.8">
+        Imagine building a house. <strong style="color:var(--js)">JavaScript</strong> is like a skilled handyman — 
+        flexible, good at many tasks, but sometimes slow on heavy lifting. 
+        <strong style="color:var(--wasm)">WebAssembly</strong> is like a specialized machine (a crane, jackhammer) — 
+        blazing fast at specific heavy tasks. <strong>You use BOTH together</strong>. JS handles the UI 
+        and coordination, WASM does the heavy number-crunching.
+      </p>
+    </div>
+
+    <div class="diagram">
+      <div style="color:var(--text3);margin-bottom:16px;font-family:sans-serif;font-size:0.85rem;">HOW WASM GETS TO THE BROWSER</div>
+      <div class="flow-row">
+        <div class="flow-box box-c">C / C++ / Rust</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box box-wat">WAT (Text)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box box-wasm">WASM Binary</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box box-browser">Browser VM</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box box-cpu">CPU</div>
+      </div>
+      <div style="margin-top:16px;color:var(--text3);font-family:sans-serif;font-size:0.8rem;">
+        OR: JS creates WASM directly using <code style="color:#c4b5fd">WebAssembly.*</code> APIs
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🆚 WASM vs JavaScript — At a Glance</div>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th style="color:var(--js)">JavaScript</th>
+          <th style="color:#a78bfa">WebAssembly</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Speed</td><td class="neutral">⚡ Fast (JIT)</td><td class="tick">🚀 Near-native</td></tr>
+        <tr><td>Type System</td><td class="neutral">Dynamic</td><td class="tick">Strongly typed</td></tr>
+        <tr><td>Loading</td><td class="tick">Small text files</td><td class="neutral">Binary (compact)</td></tr>
+        <tr><td>DOM Access</td><td class="tick">✅ Direct</td><td class="cross">❌ Via JS bridge</td></tr>
+        <tr><td>Garbage Collection</td><td class="tick">✅ Automatic</td><td class="cross">❌ Manual/limited</td></tr>
+        <tr><td>Debugging</td><td class="tick">✅ Easy</td><td class="cross">❌ Harder</td></tr>
+        <tr><td>Integer Math</td><td class="neutral">Float internally</td><td class="tick">True 32/64-bit int</td></tr>
+        <tr><td>Best For</td><td>UI, logic, APIs</td><td>CPU-heavy algorithms</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎯 The 4 Key WASM Concepts</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:8px">
+      <div style="background:rgba(101,79,240,0.1);border:1px solid rgba(101,79,240,0.3);border-radius:12px;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:8px">📦</div>
+        <div style="font-weight:700;color:#c4b5fd;margin-bottom:6px">Module</div>
+        <div style="color:var(--text2);font-size:0.85rem">The compiled WASM binary. A self-contained unit of code — like a class or library.</div>
+      </div>
+      <div style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:12px;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:8px">🏭</div>
+        <div style="font-weight:700;color:#22d3ee;margin-bottom:6px">Instance</div>
+        <div style="color:var(--text2);font-size:0.85rem">A running copy of a module with its own memory and state — like a class instance.</div>
+      </div>
+      <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:12px;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:8px">🧠</div>
+        <div style="font-weight:700;color:#34d399;margin-bottom:6px">Memory</div>
+        <div style="color:var(--text2);font-size:0.85rem">A resizable ArrayBuffer shared between WASM and JS. WASM's "RAM".</div>
+      </div>
+      <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:16px">
+        <div style="font-size:1.5rem;margin-bottom:8px">📊</div>
+        <div style="font-weight:700;color:#fbbf24;margin-bottom:6px">Table</div>
+        <div style="color:var(--text2);font-size:0.85rem">A typed array of references (like function pointers). Enables indirect calls.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚀 Live Demo — WASM Simulation in JS</div>
+    <p style="color:var(--text2);font-size:0.9rem;margin-bottom:12px">
+      Since we can't compile C here, we'll <strong>simulate WASM behavior</strong> using JavaScript 
+      typed arrays (which is exactly how WASM memory works internally):
+    </p>
+
+    <div class="demo-area">
+      <div class="demo-title">⚡ Fibonacci: JS vs WASM-style (using typed arrays)</div>
+      <div class="input-group">
+        <label style="color:var(--text2);font-size:0.9rem">Number (n):</label>
+        <input type="number" id="fibInput" value="35" min="1" max="45">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-warning" onclick="runJSFib()">🐢 Run with JS</button>
+        <button class="btn btn-wasm" onclick="runWASMFib()">🚀 Run with WASM-style</button>
+        <button class="btn btn-outline btn-sm" onclick="clearFibOutput()">Clear</button>
+      </div>
+      <div class="output-box" id="fibOutput">Results will appear here...</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ BASICS ════════ -->
+<div class="section" id="basics">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">📚 WebAssembly Text Format (WAT)</div>
+    <p style="color:var(--text2);line-height:1.8;margin-bottom:16px">
+      WAT is the human-readable form of WASM. You normally don't write it directly, 
+      but understanding it helps you understand what WASM does under the hood.
+    </p>
+
+    <div class="tab-group">
+      <button class="tab-btn active" onclick="switchTab('watTabs','wat1')">Simple Add</button>
+      <button class="tab-btn" onclick="switchTab('watTabs','wat2')">Loop</button>
+      <button class="tab-btn" onclick="switchTab('watTabs','wat3')">Memory</button>
+      <button class="tab-btn" onclick="switchTab('watTabs','wat4')">Import/Export</button>
+    </div>
+
+    <div id="watTabs">
+      <div class="tab-panel active" id="wat1">
+        <div class="code-block">
+<span class="cm">;; This is WAT — WebAssembly Text Format</span>
+<span class="cm">;; Think of it like readable assembly code</span>
+
+(<span class="wasm-kw">module</span>                          <span class="cm">;; Everything lives in a module</span>
+  (<span class="wasm-kw">func</span> $add                        <span class="cm">;; Define function named $add</span>
+    (<span class="wasm-kw">param</span> $a <span class="type">i32</span>)               <span class="cm">;; Takes int32 parameter a</span>
+    (<span class="wasm-kw">param</span> $b <span class="type">i32</span>)               <span class="cm">;; Takes int32 parameter b</span>
+    (<span class="wasm-kw">result</span> <span class="type">i32</span>)                  <span class="cm">;; Returns int32</span>
+
+    <span class="wasm-kw">local.get</span> $a                  <span class="cm">;; Push $a onto stack</span>
+    <span class="wasm-kw">local.get</span> $b                  <span class="cm">;; Push $b onto stack</span>
+    <span class="type">i32</span>.<span class="fn">add</span>                       <span class="cm">;; Pop both, add, push result</span>
+    <span class="cm">;; Stack now has [a+b], which is returned</span>
+  )
+  (<span class="wasm-kw">export</span> <span class="str">"add"</span> (<span class="wasm-kw">func</span> $add))    <span class="cm">;; Export so JS can call it</span>
+)
+
+<span class="cm">;; KEY CONCEPT: WASM is STACK-BASED</span>
+<span class="cm">;; Values are pushed onto a virtual stack</span>
+<span class="cm">;; Operations pop values off the stack</span>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="wat2">
+        <div class="code-block">
+<span class="cm">;; Loop example — sum 1 to n</span>
+(<span class="wasm-kw">module</span>
+  (<span class="wasm-kw">func</span> $sumTo
+    (<span class="wasm-kw">param</span> $n <span class="type">i32</span>)
+    (<span class="wasm-kw">result</span> <span class="type">i32</span>)
+    (<span class="wasm-kw">local</span> $i <span class="type">i32</span>)               <span class="cm">;; Local variable i</span>
+    (<span class="wasm-kw">local</span> $sum <span class="type">i32</span>)            <span class="cm">;; Local variable sum</span>
+
+    <span class="cm">;; i = 1</span>
+    <span class="wasm-kw">i32.const</span> <span class="num">1</span>
+    <span class="wasm-kw">local.set</span> $i
+
+    (<span class="wasm-kw">block</span> $break
+      (<span class="wasm-kw">loop</span> $continue
+        <span class="cm">;; if i > n: break</span>
+        <span class="wasm-kw">local.get</span> $i
+        <span class="wasm-kw">local.get</span> $n
+        <span class="type">i32</span>.<span class="fn">gt_s</span>
+        <span class="wasm-kw">br_if</span> $break
+
+        <span class="cm">;; sum += i</span>
+        <span class="wasm-kw">local.get</span> $sum
+        <span class="wasm-kw">local.get</span> $i
+        <span class="type">i32</span>.<span class="fn">add</span>
+        <span class="wasm-kw">local.set</span> $sum
+
+        <span class="cm">;; i++</span>
+        <span class="wasm-kw">local.get</span> $i
+        <span class="wasm-kw">i32.const</span> <span class="num">1</span>
+        <span class="type">i32</span>.<span class="fn">add</span>
+        <span class="wasm-kw">local.set</span> $i
+        <span class="wasm-kw">br</span> $continue                 <span class="cm">;; Jump back to loop start</span>
+      )
+    )
+    <span class="wasm-kw">local.get</span> $sum                <span class="cm">;; Return sum</span>
+  )
+  (<span class="wasm-kw">export</span> <span class="str">"sumTo"</span> (<span class="wasm-kw">func</span> $sumTo))
+)
+        </div>
+      </div>
+
+      <div class="tab-panel" id="wat3">
+        <div class="code-block">
+<span class="cm">;; Memory example — store/load values</span>
+(<span class="wasm-kw">module</span>
+  (<span class="wasm-kw">memory</span> <span class="num">1</span>)                    <span class="cm">;; 1 page = 64KB of memory</span>
+  (<span class="wasm-kw">export</span> <span class="str">"memory"</span> (<span class="wasm-kw">memory</span> <span class="num">0</span>)) <span class="cm">;; Share memory with JS</span>
+
+  (<span class="wasm-kw">func</span> $storeValue
+    (<span class="wasm-kw">param</span> $addr <span class="type">i32</span>)            <span class="cm">;; Address to store at</span>
+    (<span class="wasm-kw">param</span> $val <span class="type">i32</span>)             <span class="cm">;; Value to store</span>
+    <span class="wasm-kw">local.get</span> $addr              <span class="cm">;; Push address</span>
+    <span class="wasm-kw">local.get</span> $val               <span class="cm">;; Push value</span>
+    <span class="type">i32</span>.<span class="fn">store</span>                     <span class="cm">;; Store val at addr in memory</span>
+  )
+
+  (<span class="wasm-kw">func</span> $loadValue
+    (<span class="wasm-kw">param</span> $addr <span class="type">i32</span>)
+    (<span class="wasm-kw">result</span> <span class="type">i32</span>)
+    <span class="wasm-kw">local.get</span> $addr              <span class="cm">;; Push address</span>
+    <span class="type">i32</span>.<span class="fn">load</span>                      <span class="cm">;; Load i32 from that address</span>
+  )
+
+  (<span class="wasm-kw">export</span> <span class="str">"store"</span> (<span class="wasm-kw">func</span> $storeValue))
+  (<span class="wasm-kw">export</span> <span class="wasm-kw">"load"</span> (<span class="wasm-kw">func</span> $loadValue))
+)
+        </div>
+      </div>
+
+      <div class="tab-panel" id="wat4">
+        <div class="code-block">
+<span class="cm">;; Imports & Exports — communicating with JS</span>
+(<span class="wasm-kw">module</span>
+  <span class="cm">;; IMPORT a function FROM JavaScript</span>
+  (<span class="wasm-kw">import</span> <span class="str">"env"</span> <span class="str">"log"</span>           <span class="cm">;; Import from "env" namespace, named "log"</span>
+    (<span class="wasm-kw">func</span> $log (<span class="wasm-kw">param</span> <span class="type">i32</span>))     <span class="cm">;; Signature: takes one i32</span>
+  )
+
+  <span class="cm">;; IMPORT memory from JavaScript</span>
+  (<span class="wasm-kw">import</span> <span class="str">"env"</span> <span class="str">"memory"</span>
+    (<span class="wasm-kw">memory</span> <span class="num">1</span>)                  <span class="cm">;; Minimum 1 page (64KB)</span>
+  )
+
+  (<span class="wasm-kw">func</span> $compute (<span class="wasm-kw">param</span> $x <span class="type">i32</span>) (<span class="wasm-kw">result</span> <span class="type">i32</span>)
+    <span class="wasm-kw">local.get</span> $x
+    <span class="wasm-kw">i32.const</span> <span class="num">2</span>
+    <span class="type">i32</span>.<span class="fn">mul</span>                       <span class="cm">;; x * 2</span>
+  )
+
+  <span class="cm">;; EXPORT function TO JavaScript</span>
+  (<span class="wasm-kw">export</span> <span class="str">"compute"</span> (<span class="wasm-kw">func</span> $compute))
+)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔢 WASM Data Types</div>
+    <table class="compare-table">
+      <thead>
+        <tr><th>Type</th><th>Description</th><th>Size</th><th>JS Equivalent</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code style="color:#c4b5fd">i32</code></td>
+          <td>32-bit integer (signed or unsigned)</td>
+          <td>4 bytes</td>
+          <td><code style="color:#fbbf24">number | BigInt</code></td>
+        </tr>
+        <tr>
+          <td><code style="color:#c4b5fd">i64</code></td>
+          <td>64-bit integer</td>
+          <td>8 bytes</td>
+          <td><code style="color:#fbbf24">BigInt</code></td>
+        </tr>
+        <tr>
+          <td><code style="color:#c4b5fd">f32</code></td>
+          <td>32-bit float</td>
+          <td>4 bytes</td>
+          <td><code style="color:#fbbf24">number</code></td>
+        </tr>
+        <tr>
+          <td><code style="color:#c4b5fd">f64</code></td>
+          <td>64-bit float (double)</td>
+          <td>8 bytes</td>
+          <td><code style="color:#fbbf24">number</code></td>
+        </tr>
+        <tr>
+          <td><code style="color:#c4b5fd">v128</code></td>
+          <td>128-bit SIMD vector (SIMD proposal)</td>
+          <td>16 bytes</td>
+          <td>No direct equiv</td>
+        </tr>
+        <tr>
+          <td><code style="color:#c4b5fd">funcref</code></td>
+          <td>Function reference</td>
+          <td>Platform</td>
+          <td><code style="color:#fbbf24">Function</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="tip">
+      💡 <strong>Key insight:</strong> WASM has NO string type, NO object type, NO array type directly.
+      Strings must be encoded as bytes in linear memory and decoded by JS!
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔧 Loading WASM in JavaScript — The 3 Ways</div>
+    <div class="code-block">
+<span class="cm">// ─── METHOD 1: fetch + instantiateStreaming (BEST - most efficient) ───</span>
+<span class="kw">const</span> { <span class="prop">instance</span> } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(
+  <span class="fn">fetch</span>(<span class="str">'module.wasm'</span>),
+  importObject   <span class="cm">// optional: functions/memory to pass INTO wasm</span>
+);
+<span class="kw">const</span> result = instance.exports.<span class="fn">add</span>(<span class="num">3</span>, <span class="num">4</span>); <span class="cm">// → 7</span>
+
+<span class="cm">// ─── METHOD 2: fetch + compile + instantiate (two-step) ───</span>
+<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'module.wasm'</span>);
+<span class="kw">const</span> bytes = <span class="kw">await</span> response.<span class="fn">arrayBuffer</span>();
+<span class="kw">const</span> module = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">compile</span>(bytes);
+<span class="kw">const</span> inst = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiate</span>(module);
+<span class="cm">// Useful when you need to create multiple instances of same module</span>
+
+<span class="cm">// ─── METHOD 3: WebAssembly.instantiate with bytes (most compatible) ───</span>
+<span class="kw">const</span> { <span class="prop">module</span>, <span class="prop">instance</span> } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiate</span>(bytes);
+
+<span class="cm">// ─── METHOD 4 (Sync - NOT recommended for large files) ───</span>
+<span class="kw">const</span> module = <span class="kw">new</span> <span class="fn">WebAssembly</span>.<span class="prop">Module</span>(bytes);   <span class="cm">// BLOCKS main thread!</span>
+<span class="kw">const</span> inst = <span class="kw">new</span> <span class="fn">WebAssembly</span>.<span class="prop">Instance</span>(module);
+    </div>
+
+    <div class="demo-area">
+      <div class="demo-title">🔬 Simulate WASM Loading Steps</div>
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" onclick="simulateLoad()">▶️ Simulate Loading</button>
+        <button class="btn btn-outline btn-sm" onclick="clearLoadOutput()">Clear</button>
+      </div>
+      <div class="output-box" id="loadOutput">Click to simulate...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎮 WASM Stack Machine Simulator</div>
+    <p style="color:var(--text2);font-size:0.9rem;margin-bottom:16px">
+      WASM is a STACK machine — operations push/pop values. Let's simulate it:
+    </p>
+    <div class="wasm-sim">
+      <div class="sim-controls">
+        <button class="btn btn-wasm btn-sm" onclick="simPush(5)">push(5)</button>
+        <button class="btn btn-wasm btn-sm" onclick="simPush(3)">push(3)</button>
+        <button class="btn btn-wasm btn-sm" onclick="simPush(10)">push(10)</button>
+        <button class="btn btn-primary btn-sm" onclick="simOp('add')">i32.add</button>
+        <button class="btn btn-primary btn-sm" onclick="simOp('mul')">i32.mul</button>
+        <button class="btn btn-primary btn-sm" onclick="simOp('sub')">i32.sub</button>
+        <button class="btn btn-warning btn-sm" onclick="simReset()">Reset Stack</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="color:var(--text3);font-size:0.8rem;margin-bottom:6px">STACK (top = right)</div>
+          <div class="stack-viz" id="stackViz">
+            <div style="color:var(--text3);font-size:0.8rem;text-align:center;align-self:center">(empty)</div>
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--text3);font-size:0.8rem;margin-bottom:6px">LOG</div>
+          <div class="output-box" id="stackLog" style="min-height:100px;font-size:0.8rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ INTEROP ════════ -->
+<div class="section" id="interop">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">🔗 JS ↔ WASM Interoperability</div>
+
+    <div class="analogy">
+      <div class="analogy-title">🌉 The Bridge Analogy</div>
+      <p style="color:var(--text2);line-height:1.8">
+        JS and WASM live on opposite sides of a bridge. <strong>Numbers can cross for free</strong>. 
+        But <strong>strings, objects, arrays</strong> must be <em>converted</em> at the toll booth — 
+        this conversion costs time. Design your code to minimize bridge crossings!
+      </p>
+    </div>
+
+    <div class="tab-group">
+      <button class="tab-btn active" onclick="switchTab('interopTabs','io1')">Calling WASM from JS</button>
+      <button class="tab-btn" onclick="switchTab('interopTabs','io2')">Passing Strings</button>
+      <button class="tab-btn" onclick="switchTab('interopTabs','io3')">Import Objects</button>
+      <button class="tab-btn" onclick="switchTab('interopTabs','io4')">SharedArrayBuffer</button>
+    </div>
+
+    <div id="interopTabs">
+      <div class="tab-panel active" id="io1">
+        <div class="code-block">
+<span class="cm">// ─── Calling WASM exported functions from JavaScript ───</span>
+
+<span class="cm">// After loading the module...</span>
+<span class="kw">const</span> { <span class="prop">instance</span> } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(<span class="fn">fetch</span>(<span class="str">'math.wasm'</span>));
+<span class="kw">const</span> exports = instance.exports;
+
+<span class="cm">// ── Call exported functions directly ──</span>
+<span class="kw">const</span> sum = exports.<span class="fn">add</span>(<span class="num">10</span>, <span class="num">20</span>);        <span class="cm">// → 30 (i32)</span>
+<span class="kw">const</span> pi = exports.<span class="fn">getPi</span>();             <span class="cm">// → 3.14159... (f64)</span>
+<span class="kw">const</span> big = exports.<span class="fn">factorial</span>(<span class="num">10</span>n);     <span class="cm">// BigInt for i64!</span>
+
+<span class="cm">// ── Access exported memory ──</span>
+<span class="kw">const</span> memory = exports.memory;           <span class="cm">// WebAssembly.Memory object</span>
+<span class="kw">const</span> view = <span class="kw">new</span> <span class="fn">Int32Array</span>(memory.buffer);
+
+<span class="cm">// ── Access exported globals ──</span>
+<span class="kw">const</span> counter = exports.counter;         <span class="cm">// WebAssembly.Global</span>
+console.<span class="fn">log</span>(counter.value);             <span class="cm">// Read global value</span>
+
+<span class="cm">// ── Type coercions that happen automatically ──</span>
+exports.<span class="fn">add</span>(<span class="num">1.9</span>, <span class="num">2.1</span>);  <span class="cm">// → 3 (floats truncated to i32!)</span>
+exports.<span class="fn">add</span>(<span class="str">'5'</span>, <span class="num">3</span>);    <span class="cm">// → 8 (string coerced to number)</span>
+exports.<span class="fn">add</span>();           <span class="cm">// → 0 (undefined becomes 0)</span>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="io2">
+        <div class="code-block">
+<span class="cm">// ─── Strings must go through LINEAR MEMORY ───</span>
+<span class="cm">// WASM doesn't have a string type — we encode strings as UTF-8 bytes</span>
+
+<span class="cm">// JavaScript side: write string INTO WASM memory</span>
+<span class="kw">function</span> <span class="fn">writeString</span>(memory, str, offset) {
+  <span class="kw">const</span> bytes = <span class="kw">new</span> <span class="fn">TextEncoder</span>().<span class="fn">encode</span>(str);
+  <span class="kw">const</span> view = <span class="kw">new</span> <span class="fn">Uint8Array</span>(memory.buffer);
+  view.<span class="fn">set</span>(bytes, offset);           <span class="cm">// Copy bytes into WASM memory</span>
+  view[offset + bytes.length] = <span class="num">0</span>;  <span class="cm">// Null terminator (C-style)</span>
+  <span class="kw">return</span> bytes.length;
+}
+
+<span class="cm">// JavaScript side: read string FROM WASM memory</span>
+<span class="kw">function</span> <span class="fn">readString</span>(memory, offset) {
+  <span class="kw">const</span> view = <span class="kw">new</span> <span class="fn">Uint8Array</span>(memory.buffer);
+  <span class="kw">let</span> end = offset;
+  <span class="kw">while</span> (view[end] !== <span class="num">0</span>) end++;     <span class="cm">// Find null terminator</span>
+  <span class="kw">return</span> <span class="kw">new</span> <span class="fn">TextDecoder</span>().<span class="fn">decode</span>(view.<span class="fn">subarray</span>(offset, end));
+}
+
+<span class="cm">// Usage:</span>
+<span class="kw">const</span> { memory, processString } = instance.exports;
+<span class="kw">const</span> PTR = <span class="num">0</span>;                         <span class="cm">// Starting address in memory</span>
+<span class="fn">writeString</span>(memory, <span class="str">"Hello WASM"</span>, PTR);
+<span class="fn">processString</span>(PTR);                    <span class="cm">// WASM reads from memory[PTR]</span>
+<span class="kw">const</span> result = <span class="fn">readString</span>(memory, PTR); <span class="cm">// JS reads result back</span>
+
+<span class="cm">// ── Modern approach: use wasm-bindgen or Emscripten ──</span>
+<span class="cm">// These tools handle string marshalling automatically!</span>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="io3">
+        <div class="code-block">
+<span class="cm">// ─── Import Object: pass JS functions INTO WASM ───</span>
+<span class="cm">// WASM can call JS functions you provide — like a plugin system</span>
+
+<span class="kw">const</span> importObject = {
+  <span class="prop">env</span>: {
+    <span class="cm">// JS function that WASM can call</span>
+    <span class="prop">log</span>: (value) => {
+      console.<span class="fn">log</span>(<span class="str">'WASM says:'</span>, value);
+    },
+
+    <span class="prop">log_float</span>: (value) => {
+      console.<span class="fn">log</span>(<span class="str">'WASM float:'</span>, value.toFixed(<span class="num">4</span>));
+    },
+
+    <span class="cm">// Provide memory to WASM</span>
+    <span class="prop">memory</span>: <span class="kw">new</span> <span class="prop">WebAssembly</span>.<span class="fn">Memory</span>({
+      <span class="prop">initial</span>: <span class="num">1</span>,    <span class="cm">// 1 page = 64KB initially</span>
+      <span class="prop">maximum</span>: <span class="num">10</span>,   <span class="cm">// Can grow up to 640KB</span>
+      <span class="prop">shared</span>: <span class="bool">true</span>   <span class="cm">// Optional: for SharedArrayBuffer</span>
+    }),
+
+    <span class="cm">// Provide a table of function references</span>
+    <span class="prop">table</span>: <span class="kw">new</span> <span class="prop">WebAssembly</span>.<span class="fn">Table</span>({
+      <span class="prop">initial</span>: <span class="num">1</span>,
+      <span class="prop">element</span>: <span class="str">'anyfunc'</span>
+    }),
+
+    <span class="cm">// Math functions WASM might need</span>
+    <span class="prop">Math_sin</span>: Math.sin,
+    <span class="prop">Math_cos</span>: Math.cos,
+    <span class="prop">Math_sqrt</span>: Math.sqrt,
+
+    <span class="cm">// Constants WASM can use</span>
+    <span class="prop">PI</span>: Math.PI,           <span class="cm">// Imported as WebAssembly.Global</span>
+  },
+  <span class="prop">wasi_snapshot_preview1</span>: {  <span class="cm">// WASI: system interface</span>
+    <span class="prop">fd_write</span>: (fd, iovs, iovsLen, nwritten) => { <span class="cm">/* ... */</span> }
+  }
+};
+
+<span class="kw">const</span> { instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(
+  <span class="fn">fetch</span>(<span class="str">'module.wasm'</span>),
+  importObject   <span class="cm">// ← Pass it here</span>
+);
+        </div>
+      </div>
+
+      <div class="tab-panel" id="io4">
+        <div class="code-block">
+<span class="cm">// ─── SharedArrayBuffer: share memory between JS & WebWorker & WASM ───</span>
+<span class="cm">// Enables TRUE parallelism — no copying needed!</span>
+
+<span class="cm">// ── Setup shared memory ──</span>
+<span class="kw">const</span> sharedMemory = <span class="kw">new</span> <span class="prop">WebAssembly</span>.<span class="fn">Memory</span>({
+  <span class="prop">initial</span>: <span class="num">1</span>,
+  <span class="prop">maximum</span>: <span class="num">100</span>,
+  <span class="prop">shared</span>: <span class="bool">true</span>   <span class="cm">// ← This makes it a SharedArrayBuffer!</span>
+});
+
+<span class="cm">// ── Both JS and WASM share the SAME buffer ──</span>
+<span class="kw">const</span> jsView = <span class="kw">new</span> <span class="fn">Int32Array</span>(sharedMemory.buffer);
+jsView[<span class="num">0</span>] = <span class="num">42</span>;  <span class="cm">// Write from JS</span>
+
+<span class="cm">// ── Worker thread can also access it ──</span>
+<span class="kw">const</span> worker = <span class="kw">new</span> <span class="fn">Worker</span>(<span class="str">'worker.js'</span>);
+worker.<span class="fn">postMessage</span>({ <span class="prop">memory</span>: sharedMemory });
+
+<span class="cm">// ── Atomics for thread safety ──</span>
+<span class="prop">Atomics</span>.<span class="fn">store</span>(jsView, <span class="num">0</span>, <span class="num">100</span>);       <span class="cm">// Atomic write</span>
+<span class="kw">const</span> val = <span class="prop">Atomics</span>.<span class="fn">load</span>(jsView, <span class="num">0</span>); <span class="cm">// Atomic read</span>
+<span class="prop">Atomics</span>.<span class="fn">add</span>(jsView, <span class="num">0</span>, <span class="num">1</span>);           <span class="cm">// Atomic increment</span>
+<span class="prop">Atomics</span>.<span class="fn">wait</span>(jsView, <span class="num">0</span>, <span class="num">100</span>);        <span class="cm">// Wait until value changes</span>
+<span class="prop">Atomics</span>.<span class="fn">notify</span>(jsView, <span class="num">0</span>, <span class="num">1</span>);       <span class="cm">// Wake up one waiting thread</span>
+
+<span class="cm">// NOTE: Requires these headers for security:</span>
+<span class="cm">// Cross-Origin-Opener-Policy: same-origin</span>
+<span class="cm">// Cross-Origin-Embedder-Policy: require-corp</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧪 Interactive Interop Demo</div>
+    <div class="demo-area">
+      <div class="demo-title">🔬 Simulate WASM Memory Operations</div>
+      <p style="color:var(--text2);font-size:0.85rem;margin-bottom:12px">
+        Watch how strings are encoded into "WASM memory" (a real Uint8Array):
+      </p>
+      <div class="input-group">
+        <input type="text" id="wasmStringInput" value="Hello WASM!" style="width:200px">
+        <button class="btn btn-wasm btn-sm" onclick="writeToWasmMemory()">Write to Memory</button>
+        <button class="btn btn-primary btn-sm" onclick="readFromWasmMemory()">Read Back</button>
+      </div>
+      <div class="output-box" id="wasmMemOutput">Enter a string and click "Write to Memory"...</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ MEMORY ════════ -->
+<div class="section" id="memory">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">🧠 Linear Memory — WASM's RAM</div>
+    <p style="color:var(--text2);line-height:1.8;margin-bottom:16px">
+      WASM has a contiguous, flat block of memory called <strong>linear memory</strong>. 
+      Think of it like a giant array of bytes. Both WASM and JS can read/write it.
+    </p>
+
+    <div class="diagram">
+      <div style="font-family:sans-serif;color:var(--text3);font-size:0.8rem;margin-bottom:12px">LINEAR MEMORY LAYOUT (example)</div>
+      <div style="display:flex;align-items:stretch;gap:2px;font-size:0.75rem;margin:0 auto;max-width:600px">
+        <div style="background:rgba(239,68,68,0.3);border:1px solid rgba(239,68,68,0.5);padding:8px 4px;flex:1;text-align:center;border-radius:4px 0 0 4px">
+          <div style="color:#f87171;font-weight:700">Stack</div>
+          <div style="color:var(--text3)">local vars</div>
+        </div>
+        <div style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);padding:8px 4px;flex:1;text-align:center">
+          <div style="color:#fbbf24;font-weight:700">Globals</div>
+          <div style="color:var(--text3)">global vars</div>
+        </div>
+        <div style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.4);padding:8px 4px;flex:1;text-align:center">
+          <div style="color:#34d399;font-weight:700">Heap</div>
+          <div style="color:var(--text3)">malloc'd data</div>
+        </div>
+        <div style="background:rgba(101,79,240,0.2);border:1px solid rgba(101,79,240,0.4);padding:8px 4px;flex:1;text-align:center">
+          <div style="color:#c4b5fd;font-weight:700">Strings</div>
+          <div style="color:var(--text3)">UTF-8 bytes</div>
+        </div>
+        <div style="background:rgba(55,65,81,0.5);border:1px solid rgba(75,85,99,0.5);padding:8px 4px;flex:1;text-align:center;border-radius:0 4px 4px 0">
+          <div style="color:var(--text3);font-weight:700">Free</div>
+          <div style="color:var(--text3)">unused</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;max-width:600px;margin:4px auto 0;font-size:0.7rem;color:var(--text3)">
+        <span>Addr 0</span>
+        <span>→ growing →</span>
+        <span>64KB (1 page)</span>
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="cm">// ─── Working with WebAssembly.Memory ───</span>
+
+<span class="cm">// Create memory: 1 page = 65,536 bytes (64KB)</span>
+<span class="kw">const</span> memory = <span class="kw">new</span> <span class="prop">WebAssembly</span>.<span class="fn">Memory</span>({
+  <span class="prop">initial</span>: <span class="num">1</span>,      <span class="cm">// Start with 1 page (64KB)</span>
+  <span class="prop">maximum</span>: <span class="num">256</span>    <span class="cm">// Max 256 pages (16MB)</span>
+});
+
+console.<span class="fn">log</span>(memory.buffer.byteLength);  <span class="cm">// 65536 (64 * 1024)</span>
+
+<span class="cm">// ── Different views into the SAME memory ──</span>
+<span class="kw">const</span> i8  = <span class="kw">new</span> <span class="fn">Int8Array</span>(memory.buffer);    <span class="cm">// 8-bit signed</span>
+<span class="kw">const</span> u8  = <span class="kw">new</span> <span class="fn">Uint8Array</span>(memory.buffer);   <span class="cm">// 8-bit unsigned</span>
+<span class="kw">const</span> i16 = <span class="kw">new</span> <span class="fn">Int16Array</span>(memory.buffer);   <span class="cm">// 16-bit signed</span>
+<span class="kw">const</span> i32 = <span class="kw">new</span> <span class="fn">Int32Array</span>(memory.buffer);   <span class="cm">// 32-bit signed</span>
+<span class="kw">const</span> f32 = <span class="kw">new</span> <span class="fn">Float32Array</span>(memory.buffer); <span class="cm">// 32-bit float</span>
+<span class="kw">const</span> f64 = <span class="kw">new</span> <span class="fn">Float64Array</span>(memory.buffer); <span class="cm">// 64-bit float</span>
+
+<span class="cm">// ── Write/read ──</span>
+i32[<span class="num">0</span>] = <span class="num">12345</span>;   <span class="cm">// Write int32 at byte offset 0</span>
+i32[<span class="num">1</span>] = <span class="num">67890</span>;   <span class="cm">// Write int32 at byte offset 4 (each i32 = 4 bytes)</span>
+
+<span class="cm">// ── Grow memory (both JS and WASM must handle this!) ──</span>
+memory.<span class="fn">grow</span>(<span class="num">1</span>);   <span class="cm">// Add 1 more page (64KB more)</span>
+<span class="cm">// WARNING: after grow(), old typed array views are DETACHED!</span>
+<span class="cm">// You MUST create new views after growing memory</span>
+<span class="kw">const</span> newView = <span class="kw">new</span> <span class="fn">Int32Array</span>(memory.buffer); <span class="cm">// Re-create view</span>
+    </div>
+
+    <div class="demo-area">
+      <div class="demo-title">🔬 Live Memory Viewer</div>
+      <div class="btn-group">
+        <button class="btn btn-wasm btn-sm" onclick="initMemory()">Init Memory (64 bytes)</button>
+        <button class="btn btn-primary btn-sm" onclick="writeMemory()">Write Some Values</button>
+        <button class="btn btn-outline btn-sm" onclick="clearMemory()">Clear</button>
+      </div>
+      <div class="memory-viz" id="memViz" style="margin-top:12px">
+        <div style="color:var(--text3)">Click "Init Memory" to start</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌍 WebAssembly Globals</div>
+    <div class="code-block">
+<span class="cm">// ─── WebAssembly.Global — shared mutable/immutable values ───</span>
+
+<span class="cm">// Create from JS</span>
+<span class="kw">const</span> myGlobal = <span class="kw">new</span> <span class="prop">WebAssembly</span>.<span class="fn">Global</span>(
+  { <span class="prop">value</span>: <span class="str">'i32'</span>, <span class="prop">mutable</span>: <span class="bool">true</span> },
+  <span class="num">42</span>  <span class="cm">// initial value</span>
+);
+
+console.<span class="fn">log</span>(myGlobal.value);  <span class="cm">// 42</span>
+myGlobal.value = <span class="num">100</span>;          <span class="cm">// Change it</span>
+
+<span class="cm">// In WAT (WebAssembly Text format):</span>
+<span class="cm">;; (global $counter (mut i32) (i32.const 0))</span>
+<span class="cm">;; (export "counter" (global $counter))</span>
+
+<span class="cm">// Types for globals:</span>
+<span class="cm">// 'i32', 'i64', 'f32', 'f64', 'v128', 'anyfunc', 'externref'</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ USE CASES ════════ -->
+<div class="section" id="usecases">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">🎯 Real-World Use Cases</div>
+    <p style="color:var(--text2);margin-bottom:16px">WASM shines in specific scenarios. Here are the most important ones:</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+      
+      <div class="accordion-item">
+        <button class="accordion-btn" onclick="toggleAccordion(this)">
+          🎮 Game Engines
+          <span class="accordion-icon">▼</span>
+        </button>
+        <div class="accordion-content">
+          <strong>Examples:</strong> Unity, Unreal Engine, Godot<br><br>
+          Games need to simulate physics, render graphics, and process input 60+ times per second. 
+          JS alone can't handle this. WASM runs game logic at near-C speeds in the browser.<br><br>
+          <strong>Key:</strong> Game loop runs in WASM, DOM interactions (menus, score display) stay in JS.
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-btn" onclick="toggleAccordion(this)">
+          🖼️ Image/Video Processing
+          <span class="accordion-icon">▼</span>
+        </button>
+        <div class="accordion-content">
+          <strong>Examples:</strong> Figma, Canva, Squoosh<br><br>
+          Applying filters, resizing images, encoding video — these require processing millions of pixels fast. 
+          WASM can do this 5-20x faster than JS for CPU-bound pixel operations.<br><br>
+          <strong>Real example:</strong> Squoosh (Google's image compressor) uses WASM codecs.
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-btn" onclick="toggleAccordion(this)">
+          🔐 Cryptography
+          <span class="accordion-icon">▼</span>
+        </button>
+        <div class="accordion-content">
+          <strong>Examples:</strong> Signal (encryption), 1Password<br><br>
+          Hash functions (SHA-256, bcrypt), encryption (AES), and signature verification involve 
+          intense bit manipulation. WASM has native i32/i64 operations perfect for this.<br><br>
+          <strong>Bonus:</strong> More consistent timing than JS (important for constant-time algorithms).
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-btn" onclick="toggleAccordion(this)">
+          🤖 Machine Learning
+          <span class="accordion-icon">▼</span>
+        </button>
+        <div class="accordion-content">
+          <strong>Examples:</strong> TensorFlow.js WASM backend, ONNX Runtime Web<br><br>
+          Matrix multiplications for neural networks are perfect for WASM's typed arrays 
+          and SIMD instructions. Can run ML inference 10-30x faster than pure JS.<br><br>
+          <strong>Future:</strong> WASM SIMD (v128) makes this even faster.
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-btn" onclick="toggleAccordion(this)">
+          📊 Data Visualization
+          <span class="accordion-icon">▼</span>
+        </button>
+        <div class="accordion-content">
+          <strong>Examples:</strong> Observable, DuckDB-WASM<br><br>
+          Processing and aggregating millions of data points for charts. DuckDB runs an entire 
+          SQL query engine in the browser via WASM — query gigabytes of data locally!<br><br>
+          <strong>DuckDB-WASM:</strong> Full SQL database running 100% in the browser.
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-btn" onclick="toggleAccordion(this)">
+          🔧 Dev Tools / Compilers
+          <span class="accordion-icon">▼</span>
+        </button>
+        <div class="accordion-content">
+          <strong>Examples:</strong> StackBlitz, CodeSandbox, Pyodide<br><br>
+          Running compilers, interpreters, and language runtimes in the browser. 
+          Pyodide runs the full Python interpreter (CPython) via WASM. SQLite runs via WASM.<br><br>
+          <strong>Stack Blitz:</strong> Node.js runs IN the browser via WASM!
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 When to Use WASM vs Pure JS</div>
+
+    <div class="diagram">
+      <div style="font-family:sans-serif;margin-bottom:12px">
+        <div style="color:var(--text2);font-size:0.85rem;margin-bottom:8px">DECISION FLOWCHART</div>
+        <div style="color:var(--text);margin:8px">Is the task CPU-bound? (lots of math/processing)</div>
+        <div style="display:flex;gap:20px;justify-content:center;margin:8px">
+          <div style="color:var(--error)">NO → Use JS</div>
+          <div style="color:var(--success)">YES ↓</div>
+        </div>
+        <div style="color:var(--text);margin:8px">Does JS performance matter? (not just "fast enough")</div>
+        <div style="display:flex;gap:20px;justify-content:center;margin:8px">
+          <div style="color:var(--error)">NO → Use JS</div>
+          <div style="color:var(--success)">YES ↓</div>
+        </div>
+        <div style="color:var(--text);margin:8px">Can you avoid frequent JS↔WASM calls?</div>
+        <div style="display:flex;gap:20px;justify-content:center;margin:8px">
+          <div style="color:var(--error)">NO → Reconsider (overhead may cancel gains)</div>
+          <div style="color:var(--success)">YES → Use WASM! ✅</div>
+        </div>
+      </div>
+    </div>
+
+    <table class="compare-table">
+      <thead><tr><th>Task</th><th>Use JS?</th><th>Use WASM?</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>DOM manipulation</td><td class="tick">✅</td><td class="cross">❌</td><td>WASM can't touch DOM</td></tr>
+        <tr><td>Fibonacci(50)</td><td class="tick">✅ fine</td><td class="neutral">🟡</td><td>Overkill for simple math</td></tr>
+        <tr><td>Sort 1M numbers</td><td class="cross">❌</td><td class="tick">✅</td><td>3-10x faster in WASM</td></tr>
+        <tr><td>Image filters</td><td class="cross">❌</td><td class="tick">✅</td><td>Pixel processing = WASM wins</td></tr>
+        <tr><td>HTTP requests</td><td class="tick">✅</td><td class="cross">❌</td><td>Network I/O = JS</td></tr>
+        <tr><td>SHA-256 hashing</td><td class="cross">❌</td><td class="tick">✅</td><td>Bit operations = WASM</td></tr>
+        <tr><td>JSON parsing</td><td class="tick">✅</td><td class="neutral">🟡</td><td>JS engine is already fast</td></tr>
+        <tr><td>Physics simulation</td><td class="cross">❌</td><td class="tick">✅</td><td>Heavy float math = WASM</td></tr>
+        <tr><td>Event handling</td><td class="tick">✅</td><td class="cross">❌</td><td>Browser events = JS</td></tr>
+        <tr><td>Audio DSP</td><td class="cross">❌</td><td class="tick">✅</td><td>Real-time audio = WASM</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ PERFORMANCE ════════ -->
+<div class="section" id="performance">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">⚡ Performance Deep Dive</div>
+
+    <div class="demo-area">
+      <div class="demo-title">📊 Relative Performance Visualization</div>
+      <p style="color:var(--text2);font-size:0.85rem;margin-bottom:12px">
+        Time to complete 10 million math operations (lower = faster). Click Animate:
+      </p>
+      <button class="btn btn-primary btn-sm" onclick="animateBars()">▶️ Animate</button>
+      <div class="perf-bar-container" style="margin-top:16px" id="perfBars">
+        <div class="perf-bar-row">
+          <div class="perf-bar-label" style="color:#ef4444">Native C</div>
+          <div class="perf-bar-bg">
+            <div class="perf-bar-fill native" id="bar-native" style="width:0%">~10ms</div>
+          </div>
+        </div>
+        <div class="perf-bar-row">
+          <div class="perf-bar-label" style="color:#a78bfa">WASM</div>
+          <div class="perf-bar-bg">
+            <div class="perf-bar-fill wasm" id="bar-wasm" style="width:0%">~15ms</div>
+          </div>
+        </div>
+        <div class="perf-bar-row">
+          <div class="perf-bar-label" style="color:#fbbf24">JS (JIT)</div>
+          <div class="perf-bar-bg">
+            <div class="perf-bar-fill js" id="bar-js" style="width:0%">~60ms</div>
+          </div>
+        </div>
+      </div>
+      <div style="color:var(--text3);font-size:0.8rem;margin-top:8px">
+        * Approximate values — actual performance varies greatly by task and engine
+      </div>
+    </div>
+
+    <div class="code-block">
+<span class="cm">// ─── PERFORMANCE OPTIMIZATION PATTERNS ───</span>
+
+<span class="cm">// ✅ PATTERN 1: Batch operations — minimize JS↔WASM calls</span>
+<span class="cm">// BAD: 1000 separate calls across the bridge</span>
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i < <span class="num">1000</span>; i++) {
+  wasmInstance.exports.<span class="fn">processOne</span>(data[i]);  <span class="cm">// 1000 bridge crossings!</span>
+}
+
+<span class="cm">// GOOD: One call that processes all data inside WASM</span>
+<span class="kw">const</span> memory = wasmInstance.exports.memory;
+<span class="kw">const</span> view = <span class="kw">new</span> <span class="fn">Float64Array</span>(memory.buffer);
+view.<span class="fn">set</span>(data);  <span class="cm">// Copy all data at once</span>
+wasmInstance.exports.<span class="fn">processAll</span>(<span class="num">0</span>, data.length);  <span class="cm">// One call!</span>
+
+<span class="cm">// ✅ PATTERN 2: Reuse instances — don't re-instantiate on every use</span>
+<span class="kw">class</span> <span class="fn">WASMProcessor</span> {
+  <span class="kw">constructor</span>() { <span class="kw">this</span>.instance = <span class="kw">null</span>; }
+  <span class="kw">async</span> <span class="fn">init</span>() {
+    <span class="kw">if</span> (!<span class="kw">this</span>.instance) {   <span class="cm">// Load ONCE, reuse always</span>
+      <span class="kw">const</span> { instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(...);
+      <span class="kw">this</span>.instance = instance;
+    }
+  }
+}
+
+<span class="cm">// ✅ PATTERN 3: Use streaming instantiation</span>
+<span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(<span class="fn">fetch</span>(<span class="str">'module.wasm'</span>)) <span class="cm">// Compiles WHILE downloading!</span>
+<span class="cm">// vs</span>
+<span class="kw">const</span> bytes = <span class="kw">await</span> (<span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'module.wasm'</span>)).<span class="fn">arrayBuffer</span>();
+<span class="prop">WebAssembly</span>.<span class="fn">instantiate</span>(bytes); <span class="cm">// Must wait for full download first</span>
+
+<span class="cm">// ✅ PATTERN 4: Pre-compile the module, instantiate multiple times</span>
+<span class="kw">const</span> module = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">compileStreaming</span>(<span class="fn">fetch</span>(<span class="str">'mod.wasm'</span>));
+<span class="kw">const</span> instance1 = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiate</span>(module);
+<span class="kw">const</span> instance2 = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiate</span>(module); <span class="cm">// No re-compile!</span>
+
+<span class="cm">// ✅ PATTERN 5: Offload to Web Worker (don't block main thread)</span>
+<span class="kw">const</span> worker = <span class="kw">new</span> <span class="fn">Worker</span>(<span class="str">'wasm-worker.js'</span>);
+worker.<span class="fn">postMessage</span>({ <span class="prop">task</span>: <span class="str">'process'</span>, <span class="prop">data</span>: largeDataset });
+worker.<span class="fn">onmessage</span> = ({ data: result }) => <span class="fn">updateUI</span>(result);
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⏱️ Benchmark — JS vs WASM-style Typed Arrays</div>
+    <div class="demo-area">
+      <div class="demo-title">🔬 Real Benchmark in your Browser</div>
+      <p style="color:var(--text2);font-size:0.85rem;margin-bottom:12px">
+        Compare regular JS array operations vs typed array operations (which WASM uses internally):
+      </p>
+      <div class="input-group">
+        <label style="color:var(--text2);font-size:0.9rem">Iterations:</label>
+        <input type="number" id="benchIterations" value="5000000" min="100000" max="50000000">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-warning" onclick="benchmarkJS()">🐢 Benchmark JS Array</button>
+        <button class="btn btn-wasm" onclick="benchmarkTyped()">🚀 Benchmark Typed Array</button>
+      </div>
+      <div class="output-box" id="benchOutput">Click a benchmark to run...</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💡 Performance Considerations Summary</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+      <div class="highlight">
+        <strong>🚀 WASM Advantages</strong><br>
+        • Predictable performance (no JIT deopt)<br>
+        • True 32/64-bit integer arithmetic<br>
+        • SIMD support (parallel operations)<br>
+        • No garbage collection pauses<br>
+        • Compact binary size
+      </div>
+      <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:12px 16px;font-size:0.9rem;margin:0">
+        <strong>⚠️ WASM Disadvantages</strong><br>
+        • JS↔WASM calls have overhead<br>
+        • No DOM access<br>
+        • Harder to debug<br>
+        • String/object marshalling costs<br>
+        • Startup compile time
+      </div>
+      <div class="tip" style="margin:0">
+        <strong>🎯 Sweet Spot</strong><br>
+        Tasks with: heavy computation + 
+        few boundary crossings + 
+        numeric data (not strings/objects) + 
+        predictability requirements
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ EXERCISES ════════ -->
+<div class="section" id="exercises">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">💪 Practice Exercises</div>
+    
+    <div class="exercise-area">
+      <div class="exercise-title">
+        <span class="badge badge-info">Exercise 1</span>
+        Load and Call a WASM Module
+      </div>
+      <div class="exercise-desc">
+        Write the JavaScript code to: (1) Load a WASM file called <code>'calculator.wasm'</code>, 
+        (2) Get the exported <code>multiply</code> function, (3) Call it with 7 and 8, 
+        (4) Log the result. Include proper error handling.
+      </div>
+      <textarea id="ex1" placeholder="// Write your answer here...
+const loadWasm = async () => {
+  // Your code here
+};">(async () => {
+  // Your answer here
+})();</textarea>
+      <div class="btn-group">
+        <button class="btn btn-success btn-sm" onclick="checkEx(1)">✅ Check Answer</button>
+        <button class="btn btn-outline btn-sm" onclick="showHint(1)">💡 Hint</button>
+        <button class="btn btn-wasm btn-sm" onclick="showSolution(1)">🔑 Solution</button>
+      </div>
+      <div class="output-box" id="ex1-output" style="display:none"></div>
+    </div>
+
+    <div class="exercise-area">
+      <div class="exercise-title">
+        <span class="badge badge-info">Exercise 2</span>
+        Write a String to WASM Memory
+      </div>
+      <div class="exercise-desc">
+        Complete the <code>writeStringToMemory</code> function that takes a 
+        <code>WebAssembly.Memory</code> object, a string, and an offset, then writes 
+        the UTF-8 encoded string into the memory buffer at that offset.
+      </div>
+      <textarea id="ex2" placeholder="// Write your answer...">function writeStringToMemory(memory, str, offset) {
+  // 1. Encode the string to UTF-8 bytes using TextEncoder
+  // 2. Get a Uint8Array view of memory.buffer
+  // 3. Copy the bytes into the view at the given offset
+  // 4. Return the number of bytes written
+}</textarea>
+      <div class="btn-group">
+        <button class="btn btn-success btn-sm" onclick="checkEx(2)">✅ Check Answer</button>
+        <button class="btn btn-outline btn-sm" onclick="showHint(2)">💡 Hint</button>
+        <button class="btn btn-wasm btn-sm" onclick="showSolution(2)">🔑 Solution</button>
+      </div>
+      <div class="output-box" id="ex2-output" style="display:none"></div>
+    </div>
+
+    <div class="exercise-area">
+      <div class="exercise-title">
+        <span class="badge badge-info">Exercise 3</span>
+        Create and Use WebAssembly.Memory
+      </div>
+      <div class="exercise-desc">
+        Create a <code>WebAssembly.Memory</code> with 2 initial pages and max 10 pages. 
+        Write the numbers 1-5 as Int32 values starting at byte offset 0. 
+        Then read them back and log each one.
+      </div>
+      <textarea id="ex3" placeholder="// Write your answer...">function memoryExercise() {
+  // 1. Create WebAssembly.Memory (2 initial, max 10 pages)
+  // 2. Create an Int32Array view of memory.buffer
+  // 3. Write numbers 1, 2, 3, 4, 5 at indices 0-4
+  // 4. Read and console.log each value
+}</textarea>
+      <div class="btn-group">
+        <button class="btn btn-success btn-sm" onclick="checkEx(3)">✅ Check Answer</button>
+        <button class="btn btn-outline btn-sm" onclick="showHint(3)">💡 Hint</button>
+        <button class="btn btn-wasm btn-sm" onclick="showSolution(3)">🔑 Solution</button>
+      </div>
+      <div class="output-box" id="ex3-output" style="display:none"></div>
+    </div>
+
+    <div class="exercise-area">
+      <div class="exercise-title">
+        <span class="badge badge-info">Exercise 4</span>
+        Build an Import Object
+      </div>
+      <div class="exercise-desc">
+        Create an <code>importObject</code> for a WASM module that needs: 
+        a <code>log(i32)</code> function in the <code>'env'</code> namespace, 
+        a <code>logFloat(f64)</code> function in <code>'env'</code>, 
+        and a shared <code>Memory</code> object with 1 initial page.
+      </div>
+      <textarea id="ex4" placeholder="// Write your answer...">const importObject = {
+  // Your answer here
+};</textarea>
+      <div class="btn-group">
+        <button class="btn btn-success btn-sm" onclick="checkEx(4)">✅ Check Answer</button>
+        <button class="btn btn-outline btn-sm" onclick="showHint(4)">💡 Hint</button>
+        <button class="btn btn-wasm btn-sm" onclick="showSolution(4)">🔑 Solution</button>
+      </div>
+      <div class="output-box" id="ex4-output" style="display:none"></div>
+    </div>
+
+    <div class="exercise-area">
+      <div class="exercise-title">
+        <span class="badge badge-info">Exercise 5</span>
+        Performance-Optimized Image Processor
+      </div>
+      <div class="exercise-desc">
+        Write a function that processes image pixel data using a Uint8ClampedArray 
+        (like real image processing). Convert each pixel to grayscale using the formula: 
+        <code>gray = 0.299*R + 0.587*G + 0.114*B</code>. 
+        This simulates how WASM processes pixels via linear memory.
+      </div>
+      <textarea id="ex5" placeholder="// Write your answer...">function grayscalePixels(imageData) {
+  // imageData is a Uint8ClampedArray where each pixel = [R, G, B, A]
+  // Modify it in-place: set R=G=B=gray for each pixel
+  // Return the modified imageData
+}</textarea>
+      <div class="btn-group">
+        <button class="btn btn-success btn-sm" onclick="checkEx(5)">✅ Check Answer</button>
+        <button class="btn btn-outline btn-sm" onclick="showHint(5)">💡 Hint</button>
+        <button class="btn btn-wasm btn-sm" onclick="showSolution(5)">🔑 Solution</button>
+      </div>
+      <div class="output-box" id="ex5-output" style="display:none"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ QUIZ ════════ -->
+<div class="section" id="quiz">
+<div class="container">
+
+  <div class="score-display">
+    Score: <span id="quizScore">0</span> / <span id="quizTotal">0</span> correct
+    <span id="quizPercent" style="color:var(--text2);font-size:0.9rem;margin-left:8px"></span>
+  </div>
+
+  <div id="quizContainer"></div>
+
+  <div style="text-align:center;margin-top:24px">
+    <button class="btn btn-primary" onclick="resetQuiz()">🔄 Reset Quiz</button>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ MISTAKES ════════ -->
+<div class="section" id="mistakes">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">⚠️ Common Mistakes & Pitfalls</div>
+
+    <div class="mistake-card">
+      <div class="mistake-header">❌ Mistake 1: Re-instantiating WASM on Every Call</div>
+      <div class="code-block" style="border-color:rgba(239,68,68,0.3)">
+<span class="cm">// ❌ WRONG — Compiles and instantiates on every function call!</span>
+<span class="kw">async function</span> <span class="fn">processData</span>(data) {
+  <span class="kw">const</span> { instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(<span class="fn">fetch</span>(<span class="str">'mod.wasm'</span>));
+  <span class="kw">return</span> instance.exports.<span class="fn">process</span>(data);
+}
+<span class="cm">// Called 100 times = 100 network requests + 100 compilations = 💀</span>
+      </div>
+      <div class="fix-block">
+        <div class="fix-label">✅ FIX</div>
+        <div class="code-block" style="border-color:rgba(16,185,129,0.3)">
+<span class="cm">// ✅ CORRECT — Load once, use many times</span>
+<span class="kw">let</span> wasmInstance = <span class="kw">null</span>;
+
+<span class="kw">async function</span> <span class="fn">getWasm</span>() {
+  <span class="kw">if</span> (!wasmInstance) {
+    <span class="kw">const</span> { instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(<span class="fn">fetch</span>(<span class="str">'mod.wasm'</span>));
+    wasmInstance = instance;
+  }
+  <span class="kw">return</span> wasmInstance;
+}
+
+<span class="kw">async function</span> <span class="fn">processData</span>(data) {
+  <span class="kw">const</span> wasm = <span class="kw">await</span> <span class="fn">getWasm</span>();  <span class="cm">// Reuses existing instance</span>
+  <span class="kw">return</span> wasm.exports.<span class="fn">process</span>(data);
+}
+        </div>
+      </div>
+    </div>
+
+    <div class="mistake-card">
+      <div class="mistake-header">❌ Mistake 2: Forgetting to Recreate TypedArray Views After memory.grow()</div>
+      <div class="code-block" style="border-color:rgba(239,68,68,0.3)">
+<span class="cm">// ❌ WRONG — Stale view after memory.grow()</span>
+<span class="kw">const</span> memory = <span class="kw">new</span> <span class="prop">WebAssembly</span>.<span class="fn">Memory</span>({ <span class="prop">initial</span>: <span class="num">1</span> });
+<span class="kw">const</span> view = <span class="kw">new</span> <span class="fn">Int32Array</span>(memory.buffer);  <span class="cm">// Created here</span>
+
+memory.<span class="fn">grow</span>(<span class="num">1</span>);  <span class="cm">// Buffer is now REPLACED — old view is DETACHED!</span>
+
+view[<span class="num">0</span>] = <span class="num">42</span>;   <span class="cm">// 💥 TypeError: Cannot set property of detached ArrayBuffer</span>
+      </div>
+      <div class="fix-block">
+        <div class="fix-label">✅ FIX</div>
+        <div class="code-block" style="border-color:rgba(16,185,129,0.3)">
+<span class="cm">// ✅ CORRECT — Get fresh view after grow()</span>
+<span class="kw">function</span> <span class="fn">getView</span>(memory) {
+  <span class="kw">return</span> <span class="kw">new</span> <span class="fn">Int32Array</span>(memory.buffer);  <span class="cm">// Always use memory.buffer</span>
+}
+
+<span class="kw">const</span> memory = <span class="kw">new</span> <span class="prop">WebAssembly</span>.<span class="fn">Memory</span>({ <span class="prop">initial</span>: <span class="num">1</span> });
+memory.<span class="fn">grow</span>(<span class="num">1</span>);
+
+<span class="kw">const</span> view = <span class="fn">getView</span>(memory);  <span class="cm">// ✅ Fresh view after grow</span>
+view[<span class="num">0</span>] = <span class="num">42</span>;  <span class="cm">// ✅ Works!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mistake-card">
+      <div class="mistake-header">❌ Mistake 3: Passing i64 from JS Without BigInt</div>
+      <div class="code-block" style="border-color:rgba(239,68,68,0.3)">
+<span class="cm">// ❌ WRONG — i64 returns are BigInt in JS, not Number</span>
+<span class="kw">const</span> result = instance.exports.<span class="fn">factorial</span>(<span class="num">20</span>);  <span class="cm">// Returns BigInt!</span>
+console.<span class="fn">log</span>(result + <span class="num">1</span>);  <span class="cm">// 💥 TypeError: Cannot mix BigInt and other types</span>
+console.<span class="fn">log</span>(result > <span class="num">100</span>); <span class="cm">// 💥 TypeError!</span>
+      </div>
+      <div class="fix-block">
+        <div class="fix-label">✅ FIX</div>
+        <div class="code-block" style="border-color:rgba(16,185,129,0.3)">
+<span class="cm">// ✅ CORRECT — Work with BigInt properly</span>
+<span class="kw">const</span> result = instance.exports.<span class="fn">factorial</span>(<span class="num">20</span><span class="type">n</span>); <span class="cm">// Pass BigInt in</span>
+console.<span class="fn">log</span>(result + <span class="num">1</span><span class="type">n</span>);          <span class="cm">// Use BigInt arithmetic</span>
+console.<span class="fn">log</span>(result > <span class="num">100</span><span class="type">n</span>);        <span class="cm">// Compare with BigInt</span>
+console.<span class="fn">log</span>(<span class="fn">Number</span>(result));       <span class="cm">// Convert to Number if safe (small values)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mistake-card">
+      <div class="mistake-header">❌ Mistake 4: Too Many JS↔WASM Boundary Crossings</div>
+      <div class="code-block" style="border-color:rgba(239,68,68,0.3)">
+<span class="cm">// ❌ WRONG — 1 million boundary crossings = slow!</span>
+<span class="kw">const</span> arr = <span class="kw">new</span> <span class="fn">Float64Array</span>(<span class="num">1_000_000</span>);
+arr.<span class="fn">fill</span>(<span class="num">1.5</span>);
+
+<span class="kw">let</span> total = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">const</span> val <span class="kw">of</span> arr) {
+  total += instance.exports.<span class="fn">square</span>(val); <span class="cm">// 1M WASM calls!</span>
+}
+      </div>
+      <div class="fix-block">
+        <div class="fix-label">✅ FIX</div>
+        <div class="code-block" style="border-color:rgba(16,185,129,0.3)">
+<span class="cm">// ✅ CORRECT — One call, all work done inside WASM</span>
+<span class="kw">const</span> arr = <span class="kw">new</span> <span class="fn">Float64Array</span>(<span class="num">1_000_000</span>);
+arr.<span class="fn">fill</span>(<span class="num">1.5</span>);
+
+<span class="cm">// Copy data into WASM memory once</span>
+<span class="kw">const</span> view = <span class="kw">new</span> <span class="fn">Float64Array</span>(instance.exports.memory.buffer);
+view.<span class="fn">set</span>(arr, <span class="num">0</span>);
+
+<span class="cm">// Process ALL elements inside WASM — ONE call!</span>
+<span class="kw">const</span> total = instance.exports.<span class="fn">sumSquares</span>(<span class="num">0</span>, arr.length);
+        </div>
+      </div>
+    </div>
+
+    <div class="mistake-card">
+      <div class="mistake-header">❌ Mistake 5: Using Synchronous Compilation in Main Thread</div>
+      <div class="code-block" style="border-color:rgba(239,68,68,0.3)">
+<span class="cm">// ❌ WRONG — Blocks the main thread! UI freezes!</span>
+<span class="kw">const</span> bytes = <span class="cm">/* somehow got bytes synchronously */</span>;
+<span class="kw">const</span> module = <span class="kw">new</span> <span class="fn">WebAssembly</span>.<span class="prop">Module</span>(bytes);   <span class="cm">// BLOCKS! ❌</span>
+<span class="kw">const</span> inst = <span class="kw">new</span> <span class="fn">WebAssembly</span>.<span class="prop">Instance</span>(module);  <span class="cm">// BLOCKS! ❌</span>
+      </div>
+      <div class="fix-block">
+        <div class="fix-label">✅ FIX</div>
+        <div class="code-block" style="border-color:rgba(16,185,129,0.3)">
+<span class="cm">// ✅ CORRECT — Always use async APIs</span>
+<span class="kw">const</span> { instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(
+  <span class="fn">fetch</span>(<span class="str">'module.wasm'</span>)  <span class="cm">// Non-blocking! ✅</span>
+);
+
+<span class="cm">// OR use a Web Worker for compilation</span>
+<span class="cm">// worker.js:</span>
+<span class="kw">const</span> { instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiate</span>(bytes);
+self.<span class="fn">postMessage</span>({ <span class="prop">ready</span>: <span class="bool">true</span> });
+        </div>
+      </div>
+    </div>
+
+    <div class="mistake-card">
+      <div class="mistake-header">❌ Mistake 6: Assuming WASM Always Outperforms JS</div>
+      <div style="color:var(--text2);font-size:0.9rem;line-height:1.7;margin-top:8px">
+        <strong style="color:#f87171">MYTH:</strong> "WASM is always faster than JavaScript"<br><br>
+        <strong style="color:#34d399">TRUTH:</strong> WASM is faster for CPU-bound tasks, but may be SLOWER than JS for:
+        <ul style="margin-top:8px;margin-left:20px">
+          <li>Tasks that require frequent JS↔WASM boundary crossings</li>
+          <li>String-heavy workloads (string marshalling overhead)</li>
+          <li>Simple operations (JS JIT can match WASM for simple code)</li>
+          <li>DOM manipulation (WASM can't touch the DOM — must go through JS)</li>
+          <li>Short-running tasks (startup time outweighs benefits)</li>
+        </ul>
+        <div class="tip" style="margin-top:12px">
+          💡 Always benchmark YOUR specific use case before deciding to use WASM!
+        </div>
+      </div>
+    </div>
+
+    <div class="mistake-card">
+      <div class="mistake-header">❌ Mistake 7: Wrong MIME Type for .wasm Files</div>
+      <div class="code-block" style="border-color:rgba(239,68,68,0.3)">
+<span class="cm">// ❌ PROBLEM: Server sends wrong Content-Type</span>
+<span class="cm">// If server sends: Content-Type: application/octet-stream</span>
+<span class="cm">// Then instantiateStreaming will FAIL with a TypeError!</span>
+
+<span class="cm">// Error: "Response has unsupported MIME type"</span>
+      </div>
+      <div class="fix-block">
+        <div class="fix-label">✅ FIX</div>
+        <div class="code-block" style="border-color:rgba(16,185,129,0.3)">
+<span class="cm">// Configure server to send: Content-Type: application/wasm</span>
+
+<span class="cm">// In Express.js:</span>
+app.<span class="fn">use</span>((req, res, next) => {
+  <span class="kw">if</span> (req.path.<span class="fn">endsWith</span>(<span class="str">'.wasm'</span>)) {
+    res.<span class="fn">set</span>(<span class="str">'Content-Type'</span>, <span class="str">'application/wasm'</span>);
+  }
+  <span class="fn">next</span>();
+});
+
+<span class="cm">// OR: fallback in case of MIME type issues</span>
+<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'module.wasm'</span>);
+<span class="kw">if</span> (!response.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Failed to fetch WASM'</span>);
+<span class="kw">const</span> bytes = <span class="kw">await</span> response.<span class="fn">arrayBuffer</span>(); <span class="cm">// Fallback: doesn't need MIME</span>
+<span class="kw">const</span> { instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiate</span>(bytes);
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════════════ CHEAT SHEET ════════ -->
+<div class="section" id="cheatsheet">
+<div class="container">
+
+  <div class="card">
+    <div class="card-title">📋 WebAssembly Cheat Sheet</div>
+    <div class="cheat-grid">
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">🔑 Core JS APIs</div>
+        <div class="cheat-item">
+          <span class="cheat-key">WebAssembly.instantiateStreaming(fetch, imports)</span>
+          <span class="cheat-val">Best: load + compile + instantiate</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">WebAssembly.instantiate(bytes, imports)</span>
+          <span class="cheat-val">From ArrayBuffer</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">WebAssembly.compile(bytes)</span>
+          <span class="cheat-val">Compile only (reuse module)</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">WebAssembly.compileStreaming(fetch)</span>
+          <span class="cheat-val">Stream compile only</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">WebAssembly.validate(bytes)</span>
+          <span class="cheat-val">Check if bytes are valid WASM</span>
+        </div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">📦 Core Objects</div>
+        <div class="cheat-item">
+          <span class="cheat-key">new WebAssembly.Memory({initial, maximum, shared})</span>
+          <span class="cheat-val">Linear memory (pages of 64KB)</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">memory.buffer</span>
+          <span class="cheat-val">The underlying ArrayBuffer</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">memory.grow(pages)</span>
+          <span class="cheat-val">Grow by N pages (64KB each)</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">new WebAssembly.Table({initial, element})</span>
+          <span class="cheat-val">Function reference table</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">new WebAssembly.Global({value, mutable}, init)</span>
+          <span class="cheat-val">Shared global variable</span>
+        </div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">🔢 WASM Types</div>
+        <div class="cheat-item"><span class="cheat-key">i32</span><span class="cheat-val">32-bit integer</span></div>
+        <div class="cheat-item"><span class="cheat-key">i64</span><span class="cheat-val">64-bit integer (BigInt in JS)</span></div>
+        <div class="cheat-item"><span class="cheat-key">f32</span><span class="cheat-val">32-bit float</span></div>
+        <div class="cheat-item"><span class="cheat-key">f64</span><span class="cheat-val">64-bit float (number in JS)</span></div>
+        <div class="cheat-item"><span class="cheat-key">v128</span><span class="cheat-val">128-bit SIMD vector</span></div>
+        <div class="cheat-item"><span class="cheat-key">funcref</span><span class="cheat-val">Function reference</span></div>
+        <div class="cheat-item"><span class="cheat-key">externref</span><span class="cheat-val">JS object reference</span></div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">🧠 TypedArray Views</div>
+        <div class="cheat-item"><span class="cheat-key">new Int8Array(memory.buffer)</span><span class="cheat-val">8-bit signed</span></div>
+        <div class="cheat-item"><span class="cheat-key">new Uint8Array(memory.buffer)</span><span class="cheat-val">8-bit unsigned</span></div>
+        <div class="cheat-item"><span class="cheat-key">new Int16Array(memory.buffer)</span><span class="cheat-val">16-bit signed</span></div>
+        <div class="cheat-item"><span class="cheat-key">new Uint16Array(memory.buffer)</span><span class="cheat-val">16-bit unsigned</span></div>
+        <div class="cheat-item"><span class="cheat-key">new Int32Array(memory.buffer)</span><span class="cheat-val">32-bit signed (WASM i32)</span></div>
+        <div class="cheat-item"><span class="cheat-key">new Float32Array(memory.buffer)</span><span class="cheat-val">32-bit float (WASM f32)</span></div>
+        <div class="cheat-item"><span class="cheat-key">new Float64Array(memory.buffer)</span><span class="cheat-val">64-bit float (WASM f64)</span></div>
+        <div class="cheat-item"><span class="cheat-key">new BigInt64Array(memory.buffer)</span><span class="cheat-val">64-bit int (WASM i64)</span></div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">📝 WAT Keywords</div>
+        <div class="cheat-item"><span class="cheat-key">module</span><span class="cheat-val">Top-level container</span></div>
+        <div class="cheat-item"><span class="cheat-key">func / param / result</span><span class="cheat-val">Function definition</span></div>
+        <div class="cheat-item"><span class="cheat-key">local.get / local.set</span><span class="cheat-val">Read/write local variable</span></div>
+        <div class="cheat-item"><span class="cheat-key">i32.const / f64.const</span><span class="cheat-val">Push literal value</span></div>
+        <div class="cheat-item"><span class="cheat-key">i32.add / i32.mul</span><span class="cheat-val">Integer arithmetic</span></div>
+        <div class="cheat-item"><span class="cheat-key">i32.load / i32.store</span><span class="cheat-val">Memory read/write</span></div>
+        <div class="cheat-item"><span class="cheat-key">call $funcName</span><span class="cheat-val">Call a function</span></div>
+        <div class="cheat-item"><span class="cheat-key">import / export</span><span class="cheat-val">JS ↔ WASM interface</span></div>
+        <div class="cheat-item"><span class="cheat-key">block / loop / br / br_if</span><span class="cheat-val">Control flow</span></div>
+        <div class="cheat-item"><span class="cheat-key">if / then / else</span><span class="cheat-val">Conditional</span></div>
+        <div class="cheat-item"><span class="cheat-key">memory (pages)</span><span class="cheat-val">Declare memory</span></div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">⚡ String Handling</div>
+        <div class="cheat-item">
+          <span class="cheat-key">new TextEncoder().encode(str)</span>
+          <span class="cheat-val">String → Uint8Array</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">new TextDecoder().decode(bytes)</span>
+          <span class="cheat-val">Uint8Array → String</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">view.set(bytes, offset)</span>
+          <span class="cheat-val">Copy bytes into memory</span>
+        </div>
+        <div class="cheat-item">
+          <span class="cheat-key">view.subarray(start, end)</span>
+          <span class="cheat-val">Slice without copying</span>
+        </div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">🔢 Memory Math</div>
+        <div class="cheat-item"><span class="cheat-key">1 page</span><span class="cheat-val">65,536 bytes (64KB)</span></div>
+        <div class="cheat-item"><span class="cheat-key">Max pages</span><span class="cheat-val">65,536 pages = 4GB</span></div>
+        <div class="cheat-item"><span class="cheat-key">i32 size</span><span class="cheat-val">4 bytes</span></div>
+        <div class="cheat-item"><span class="cheat-key">i64 size</span><span class="cheat-val">8 bytes</span></div>
+        <div class="cheat-item"><span class="cheat-key">f32 size</span><span class="cheat-val">4 bytes</span></div>
+        <div class="cheat-item"><span class="cheat-key">f64 size</span><span class="cheat-val">8 bytes</span></div>
+        <div class="cheat-item"><span class="cheat-key">Byte addr of i32[n]</span><span class="cheat-val">n * 4</span></div>
+        <div class="cheat-item"><span class="cheat-key">Byte addr of f64[n]</span><span class="cheat-val">n * 8</span></div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">🛠️ Tools & Ecosystem</div>
+        <div class="cheat-item"><span class="cheat-key">Emscripten</span><span class="cheat-val">C/C++ → WASM compiler</span></div>
+        <div class="cheat-item"><span class="cheat-key">wasm-pack</span><span class="cheat-val">Rust → WASM tool</span></div>
+        <div class="cheat-item"><span class="cheat-key">wasm-bindgen</span><span class="cheat-val">Rust↔JS bindings</span></div>
+        <div class="cheat-item"><span class="cheat-key">wat2wasm</span><span class="cheat-val">WAT text → WASM binary</span></div>
+        <div class="cheat-item"><span class="cheat-key">wasm2wat</span><span class="cheat-val">WASM binary → WAT text</span></div>
+        <div class="cheat-item"><span class="cheat-key">AssemblyScript</span><span class="cheat-val">TypeScript → WASM</span></div>
+        <div class="cheat-item"><span class="cheat-key">wasm-opt</span><span class="cheat-val">Optimize WASM binary</span></div>
+        <div class="cheat-item"><span class="cheat-key">WASI</span><span class="cheat-val">WASM System Interface (Node)</span></div>
+      </div>
+
+      <div class="cheat-section">
+        <div class="cheat-section-title">✅ Best Practices</div>
+        <div class="cheat-item"><span class="cheat-key">Load once</span><span class="cheat-val">Cache the instance</span></div>
+        <div class="cheat-item"><span class="cheat-key">Batch calls</span><span class="cheat-val">Minimize JS↔WASM crossings</span></div>
+        <div class="cheat-item"><span class="cheat-key">Async always</span><span class="cheat-val">Never use sync APIs</span></div>
+        <div class="cheat-item"><span class="cheat-key">Stream it</span><span class="cheat-val">instantiateStreaming > instantiate</span></div>
+        <div class="cheat-item"><span class="cheat-key">Refresh views</span><span class="cheat-val">After memory.grow()</span></div>
+        <div class="cheat-item"><span class="cheat-key">Web Workers</span><span class="cheat-val">Heavy WASM off main thread</span></div>
+        <div class="cheat-item"><span class="cheat-key">Benchmark first</span><span class="cheat-val">Measure before optimizing</span></div>
+        <div class="cheat-item"><span class="cheat-key">MIME type</span><span class="cheat-val">Serve as application/wasm</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚀 Complete Pattern: Production-Ready WASM Loader</div>
+    <div class="code-block">
+<span class="cm">// ─── Production-ready WASM module loader ───</span>
+<span class="kw">class</span> <span class="fn">WasmModule</span> {
+  <span class="prop">#module</span> = <span class="kw">null</span>;
+  <span class="prop">#instance</span> = <span class="kw">null</span>;
+  <span class="prop">#memory</span> = <span class="kw">null</span>;
+  <span class="prop">#loading</span> = <span class="kw">null</span>;
+
+  <span class="kw">constructor</span>(url, importObject = {}) {
+    <span class="kw">this</span>.url = url;
+    <span class="kw">this</span>.importObject = importObject;
+  }
+
+  <span class="kw">async</span> <span class="fn">load</span>() {
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="prop">#instance</span>) <span class="kw">return</span> <span class="kw">this</span>;     <span class="cm">// Already loaded</span>
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="prop">#loading</span>) <span class="kw">return</span> <span class="kw">this</span>.<span class="prop">#loading</span>;  <span class="cm">// In progress</span>
+
+    <span class="kw">this</span>.<span class="prop">#loading</span> = (<span class="kw">async</span> () => {
+      <span class="kw">try</span> {
+        <span class="kw">const</span> { module, instance } = <span class="kw">await</span> <span class="prop">WebAssembly</span>.<span class="fn">instantiateStreaming</span>(
+          <span class="fn">fetch</span>(<span class="kw">this</span>.url),
+          <span class="kw">this</span>.importObject
+        );
+        <span class="kw">this</span>.<span class="prop">#module</span> = module;
+        <span class="kw">this</span>.<span class="prop">#instance</span> = instance;
+        <span class="kw">this</span>.<span class="prop">#memory</span> = instance.exports.memory;
+      } <span class="kw">catch</span> (e) {
+        <span class="kw">this</span>.<span class="prop">#loading</span> = <span class="kw">null</span>;  <span class="cm">// Allow retry on error</span>
+        <span class="kw">throw</span> e;
+      }
+      <span class="kw">return</span> <span class="kw">this</span>;
+    })();
+
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="prop">#loading</span>;
+  }
+
+  <span class="fn">call</span>(fnName, ...args) {
+    <span class="kw">if</span> (!<span class="kw">this</span>.<span class="prop">#instance</span>) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Module not loaded! Call load() first'</span>);
+    <span class="kw">const</span> fn = <span class="kw">this</span>.<span class="prop">#instance</span>.exports[fnName];
+    <span class="kw">if</span> (!fn) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">`Export '${fnName}' not found`</span>);
+    <span class="kw">return</span> <span class="fn">fn</span>(...args);
+  }
+
+  <span class="fn">getView</span>(TypedArrayClass) {
+    <span class="kw">return</span> <span class="kw">new</span> <span class="fn">TypedArrayClass</span>(<span class="kw">this</span>.<span class="prop">#memory</span>.buffer);  <span class="cm">// Always fresh</span>
+  }
+
+  <span class="fn">writeString</span>(str, offset) {
+    <span class="kw">const</span> bytes = <span class="kw">new</span> <span class="fn">TextEncoder</span>().<span class="fn">encode</span>(str);
+    <span class="kw">const</span> view = <span class="kw">this</span>.<span class="fn">getView</span>(Uint8Array);
+    view.<span class="fn">set</span>(bytes, offset);
+    view[offset + bytes.length] = <span class="num">0</span>;
+    <span class="kw">return</span> bytes.length;
+  }
+
+  <span class="fn">readString</span>(offset) {
+    <span class="kw">const</span> view = <span class="kw">this</span>.<span class="fn">getView</span>(Uint8Array);
+    <span class="kw">let</span> end = offset;
+    <span class="kw">while</span> (view[end]) end++;
+    <span class="kw">return</span> <span class="kw">new</span> <span class="fn">TextDecoder</span>().<span class="fn">decode</span>(view.<span class="fn">subarray</span>(offset, end));
+  }
+}
+
+<span class="cm">// Usage:</span>
+<span class="kw">const</span> wasm = <span class="kw">new</span> <span class="fn">WasmModule</span>(<span class="str">'./my-lib.wasm'</span>);
+<span class="kw">await</span> wasm.<span class="fn">load</span>();
+<span class="kw">const</span> result = wasm.<span class="fn">call</span>(<span class="str">'multiply'</span>, <span class="num">6</span>, <span class="num">7</span>);  <span class="cm">// → 42</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════ NAV LOGIC
+const sections = ['intro','basics','interop','memory','usecases','performance','exercises','quiz','mistakes','cheatsheet'];
+const visitedSections = new Set(['intro']);
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  visitedSections.add(id);
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+function updateProgress() {
+  const pct = Math.round((visitedSections.size / sections.length) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = pct + '% Explored';
+}
+
+// ═══════════════════════════════════════════════════════════ TAB SWITCHING
+function switchTab(groupId, tabId) {
+  const group = document.getElementById(groupId);
+  group.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  group.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════ ACCORDION
+function toggleAccordion(btn) {
+  const content = btn.nextElementSibling;
+  btn.classList.toggle('open');
+  content.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════════ FIBONACCI DEMO
+function jsFib(n) {
+  if (n <= 1) return n;
+  let a = 0, b = 1;
+  for (let i = 2; i <= n; i++) { let t = a + b; a = b; b = t; }
+  return b;
+}
+
+function wasmStyleFib(n) {
+  // Use Int32Array (like WASM linear memory)
+  const mem = new Int32Array(2);
+  mem[0] = 0; mem[1] = 1;
+  if (n <= 1) return mem[n];
+  for (let i = 2; i <= n; i++) {
+    const t = mem[0] + mem[1];
+    mem[0] = mem[1];
+    mem[1] = t;
+  }
+  return mem[1];
+}
+
+function runJSFib() {
+  const n = parseInt(document.getElementById('fibInput').value);
+  const out = document.getElementById('fibOutput');
+  out.textContent = '⏳ Running...';
+  setTimeout(() => {
+    const t0 = performance.now();
+    let result;
+    for (let i = 0; i < 1000; i++) result = jsFib(n);
+    const t1 = performance.now();
+    out.textContent = `🐢 JavaScript\n  fib(${n}) = ${result}\n  1000 runs avg: ${((t1-t0)/1000).toFixed(4)}ms per call\n  Total: ${(t1-t0).toFixed(2)}ms`;
+  }, 10);
+}
+
+function runWASMFib() {
+  const n = parseInt(document.getElementById('fibInput').value);
+  const out = document.getElementById('fibOutput');
+  out.textContent = '⏳ Running...';
+  setTimeout(() => {
+    const t0 = performance.now();
+    let result;
+    for (let i = 0; i < 1000; i++) result = wasmStyleFib(n);
+    const t1 = performance.now();
+    out.textContent = `🚀 WASM-style (TypedArray)\n  fib(${n}) = ${result}\n  1000 runs avg: ${((t1-t0)/1000).toFixed(4)}ms per call\n  Total: ${(t1-t0).toFixed(2)}ms\n\n💡 Real WASM would be faster — this simulates the typed array style`;
+  }, 10);
+}
+
+function clearFibOutput() { document.getElementById('fibOutput').textContent = 'Results cleared.'; }
+
+// ═══════════════════════════════════════════════════════════ LOAD SIMULATION
+async function simulateLoad() {
+  const out = document.getElementById('loadOutput');
+  const steps = [
+    { delay: 200, text: '1. fetch("module.wasm") → HTTP GET request sent...' },
+    { delay: 600, text: '2. Response streaming... Content-Type: application/wasm ✅' },
+    { delay: 900, text: '3. WebAssembly.instantiateStreaming() → Compiling while streaming...' },
+    { delay: 1400, text: '4. Compilation complete! Validating binary...' },
+    { delay: 1700, text: '5. Creating instance with memory (64KB page)...' },
+    { delay: 2000, text: '6. ✅ Instance ready!\n   exports.add → function\n   exports.multiply → function\n   exports.memory → WebAssembly.Memory { buffer: ArrayBuffer(65536) }' },
+    { delay: 2400, text: '7. Calling exports.add(10, 20) → 30\n   Calling exports.multiply(7, 6) → 42\n\n🎉 Module loaded and executed successfully!' },
+  ];
+
+  out.textContent = '⏳ Starting WASM load simulation...\n';
+  for (const step of steps) {
+    await new Promise(r => setTimeout(r, step.delay));
+    out.textContent += '\n' + step.text;
+    out.scrollTop = out.scrollHeight;
+  }
+}
+
+function clearLoadOutput() { document.getElementById('loadOutput').textContent = 'Click to simulate...'; }
+
+// ═══════════════════════════════════════════════════════════ STACK SIMULATOR
+const stack = [];
+const log = [];
+
+function updateStackViz() {
+  const viz = document.getElementById('stackViz');
+  const logEl = document.getElementById('stackLog');
+  if (stack.length === 0) {
+    viz.innerHTML = '<div style="color:var(--text3);font-size:0.8rem;text-align:center;align-self:center">(empty)</div>';
+  } else {
+    viz.innerHTML = stack.map((v, i) =>
+      `<div class="stack-item">${i === stack.length - 1 ? '→ ' : '   '}${v}</div>`
+    ).join('');
+  }
+  logEl.textContent = log.slice(-10).join('\n');
+}
+
+function simPush(val) {
+  stack.push(val);
+  log.push(`push(${val}) → stack: [${stack.join(', ')}]`);
+  updateStackViz();
+}
+
+function simOp(op) {
+  if (stack.length < 2) {
+    log.push(`❌ ${op}: Need 2 values on stack! (have ${stack.length})`);
+    updateStackViz();
+    return;
+  }
+  const b = stack.pop();
+  const a = stack.pop();
+  let result;
+  switch (op) {
+    case 'add': result = a + b; break;
+    case 'mul': result = a * b; break;
+    case 'sub': result = a - b; break;
+  }
+  stack.push(result);
+  log.push(`i32.${op}(${a}, ${b}) = ${result} → stack: [${stack.join(', ')}]`);
+  updateStackViz();
+}
+
+function simReset() {
+  stack.length = 0;
+  log.length = 0;
+  log.push('Stack reset.');
+  updateStackViz();
+}
+
+// ═══════════════════════════════════════════════════════════ WASM MEMORY DEMO
+let fakeWasmMemory = null;
+
+function writeToWasmMemory() {
+  const str = document.getElementById('wasmStringInput').value;
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(str);
+  fakeWasmMemory = new Uint8Array(256);
+  fakeWasmMemory.set(bytes, 0);
+  fakeWasmMemory[bytes.length] = 0;
+
+  let hexView = '';
+  for (let i = 0; i < Math.min(bytes.length + 4, 32); i++) {
+    hexView += fakeWasmMemory[i].toString(16).padStart(2, '0').toUpperCase() + ' ';
+    if ((i + 1) % 8 === 0) hexView += ' ';
+  }
+
+  document.getElementById('wasmMemOutput').textContent =
+    `✅ Written "${str}" to memory at offset 0\n\nBytes: [${Array.from(bytes).join(', ')}]\nLength: ${bytes.length}\nNull terminator at: offset ${bytes.length}\n\nHex view:\n${hexView}\n\n(Click "Read Back" to decode from memory)`;
+}
+
+function readFromWasmMemory() {
+  if (!fakeWasmMemory) {
+    document.getElementById('wasmMemOutput').textContent = '❌ No data in memory! Write first.';
+    return;
+  }
+  const decoder = new TextDecoder();
+  let end = 0;
+  while (fakeWasmMemory[end] !== 0 && end < 256) end++;
+  const str = decoder.decode(fakeWasmMemory.subarray(0, end));
+  document.getElementById('wasmMemOutput').textContent =
+    `📖 Reading from memory at offset 0...\n\nScan for null terminator → found at offset ${end}\nDecoded bytes [0..${end}] → "${str}"\n\n✅ Successfully read: "${str}"\n\nThis is exactly how real WASM passes strings to/from JavaScript!`;
+}
+
+// ═══════════════════════════════════════════════════════════ MEMORY VIEWER
+function initMemory() {
+  const viz = document.getElementById('memViz');
+  const mem = new Uint8Array(64);
+  viz.innerHTML = renderMemory(mem, new Set(), 'Empty memory (64 bytes — all zeros)');
+}
+
+function writeMemory() {
+  const viz = document.getElementById('memViz');
+  const mem = new Uint8Array(64);
+  const view32 = new Int32Array(mem.buffer);
+  view32[0] = 42;
+  view32[1] = 1337;
+  view32[2] = -1;
+  const floatView = new Float32Array(mem.buffer);
+  floatView[3] = 3.14;
+  const str = 'Hi!';
+  const encoded = new TextEncoder().encode(str);
+  mem.set(encoded, 16);
+  const used = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]);
+  viz.innerHTML = renderMemory(mem, used,
+    'Written: i32(42) at 0, i32(1337) at 4, i32(-1) at 8, f32(3.14) at 12, "Hi!" at 16');
+}
+
+function renderMemory(mem, used, label) {
+  let html = `<div style="color:var(--text2);font-size:0.8rem;margin-bottom:8px">${label}</div>`;
+  for (let row = 0; row < 4; row++) {
+    html += '<div class="mem-row">';
+    html += `<span class="mem-addr">0x${(row * 16).toString(16).padStart(4, '0')}:</span>`;
+    for (let col = 0; col < 16; col++) {
+      const idx = row * 16 + col;
+      const cls = used.has(idx) ? 'mem-used' : 'mem-free';
+      html += `<span class="mem-byte ${cls}">${mem[idx].toString(16).padStart(2,'0').toUpperCase()}</span>`;
+    }
+    html += '</div>';
+  }
+  return html;
+}
+
+function clearMemory() {
+  document.getElementById('memViz').innerHTML = '<div style="color:var(--text3)">Memory cleared</div>';
+}
+
+// ═══════════════════════════════════════════════════════════ PERFORMANCE BARS
+function animateBars() {
+  setTimeout(() => { document.getElementById('bar-native').style.width = '17%'; }, 100);
+  setTimeout(() => { document.getElementById('bar-wasm').style.width = '25%'; }, 300);
+  setTimeout(() => { document.getElementById('bar-js').style.width = '100%'; }, 600);
+}
+
+// ═══════════════════════════════════════════════════════════ BENCHMARK
+function benchmarkJS() {
+  const n = parseInt(document.getElementById('benchIterations').value);
+  const out = document.getElementById('benchOutput');
+  out.textContent = '⏳ Running JS Array benchmark...';
+  setTimeout(() => {
+    const arr = new Array(n).fill(1.5);
+    const t0 = performance.now();
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) sum += arr[i] * arr[i];
+    const t1 = performance.now();
+    out.textContent = `🐢 JavaScript Array\n  Iterations: ${n.toLocaleString()}\n  Sum: ${sum.toFixed(2)}\n  Time: ${(t1-t0).toFixed(2)}ms\n  Rate: ${(n / (t1-t0) * 1000 / 1e6).toFixed(1)}M ops/sec`;
+  }, 20);
+}
+
+function benchmarkTyped() {
+  const n = parseInt(document.getElementById('benchIterations').value);
+  const out = document.getElementById('benchOutput');
+  out.textContent = '⏳ Running Typed Array benchmark...';
+  setTimeout(() => {
+    const arr = new Float64Array(n).fill(1.5);
+    const t0 = performance.now();
+    let sum = 0;
+    for (let i = 0; i < arr.length; i++) sum += arr[i] * arr[i];
+    const t1 = performance.now();
+    out.textContent += `\n\n🚀 Typed Array (WASM-style)\n  Iterations: ${n.toLocaleString()}\n  Sum: ${sum.toFixed(2)}\n  Time: ${(t1-t0).toFixed(2)}ms\n  Rate: ${(n / (t1-t0) * 1000 / 1e6).toFixed(1)}M ops/sec\n\n💡 Real WASM would be even faster — it avoids JS engine overhead entirely!`;
+  }, 20);
+}
+
+// ═══════════════════════════════════════════════════════════ EXERCISES
+const hints = {
+  1: "Use WebAssembly.instantiateStreaming(fetch('calculator.wasm')). Wrap in try/catch. Access instance.exports.multiply.",
+  2: "Use new TextEncoder().encode(str) to get Uint8Array. Then new Uint8Array(memory.buffer).set(bytes, offset).",
+  3: "new WebAssembly.Memory({initial:2, maximum:10}). new Int32Array(memory.buffer)[0]=1, [1]=2... console.log each.",
+  4: "importObject = { env: { log: (v)=>console.log(v), logFloat: (v)=>console.log(v), memory: new WebAssembly.Memory({initial:1}) } }",
+  5: "Loop with stride 4 (RGBA). gray = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2]. Set data[i]=data[i+1]=data[i+2]=gray."
+};
+
+const solutions = {
+  1: `(async () => {
+  try {
+    const { instance } = await WebAssembly.instantiateStreaming(
+      fetch('calculator.wasm')
+    );
+    const result = instance.exports.multiply(7, 8);
+    console.log('Result:', result); // 56
+  } catch (error) {
+    console.error('Failed to load WASM:', error);
+  }
+})();`,
+  2: `function writeStringToMemory(memory, str, offset) {
+  const bytes = new TextEncoder().encode(str);
+  const view = new Uint8Array(memory.buffer);
+  view.set(bytes, offset);
+  return bytes.length;
+}`,
+  3: `function memoryExercise() {
+  const memory = new WebAssembly.Memory({ initial: 2, maximum: 10 });
+  const view = new Int32Array(memory.buffer);
+  for (let i = 0; i < 5; i++) view[i] = i + 1;
+  for (let i = 0; i < 5; i++) console.log(view[i]);
+}`,
+  4: `const importObject = {
+  env: {
+    log: (value) => console.log('WASM log:', value),
+    logFloat: (value) => console.log('WASM float:', value),
+    memory: new WebAssembly.Memory({ initial: 1 })
+  }
+};`,
+  5: `function grayscalePixels(imageData) {
+  for (let i = 0; i < imageData.length; i += 4) {
+    const gray = Math.round(
+      0.299 * imageData[i] +
+      0.587 * imageData[i + 1] +
+      0.114 * imageData[i + 2]
+    );
+    imageData[i] = imageData[i + 1] = imageData[i + 2] = gray;
+  }
+  return imageData;
+}`
+};
+
+function checkEx(num) {
+  const code = document.getElementById(`ex${num}`).value.trim();
+  const out = document.getElementById(`ex${num}-output`);
+  out.style.display = 'block';
+  
+  const checks = {
+    1: () => code.includes('instantiateStreaming') && code.includes('fetch') && code.includes('exports') && (code.includes('try') || code.includes('catch')),
+    2: () => code.includes('TextEncoder') && code.includes('encode') && code.includes('Uint8Array') && code.includes('memory.buffer') && code.includes('set'),
+    3: () => code.includes('WebAssembly.Memory') && code.includes('initial') && code.includes('Int32Array') && (code.includes('console.log') || code.includes('return')),
+    4: () => code.includes('env') && code.includes('log') && code.includes('WebAssembly.Memory') && code.includes('initial'),
+    5: () => code.includes('0.299') && code.includes('0.587') && code.includes('0.114') && (code.includes('i += 4') || code.includes('i + 4')),
+  };
+
+  const pass = checks[num]();
+  out.style.color = pass ? 'var(--success)' : 'var(--error)';
+  out.textContent = pass
+    ? '✅ Looks correct! Key concepts present.'
+    : '❌ Not quite right. Check the hint or solution for guidance.';
+}
+
+function showHint(num) {
+  const out = document.getElementById(`ex${num}-output`);
+  out.style.display = 'block';
+  out.style.color = 'var(--warning)';
+  out.textContent = '💡 Hint: ' + hints[num];
+}
+
+function showSolution(num) {
+  const out = document.getElementById(`ex${num}-output`);
+  out.style.display = 'block';
+  out.style.color = 'var(--accent3)';
+  out.textContent = '🔑 Solution:\n\n' + solutions[num];
+}
+
+// ═══════════════════════════════════════════════════════════ QUIZ
+const quizData = [
+  {
+    q: "What is the CORRECT MIME type to serve .wasm files?",
+    opts: ["application/octet-stream", "text/wasm", "application/wasm", "binary/wasm"],
+    correct: 2,
+    explain: "'application/wasm' is required for instantiateStreaming(). Other MIME types cause a TypeError."
+  },
+  {
+    q: "Which method is MOST efficient for loading a WASM file?",
+    opts: [
+      "new WebAssembly.Module(bytes) — synchronous",
+      "WebAssembly.instantiateStreaming(fetch(url)) — streaming",
+      "fetch → arrayBuffer → WebAssembly.instantiate",
+      "XMLHttpRequest then WebAssembly.compile"
+    ],
+    correct: 1,
+    explain: "instantiateStreaming compiles the module AS it downloads — overlapping network and CPU work."
+  },
+  {
+    q: "How large is 1 WebAssembly memory page?",
+    opts: ["1KB (1024 bytes)", "4KB (4096 bytes)", "32KB (32768 bytes)", "64KB (65536 bytes)"],
+    correct: 3,
+    explain: "One WASM page is exactly 65,536 bytes (64KB). Max is 65,536 pages = 4GB total."
+  },
+  {
+    q: "What happens to a TypedArray view after memory.grow() is called?",
+    opts: [
+      "It automatically resizes to match the new memory",
+      "It becomes DETACHED and unusable — you must create a new view",
+      "It throws an error immediately",
+      "Nothing — it still works with the old size"
+    ],
+    correct: 1,
+    explain: "memory.grow() replaces the underlying ArrayBuffer. Old TypedArray views are detached. Always re-create views after grow()!"
+  },
+  {
+    q: "What JavaScript type does a WASM i64 become when returned to JavaScript?",
+    opts: ["number", "BigInt", "string", "Int64Array"],
+    correct: 1,
+    explain: "i64 values become BigInt in JavaScript because JS 'number' can't represent 64-bit integers precisely."
+  },
+  {
+    q: "WASM can directly manipulate the DOM — True or False?",
+    opts: [
+      "True — WASM has full browser API access",
+      "False — WASM must call imported JS functions to touch the DOM",
+      "True — but only with special flags",
+      "False — WASM can never interact with the page at all"
+    ],
+    correct: 1,
+    explain: "WASM is sandboxed with no direct DOM access. It must import JS functions, which then manipulate the DOM on WASM's behalf."
+  },
+  {
+    q: "Which WASM type should you use to pass a large integer (e.g., factorial of 25) from JS to WASM?",
+    opts: ["i32", "f64", "i64 with BigInt", "string"],
+    correct: 2,
+    explain: "i64 maps to BigInt in JS. Use 25n (BigInt literal) as the argument. i32 would overflow, f64 would lose precision."
+  },
+  {
+    q: "What is LINEAR MEMORY in WebAssembly?",
+    opts: [
+      "Memory arranged in a linked list structure",
+      "A contiguous flat byte array shared between WASM and JS",
+      "Memory that grows linearly with program size",
+      "A special GPU memory buffer"
+    ],
+    correct: 1,
+    explain: "Linear memory is a flat, contiguous byte array (ArrayBuffer) that WASM uses as its 'RAM'. Both JS and WASM can read/write it."
+  },
+  {
+    q: "You have a WASM function that processes 1 million numbers. What's the BEST approach?",
+    opts: [
+      "Call the WASM function once per number in a JS loop",
+      "Copy all numbers to WASM memory once, call one WASM function to process all",
+      "Process in JS — WASM isn't faster for loops",
+      "Use synchronous WebAssembly.Module for maximum speed"
+    ],
+    correct: 1,
+    explain: "Minimize JS↔WASM boundary crossings! Copy data to memory once, then call WASM once. 1M calls = 1M boundary crossings = slow."
+  },
+  {
+    q: "What is WAT (WebAssembly Text Format)?",
+    opts: [
+      "A binary compression format for WASM files",
+      "A JavaScript library for compiling to WASM",
+      "Human-readable text representation of WASM binary",
+      "A testing framework for WebAssembly modules"
+    ],
+    correct: 2,
+    explain: "WAT is the S-expression text format that corresponds to WASM binary. You can convert between them with wat2wasm/wasm2wat tools."
+  },
+  {
+    q: "Which tool converts Rust code to WebAssembly?",
+    opts: ["Emscripten", "wasm-pack", "wat2wasm", "WebAssembly.compile"],
+    correct: 1,
+    explain: "wasm-pack is the primary tool for compiling Rust to WASM. Emscripten handles C/C++. wat2wasm converts text format to binary."
+  },
+  {
+    q: "WASM's stack machine means...",
+    opts: [
+      "WASM uses a call stack like JavaScript",
+      "Operations push/pop values on a virtual stack — no registers",
+      "WASM memory is organized as a stack data structure",
+      "WASM can only run stack-based algorithms"
+    ],
+    correct: 1,
+    explain: "WASM is stack-based: instructions push operands and results onto a value stack. i32.add pops two values, pushes their sum."
+  }
+];
+
+let quizScoreVal = 0;
+let quizAnswered = 0;
+
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  quizData.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'quiz-card';
+    card.id = `qcard-${i}`;
+    card.innerHTML = `
+      <div class="quiz-q">Q${i+1}. ${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((opt, j) => `
+          <button class="quiz-opt" onclick="answerQuiz(${i}, ${j})" id="qopt-${i}-${j}">
+            ${String.fromCharCode(65+j)}. ${opt}
+          </button>
+        `).join('')}
+      </div>
+      <div class="quiz-feedback" id="qfb-${i}"></div>
+    `;
+    container.appendChild(card);
+  });
+  document.getElementById('quizTotal').textContent = quizData.length;
+}
+
+function answerQuiz(qi, oi) {
+  const q = quizData[qi];
+  const card = document.getElementById(`qcard-${qi}`);
+  if (card.dataset.answered) return;
+  card.dataset.answered = '1';
+
+  const opts = card.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.disabled = true);
+
+  const selected = document.getElementById(`qopt-${qi}-${oi}`);
+  const correct = document.getElementById(`qopt-${qi}-${q.correct}`);
+  const fb = document.getElementById(`qfb-${qi}`);
+
+  if (oi === q.correct) {
+    selected.classList.add('selected-correct');
+    card.classList.add('correct');
+    fb.className = 'quiz-feedback show correct';
+    fb.textContent = '✅ Correct! ' + q.explain;
+    quizScoreVal++;
+  } else {
+    selected.classList.add('selected-wrong');
+    correct.classList.add('reveal-correct');
+    card.classList.add('wrong');
+    fb.className = 'quiz-feedback show wrong';
+    fb.textContent = '❌ Wrong. ' + q.explain;
+  }
+
+  quizAnswered++;
+  document.getElementById('quizScore').textContent = quizScoreVal;
+  if (quizAnswered > 0) {
+    const pct = Math.round(quizScoreVal / quizAnswered * 100);
+    document.getElementById('quizPercent').textContent = `(${pct}%)`;
+  }
+}
+
+function resetQuiz() {
+  quizScoreVal = 0;
+  quizAnswered = 0;
+  document.getElementById('quizScore').textContent = '0';
+  document.getElementById('quizPercent').textContent = '';
+  buildQuiz();
+}
+
+// ═══════════════════════════════════════════════════════════ INIT
+buildQuiz();
+updateProgress();
+simReset();
+</script>
+</body>
+</html>
